@@ -32,3 +32,8 @@ Set `site.baseUrl`, publisher data, and language details in `blyss.config.js` be
 Keep translations linked with the same `translationKey`.
 
 Titles come from front matter, so Markdown body text should begin below the title rather than with another H1.
+
+## Acknowledgments
+
+Blyss was initially developed with assistance from Microsoft 365 Copilot.
+All generated code was reviewed and validated by the project maintainer (Blooniverse).
