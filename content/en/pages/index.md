@@ -7,5 +7,3 @@ translationKey: home
 Blyss transforms Markdown into a small, bilingual static website and serves the generated files with Node.js.
 
 {{recentPosts}}
-
-[Read the first post](/en/posts/hello-world/)
