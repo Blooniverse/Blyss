@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="{{locale}}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{pageTitle}}</title>
+  <meta name="description" content="{{description}}">
+  <link rel="canonical" href="{{canonicalUrl}}">
+{{alternateLinks}}
+  <link rel="stylesheet" href="/assets/css/main.css">
+{{jsonLd}}
+</head>
+<body>
+  <header>
+    <nav aria-label="{{mainNavigationLabel}}">
+      <ul>
+        <li><a href="/{{languageKey}}/">{{homeLabel}}</a></li>
+        <li><a href="/{{languageKey}}/about/">{{aboutLabel}}</a></li>
+      </ul>
+    </nav>
+{{languageSwitcher}}
+  </header>
+  <main>
+{{content}}
+  </main>
+  <footer><small>{{generatedByLabel}}</small></footer>
+</body>
+</html>
