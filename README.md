@@ -7,6 +7,7 @@ Blyss is a lean bilingual Markdown transformer and static-site server for Node.j
 - English and German content trees
 - clean localized URLs under `/en/` and `/de/`
 - default language redirect from `/` to `/${site.defaultLanguage}/`
+- recent-post placeholders via `{{recentPosts}}` that render the newest three posts for the current language
 - front matter and localized slugs
 - translation matching via `translationKey`
 - visible language switchers and `hreflang` alternate links

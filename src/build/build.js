@@ -59,7 +59,7 @@ async function build() {
   const translationIndex = indexTranslations(records);
 
   for (const record of records) {
-    const html = renderRecord({ record, templates, translationIndex, site: config.site });
+    const html = renderRecord({ record, templates, translationIndex, site: config.site, records });
     await mkdir(join(record.outputFile, '..'), { recursive: true });
     await writeFile(record.outputFile, html, 'utf8');
     console.log(`Built ${record.url}`);

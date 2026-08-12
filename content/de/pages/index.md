@@ -6,4 +6,6 @@ translationKey: home
 
 Blyss verwandelt Markdown in eine kleine, zweisprachige statische Website und stellt die generierten Dateien mit Node.js bereit.
 
+{{recentPosts}}
+
 [Ersten Beitrag lesen](/de/posts/hallo-welt/)

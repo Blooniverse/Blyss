@@ -26,11 +26,33 @@ export function applyTemplate(template, values) {
   return template.replace(/{{([a-zA-Z][a-zA-Z0-9]*)}}/g, (_, key) => values[key] ?? "");
 }
 
-export function renderRecord({ record, templates, translationIndex, site }) {
+export function renderRecentPosts(record, records) {
+  const posts = records.filter(item => item.type === "post" && item.languageKey === record.languageKey)
+    .sort((left, right) => {
+      const leftDate = left.metadata.datePublished || "";
+      const rightDate = right.metadata.datePublished || "";
+      if (leftDate < rightDate) return 1;
+      if (leftDate > rightDate) return -1;
+      return 0;
+    })
+    .slice(0, 3);
+
+  if (!posts.length) return "";
+
+  const listItems = posts.map(item => {
+    const title = item.metadata.title || item.slug || item.url;
+    return `    <li><a href="${escapeHtml(item.url)}">${escapeHtml(title)}</a></li>`;
+  }).join("\n");
+
+  return `\n<section aria-label="${escapeHtml(record.languageConfig.labels.recentPosts || "Recent posts")}">\n  <h2>${escapeHtml(record.languageConfig.labels.recentPosts || "Recent posts")}</h2>\n  <ul>\n${listItems}\n  </ul>\n</section>\n`;
+}
+
+export function renderRecord({ record, templates, translationIndex, site, records = [] }) {
   const metadata = record.metadata;
   const title = metadata.title || site.name;
   const description = metadata.description || record.languageConfig.description;
-  const bodyHtml = marked.parse(record.markdown);
+  const recentPosts = renderRecentPosts(record, records);
+  const bodyHtml = marked.parse(record.markdown.replace(/{{recentPosts}}/g, recentPosts));
   const dateBlock = metadata.datePublished
     ? `    <p><time datetime="${escapeHtml(metadata.datePublished)}">${escapeHtml(metadata.datePublished)}</time></p>` : "";
   const innerTemplate = record.type === "post" ? templates.post : templates.page;
