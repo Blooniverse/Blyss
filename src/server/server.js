@@ -11,6 +11,13 @@ const server = createServer(async (request, response) => {
   try {
     const requestUrl = new URL(request.url ?? "/", "http://localhost");
     let pathname = decodeURIComponent(requestUrl.pathname);
+    if (pathname === "/") {
+      response.writeHead(302, {
+        Location: `/${config.site.defaultLanguage}/`
+      });
+      response.end();
+      return;
+    }
     if (pathname.endsWith("/")) pathname += "index.html";
     const relativeRequestPath = pathname.replace(/^[/\\]+/, "");
     const filePath = resolve(publicDirectory, relativeRequestPath);
