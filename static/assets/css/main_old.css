@@ -1,0 +1,9 @@
+:root {
+  color-scheme: light dark;
+  font-family: system-ui, sans-serif;
+  line-height: 1.6;
+}
+body { max-width: 48rem; margin: 0 auto; padding: 2rem 1rem; }
+a { color: inherit; }
+nav ul { display: flex; flex-wrap: wrap; gap: 1rem; padding: 0; list-style: none; }
+header, footer { margin-block: 2rem; }

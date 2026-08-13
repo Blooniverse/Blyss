@@ -1,9 +1,85 @@
-:root {
-  color-scheme: light dark;
-  font-family: system-ui, sans-serif;
-  line-height: 1.6;
+@charset "utf-8";
+
+:root
+{
+  --color202:        hsla(202, 100%,  25%,  1.0);
+  --color202grey:    hsla(202,  10%,  30%,  0.7);
+  --color202black:   hsla(202,  50%,  10%,  0.8);
+  --color202border:  hsla(202,  80%,  80%,  1.0);
+  --color040border:  hsla(040,  90%,  60%,  1.0);
+  --h-textshadow: 0.01em 0.01em 0.01em hsla(202,20%,5%, 0.8);
 }
-body { max-width: 48rem; margin: 0 auto; padding: 2rem 1rem; }
-a { color: inherit; }
-nav ul { display: flex; flex-wrap: wrap; gap: 1rem; padding: 0; list-style: none; }
-header, footer { margin-block: 2rem; }
+
+
+*, html
+{
+  margin: 0;
+  padding: 0;
+}
+
+html
+{
+  font-family: 'Titillium Upright', Titillium, 'Aptos Narrow', system-ui, -apple-system, sans-serif;
+  font-weight: 400;
+  font-size: clamp(12px, 3vmin, 1000px);
+  font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  text-align: left;
+  vertical-align: baseline;
+}
+
+body 
+{ 
+  box-sizing: border-box; min-height: 100vh; padding: 3vmin 3vmin 1.5vmin;
+  border: 1.5vmin solid; 
+  border-image: linear-gradient(15deg, var(--color040border), var(--color202border)) 1% 1 1 stretch;
+}
+
+header,footer { }
+nav ul  { display: flex; flex-wrap: wrap; gap: 1rem; padding: 0; list-style: none; }
+h1,h2   { color: var(--color202); }
+h1      { font-size: 2.00rem; letter-spacing: 0.160em; margin: -0.10rem 0rem 0.10rem; line-height: 1.0; text-shadow: var(--h-textshadow); white-space: nowrap; }
+h2      { font-size: 1.50rem; letter-spacing: 0.040em; margin-bottom: 0.50rem; line-height: 1.1; }
+h3      { display: inline-block; color: white; background-color: var(--color202black); margin-bottom: 0.5em; margin-top: 5vh; }
+		 
+svg,img,object,iframe { float:right; width: 47vw; height: auto; max-height: 92vh; margin-left: 0.2vw; }
+
+
+main  { max-width: 70ch; }
+p     { line-height: 1.4; }
+a     { text-decoration: underline var(--color202) dotted; color: inherit; }
+				
+aside { }
+				
+footer
+{
+  margin-top: 5vh;
+  font-family: Titillium, system-ui, -apple-system, sans-serif;
+  font-size: 0.9rem;
+  color: var(--color202grey);
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+@media (max-width: 1500px) 
+{
+  /* Minimalism */
+  svg,img,object,iframe { width: 20vw; margin-top: 5vh; }
+}
+					  
+img,object
+{
+  animation-name:             ani;
+  animation-delay:            0s;
+  animation-duration:         4s;
+  animation-iteration-count:  1;
+  animation-timing-function:  ease-in-out;
+  animation-play-state:       running;
+}
+
+@keyframes ani
+{
+   0% { transform: scale(1.2); margin-top: -20vh; }
+ 100% { transform: scale(1); }
+}
