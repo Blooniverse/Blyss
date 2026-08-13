@@ -5,9 +5,9 @@ name: Node.js build & test CI workflow
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "dev" ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ "dev" ]
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
