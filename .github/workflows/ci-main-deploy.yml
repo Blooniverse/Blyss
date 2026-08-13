@@ -1,0 +1,54 @@
+# Replace ./dist/ with the directory into which Blyss generates the finished website, for example ./public/ or ./build/.
+# The --delete option makes the destination mirror the generated output.
+# Therefore, files removed from the repository are also removed from production. It must only target the dedicated website directory.
+
+name: Build and deploy Blyss
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build static website
+        run: npm run build
+
+      - name: Configure SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SRV_SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.SRV_SSH_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Deploy generated website
+        run: |
+          rsync -az --delete \
+            ./dist/ \
+            "${{ secrets.SRV_SSH_USER }}@${{ secrets.SRV_SSH_HOST }}:${{ secrets.SRV_DEPLOY_PATH }}/"
