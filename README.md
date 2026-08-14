@@ -12,7 +12,7 @@ Option for in-browser content editing:
 Author
   │
   ▼
-Git CLI
+Git CLI ||
 Git GUI (eg CMS)
   │
   ▼
