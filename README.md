@@ -12,21 +12,22 @@ Option for in-browser content editing:
 Author
   │
   ▼
-Git CLI ||
-Git GUI (eg CMS)
+Git Client
+(CLI, GUI, CMS)
   │
   ▼
 Git Repository
   │
-  ▼
-Blyss
-  │
-  ▼
-Website
-  │
-  ▼
-Post-processing
-(eg Activepieces, Windmill or N8n)
+  ├─────────────┐
+  ▼             │
+Blyss           │
+  │             │
+  ▼             │
+Website         │
+                │
+                ▼
+Automation Platform
+(Activepieces, Windmill, N8n)
 ```
 
 
