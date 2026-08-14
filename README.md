@@ -11,7 +11,7 @@ Optional combination for in-browser content editing:
 ```mermaid
 flowchart TD
     A[Author]
-    B[Git-based CMS (Decap, Tina, ...)]
+    B[Git-based CMS]
     C[Git Repository]
     D[Blyss]
     E[Website]
