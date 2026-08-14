@@ -25,7 +25,7 @@ Blyss
 Website
   │
   ▼
-Post-processing with eg N8n](https://n8n.io/).
+Post-processing with eg [N8n](https://n8n.io/).
 ```
 
 
