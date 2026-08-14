@@ -12,8 +12,8 @@ Option for in-browser content editing:
 Author
   │
   ▼
-Git-based CMS
-(Decap CMS, Tina, …)
+Git CLI
+Git GUI (eg CMS)
   │
   ▼
 Git Repository
@@ -25,7 +25,8 @@ Blyss
 Website
   │
   ▼
-Post-proc (eg Activepieces, Windmill, N8n …)
+Post-processing
+(eg Activepieces, Windmill or N8n)
 ```
 
 
