@@ -8,19 +8,16 @@ Optional combination for in-browser content editing:
 [Decap CMS](https://decapcms.org/) or
 [Tina](https://tina.io/)
 
-Author
-  │
-  ▼
-Git-based CMS (Decap, Tina, ...)
-  │
-  ▼
-Git Repository
-  │
-  ▼
-Blyss
-  │
-  ▼
-Website
+```mermaid
+flowchart TD
+    A[Author]
+    B[Git-based CMS<br/>(Decap, Tina, ...)]
+    C[Git Repository]
+    D[Blyss]
+    E[Website]
+
+    A --> B --> C --> D --> E
+```
 
 ## Features
 
