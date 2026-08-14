@@ -13,7 +13,7 @@ Author
   │
   ▼
 Git-based CMS
-(Decap CMS, Tina, ...)
+(Decap CMS, Tina, …)
   │
   ▼
 Git Repository
@@ -25,7 +25,7 @@ Blyss
 Website
   │
   ▼
-Post-processing with eg [N8n](https://n8n.io/).
+Post-proc (eg Activepieces, Windmill, N8n …)
 ```
 
 
