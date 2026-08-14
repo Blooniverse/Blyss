@@ -6,7 +6,7 @@ Ideal for **local-first & Git-based** build & content workflows!
 
 Optional combination for in-browser content editing:
 [Decap CMS](https://decapcms.org/) or
-[Tina](https://tina.io/)
+[Tina](https://tina.io/).
 
 ```text
 Author
