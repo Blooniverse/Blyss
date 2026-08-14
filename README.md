@@ -4,7 +4,7 @@ Blyss is a lean bilingual Markdown transformer and static-site server for Node.j
 
 Ideal for **local-first & Git-based** build & content workflows!
 
-Optional combination for in-browser content editing:
+Option for in-browser content editing:
 [Decap CMS](https://decapcms.org/) or
 [Tina](https://tina.io/).
 
@@ -23,7 +23,12 @@ Blyss
   │
   ▼
 Website
+  │
+  ▼
+Post-processing with eg N8n](https://n8n.io/).
 ```
+
+
 
 ## Features
 
