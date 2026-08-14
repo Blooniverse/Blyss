@@ -25,17 +25,6 @@ Blyss
 Website
 ```
 
-```mermaid
-flowchart TD
-    A[Author]
-    B[Git-based CMS]
-    C[Git Repository]
-    D[Blyss]
-    E[Website]
-
-    A --> B --> C --> D --> E
-```
-
 ## Features
 
 - English and German content trees
