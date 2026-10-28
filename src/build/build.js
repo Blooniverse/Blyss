@@ -1,7 +1,7 @@
 import { cp, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { basename, extname, join, relative, sep } from "node:path";
-import config from "../../blyss.config.js";
-import { contentDirectory, publicDirectory, staticDirectory, templatesDirectory } from "./paths.js";
+import { pathToFileURL } from "node:url";
+import { resolvePaths } from "./paths.js";
 import { parseFrontMatter, renderRecord } from "./render.js";
 import { indexTranslations } from "./translations.js";
 
@@ -16,11 +16,8 @@ async function findMarkdownFiles(directory) {
   return files;
 }
 
-function absoluteUrl(pathname) {
-  return new URL(pathname.replace(/^\//, ""), `${config.site.baseUrl.replace(/\/$/, "")}/`).href;
-}
-
-async function discoverContent() {
+async function discoverContent(config, paths) {
+  const { contentDirectory, publicDirectory } = paths;
   const files = await findMarkdownFiles(contentDirectory);
   return Promise.all(files.map(async sourceFile => {
     const parts = relative(contentDirectory, sourceFile).split(sep);
@@ -37,6 +34,8 @@ async function discoverContent() {
     if (type === 'page' && filename === 'index') urlParts.pop();
     const url = `/${urlParts.join('/')}/`.replace(/\/{2,}/g, '/');
     const outputFile = join(publicDirectory, ...urlParts, 'index.html');
+    const absoluteUrl = (pathname) =>
+      new URL(pathname.replace(/^\//, ""), `${config.site.baseUrl.replace(/\/$/, "")}/`).href;
     return {
       sourceFile, languageKey, languageConfig, type, metadata, markdown,
       url, outputFile, canonicalUrl: absoluteUrl(url), siteUrl: absoluteUrl(`/${config.site.defaultLanguage}/`)
@@ -44,13 +43,18 @@ async function discoverContent() {
   }));
 }
 
-async function build() {
+export async function build(projectDir, configPath = './blyss.config.js') {
+  const configUrl = pathToFileURL(join(projectDir, configPath)).href;
+  const { default: config } = await import(configUrl);
+  const paths = resolvePaths(projectDir, config);
+  const { publicDirectory, staticDirectory, templatesDirectory } = paths;
+
   await rm(publicDirectory, { recursive: true, force: true });
   await mkdir(publicDirectory, { recursive: true });
   await cp(staticDirectory, publicDirectory, { recursive: true, force: true });
 
   const [records, document, page, post] = await Promise.all([
-    discoverContent(),
+    discoverContent(config, paths),
     readFile(join(templatesDirectory, 'document.html'), 'utf8'),
     readFile(join(templatesDirectory, 'page.html'), 'utf8'),
     readFile(join(templatesDirectory, 'post.html'), 'utf8')
@@ -67,5 +71,3 @@ async function build() {
 
   console.log(`Blyss built ${records.length} localized page(s).`);
 }
-
-await build();

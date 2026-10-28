@@ -1,13 +1,21 @@
 {
-  "name": "blyss",
+  "name": "@blooniverse/blyss",
   "version": "0.4.0",
-  "private": true,
   "description": "A lean bilingual Markdown transformer and static-site server.",
   "license": "MIT",
   "type": "module",
+  "bin": {
+    "blyss": "./bin/blyss.js"
+  },
+  "files": [
+    "bin/",
+    "src/",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
-    "build": "node src/build/build.js",
-    "start": "node src/server/server.js",
+    "build": "node bin/blyss.js build",
+    "start": "node bin/blyss.js serve",
     "test": "npm run build"
   },
   "dependencies": {
