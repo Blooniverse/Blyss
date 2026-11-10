@@ -1,0 +1,9 @@
+---
+title: Hallo Welt
+slug: hallo-welt
+description: Der erste Beitrag dieser Website.
+datePublished: 2026-11-10
+translationKey: hello-world
+---
+
+Beiträge liegen in `content/de/posts/` und erscheinen unter `/de/posts/`. Die englische Übersetzung teilt den `translationKey` dieses Beitrags, hat aber einen eigenen lokalisierten Slug.

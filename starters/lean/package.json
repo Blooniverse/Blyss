@@ -1,0 +1,16 @@
+{
+  "name": "__SITE_PACKAGE_NAME__",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "blyss build",
+    "start": "blyss serve"
+  },
+  "dependencies": {
+    "@blooniverse/blyss": "__BLYSS_VERSION__"
+  },
+  "engines": {
+    "node": "__SUPPORTED_NODE_RANGE__"
+  }
+}

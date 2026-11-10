@@ -17,6 +17,8 @@ Blyss is a lean bilingual Markdown transformer and static-site server.
 - Do not generate public/index.html.
 - The server must redirect / to the configured default language with HTTP 302.
 - Prevent filesystem access outside public/.
+- `blyss init` must never overwrite or delete files that existed before it ran.
+- Keep the starter in starters/lean/ buildable and free of unreplaced tokens.
 
 ## Validation
 
@@ -30,3 +32,4 @@ For every code change:
 6. Verify a missing route returns 404.
 7. Check that recent posts are ordered by datePublished.
 8. Confirm that no generated template placeholders remain.
+9. Run npm test.

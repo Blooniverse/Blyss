@@ -1,5 +1,25 @@
 # Changelog
 
+## Unreleased
+
+### New features
+
+- **`blyss init [directory]`**: copies the bundled bilingual starter website
+  into a new or empty directory (default: the current directory). Non-empty
+  directories are refused without changes; a failed copy removes only what it
+  created. The new `package.json` gets a name derived from the directory and
+  depends on the running Blyss version. It does not install, build, serve,
+  initialize Git or access the network.
+- **Lean starter**: `starters/lean/` with English and German pages and posts,
+  matching `translationKey` values, localized post slugs, templates and one
+  small stylesheet. It is published in the npm package and builds into
+  `dist/`.
+- **Missing configuration**: `blyss build` and `blyss serve` report a missing
+  `blyss.config.js` with its absolute path and suggest `blyss init` instead of
+  printing `ERR_MODULE_NOT_FOUND`.
+- **Tests**: `npm test` runs the CLI test suite in `test/` with `node:test`
+  after the build.
+
 ## 0.5.0 — 2026-10-28
 
 ### Breaking changes

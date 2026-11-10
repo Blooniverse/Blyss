@@ -10,13 +10,14 @@
   "files": [
     "bin/",
     "src/",
+    "starters/",
     "README.md",
     "LICENSE"
   ],
   "scripts": {
     "build": "node bin/blyss.js build",
     "start": "node bin/blyss.js serve",
-    "test": "npm run build"
+    "test": "npm run build && node --test test/*.test.js"
   },
   "dependencies": {
     "marked": "^16.0.0"
