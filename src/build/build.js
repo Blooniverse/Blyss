@@ -1,6 +1,6 @@
 import { cp, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { basename, extname, join, relative, sep } from "node:path";
-import { pathToFileURL } from "node:url";
+import { loadConfig } from "../config.js";
 import { resolvePaths } from "./paths.js";
 import { parseFrontMatter, renderRecord } from "./render.js";
 import { indexTranslations } from "./translations.js";
@@ -44,8 +44,7 @@ async function discoverContent(config, paths) {
 }
 
 export async function build(projectDir, configPath = './blyss.config.js') {
-  const configUrl = pathToFileURL(join(projectDir, configPath)).href;
-  const { default: config } = await import(configUrl);
+  const config = await loadConfig(projectDir, configPath);
   const paths = resolvePaths(projectDir, config);
   const { publicDirectory, staticDirectory, templatesDirectory } = paths;
 
