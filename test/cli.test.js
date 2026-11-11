@@ -73,7 +73,7 @@ describe("blyss init <new-directory>", () => {
 
   test("copies dotfiles such as .gitignore", async () => {
     const gitignore = await readFile(join(site, ".gitignore"), "utf8");
-    for (const pattern of ["node_modules/", "dist/", "*.log", ".DS_Store"]) {
+    for (const pattern of ["node_modules/", "public/", "*.log", ".DS_Store"]) {
       assert.ok(gitignore.split("\n").includes(pattern), pattern);
     }
   });
@@ -177,16 +177,17 @@ describe("a generated starter", () => {
   test("builds with the local Blyss package", async () => {
     const result = run(["build"], site);
     assert.equal(result.status, 0, result.stderr);
-    const pages = ["en/", "en/about/", "en/posts/hello-world/", "de/", "de/about/", "de/posts/hallo-welt/"];
-    assert.deepEqual(await listFiles(join(site, "dist")),
-      ["assets/css/main.css", "robots.txt", ...pages.map(page => `${page}index.html`)].sort());
+    const pages = [["en", "hello-world"], ["de", "hallo-welt"]].flatMap(([language, post]) =>
+      ["", "about/", "posts/", `posts/${post}/`, "tags/", "tags/blyss/", "tags/markdown/"].map(path => `${language}/${path}`));
+    assert.deepEqual(await listFiles(join(site, "public")),
+      ["assets/css/main.css", "robots.txt", "sitemap.xml", ...pages.map(page => `${page}index.html`)].sort());
     for (const page of pages) {
-      const html = await readFile(join(site, "dist", page, "index.html"), "utf8");
+      const html = await readFile(join(site, "public", page, "index.html"), "utf8");
       assert.doesNotMatch(html, /{{\w+}}/, page);
       const jsonLd = JSON.parse(html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)[1]);
       assert.ok(Array.isArray(jsonLd["@graph"]), page);
     }
-    const post = await readFile(join(site, "dist", "en", "posts", "hello-world", "index.html"), "utf8");
+    const post = await readFile(join(site, "public", "en", "posts", "hello-world", "index.html"), "utf8");
     assert.match(post, /<a lang="de" hreflang="de" href="\/de\/posts\/hallo-welt\/">Deutsch<\/a>/);
   });
 
@@ -201,7 +202,7 @@ describe("a generated starter", () => {
         let stdout = "";
         server.stdout.on("data", chunk => {
           stdout += chunk;
-          if (stdout.includes(`Blyss is serving dist/ on port ${port}`)) resolve();
+          if (stdout.includes(`Blyss is serving public/ on port ${port}`)) resolve();
         });
         exited.then(() => reject(new Error(`blyss serve exited early: ${stderr}`)), reject);
       });
@@ -210,7 +211,8 @@ describe("a generated starter", () => {
       await home.text();
       assert.equal(home.status, 302);
       assert.equal(home.headers.get("location"), "/en/");
-      for (const [path, status] of [["/en/", 200], ["/de/posts/hallo-welt/", 200], ["/assets/css/main.css", 200], ["/missing/", 404]]) {
+      for (const [path, status] of [["/en/", 200], ["/de/posts/hallo-welt/", 200], ["/en/posts/", 200], ["/de/tags/blyss/", 200],
+        ["/sitemap.xml", 200], ["/assets/css/main.css", 200], ["/missing/", 404]]) {
         const response = await fetch(base + path);
         await response.text();
         assert.equal(response.status, status, path);
@@ -221,23 +223,108 @@ describe("a generated starter", () => {
     await exited;
     assert.equal(stderr, "");
   });
+});
+
+describe("a site with several tagged posts", () => {
+  let site;
+  const page = path => readFile(join(site, "public", path, "index.html"), "utf8");
+  const main = async path => {
+    const html = await page(path);
+    return html.slice(html.indexOf("<main>"), html.indexOf("</main>"));
+  };
+  const postSlugs = async path => [...(await main(path)).matchAll(/href="\/\w+\/posts\/([^/"]+)\/"/g)].map(match => match[1]);
+
+  before(async () => {
+    site = join(sandbox, "blog");
+    assert.equal(run(["init", site], sandbox).status, 0);
+    const posts = {
+      oldest: "title: Oldest\ndatePublished: 2026-01-01\ntags: Blyss",
+      newest: 'title: </script><script>alert(1)</script>\ndatePublished: 2026-12-31\ntags:\n  - Static Sites\n  - "Über Blyss"',
+      older: "title: Older\ndatePublished: 2026-06-30\ntags: [blyss, static sites]"
+    };
+    for (const [slug, frontMatter] of Object.entries(posts)) {
+      await writeFile(join(site, "content", "en", "posts", `${slug}.md`), `---\n${frontMatter}\n---\n\nText.\n`);
+    }
+    const result = run(["build"], site);
+    assert.equal(result.status, 0, result.stderr);
+  });
 
   test("lists the three newest posts of each language by datePublished", async () => {
-    const posts = join(sandbox, "recent-posts");
-    assert.equal(run(["init", posts], sandbox).status, 0);
-    for (const [slug, date] of [["oldest", "2026-01-01"], ["newest", "2026-12-31"], ["older", "2026-06-30"]]) {
-      await writeFile(join(posts, "content", "en", "posts", `${slug}.md`),
-        `---\ntitle: ${slug}\ndatePublished: ${date}\n---\n\nText.\n`);
-    }
-    const result = run(["build"], posts);
-    assert.equal(result.status, 0, result.stderr);
-    const recentPosts = async language => {
-      const home = await readFile(join(posts, "dist", language, "index.html"), "utf8");
-      return [...home.matchAll(/<li><a href="\/\w+\/posts\/([^/]+)\/">/g)].map(match => match[1]);
-    };
-    assert.deepEqual(await recentPosts("en"), ["newest", "hello-world", "older"]);
-    assert.deepEqual(await recentPosts("de"), ["hallo-welt"]);
+    assert.deepEqual(await postSlugs("en"), ["newest", "hello-world", "older"]);
+    assert.deepEqual(await postSlugs("de"), ["hallo-welt"]);
   });
+
+  test("archives all posts newest first", async () => {
+    assert.deepEqual(await postSlugs("en/posts"), ["newest", "hello-world", "older", "oldest"]);
+    assert.match(await page("en"), /<a href="\/en\/posts\/">Posts<\/a>/);
+  });
+
+  test("links posts to their tags, spelled as in the newest tagged post", async () => {
+    assert.match(await main("en/posts/older"), new RegExp('<p>Tags: <a href="/en/tags/blyss/" rel="tag">Blyss</a>, ' +
+      '<a href="/en/tags/static-sites/" rel="tag">Static Sites</a></p>'));
+  });
+
+  test("lists every tag with its post count and the posts of each tag", async () => {
+    const tags = [...(await main("en/tags")).matchAll(/<li><a href="[^"]+">([^<]+)<\/a> (\(\d+\))<\/li>/g)];
+    assert.deepEqual(tags.map(([, name, count]) => `${name} ${count}`),
+      ["Blyss (3)", "Markdown (1)", "Static Sites (2)", "Über Blyss (1)"]);
+    assert.deepEqual(await postSlugs("en/tags/blyss"), ["hello-world", "older", "oldest"]);
+    assert.deepEqual(await postSlugs("en/tags/static-sites"), ["newest", "older"]);
+    assert.deepEqual(await postSlugs("en/tags/uber-blyss"), ["newest"]);
+    assert.match(await page("en/tags/blyss"), /<a lang="de" hreflang="de" href="\/de\/tags\/blyss\/">Deutsch<\/a>/);
+  });
+
+  test("writes a sitemap of every page with dates and translations", async () => {
+    const sitemap = await readFile(join(site, "public", "sitemap.xml"), "utf8");
+    const pages = (await listFiles(join(site, "public"))).filter(file => file.endsWith("index.html"))
+      .map(file => `https://example.com/${file.replace(/index\.html$/, "")}`);
+    assert.deepEqual([...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map(match => match[1]).sort(), pages.sort());
+    const post = sitemap.split("<url>").find(entry => entry.includes("<loc>https://example.com/en/posts/hello-world/</loc>"));
+    assert.match(post, /<lastmod>2026-11-10<\/lastmod>/);
+    for (const [hreflang, path] of [["de", "de/posts/hallo-welt/"], ["en", "en/posts/hello-world/"], ["x-default", "en/"]]) {
+      assert.ok(post.includes(`<xhtml:link rel="alternate" hreflang="${hreflang}" href="https://example.com/${path}"/>`), hreflang);
+    }
+  });
+
+  test("escapes JSON-LD so that content cannot close its script element", async () => {
+    const html = await page("en/posts/newest");
+    assert.equal(html.match(/<\/script/gi).length, 1);
+    const jsonLd = JSON.parse(html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)[1]);
+    const post = jsonLd["@graph"].find(node => node["@type"] === "BlogPosting");
+    assert.equal(post.name, "</script><script>alert(1)</script>");
+    assert.deepEqual(post.keywords, ["Static Sites", "Über Blyss"]);
+  });
+});
+
+describe("invalid content", () => {
+  let site;
+  before(() => {
+    site = join(sandbox, "invalid");
+    assert.equal(run(["init", site], sandbox).status, 0);
+    assert.equal(run(["build"], site).status, 0);
+  });
+
+  const page = join("content", "en", "pages", "posts.md");
+  const post = join("content", "en", "posts", "symbols.md");
+  const cases = [
+    ["a page with the URL of a generated page", page, "---\ntitle: Posts\n---\n",
+      `Cannot build /en/posts/: ${page} and the generated page "Posts" have the same URL.\nRename ${page} or give it a different slug.\n`],
+    ["a tag without a Latin letter or digit", post, '---\ntitle: Symbols\ntags: [Blyss, "#"]\n---\n',
+      `Cannot build ${post}: the tag "#" needs a Latin letter or digit for its URL.\n`]
+  ];
+  for (const [name, file, source, message] of cases) {
+    test(`rejects ${name} and keeps the previous output`, async () => {
+      await writeFile(join(site, file), source);
+      try {
+        const result = run(["build"], site);
+        assert.equal(result.status, 1);
+        assert.equal(result.stderr, message);
+        assert.ok((await stat(join(site, "public", "en", "index.html"))).isFile());
+      } finally {
+        await rm(join(site, file));
+      }
+    });
+  }
 });
 
 describe("missing configuration", () => {

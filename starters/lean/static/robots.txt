@@ -1,2 +1,5 @@
 User-agent: *
 Allow: /
+
+# CHANGE BEFORE PRODUCTION: use the absolute URL of your sitemap.
+Sitemap: https://example.com/sitemap.xml
