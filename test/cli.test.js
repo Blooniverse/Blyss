@@ -177,11 +177,12 @@ describe("a generated starter", () => {
   test("builds with the local Blyss package", async () => {
     const result = run(["build"], site);
     assert.equal(result.status, 0, result.stderr);
-    const pages = [["en", "hello-world"], ["de", "hallo-welt"]].flatMap(([language, post]) =>
-      ["", "about/", "posts/", `posts/${post}/`, "tags/", "tags/blyss/", "tags/markdown/"].map(path => `${language}/${path}index.html`));
+    const pages = [["en", "hello-world", "templates", "translations"], ["de", "hallo-welt", "uebersetzungen", "vorlagen"]]
+      .flatMap(([language, ...posts]) => ["", "about/", "posts/", ...posts.map(post => `posts/${post}/`), "tags/", "tags/blyss/",
+        "tags/markdown/"].map(path => `${language}/${path}index.html`));
     const notFoundPages = ["404.html", "en/404.html", "de/404.html"];
-    assert.deepEqual(await listFiles(join(site, "public")), ["assets/css/main.css", "robots.txt", "sitemap.xml",
-      "staticwebapp.config.json", ...pages, ...notFoundPages].sort());
+    assert.deepEqual(await listFiles(join(site, "public")), ["assets/css/main.css", "assets/js/overlay.js", "robots.txt",
+      "sitemap.xml", "staticwebapp.config.json", ...pages, ...notFoundPages].sort());
     for (const page of [...pages, ...notFoundPages]) {
       const html = await readFile(join(site, "public", page), "utf8");
       assert.doesNotMatch(html, /{{\w+}}/, page);
@@ -192,6 +193,23 @@ describe("a generated starter", () => {
     assert.match(post, /<a lang="de" hreflang="de" href="\/de\/posts\/hallo-welt\/">Deutsch<\/a>/);
     assert.equal(await readFile(join(site, "public", "404.html"), "utf8"), await readFile(join(site, "public", "en", "404.html"), "utf8"));
     assert.match(await readFile(join(site, "public", "de", "404.html"), "utf8"), /<h1>Seite nicht gefunden<\/h1>/);
+  });
+
+  test("renders the home pages with home.html: title and slogan in the header, then the article", async () => {
+    assert.match(await readFile(join(site, "public", "en", "index.html"), "utf8"), new RegExp("</aside>\\s*<div class=\"page\">\\s*" +
+      "<header>\\s*<h1>Blyss</h1>\\s*<h2>Blyss slogan</h2>\\s*</header>\\s*<main>\\s*<article>\\s*<h3>Blyss about or description</h3>"));
+    const german = await readFile(join(site, "public", "de", "index.html"), "utf8");
+    for (const label of ['<label for="overlay-slider">Schieberegler</label>', "<h3>Neueste Inhalte</h3>"]) {
+      assert.ok(german.includes(label), label);
+    }
+  });
+
+  test("marks every page with its kind", async () => {
+    const kinds = { "en/index.html": "home", "de/about/index.html": "page", "en/posts/hello-world/index.html": "post",
+      "de/posts/index.html": "list", "en/tags/blyss/index.html": "list", "de/404.html": "not-found" };
+    for (const [path, kind] of Object.entries(kinds)) {
+      assert.ok((await readFile(join(site, "public", path), "utf8")).includes(`<body data-kind="${kind}">`), path);
+    }
   });
 
   test("configures Azure Static Web Apps like blyss serve", async () => {
@@ -222,7 +240,8 @@ describe("a generated starter", () => {
       assert.equal(home.status, 302);
       assert.equal(home.headers.get("location"), "/en/");
       for (const [path, status] of [["/en/", 200], ["/de/posts/hallo-welt/", 200], ["/en/posts/", 200], ["/de/tags/blyss/", 200],
-        ["/de/404.html", 200], ["/sitemap.xml", 200], ["/assets/css/main.css", 200], ["/missing/", 404]]) {
+        ["/de/404.html", 200], ["/sitemap.xml", 200], ["/assets/css/main.css", 200], ["/assets/js/overlay.js", 200],
+        ["/missing/", 404]]) {
         const response = await fetch(base + path);
         await response.text();
         assert.equal(response.status, status, path);
@@ -260,27 +279,51 @@ describe("a site with several tagged posts", () => {
     const config = await readFile(configFile, "utf8");
     assert.ok(config.includes("pageSize: 10"));
     await writeFile(configFile, config.replace("pageSize: 10", "pageSize: 2"));
+    for (const language of ["en", "de"]) {
+      const home = join(site, "content", language, "pages", "index.md");
+      await writeFile(home, `${await readFile(home, "utf8")}\n{{recentPosts}}\n`);
+    }
+    const words = Array.from({ length: 80 }, (_, index) => `w${index + 1}`).join(" ");
     const posts = {
-      oldest: "title: Oldest\ndatePublished: 2026-01-01\ntags: Blyss",
-      newest: 'title: </script><script>alert(1)</script>\ndatePublished: 2026-12-31\ntags:\n  - Static Sites\n  - "Über Blyss"',
-      older: "title: Older\ndatePublished: 2026-06-30\ntags: [blyss, static sites]"
+      oldest: ["title: Oldest\ndatePublished: 2026-01-01\ntags: Blyss", "Text."],
+      newest: ['title: </script><script>alert(1)</script>\ndatePublished: 2026-12-31\ntags:\n  - Static Sites\n  - "Über Blyss"',
+        `## Heading\n\nOne *two* \`three\` [four](/en/) <b>five</b> 6 < 7 & 8.\n\n\`\`\`\ncode block\n\`\`\`\n\n${words}`],
+      older: ["title: Older\ndatePublished: 2026-06-30\ntags: [blyss, static sites]", "Text."]
     };
-    for (const [slug, frontMatter] of Object.entries(posts)) {
-      await writeFile(join(site, "content", "en", "posts", `${slug}.md`), `---\n${frontMatter}\n---\n\nText.\n`);
+    for (const [slug, [frontMatter, body]] of Object.entries(posts)) {
+      await writeFile(join(site, "content", "en", "posts", `${slug}.md`), `---\n${frontMatter}\n---\n\n${body}\n`);
     }
     const result = run(["build"], site);
     assert.equal(result.status, 0, result.stderr);
   });
 
   test("lists the three newest posts of each language by datePublished", async () => {
-    assert.deepEqual(await postSlugs("en"), ["newest", "hello-world", "older"]);
-    assert.deepEqual(await postSlugs("de"), ["hallo-welt"]);
+    assert.deepEqual(await postSlugs("en"), ["newest", "templates", "translations"]);
+    assert.deepEqual(await postSlugs("de"), ["vorlagen", "uebersetzungen", "hallo-welt"]);
+  });
+
+  test("shows the three newest posts with an 80-word teaser in the overlay of every page", async () => {
+    const overlay = async path => {
+      const html = await readFile(join(site, "public", path), "utf8");
+      return html.slice(html.indexOf('<div id="overlay"'), html.indexOf("</aside>"));
+    };
+    const home = await overlay("en/index.html");
+    for (const path of ["en/about/index.html", "en/posts/older/index.html", "en/tags/index.html", "en/404.html"]) {
+      assert.equal(await overlay(path), home, path);
+    }
+    assert.deepEqual([...home.matchAll(/<h4><a href="\/en\/posts\/([^/]+)\/">/g)].map(match => match[1]),
+      ["newest", "templates", "translations"]);
+    const words = Array.from({ length: 70 }, (_, index) => `w${index + 1}`).join(" ");
+    assert.ok(home.includes('<h4><a href="/en/posts/newest/">&lt;/script&gt;&lt;script&gt;alert(1)&lt;/script&gt;</a></h4>\n' +
+      `    <p>One two three four five 6 &lt; 7 &amp; 8. ${words}…</p>\n  </li>`));
+    assert.match(await overlay("de/index.html"), /<h4><a href="\/de\/posts\/vorlagen\/">Vorlagen und Stile<\/a><\/h4>/);
   });
 
   test("archives all posts newest first, pageSize posts per page", async () => {
-    assert.deepEqual(await postSlugs("en/posts"), ["newest", "hello-world"]);
-    assert.deepEqual(await postSlugs("en/posts/page/2"), ["older", "oldest"]);
-    await assert.rejects(stat(join(site, "public", "en", "posts", "page", "3")), { code: "ENOENT" });
+    assert.deepEqual(await postSlugs("en/posts"), ["newest", "templates"]);
+    assert.deepEqual(await postSlugs("en/posts/page/2"), ["translations", "hello-world"]);
+    assert.deepEqual(await postSlugs("en/posts/page/3"), ["older", "oldest"]);
+    await assert.rejects(stat(join(site, "public", "en", "posts", "page", "4")), { code: "ENOENT" });
     assert.match(await page("en"), /<a href="\/en\/posts\/">Posts<\/a>/);
   });
 
@@ -289,9 +332,10 @@ describe("a site with several tagged posts", () => {
       (newer ? `  <li><a href="${newer}" rel="prev">Newer posts</a></li>\n` : "") +
       (older ? `  <li><a href="${older}" rel="next">Older posts</a></li>\n` : "") + "</ul>\n</nav>";
     assert.ok((await main("en/posts")).includes(pager(null, "/en/posts/page/2/")));
-    assert.ok((await main("en/posts/page/2")).includes(pager("/en/posts/", null)));
+    assert.ok((await main("en/posts/page/2")).includes(pager("/en/posts/", "/en/posts/page/3/")));
+    assert.ok((await main("en/posts/page/3")).includes(pager("/en/posts/page/2/", null)));
     assert.match(await page("en/posts/page/2"), /<title>Posts – Page 2 \| My Website<\/title>/);
-    assert.doesNotMatch(await main("de/posts"), /<nav/);
+    assert.doesNotMatch(await main("de/tags/markdown"), /<nav/);
     assert.doesNotMatch(await main("en/tags/static-sites"), /<nav/);
     await assert.rejects(stat(join(site, "public", "en", "tags", "static-sites", "page")), { code: "ENOENT" });
   });
@@ -304,9 +348,10 @@ describe("a site with several tagged posts", () => {
   test("lists every tag with its post count and the posts of each tag", async () => {
     const tags = [...(await main("en/tags")).matchAll(/<li><a href="[^"]+">([^<]+)<\/a> (\(\d+\))<\/li>/g)];
     assert.deepEqual(tags.map(([, name, count]) => `${name} ${count}`),
-      ["Blyss (3)", "Markdown (1)", "Static Sites (2)", "Über Blyss (1)"]);
-    assert.deepEqual(await postSlugs("en/tags/blyss"), ["hello-world", "older"]);
-    assert.deepEqual(await postSlugs("en/tags/blyss/page/2"), ["oldest"]);
+      ["Blyss (5)", "Markdown (1)", "Static Sites (2)", "Über Blyss (1)"]);
+    assert.deepEqual(await postSlugs("en/tags/blyss"), ["templates", "translations"]);
+    assert.deepEqual(await postSlugs("en/tags/blyss/page/2"), ["hello-world", "older"]);
+    assert.deepEqual(await postSlugs("en/tags/blyss/page/3"), ["oldest"]);
     assert.deepEqual(await postSlugs("en/tags/static-sites"), ["newest", "older"]);
     assert.deepEqual(await postSlugs("en/tags/uber-blyss"), ["newest"]);
     assert.match(await page("en/tags/blyss"), /<a lang="de" hreflang="de" href="\/de\/tags\/blyss\/">Deutsch<\/a>/);
@@ -327,11 +372,24 @@ describe("a site with several tagged posts", () => {
 
   test("escapes JSON-LD so that content cannot close its script element", async () => {
     const html = await page("en/posts/newest");
-    assert.equal(html.match(/<\/script/gi).length, 1);
+    assert.equal(html.match(/<\/script/gi).length, 2, "the scripts of overlay.js and JSON-LD");
     const jsonLd = JSON.parse(html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)[1]);
     const post = jsonLd["@graph"].find(node => node["@type"] === "BlogPosting");
     assert.equal(post.name, "</script><script>alert(1)</script>");
     assert.deepEqual(post.keywords, ["Static Sites", "Über Blyss"]);
+  });
+});
+
+describe("a site without templates/home.html", () => {
+  test("renders its home pages with page.html", async () => {
+    const site = join(sandbox, "without-home-template");
+    assert.equal(run(["init", site], sandbox).status, 0);
+    await rm(join(site, "templates", "home.html"));
+    const result = run(["build"], site);
+    assert.equal(result.status, 0, result.stderr);
+    const html = await readFile(join(site, "public", "en", "index.html"), "utf8");
+    assert.ok(html.includes('<body data-kind="home">'));
+    assert.match(html, /<main>\s*<article>\s*<header>\s*<h1>Blyss<\/h1>\s*<\/header>\s*<h3>Blyss about or description<\/h3>/);
   });
 });
 

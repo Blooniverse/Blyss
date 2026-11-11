@@ -61,6 +61,17 @@
   `blyss serve`. The starter's README shows a GitHub Actions workflow that
   builds with Node.js 25 or newer and uploads `public/` with
   `skip_app_build: true`, adding the `index.html` stub Azure's upload requires.
+- **Home template**: an optional `templates/home.html` renders the home pages
+  `/<language>/`; without it, they use `page.html`. Content templates also
+  receive `{{description}}`.
+- **Page kinds**: `{{kind}}` in `document.html` is `home`, `page`, `post`,
+  `list` or `not-found`, for example for `<body data-kind="{{kind}}">`.
+- **Recent content**: `{{recentContent}}` in `document.html` lists the three
+  newest posts of the language, each with its title and a plain-text teaser of
+  up to 80 words.
+- **Labels**: every label of a language is available in templates as
+  `{{<key>Label}}`, such as `{{sliderLabel}}`; previously only six labels
+  were.
 
 ### Changes
 
@@ -73,6 +84,14 @@
   `tag`, and sample tags. It also adds English and German not-found pages,
   `static/staticwebapp.config.json`, pagination labels and
   `pagination: { pageSize: 10 }`.
+- **Starter design**: a new stylesheet modelled on philippschaffner.ch, with
+  the font Titillium Web from Google Fonts and a `70ch` text column. An
+  overlay with a slider, a description and the three newest
+  posts opens as the hero of the home pages and fades out while the page
+  scrolls over it; elsewhere it collapses into a bar that opens it as a
+  panel. The home pages show the site's title and slogan in a header, and
+  each language has two more sample posts. `<main>` moved from
+  `document.html` into the content templates.
 - **Build**: content is read and validated before the previous output is
   deleted, and files are processed in sorted order for reproducible output.
   Two content files with the same URL stop the build with an error instead of
@@ -81,7 +100,8 @@
 - **Tests**: recent posts are checked to be the three newest of each language,
   ordered by `datePublished`; the archive, tags, sitemap, JSON-LD escaping and
   build errors are covered too, as are pagination, not-found pages, the Azure
-  configuration and refused output directories.
+  configuration, refused output directories, the home template and its
+  fallback, page kinds and the teasers of `{{recentContent}}`.
 
 ### Fixes
 

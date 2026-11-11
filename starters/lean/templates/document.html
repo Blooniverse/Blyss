@@ -7,11 +7,15 @@
   <meta name="description" content="{{description}}">
   <link rel="canonical" href="{{canonicalUrl}}">
 {{alternateLinks}}
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Titillium+Web:ital,wght@0,400;0,700;1,400&amp;display=swap">
   <link rel="stylesheet" href="/assets/css/main.css">
+  <script type="module" src="/assets/js/overlay.js"></script>
 {{jsonLd}}
 </head>
-<body>
-  <header>
+<body data-kind="{{kind}}">
+  <div class="site-bar">
     <nav aria-label="{{mainNavigationLabel}}">
       <ul>
         <li><a href="/{{languageKey}}/">{{homeLabel}}</a></li>
@@ -21,10 +25,24 @@
       </ul>
     </nav>
     {{languageSwitcher}}
-  </header>
-  <main>
+  </div>
+  <aside class="overlay" aria-label="{{overlayLabel}}">
+    <button class="overlay-toggle" type="button" popovertarget="overlay">{{overlayLabel}} <span aria-hidden="true">⤒</span></button>
+    <div id="overlay" popover>
+      <button class="overlay-toggle" type="button" popovertarget="overlay" popovertargetaction="hide">{{closeLabel}} <span aria-hidden="true">⤓</span></button>
+      <p class="slider">
+        <label for="overlay-slider">{{sliderLabel}}</label>
+        <input id="overlay-slider" type="range" min="1" max="1000" value="500">
+        <output for="overlay-slider" aria-hidden="true">500</output>
+      </p>
+      <p>{{sliderDescriptionLabel}}</p>
+      <h3>{{recentContentLabel}}</h3>
+{{recentContent}}
+    </div>
+  </aside>
+  <div class="page">
 {{content}}
-  </main>
-  <footer><small>{{generatedByLabel}}</small></footer>
+    <footer><small>{{generatedByLabel}}</small></footer>
+  </div>
 </body>
 </html>

@@ -28,7 +28,12 @@ export default {
           page: "Page",
           pagination: "Pagination",
           newerPosts: "Newer posts",
-          olderPosts: "Older posts"
+          olderPosts: "Older posts",
+          overlay: "Overlay",
+          close: "Close",
+          slider: "Slider",
+          sliderDescription: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+          recentContent: "Most recent content"
         }
       },
       de: {
@@ -48,7 +53,12 @@ export default {
           page: "Seite",
           pagination: "Seitennavigation",
           newerPosts: "Neuere Beiträge",
-          olderPosts: "Ältere Beiträge"
+          olderPosts: "Ältere Beiträge",
+          overlay: "Overlay",
+          close: "Schließen",
+          slider: "Schieberegler",
+          sliderDescription: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+          recentContent: "Neueste Inhalte"
         }
       }
     }

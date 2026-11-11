@@ -41,9 +41,11 @@ export function newestFirst(posts) {
   return [...posts].sort((left, right) => compare(date(right), date(left)) || compare(left.url, right.url));
 }
 
+const recentPostsOf = (record, records) =>
+  newestFirst(records.filter(item => item.type === "post" && item.languageKey === record.languageKey)).slice(0, 3);
+
 export function renderRecentPosts(record, records) {
-  const posts = newestFirst(records.filter(item => item.type === "post" && item.languageKey === record.languageKey))
-    .slice(0, 3);
+  const posts = recentPostsOf(record, records);
 
   if (!posts.length) return "";
 
@@ -53,6 +55,42 @@ export function renderRecentPosts(record, records) {
   }).join("\n");
 
   return `\n<section aria-label="${escapeHtml(record.languageConfig.labels.recentPosts || "Recent posts")}">\n  <h2>${escapeHtml(record.languageConfig.labels.recentPosts || "Recent posts")}</h2>\n  <ul>\n${listItems}\n  </ul>\n</section>\n`;
+}
+
+// The first words of rendered HTML as plain text, without headings and code blocks.
+function teaser(html, wordCount = 80) {
+  const words = html
+    .replace(/<!--[\s\S]*?-->|<(h[1-6]|pre|script|style)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, " ")
+    .replace(/<br\b[^>]*>/gi, " ")
+    .replace(/<[^>]*>/g, "")
+    .replaceAll("<", "&lt;").replaceAll(">", "&gt;")
+    .split(/\s+/).filter(Boolean);
+  return words.length > wordCount ? `${words.slice(0, wordCount).join(" ")}…` : words.join(" ");
+}
+
+// Each body is rendered once, because the teasers of {{recentContent}} appear on every page of a language.
+const bodies = new WeakMap();
+function renderBody(record, records) {
+  if (record.type === "list") return record.html;
+  if (!bodies.has(record)) {
+    bodies.set(record, marked.parse(record.markdown.replace(/{{recentPosts}}/g, renderRecentPosts(record, records))));
+  }
+  return bodies.get(record);
+}
+
+function renderRecentContent(record, records) {
+  const items = recentPostsOf(record, records).map(post => {
+    const text = teaser(renderBody(post, records));
+    return `  <li>\n    <h4><a href="${escapeHtml(post.url)}">${escapeHtml(post.metadata.title || post.url)}</a></h4>\n` +
+      (text ? `    <p>${text}</p>\n` : "") + "  </li>";
+  });
+  return items.length ? `<ul>\n${items.join("\n")}\n</ul>` : "";
+}
+
+// "home" is the index page of a language; templates can style each kind, e.g. with <body data-kind="{{kind}}">.
+function kindOf(record) {
+  if (record.notFound) return "not-found";
+  return record.type === "page" && record.url === `/${record.languageKey}/` ? "home" : record.type;
 }
 
 function renderTags(record) {
@@ -65,15 +103,22 @@ export function renderRecord({ record, templates, translationIndex, site, record
   const metadata = record.metadata;
   const title = metadata.title || site.name;
   const description = metadata.description || record.languageConfig.description;
-  const bodyHtml = record.type === "list" ? record.html
-    : marked.parse(record.markdown.replace(/{{recentPosts}}/g, renderRecentPosts(record, records)));
+  const kind = kindOf(record);
   const dateBlock = metadata.datePublished
     ? `    <p><time datetime="${escapeHtml(metadata.datePublished)}">${escapeHtml(metadata.datePublished)}</time></p>` : "";
-  const innerTemplate = record.type === "post" ? templates.post : templates.page;
-  const content = applyTemplate(innerTemplate, { title: escapeHtml(title), dateBlock, tags: renderTags(record), content: bodyHtml });
+  // Without a home.html template, home pages use page.html.
+  const innerTemplate = record.type === "post" ? templates.post : (kind === "home" && templates.home) || templates.page;
+  const content = applyTemplate(innerTemplate, {
+    title: escapeHtml(title), description: escapeHtml(description), dateBlock, tags: renderTags(record), content: renderBody(record, records)
+  });
   const pageTitle = title === site.name ? title : `${title} | ${site.name}`;
+  // Every label of the language is available as {{<key>Label}}, such as {{postsLabel}}.
+  const { labels } = record.languageConfig;
+  const labelValues = Object.entries({ ...labels, posts: labels.posts || "Posts", tags: labels.tags || "Tags" })
+    .map(([key, value]) => [`${key}Label`, escapeHtml(value)]);
 
   return applyTemplate(templates.document, {
+    ...Object.fromEntries(labelValues),
     locale: escapeHtml(record.languageConfig.locale),
     pageTitle: escapeHtml(pageTitle),
     description: escapeHtml(description),
@@ -81,13 +126,9 @@ export function renderRecord({ record, templates, translationIndex, site, record
     alternateLinks: renderAlternateLinks(record, translationIndex),
     jsonLd: renderJsonLd(createJsonLd({ site, record })),
     languageKey: escapeHtml(record.languageKey),
-    mainNavigationLabel: escapeHtml(record.languageConfig.labels.mainNavigation),
-    homeLabel: escapeHtml(record.languageConfig.labels.home),
-    postsLabel: escapeHtml(record.languageConfig.labels.posts || "Posts"),
-    tagsLabel: escapeHtml(record.languageConfig.labels.tags || "Tags"),
-    aboutLabel: escapeHtml(record.languageConfig.labels.about),
+    kind,
     languageSwitcher: renderLanguageSwitcher(record, translationIndex, site),
-    generatedByLabel: escapeHtml(record.languageConfig.labels.generatedBy),
+    recentContent: renderRecentContent(record, records),
     content
   });
 }
