@@ -8,8 +8,8 @@ const fromStarter = directory => `starters/lean/${starter.directories[directory]
 export default {
   ...starter,
   directories: {
+    ...starter.directories,
     content: fromStarter("content"),
-    public: "public",
     static: fromStarter("static"),
     templates: fromStarter("templates")
   }

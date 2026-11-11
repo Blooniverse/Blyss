@@ -33,4 +33,5 @@ For every code change:
 6. Verify a missing route returns 404.
 7. Check that recent posts are ordered by datePublished.
 8. Confirm that no generated template placeholders remain.
-9. Run npm test.
+9. Check that public/sitemap.xml lists every generated page.
+10. Run npm test.

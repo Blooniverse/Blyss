@@ -8,7 +8,7 @@ export function createJsonLd({ site, record }) {
   const publisherId = `${siteUrl}#publisher`;
   const websiteId = `${siteUrl}#website`;
   const pageId = `${canonicalUrl}#webpage`;
-  const pageType = record.metadata.type || (record.type === "post" ? "BlogPosting" : "WebPage");
+  const pageType = record.metadata.type || { post: "BlogPosting", list: "CollectionPage" }[record.type] || "WebPage";
 
   const graph = [
     {
@@ -41,16 +41,18 @@ export function createJsonLd({ site, record }) {
   if (record.type === "post") {
     if (record.metadata.datePublished) page.datePublished = record.metadata.datePublished;
     if (record.metadata.dateModified) page.dateModified = record.metadata.dateModified;
+    if (record.tags?.length) page.keywords = record.tags.map(tag => tag.name);
     page.mainEntityOfPage = { "@id": pageId };
   }
 
   return { "@context": "https://schema.org", "@graph": graph };
 }
 
+// Unicode escapes keep "</script>" and "<!--" in values from ending or altering the script element.
 export function renderJsonLd(data) {
   const json = JSON.stringify(data, null, 2)
-    .replaceAll("<", "\u003c")
-    .replaceAll(">", "\u003e")
-    .replaceAll("&", "\u0026");
+    .replaceAll("<", "\\u003c")
+    .replaceAll(">", "\\u003e")
+    .replaceAll("&", "\\u0026");
   return `<script type="application/ld+json">\n${json}\n</script>`;
 }

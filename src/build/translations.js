@@ -13,11 +13,17 @@ export function indexTranslations(records) {
   return index;
 }
 
-export function renderAlternateLinks(record, translationIndex) {
+// Shared by the HTML head and sitemap.xml so that both declare the same alternates.
+export function alternatesFor(record, translationIndex) {
   const translations = translationIndex.get(record.metadata.translationKey) || [record];
   return translations
-    .map(item => `  <link rel="alternate" hreflang="${escapeHtml(item.languageConfig.locale)}" href="${escapeHtml(item.canonicalUrl)}">`)
-    .concat(`  <link rel="alternate" hreflang="x-default" href="${escapeHtml(record.siteUrl)}">`)
+    .map(item => ({ hreflang: item.languageConfig.locale, href: item.canonicalUrl }))
+    .concat({ hreflang: "x-default", href: record.siteUrl });
+}
+
+export function renderAlternateLinks(record, translationIndex) {
+  return alternatesFor(record, translationIndex)
+    .map(({ hreflang, href }) => `  <link rel="alternate" hreflang="${escapeHtml(hreflang)}" href="${escapeHtml(href)}">`)
     .join("\n");
 }
 
