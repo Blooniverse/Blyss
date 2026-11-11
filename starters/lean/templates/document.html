@@ -16,6 +16,7 @@
 </head>
 <body data-kind="{{kind}}">
   <div class="site-bar">
+    <a class="logo" href="/{{languageKey}}/"><img src="/assets/img/logo.svg" alt="Blyss" width="93" height="32"></a>
     <nav aria-label="{{mainNavigationLabel}}">
       <ul>
         <li><a href="/{{languageKey}}/">{{homeLabel}}</a></li>
@@ -24,6 +25,7 @@
         <li><a href="/{{languageKey}}/about/">{{aboutLabel}}</a></li>
       </ul>
     </nav>
+    <search><input type="search" aria-label="{{searchLabel}}" placeholder="{{searchLabel}}"></search>
     {{languageSwitcher}}
   </div>
   <aside class="overlay" aria-label="{{overlayLabel}}">

@@ -134,6 +134,7 @@ my-site/
 │       └── posts/vorlagen.md
 ├── static/                  # copied verbatim into public/
 │   ├── assets/css/main.css
+│   ├── assets/img/logo.svg  # placeholder logo
 │   ├── assets/js/overlay.js # slider value; keeps keyboard focus on the hero visible
 │   ├── robots.txt           # references the sitemap
 │   └── staticwebapp.config.json  # Azure Static Web Apps redirect and 404 page
