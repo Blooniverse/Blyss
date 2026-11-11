@@ -1,42 +1,170 @@
+/* A lean style after philippschaffner.ch: one palette, one gradient frame, 70ch lines. */
+
 :root {
-  color-scheme: light dark;
-  --accent: #0b5cad;
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  line-height: 1.6;
+  --color202: hsla(202, 100%, 25%, 1);
+  --color202grey: hsla(202, 10%, 30%, .7);
+  --color202black: hsla(202, 50%, 10%, .8);
+  --color202border: hsla(202, 80%, 80%, 1);
+  --color040border: hsla(40, 90%, 60%, 1);
+  --h-textshadow: .01em .01em .01em hsla(202, 20%, 5%, .8);
+  --tint: hsla(202, 30%, 30%, .2);
+  --card: #fafafa;
+  --card-border: #e5e7eb;
+  --radius: 8px;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root { --accent: #8cc4ff; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html {
+  font-family: "Titillium Web", "Aptos Narrow", system-ui, -apple-system, sans-serif;
+  font-size: max(16px, 3vmin); /* grows with the window, but stays legible on phones */
+  line-height: 1.35;
+  -webkit-font-smoothing: antialiased;
 }
 
 body {
-  max-width: 42rem;
-  margin: 0 auto;
-  padding: 1.5rem 1rem 3rem;
+  min-height: 100svh;
+  padding: 3vmin 1.5vmin 0 2vmin;
+  border: 1.6vmin solid;
+  border-image: linear-gradient(15deg, var(--color040border), var(--color202border)) 1% 1 1 stretch;
 }
 
-body > header {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  gap: 1rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid #8888;
+h1, h2 { color: var(--color202); text-wrap: balance; }
+h1 { font-size: 2rem; letter-spacing: .16em; line-height: 1; margin: -.1rem 0 .1rem; text-shadow: var(--h-textshadow); }
+h2 { font-size: 1.5rem; letter-spacing: .04em; line-height: 1.1; margin-bottom: .5rem; }
+h3 { display: inline-block; margin: 3vh 0 .3em; padding: 0 .3em; color: #fff; background-color: var(--color202black); }
+article h2 { margin-top: 1em; }
+
+main { max-width: 70ch; }
+:is(p, ul, ol, pre, blockquote, table) { margin-bottom: .6em; }
+:is(ul, ol) { padding-left: 1.2em; }
+blockquote { padding-left: 1em; border-left: 3px solid var(--color202border); }
+a { color: inherit; text-decoration: underline var(--color202) dotted; }
+:focus-visible { outline: 2px solid var(--color202); outline-offset: 2px; }
+img { max-width: 100%; height: auto; }
+code { padding: .1em .25em; border-radius: 4px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .85em; background: #f3f4f6; }
+pre { padding: .5em .75em; overflow: auto; border: 1px solid var(--card-border); border-radius: 6px; background: #f6f8fa; }
+pre code { padding: 0; background: none; }
+time { color: var(--color202grey); }
+article > header { margin-bottom: 1rem; }
+article > header p { margin: 0; font-size: .9rem; }
+
+nav ul { display: flex; flex-wrap: wrap; gap: .25rem 1rem; padding: 0; list-style: none; }
+[aria-current="page"] { font-weight: 700; text-decoration: none; }
+.site-bar { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .25rem 1rem; margin-bottom: 1rem; font-size: .8rem; }
+.site-bar ul { margin: 0; }
+
+footer { margin-top: 4vh; font-size: .9rem; color: var(--color202grey); letter-spacing: -.03em; line-height: 1.1; }
+
+/* The overlay: open as the hero of the home page; elsewhere a bar at the bottom of the window
+   whose button opens it as a popover, closed by its own button, by Escape or by a click outside. */
+.overlay-toggle {
+  padding: .15em .6em;
+  border: 0;
+  border-radius: var(--radius);
+  font: inherit;
+  font-size: .8rem;
+  color: #fff;
+  background: #222;
+  cursor: pointer;
 }
 
-nav ul {
+body:not([data-kind="home"]) { padding-bottom: 2.5rem; }
+body:not([data-kind="home"]) > .overlay {
+  position: fixed;
+  inset: auto 0 0;
+  z-index: 2;
   display: flex;
-  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  height: 2rem;
+  padding: 0 .75rem;
+  border-top: 1px solid var(--card-border);
+  background: var(--tint);
+  box-shadow: 0 -2px 8px rgb(0 0 0 / .08);
+  opacity: .5;
+  transition: opacity .28s;
+}
+body:not([data-kind="home"]) > .overlay:is(:hover, :focus-within) { opacity: 1; }
+
+#overlay {
+  inset: auto 0 0;
+  width: auto;
+  height: 80vh;
+  margin: 0;
+  padding: 1rem;
+  border: 0;
+  border-top: 1px solid var(--card-border);
+  color: inherit;
+  background: linear-gradient(var(--tint), var(--tint)), #fff;
+  box-shadow: 0 -12px 32px rgb(0 0 0 / .18);
+}
+.overlay-toggle[popovertargetaction="hide"] { position: sticky; top: 0; z-index: 1; display: block; margin: 0 0 .5rem auto; }
+#overlay > :is(p, h3) { max-width: 70ch; }
+.slider { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
+.slider input { flex: 1; min-width: 8rem; accent-color: var(--color202); }
+.slider output { min-width: 4ch; text-align: end; font-variant-numeric: tabular-nums; }
+#overlay > ul {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
   gap: 1rem;
   margin: 0;
   padding: 0;
+  font-size: .8rem;
   list-style: none;
 }
+#overlay li { padding: .5rem .75rem; border: 1px solid var(--card-border); border-radius: var(--radius); background: var(--card); }
+#overlay h4 { margin-bottom: .3em; font-size: 1.1em; line-height: 1.2; }
+#overlay li p { margin: 0; }
 
-a { color: var(--accent); text-underline-offset: 0.15em; }
-a[aria-current="page"] { font-weight: 700; text-decoration: none; }
-a:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+@media (prefers-reduced-motion: no-preference) {
+  #overlay { translate: 0 100%; transition: translate .28s ease, display .28s allow-discrete, overlay .28s allow-discrete; }
+  #overlay:popover-open { translate: none; }
+  @starting-style { #overlay:popover-open { translate: 0 100%; } }
+}
 
-h1, h2 { line-height: 1.2; }
-img { max-width: 100%; height: auto; }
-footer { margin-top: 3rem; font-size: 0.875rem; }
+/* Home: author styles override the browser's rule that hides a closed popover. */
+body[data-kind="home"] .overlay-toggle { display: none; }
+[data-kind="home"] #overlay {
+  display: block;
+  position: static;
+  height: auto;
+  margin-bottom: 1rem;
+  overflow: visible;
+  border: 0;
+  border-radius: var(--radius);
+  background: var(--tint);
+  box-shadow: none;
+  translate: none;
+  transition: none;
+}
+
+/* Like aspire.dev: on large screens the hero stays while the page slides up over it and fades it out. */
+@media (prefers-reduced-motion: no-preference) and (min-width: 64rem) and (min-height: 40rem) {
+  @supports (animation-timeline: scroll()) {
+    [data-kind="home"] > .overlay { position: sticky; top: 0; }
+    [data-kind="home"] #overlay {
+      min-height: calc(100svh - 8rem);
+      align-content: center;
+      animation: hero-fade linear both;
+      animation-timeline: scroll(root);
+      animation-range: 0 calc(100svh - 4rem);
+    }
+    [data-kind="home"] #overlay > ul { font-size: .7rem; }
+    [data-kind="home"] > .page {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 100svh;
+      padding: 1rem 0;
+      background: #fff;
+    }
+    [data-kind="home"] > .page > main { flex: 1; }
+  }
+}
+
+/* Hidden at the end, so that keyboard focus skips the covered links. */
+@keyframes hero-fade {
+  to { opacity: .12; transform: translateY(-2rem) scale(.955); visibility: hidden; }
+}

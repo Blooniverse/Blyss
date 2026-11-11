@@ -16,8 +16,8 @@ npm start       # serve public/ on http://localhost:3000
 | --- | --- |
 | `content/en/pages/`, `content/en/posts/` | English Markdown pages and posts |
 | `content/de/pages/`, `content/de/posts/` | German Markdown pages and posts |
-| `templates/` | HTML templates: `document.html`, `page.html`, `post.html` |
-| `static/` | Static files such as `static/assets/css/main.css`, `static/robots.txt` and `static/staticwebapp.config.json`, copied unchanged into `public/` |
+| `templates/` | HTML templates: `document.html`, `home.html`, `page.html`, `post.html` |
+| `static/` | Static files such as `static/assets/css/main.css`, `static/assets/js/overlay.js`, `static/robots.txt` and `static/staticwebapp.config.json`, copied unchanged into `public/` |
 | `blyss.config.js` | Site, language, pagination and directory configuration |
 | `public/` | Generated website — do not edit |
 
@@ -37,6 +37,7 @@ tags: [Blyss, Markdown]
 ```
 
 - Pages in `content/<language>/pages/` are published at `/<language>/<slug>/`; `index.md` becomes `/<language>/`.
+- The home pages `/<language>/` use `templates/home.html`: the `title` and `description` of `index.md` become the heading and the slogan in their header.
 - Posts in `content/<language>/posts/` are published at `/<language>/posts/<slug>/`.
 - `slug` defaults to the file name. Give each language its own slug for localized URLs.
 - Translations are associated by giving them the same `translationKey`. Blyss links them in the language switcher and with `hreflang` alternate links.
@@ -45,6 +46,20 @@ tags: [Blyss, Markdown]
 - The archive and tag pages show `pagination.pageSize` posts (10 by default, set in `blyss.config.js`). Older posts continue on `/<language>/posts/page/2/`, `/<language>/tags/<tag>/page/2/` and so on, linked by “Newer posts” and “Older posts”.
 - `pages/404.md` is the “not found” page. It is published at `/<language>/404.html`; the default language's page, English, is also published as `/404.html`, which `npm start` and most static hosts show for every missing URL. Because it appears at any URL, link from it with absolute paths such as `/en/`.
 - Keep `index.md` and `about.md` in both languages without a different slug: the navigation in `templates/document.html` links to `/<language>/` and `/<language>/about/`.
+
+## Overlay
+
+`templates/document.html` contains an overlay with a slider, a short description and the three newest posts of the language, each with a teaser of up to 80 words.
+
+- On the home pages, the overlay is open and serves as the hero. On screens of at least 1024×640 pixels, it stays in place while the page slides up over it and fades it out. With reduced motion, on smaller screens and in browsers without scroll-driven animations, it is a static block above the page.
+- On every other page, it is collapsed into a bar at the bottom of the window. Its button opens the overlay as a panel; the Close button, the Escape key or a click outside closes it again. The browser's [Popover API](https://developer.mozilla.org/docs/Web/API/Popover_API) does this without JavaScript.
+- `static/assets/js/overlay.js` shows the slider's value next to it. When keyboard focus enters the hero, it also scrolls back to the top, so that the page cannot cover the focused element.
+- The labels `overlay`, `close`, `slider`, `sliderDescription` and `recentContent` in `blyss.config.js` hold its texts. Templates can use every label as `{{<key>Label}}`, such as `{{sliderLabel}}`.
+- `templates/document.html` sets `<body data-kind="…">` to `home`, `page`, `post`, `list` or `not-found`; `static/assets/css/main.css` uses it to style the overlay per kind of page.
+
+## Fonts
+
+`templates/document.html` loads the font Titillium Web from Google Fonts. Each visit then sends the visitor's IP address to Google, which a German court held to violate the GDPR without consent (Landgericht München I, 3 O 17493/20, 20 January 2022). To host the font yourself, download it from [Google Fonts](https://fonts.google.com/specimen/Titillium+Web), put the `.woff2` files into `static/assets/fonts/`, declare them with `@font-face` in `static/assets/css/main.css` and remove the three Google Fonts `<link>` elements.
 
 ## Generated output
 

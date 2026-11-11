@@ -1,9 +1,9 @@
 ---
-title: Willkommen
-description: Die deutsche Startseite dieser zweisprachigen Website.
+title: Blyss
+description: Blyss-Slogan
 translationKey: home
 ---
 
-Blyss erzeugt diese Website aus Markdown-Dateien. Diese Seite liegt in `content/de/pages/index.md`.
+### Über Blyss oder Beschreibung
 
-{{recentPosts}}
+Blyss erzeugt diese Website aus Markdown-Dateien. Diese Seite liegt in `content/de/pages/index.md`: Ihr Titel und ihre Beschreibung erscheinen oben als Überschrift und Slogan.

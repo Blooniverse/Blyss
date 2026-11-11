@@ -76,15 +76,21 @@ export async function build(projectDir, configPath = './blyss.config.js') {
   const locate = createLocator(config, publicDirectory);
 
   // Content is read and validated before the previous output is deleted.
-  const [content, document, page, post] = await Promise.all([
+  const readTemplate = name => readFile(join(templatesDirectory, name), 'utf8');
+  const [content, document, page, post, home] = await Promise.all([
     discoverContent(projectDir, config, contentDirectory, locate),
-    readFile(join(templatesDirectory, 'document.html'), 'utf8'),
-    readFile(join(templatesDirectory, 'page.html'), 'utf8'),
-    readFile(join(templatesDirectory, 'post.html'), 'utf8')
+    readTemplate('document.html'),
+    readTemplate('page.html'),
+    readTemplate('post.html'),
+    // home.html is optional: without it, home pages use page.html.
+    readTemplate('home.html').catch(error => {
+      if (error.code === 'ENOENT') return undefined;
+      throw error;
+    })
   ]);
   const records = [...content, ...createListRecords(config, content, locate)];
   assertUniqueUrls(projectDir, records);
-  const templates = { document, page, post };
+  const templates = { document, page, post, home };
   const translationIndex = indexTranslations(records);
 
   await rm(publicDirectory, { recursive: true, force: true });
