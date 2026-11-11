@@ -29,16 +29,46 @@ function renderPostItem(post) {
   return `${time}<a href="${escapeHtml(post.url)}">${escapeHtml(post.metadata.title || post.url)}</a>`;
 }
 
+function renderPager(labels, newerUrl, olderUrl) {
+  const links = [
+    newerUrl && `<a href="${escapeHtml(newerUrl)}" rel="prev">${escapeHtml(labels.newerPosts || "Newer posts")}</a>`,
+    olderUrl && `<a href="${escapeHtml(olderUrl)}" rel="next">${escapeHtml(labels.olderPosts || "Older posts")}</a>`
+  ].filter(Boolean);
+  return links.length ? `<nav aria-label="${escapeHtml(labels.pagination || "Pagination")}">\n${renderList(links)}</nav>\n` : "";
+}
+
+function pageSizeOf(config) {
+  const pageSize = config.pagination?.pageSize ?? 10;
+  if (Number.isInteger(pageSize) && pageSize > 0) return pageSize;
+  throw new BlyssError(`Cannot use pagination.pageSize ${JSON.stringify(pageSize)}: it must be a whole number greater than 0.`);
+}
+
 // Creates the post archive, the tag index and one page per tag for every language with content.
 // Tag pages share a translationKey across languages when their slugs match.
+// Like Hugo, long post lists are split into pages: the first keeps the list's URL, later ones add /page/<n>/.
 export function createListRecords(config, records, locate) {
+  const pageSize = pageSizeOf(config);
   const lists = [];
   for (const languageKey of new Set(records.map(record => record.languageKey))) {
     const languageConfig = config.site.languages[languageKey];
     const { labels } = languageConfig;
-    const addList = (urlParts, title, translationKey, html) => lists.push({
-      languageKey, languageConfig, type: "list", metadata: { title, translationKey }, html, ...locate(urlParts)
-    });
+    const addList = (urlParts, title, translationKey, html = "") => {
+      const list = { languageKey, languageConfig, type: "list", metadata: { title, translationKey }, html, ...locate(urlParts) };
+      lists.push(list);
+      return list;
+    };
+    const addPostLists = (urlParts, title, translationKey, posts) => {
+      const pages = [];
+      for (let start = 0; start < posts.length || !pages.length; start += pageSize) {
+        const number = pages.length + 1;
+        const list = number === 1 ? addList(urlParts, title, translationKey)
+          : addList([...urlParts, "page", String(number)], `${title} – ${labels.page || "Page"} ${number}`, `${translationKey}/page/${number}`);
+        pages.push({ list, posts: posts.slice(start, start + pageSize) });
+      }
+      pages.forEach(({ list, posts: listed }, index) => {
+        list.html = renderList(listed.map(renderPostItem)) + renderPager(labels, pages[index - 1]?.list.url, pages[index + 1]?.list.url);
+      });
+    };
 
     const posts = newestFirst(records.filter(record => record.type === "post" && record.languageKey === languageKey));
     const tags = new Map();
@@ -53,12 +83,11 @@ export function createListRecords(config, records, locate) {
     }
     const sortedTags = [...tags.values()].sort((left, right) => left.name.localeCompare(right.name, languageConfig.locale));
 
-    addList([languageKey, "posts"], labels.posts || "Posts", "blyss:posts", renderList(posts.map(renderPostItem)));
+    addPostLists([languageKey, "posts"], labels.posts || "Posts", "blyss:posts", posts);
     addList([languageKey, "tags"], labels.tags || "Tags", "blyss:tags", renderList(sortedTags.map(tag =>
       `<a href="${escapeHtml(tag.url)}">${escapeHtml(tag.name)}</a> (${tag.posts.length})`)));
     for (const tag of sortedTags) {
-      addList([languageKey, "tags", tag.slug], `${labels.tag || "Tag"}: ${tag.name}`, `blyss:tags/${tag.slug}`,
-        renderList(tag.posts.map(renderPostItem)));
+      addPostLists([languageKey, "tags", tag.slug], `${labels.tag || "Tag"}: ${tag.name}`, `blyss:tags/${tag.slug}`, tag.posts);
     }
   }
   return lists;

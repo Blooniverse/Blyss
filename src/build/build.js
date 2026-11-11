@@ -23,9 +23,10 @@ function createLocator(config, publicDirectory) {
   const absoluteUrl = (pathname) =>
     new URL(pathname.replace(/^\//, ""), `${config.site.baseUrl.replace(/\/$/, "")}/`).href;
   const siteUrl = absoluteUrl(`/${config.site.defaultLanguage}/`);
-  return urlParts => {
-    const url = `/${urlParts.join('/')}/`.replace(/\/{2,}/g, '/');
-    return { url, outputFile: join(publicDirectory, ...urlParts, 'index.html'), canonicalUrl: absoluteUrl(url), siteUrl };
+  // Pages are published as <urlParts>/index.html at a URL ending in "/"; a fileName publishes a file URL instead.
+  return (urlParts, fileName = "") => {
+    const url = `/${urlParts.join('/')}/${fileName}`.replace(/\/{2,}/g, '/');
+    return { url, outputFile: join(publicDirectory, ...urlParts, fileName || 'index.html'), canonicalUrl: absoluteUrl(url), siteUrl };
   };
 }
 
@@ -41,11 +42,15 @@ async function discoverContent(projectDir, config, contentDirectory, locate) {
     const { metadata, markdown } = parseFrontMatter(await readFile(sourceFile, "utf8"));
     const type = section === 'posts' ? 'post' : 'page';
     const filename = basename(sourceFile, '.md');
-    const slug = metadata.slug || filename;
     const nested = parts.slice(2, -1);
+    const tags = type === 'post' ? parseTags(metadata.tags, languageKey, relative(projectDir, sourceFile)) : [];
+    // pages/404.md becomes /<language>/404.html, the file name static hosts expect for "not found" pages.
+    if (type === 'page' && !nested.length && filename === '404') {
+      return { sourceFile, languageKey, languageConfig, type, metadata, markdown, tags, notFound: true, ...locate([languageKey], '404.html') };
+    }
+    const slug = metadata.slug || filename;
     const urlParts = type === 'post' ? [languageKey, 'posts', ...nested, slug] : [languageKey, ...nested, slug];
     if (type === 'page' && filename === 'index') urlParts.pop();
-    const tags = type === 'post' ? parseTags(metadata.tags, languageKey, relative(projectDir, sourceFile)) : [];
     return { sourceFile, languageKey, languageConfig, type, metadata, markdown, tags, ...locate(urlParts) };
   }));
 }
@@ -91,8 +96,14 @@ export async function build(projectDir, configPath = './blyss.config.js') {
     await mkdir(join(record.outputFile, '..'), { recursive: true });
     await writeFile(record.outputFile, html, 'utf8');
     console.log(`Built ${record.url}`);
+    // Hosts look for a single /404.html, so the default language's 404 page is published there as well.
+    if (record.notFound && record.languageKey === config.site.defaultLanguage) {
+      await writeFile(join(publicDirectory, '404.html'), html, 'utf8');
+      console.log('Built /404.html');
+    }
   }
-  await writeFile(join(publicDirectory, 'sitemap.xml'), renderSitemap(records, translationIndex), 'utf8');
+  const sitemapRecords = records.filter(record => !record.notFound);
+  await writeFile(join(publicDirectory, 'sitemap.xml'), renderSitemap(sitemapRecords, translationIndex), 'utf8');
   console.log('Built /sitemap.xml');
 
   console.log(`Blyss built ${records.length} localized page(s).`);

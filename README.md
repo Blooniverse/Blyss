@@ -38,7 +38,8 @@ Automation Platform
 - clean localized URLs under `/en/` and `/de/`
 - default language redirect from `/` to `/${site.defaultLanguage}/`
 - recent-post placeholders via `{{recentPosts}}` that render the newest three posts for the current language
-- a post archive and post tags with generated tag pages for each language
+- a paginated post archive and post tags with generated tag pages for each language
+- localized “not found” pages, served by `blyss serve` for missing URLs
 - `sitemap.xml` with `lastmod` dates and `hreflang` alternates
 - front matter and localized slugs
 - translation matching via `translationKey`
@@ -46,7 +47,7 @@ Automation Platform
 - Schema.org JSON-LD using a future-proof `@graph`
 - static asset copying
 - dependency-free Node.js static server
-- `blyss init` scaffolding of a bilingual starter website
+- `blyss init` scaffolding of a bilingual starter website, ready for Azure Static Web Apps
 
 ## Quick start
 
@@ -117,14 +118,17 @@ my-site/
 │   ├── en/
 │   │   ├── pages/index.md
 │   │   ├── pages/about.md
+│   │   ├── pages/404.md     # "not found" page
 │   │   └── posts/hello-world.md
 │   └── de/
 │       ├── pages/index.md
 │       ├── pages/about.md
+│       ├── pages/404.md
 │       └── posts/hallo-welt.md
 ├── static/                  # copied verbatim into public/
 │   ├── assets/css/main.css
-│   └── robots.txt           # references the sitemap
+│   ├── robots.txt           # references the sitemap
+│   └── staticwebapp.config.json  # Azure Static Web Apps redirect and 404 page
 ├── templates/               # HTML templates (see blyss.config.js)
 │   ├── document.html
 │   ├── page.html
@@ -159,11 +163,16 @@ export default {
           recentPosts: "Recent posts",
           posts: "Posts", // optional labels of the archive and tag pages
           tags: "Tags",
-          tag: "Tag"
+          tag: "Tag",
+          page: "Page", // optional labels of paginated lists
+          pagination: "Pagination",
+          newerPosts: "Newer posts",
+          olderPosts: "Older posts"
         }
       }
     }
   },
+  pagination: { pageSize: 10 }, // optional: posts per archive and tag page
   directories: {
     content: "content",
     public: "public",
@@ -175,7 +184,7 @@ export default {
 };
 ```
 
-All directories are resolved relative to the website's root. `directories.public` names the generated output directory, which every build deletes and recreates. Templates belong to each website: Blyss ships no default templates, so customise the ones `blyss init` copies into `templates/`. In `post.html`, `{{tags}}` shows a post's tags; `document.html` can link to the archive and tag index with `{{postsLabel}}` and `{{tagsLabel}}`.
+All directories are resolved relative to the website's root. `directories.public` names the generated output directory, which every build deletes and recreates. It must therefore be a subdirectory of the website's root that neither contains nor lies inside `content`, `static` or `templates`; `blyss build` and `blyss serve` refuse other values, such as `"."`, without deleting anything. `pagination.pageSize` defaults to 10 and must be a whole number greater than 0. Templates belong to each website: Blyss ships no default templates, so customise the ones `blyss init` copies into `templates/`. In `post.html`, `{{tags}}` shows a post's tags; `document.html` can link to the archive and tag index with `{{postsLabel}}` and `{{tagsLabel}}`.
 
 ## Commands
 
@@ -190,7 +199,9 @@ Open `http://localhost:3000` locally.
 
 Set `site.baseUrl`, publisher data, and language details in `blyss.config.js`, and the `Sitemap:` URL in `static/robots.txt`, before production deployment.
 
-Blyss does not generate `public/index.html`: configure your static host to redirect `/` to the default language, as `blyss serve` does.
+Blyss does not generate `public/index.html`: configure your static host to redirect `/` to the default language and to answer missing URLs with `/404.html`, as `blyss serve` does.
+
+Websites created by `blyss init` include `static/staticwebapp.config.json`, which configures both for Azure Static Web Apps. Azure's build service may lack Node.js 25 or newer, so their README shows a GitHub Actions workflow that builds the website and uploads `public/` with `skip_app_build: true`. Azure's upload requires an `index.html`, so the workflow adds a stub that the `/` redirect keeps out of sight.
 
 ## Content
 
@@ -204,6 +215,10 @@ Posts can have tags, written as `tags: [Blyss, Markdown]`, `tags: Blyss, Markdow
 - `/<language>/tags/`: all tags of the language with their post counts;
 - `/<language>/tags/<tag>/`: the posts with that tag;
 - `/sitemap.xml`: every page with `lastmod` (from `dateModified` or `datePublished`) and its `hreflang` alternates.
+
+The archive and tag pages show `pagination.pageSize` posts each and continue at `/<language>/posts/page/<n>/` and `/<language>/tags/<tag>/page/<n>/`, linked with `rel="prev"` and `rel="next"`.
+
+A top-level `pages/404.md` is published at `/<language>/404.html` instead of at its slug. The default language's “not found” page is also published as `/404.html`, which `blyss serve` returns with HTTP status 404 for every missing URL. “Not found” pages are left out of the sitemap; link from them with absolute paths, since they appear at any URL.
 
 Tag URLs use ASCII slugs (`Über Blyss` becomes `/en/tags/uber-blyss/`), and tag pages with the same slug are linked across languages. A tag is displayed as spelled in its newest post. A content file whose URL is already taken by another file or a generated page stops the build with an error.
 

@@ -11,6 +11,16 @@
 - **Reserved list URLs**: every build now generates `/<language>/posts/`,
   `/<language>/tags/` and `/<language>/tags/<slug>/`. A content file at one of
   these URLs stops the build with an error; give it a different slug.
+- **Paginated lists**: the archive and each tag page list at most
+  `pagination.pageSize` posts (default 10). Older posts continue at
+  `<list>/page/<n>/`, which is reserved like the other list URLs.
+- **Safe output directory**: `blyss build` and `blyss serve` refuse a
+  `directories.public` that is the website's root, lies outside it, or
+  contains or lies inside `directories.content`, `static` or `templates`.
+  Every build deletes this directory, so `public: "."` used to delete the
+  whole website.
+- **Not-found page URL**: a top-level `pages/404.md` is published at
+  `/<language>/404.html` instead of `/<language>/404/`.
 
 ### New features
 
@@ -39,6 +49,18 @@
 - **Sitemap**: every build writes `sitemap.xml`, listing every generated
   page with the same `hreflang` alternates as its HTML and, for dated posts,
   `lastmod`.
+- **Pagination**: `pagination.pageSize` sets the posts per archive and tag
+  page. Pages link to each other with `rel="prev"` and `rel="next"`, using the
+  optional labels `page`, `pagination`, `newerPosts` and `olderPosts`.
+- **Not-found pages**: `pages/404.md` becomes `/<language>/404.html`, and the
+  default language's also `/404.html`. `blyss serve` answers missing URLs with
+  `/404.html` and HTTP status 404, or plain text if it does not exist.
+  Not-found pages are left out of the sitemap.
+- **Azure Static Web Apps**: the starter's `static/staticwebapp.config.json`
+  redirects `/` to `/en/` and answers missing URLs with `/404.html`, like
+  `blyss serve`. The starter's README shows a GitHub Actions workflow that
+  builds with Node.js 25 or newer and uploads `public/` with
+  `skip_app_build: true`, adding the `index.html` stub Azure's upload requires.
 
 ### Changes
 
@@ -48,7 +70,9 @@
   renders it into `public/` and `npm start` serves it.
 - **Starter**: adds `static/robots.txt` with a `Sitemap` line, navigation
   links to the archive and tag index, the optional labels `posts`, `tags` and
-  `tag`, and sample tags.
+  `tag`, and sample tags. It also adds English and German not-found pages,
+  `static/staticwebapp.config.json`, pagination labels and
+  `pagination: { pageSize: 10 }`.
 - **Build**: content is read and validated before the previous output is
   deleted, and files are processed in sorted order for reproducible output.
   Two content files with the same URL stop the build with an error instead of
@@ -56,7 +80,8 @@
   type `CollectionPage`.
 - **Tests**: recent posts are checked to be the three newest of each language,
   ordered by `datePublished`; the archive, tags, sitemap, JSON-LD escaping and
-  build errors are covered too.
+  build errors are covered too, as are pagination, not-found pages, the Azure
+  configuration and refused output directories.
 
 ### Fixes
 
