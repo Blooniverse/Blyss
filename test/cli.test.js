@@ -179,7 +179,7 @@ describe("a generated starter", () => {
     assert.equal(result.status, 0, result.stderr);
     const pages = ["en/", "en/about/", "en/posts/hello-world/", "de/", "de/about/", "de/posts/hallo-welt/"];
     assert.deepEqual(await listFiles(join(site, "dist")),
-      ["assets/css/main.css", ...pages.map(page => `${page}index.html`)].sort());
+      ["assets/css/main.css", "robots.txt", ...pages.map(page => `${page}index.html`)].sort());
     for (const page of pages) {
       const html = await readFile(join(site, "dist", page, "index.html"), "utf8");
       assert.doesNotMatch(html, /{{\w+}}/, page);
@@ -220,6 +220,23 @@ describe("a generated starter", () => {
     }
     await exited;
     assert.equal(stderr, "");
+  });
+
+  test("lists the three newest posts of each language by datePublished", async () => {
+    const posts = join(sandbox, "recent-posts");
+    assert.equal(run(["init", posts], sandbox).status, 0);
+    for (const [slug, date] of [["oldest", "2026-01-01"], ["newest", "2026-12-31"], ["older", "2026-06-30"]]) {
+      await writeFile(join(posts, "content", "en", "posts", `${slug}.md`),
+        `---\ntitle: ${slug}\ndatePublished: ${date}\n---\n\nText.\n`);
+    }
+    const result = run(["build"], posts);
+    assert.equal(result.status, 0, result.stderr);
+    const recentPosts = async language => {
+      const home = await readFile(join(posts, "dist", language, "index.html"), "utf8");
+      return [...home.matchAll(/<li><a href="\/\w+\/posts\/([^/]+)\/">/g)].map(match => match[1]);
+    };
+    assert.deepEqual(await recentPosts("en"), ["newest", "hello-world", "older"]);
+    assert.deepEqual(await recentPosts("de"), ["hallo-welt"]);
   });
 });
 

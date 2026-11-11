@@ -17,7 +17,7 @@ npm start       # serve dist/ on http://localhost:3000
 | `content/en/pages/`, `content/en/posts/` | English Markdown pages and posts |
 | `content/de/pages/`, `content/de/posts/` | German Markdown pages and posts |
 | `templates/` | HTML templates: `document.html`, `page.html`, `post.html` |
-| `static/` | Static assets such as `static/assets/css/main.css`, copied unchanged into `dist/` |
+| `static/` | Static files such as `static/assets/css/main.css` and `static/robots.txt`, copied unchanged into `dist/` |
 | `blyss.config.js` | Site, language and directory configuration |
 | `dist/` | Generated website — do not edit |
 
