@@ -178,17 +178,27 @@ describe("a generated starter", () => {
     const result = run(["build"], site);
     assert.equal(result.status, 0, result.stderr);
     const pages = [["en", "hello-world"], ["de", "hallo-welt"]].flatMap(([language, post]) =>
-      ["", "about/", "posts/", `posts/${post}/`, "tags/", "tags/blyss/", "tags/markdown/"].map(path => `${language}/${path}`));
-    assert.deepEqual(await listFiles(join(site, "public")),
-      ["assets/css/main.css", "robots.txt", "sitemap.xml", ...pages.map(page => `${page}index.html`)].sort());
-    for (const page of pages) {
-      const html = await readFile(join(site, "public", page, "index.html"), "utf8");
+      ["", "about/", "posts/", `posts/${post}/`, "tags/", "tags/blyss/", "tags/markdown/"].map(path => `${language}/${path}index.html`));
+    const notFoundPages = ["404.html", "en/404.html", "de/404.html"];
+    assert.deepEqual(await listFiles(join(site, "public")), ["assets/css/main.css", "robots.txt", "sitemap.xml",
+      "staticwebapp.config.json", ...pages, ...notFoundPages].sort());
+    for (const page of [...pages, ...notFoundPages]) {
+      const html = await readFile(join(site, "public", page), "utf8");
       assert.doesNotMatch(html, /{{\w+}}/, page);
       const jsonLd = JSON.parse(html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)[1]);
       assert.ok(Array.isArray(jsonLd["@graph"]), page);
     }
     const post = await readFile(join(site, "public", "en", "posts", "hello-world", "index.html"), "utf8");
     assert.match(post, /<a lang="de" hreflang="de" href="\/de\/posts\/hallo-welt\/">Deutsch<\/a>/);
+    assert.equal(await readFile(join(site, "public", "404.html"), "utf8"), await readFile(join(site, "public", "en", "404.html"), "utf8"));
+    assert.match(await readFile(join(site, "public", "de", "404.html"), "utf8"), /<h1>Seite nicht gefunden<\/h1>/);
+  });
+
+  test("configures Azure Static Web Apps like blyss serve", async () => {
+    const { default: config } = await import(pathToFileURL(join(site, "blyss.config.js")).href);
+    const azure = JSON.parse(await readFile(join(site, "public", "staticwebapp.config.json"), "utf8"));
+    assert.deepEqual(azure.routes, [{ route: "/", redirect: `/${config.site.defaultLanguage}/`, statusCode: 302 }]);
+    assert.ok((await stat(join(site, "public", azure.responseOverrides["404"].rewrite))).isFile());
   });
 
   test("is served for a smoke test and terminates cleanly", { timeout: 15_000 }, async () => {
@@ -212,11 +222,20 @@ describe("a generated starter", () => {
       assert.equal(home.status, 302);
       assert.equal(home.headers.get("location"), "/en/");
       for (const [path, status] of [["/en/", 200], ["/de/posts/hallo-welt/", 200], ["/en/posts/", 200], ["/de/tags/blyss/", 200],
-        ["/sitemap.xml", 200], ["/assets/css/main.css", 200], ["/missing/", 404]]) {
+        ["/de/404.html", 200], ["/sitemap.xml", 200], ["/assets/css/main.css", 200], ["/missing/", 404]]) {
         const response = await fetch(base + path);
         await response.text();
         assert.equal(response.status, status, path);
       }
+      const missing = await fetch(`${base}/de/missing/`);
+      assert.equal(missing.status, 404);
+      assert.equal(missing.headers.get("content-type"), "text/html; charset=utf-8");
+      assert.match(await missing.text(), /<h1>Page not found<\/h1>/);
+
+      await rm(join(site, "public", "404.html"));
+      const plain = await fetch(`${base}/missing/`);
+      assert.equal(plain.status, 404);
+      assert.equal(await plain.text(), "404 Not Found");
     } finally {
       server.kill();
     }
@@ -237,6 +256,10 @@ describe("a site with several tagged posts", () => {
   before(async () => {
     site = join(sandbox, "blog");
     assert.equal(run(["init", site], sandbox).status, 0);
+    const configFile = join(site, "blyss.config.js");
+    const config = await readFile(configFile, "utf8");
+    assert.ok(config.includes("pageSize: 10"));
+    await writeFile(configFile, config.replace("pageSize: 10", "pageSize: 2"));
     const posts = {
       oldest: "title: Oldest\ndatePublished: 2026-01-01\ntags: Blyss",
       newest: 'title: </script><script>alert(1)</script>\ndatePublished: 2026-12-31\ntags:\n  - Static Sites\n  - "Über Blyss"',
@@ -254,9 +277,23 @@ describe("a site with several tagged posts", () => {
     assert.deepEqual(await postSlugs("de"), ["hallo-welt"]);
   });
 
-  test("archives all posts newest first", async () => {
-    assert.deepEqual(await postSlugs("en/posts"), ["newest", "hello-world", "older", "oldest"]);
+  test("archives all posts newest first, pageSize posts per page", async () => {
+    assert.deepEqual(await postSlugs("en/posts"), ["newest", "hello-world"]);
+    assert.deepEqual(await postSlugs("en/posts/page/2"), ["older", "oldest"]);
+    await assert.rejects(stat(join(site, "public", "en", "posts", "page", "3")), { code: "ENOENT" });
     assert.match(await page("en"), /<a href="\/en\/posts\/">Posts<\/a>/);
+  });
+
+  test("links paginated lists to newer and older pages", async () => {
+    const pager = (newer, older) => '<nav aria-label="Pagination">\n<ul>\n' +
+      (newer ? `  <li><a href="${newer}" rel="prev">Newer posts</a></li>\n` : "") +
+      (older ? `  <li><a href="${older}" rel="next">Older posts</a></li>\n` : "") + "</ul>\n</nav>";
+    assert.ok((await main("en/posts")).includes(pager(null, "/en/posts/page/2/")));
+    assert.ok((await main("en/posts/page/2")).includes(pager("/en/posts/", null)));
+    assert.match(await page("en/posts/page/2"), /<title>Posts – Page 2 \| My Website<\/title>/);
+    assert.doesNotMatch(await main("de/posts"), /<nav/);
+    assert.doesNotMatch(await main("en/tags/static-sites"), /<nav/);
+    await assert.rejects(stat(join(site, "public", "en", "tags", "static-sites", "page")), { code: "ENOENT" });
   });
 
   test("links posts to their tags, spelled as in the newest tagged post", async () => {
@@ -268,7 +305,8 @@ describe("a site with several tagged posts", () => {
     const tags = [...(await main("en/tags")).matchAll(/<li><a href="[^"]+">([^<]+)<\/a> (\(\d+\))<\/li>/g)];
     assert.deepEqual(tags.map(([, name, count]) => `${name} ${count}`),
       ["Blyss (3)", "Markdown (1)", "Static Sites (2)", "Über Blyss (1)"]);
-    assert.deepEqual(await postSlugs("en/tags/blyss"), ["hello-world", "older", "oldest"]);
+    assert.deepEqual(await postSlugs("en/tags/blyss"), ["hello-world", "older"]);
+    assert.deepEqual(await postSlugs("en/tags/blyss/page/2"), ["oldest"]);
     assert.deepEqual(await postSlugs("en/tags/static-sites"), ["newest", "older"]);
     assert.deepEqual(await postSlugs("en/tags/uber-blyss"), ["newest"]);
     assert.match(await page("en/tags/blyss"), /<a lang="de" hreflang="de" href="\/de\/tags\/blyss\/">Deutsch<\/a>/);
@@ -279,6 +317,7 @@ describe("a site with several tagged posts", () => {
     const pages = (await listFiles(join(site, "public"))).filter(file => file.endsWith("index.html"))
       .map(file => `https://example.com/${file.replace(/index\.html$/, "")}`);
     assert.deepEqual([...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map(match => match[1]).sort(), pages.sort());
+    assert.doesNotMatch(sitemap, /404/);
     const post = sitemap.split("<url>").find(entry => entry.includes("<loc>https://example.com/en/posts/hello-world/</loc>"));
     assert.match(post, /<lastmod>2026-11-10<\/lastmod>/);
     for (const [hreflang, path] of [["de", "de/posts/hallo-welt/"], ["en", "en/posts/hello-world/"], ["x-default", "en/"]]) {
@@ -325,6 +364,57 @@ describe("invalid content", () => {
       }
     });
   }
+});
+
+describe("invalid configuration", () => {
+  let site;
+  let config;
+  before(async () => {
+    site = join(sandbox, "unsafe", "site");
+    assert.equal(run(["init", site], sandbox).status, 0);
+    assert.equal(run(["build"], site).status, 0);
+    config = await readFile(join(site, "blyss.config.js"), "utf8");
+  });
+
+  async function withConfig(search, replacement, check) {
+    assert.ok(config.includes(search), search);
+    await writeFile(join(site, "blyss.config.js"), config.replace(search, replacement));
+    try {
+      await check();
+    } finally {
+      await writeFile(join(site, "blyss.config.js"), config);
+    }
+  }
+
+  // Each value would delete the website or one of its sources if Blyss accepted it.
+  for (const [value, requirement] of [[".", "a subdirectory of SITE"], ["..", "a subdirectory of SITE"],
+    ["content", "separate from directories.content"], ["static/assets", "separate from directories.static"]]) {
+    test(`refuses directories.public "${value}" without deleting anything`, async () => {
+      const files = await listFiles(join(sandbox, "unsafe"));
+      const message = `Cannot use directories.public "${value}": every build deletes it, so it must be ` +
+        `${requirement.replace("SITE", site)}.\nUse a dedicated directory such as "public".\n`;
+      await withConfig('public: "public"', `public: "${value}"`, async () => {
+        for (const command of ["build", "serve"]) {
+          const env = { ...process.env, PORT: String(await freePort()) };
+          const result = spawnSync(process.execPath, [cli, command], { cwd: site, encoding: "utf8", env, timeout: 10_000 });
+          assert.equal(result.status, 1, command);
+          assert.equal(result.stderr, message, command);
+        }
+      });
+      assert.deepEqual(await listFiles(join(sandbox, "unsafe")), files);
+    });
+  }
+
+  test("refuses a pagination.pageSize that is not a whole number greater than 0", async () => {
+    for (const value of ["0", '"10"']) {
+      await withConfig("pageSize: 10", `pageSize: ${value}`, async () => {
+        const result = run(["build"], site);
+        assert.equal(result.status, 1, value);
+        assert.equal(result.stderr, `Cannot use pagination.pageSize ${value}: it must be a whole number greater than 0.\n`);
+        assert.ok((await stat(join(site, "public", "en", "index.html"))).isFile());
+      });
+    }
+  });
 });
 
 describe("missing configuration", () => {

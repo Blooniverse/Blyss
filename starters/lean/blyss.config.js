@@ -24,7 +24,11 @@ export default {
           recentPosts: "Recent posts",
           posts: "Posts",
           tags: "Tags",
-          tag: "Tag"
+          tag: "Tag",
+          page: "Page",
+          pagination: "Pagination",
+          newerPosts: "Newer posts",
+          olderPosts: "Older posts"
         }
       },
       de: {
@@ -40,14 +44,19 @@ export default {
           recentPosts: "Neueste Beiträge",
           posts: "Beiträge",
           tags: "Schlagwörter",
-          tag: "Schlagwort"
+          tag: "Schlagwort",
+          page: "Seite",
+          pagination: "Seitennavigation",
+          newerPosts: "Neuere Beiträge",
+          olderPosts: "Ältere Beiträge"
         }
       }
     }
   },
+  pagination: { pageSize: 10 }, // posts per archive and tag page; later pages are at <list>/page/<n>/
   directories: {
     content: "content",
-    public: "public", // generated output: deleted and recreated by every build
+    public: "public", // generated output: deleted and recreated by every build, so keep it a separate subdirectory
     static: "static",
     templates: "templates"
   },
