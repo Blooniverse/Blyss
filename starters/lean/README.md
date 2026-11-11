@@ -17,7 +17,7 @@ npm start       # serve public/ on http://localhost:3000
 | `content/en/pages/`, `content/en/posts/` | English Markdown pages and posts |
 | `content/de/pages/`, `content/de/posts/` | German Markdown pages and posts |
 | `templates/` | HTML templates: `document.html`, `home.html`, `page.html`, `post.html` |
-| `static/` | Static files such as `static/assets/css/main.css`, `static/assets/js/overlay.js`, `static/robots.txt` and `static/staticwebapp.config.json`, copied unchanged into `public/` |
+| `static/` | Static files such as `static/assets/css/main.css`, `static/assets/img/logo.svg`, `static/assets/js/overlay.js`, `static/robots.txt` and `static/staticwebapp.config.json`, copied unchanged into `public/` |
 | `blyss.config.js` | Site, language, pagination and directory configuration |
 | `public/` | Generated website — do not edit |
 
@@ -47,11 +47,19 @@ tags: [Blyss, Markdown]
 - `pages/404.md` is the “not found” page. It is published at `/<language>/404.html`; the default language's page, English, is also published as `/404.html`, which `npm start` and most static hosts show for every missing URL. Because it appears at any URL, link from it with absolute paths such as `/en/`.
 - Keep `index.md` and `about.md` in both languages without a different slug: the navigation in `templates/document.html` links to `/<language>/` and `/<language>/about/`.
 
+## Top bar
+
+`templates/document.html` starts every page with a bar that stays at the top of the window while the page scrolls. It holds the logo, the navigation, a search field and the language switcher.
+
+- `static/assets/img/logo.svg` is a placeholder logo in the stylesheet's dark blue, `#005180`. Replace it with your own, and adjust the `alt`, `width` and `height` of its `<img>` in `templates/document.html`.
+- The search field has no function yet: it belongs to no form, so nothing is sent. The label `search` in `blyss.config.js` holds its text.
+- On narrow screens, the bar wraps into two or three rows.
+
 ## Overlay
 
 `templates/document.html` contains an overlay with a slider, a short description and the three newest posts of the language, each with a teaser of up to 80 words.
 
-- On the home pages, the overlay is open and serves as the hero. On screens of at least 1024×640 pixels, it stays in place while the page slides up over it and fades it out. With reduced motion, on smaller screens and in browsers without scroll-driven animations, it is a static block above the page.
+- On the home pages, the overlay is open and serves as the hero. On screens of at least 1024×640 pixels, it stays in place below the top bar while the page slides up over it and fades it out. With reduced motion, on smaller screens and in browsers without scroll-driven animations, it is a static block above the page.
 - On every other page, it is collapsed into a bar at the bottom of the window. Its button opens the overlay as a panel; the Close button, the Escape key or a click outside closes it again. The browser's [Popover API](https://developer.mozilla.org/docs/Web/API/Popover_API) does this without JavaScript.
 - `static/assets/js/overlay.js` shows the slider's value next to it. When keyboard focus enters the hero, it also scrolls back to the top, so that the page cannot cover the focused element.
 - The labels `overlay`, `close`, `slider`, `sliderDescription` and `recentContent` in `blyss.config.js` hold its texts. Templates can use every label as `{{<key>Label}}`, such as `{{sliderLabel}}`.
@@ -74,7 +82,7 @@ Replace the values marked `CHANGE BEFORE PRODUCTION` in `blyss.config.js`:
 - `site.publisher` — `type`, `name` and `url`
 - `site.languages.en.description` and `site.languages.de.description`
 
-Also replace the `Sitemap:` URL in `static/robots.txt`, which is marked the same way.
+Also replace the `Sitemap:` URL in `static/robots.txt`, which is marked the same way, and the placeholder logo `static/assets/img/logo.svg` (see [Top bar](#top-bar)).
 
 If you change `site.defaultLanguage`, also change the `/en/` redirect in `static/staticwebapp.config.json` and in your deployment workflow.
 

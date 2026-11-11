@@ -181,8 +181,8 @@ describe("a generated starter", () => {
       .flatMap(([language, ...posts]) => ["", "about/", "posts/", ...posts.map(post => `posts/${post}/`), "tags/", "tags/blyss/",
         "tags/markdown/"].map(path => `${language}/${path}index.html`));
     const notFoundPages = ["404.html", "en/404.html", "de/404.html"];
-    assert.deepEqual(await listFiles(join(site, "public")), ["assets/css/main.css", "assets/js/overlay.js", "robots.txt",
-      "sitemap.xml", "staticwebapp.config.json", ...pages, ...notFoundPages].sort());
+    assert.deepEqual(await listFiles(join(site, "public")), ["assets/css/main.css", "assets/img/logo.svg", "assets/js/overlay.js",
+      "robots.txt", "sitemap.xml", "staticwebapp.config.json", ...pages, ...notFoundPages].sort());
     for (const page of [...pages, ...notFoundPages]) {
       const html = await readFile(join(site, "public", page), "utf8");
       assert.doesNotMatch(html, /{{\w+}}/, page);
@@ -199,7 +199,8 @@ describe("a generated starter", () => {
     assert.match(await readFile(join(site, "public", "en", "index.html"), "utf8"), new RegExp("</aside>\\s*<div class=\"page\">\\s*" +
       "<header>\\s*<h1>Blyss</h1>\\s*<h2>Blyss slogan</h2>\\s*</header>\\s*<main>\\s*<article>\\s*<h3>Blyss about or description</h3>"));
     const german = await readFile(join(site, "public", "de", "index.html"), "utf8");
-    for (const label of ['<label for="overlay-slider">Schieberegler</label>', "<h3>Neueste Inhalte</h3>"]) {
+    for (const label of ['<label for="overlay-slider">Schieberegler</label>', "<h3>Neueste Inhalte</h3>",
+      '<input type="search" aria-label="Suchen" placeholder="Suchen">']) {
       assert.ok(german.includes(label), label);
     }
   });
@@ -241,7 +242,7 @@ describe("a generated starter", () => {
       assert.equal(home.headers.get("location"), "/en/");
       for (const [path, status] of [["/en/", 200], ["/de/posts/hallo-welt/", 200], ["/en/posts/", 200], ["/de/tags/blyss/", 200],
         ["/de/404.html", 200], ["/sitemap.xml", 200], ["/assets/css/main.css", 200], ["/assets/js/overlay.js", 200],
-        ["/missing/", 404]]) {
+        ["/assets/img/logo.svg", 200], ["/missing/", 404]]) {
         const response = await fetch(base + path);
         await response.text();
         assert.equal(response.status, status, path);

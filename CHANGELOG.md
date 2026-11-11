@@ -92,6 +92,10 @@
   panel. The home pages show the site's title and slogan in a header, and
   each language has two more sample posts. `<main>` moved from
   `document.html` into the content templates.
+- **Top bar**: the starter's navigation bar stays at the top of the window on
+  every page. It shows a placeholder logo, `static/assets/img/logo.svg`, next
+  to the navigation and a search field without a function yet, whose text is
+  the new label `search`.
 - **Build**: content is read and validated before the previous output is
   deleted, and files are processed in sorted order for reproducible output.
   Two content files with the same URL stop the build with an error instead of

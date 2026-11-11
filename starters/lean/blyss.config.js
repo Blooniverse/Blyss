@@ -33,7 +33,8 @@ export default {
           close: "Close",
           slider: "Slider",
           sliderDescription: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-          recentContent: "Most recent content"
+          recentContent: "Most recent content",
+          search: "Search"
         }
       },
       de: {
@@ -58,7 +59,8 @@ export default {
           close: "Schließen",
           slider: "Schieberegler",
           sliderDescription: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-          recentContent: "Neueste Inhalte"
+          recentContent: "Neueste Inhalte",
+          search: "Suchen"
         }
       }
     }
