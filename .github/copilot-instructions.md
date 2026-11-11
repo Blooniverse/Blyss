@@ -19,13 +19,14 @@ Blyss is a lean bilingual Markdown transformer and static-site server.
 - Prevent filesystem access outside public/.
 - `blyss init` must never overwrite or delete files that existed before it ran.
 - Keep the starter in starters/lean/ buildable and free of unreplaced tokens.
+- Keep this repository engine-only: website content, static assets and templates belong in starters/lean/; the root blyss.config.js only previews the starter.
 
 ## Validation
 
 For every code change:
 
 1. Run node --check on all JavaScript files.
-2. Run npm run build.
+2. Run npm run build (it renders starters/lean/ into public/).
 3. Validate generated JSON-LD by parsing it as JSON.
 4. Verify English and German routes.
 5. Verify the root 302 redirect.

@@ -121,7 +121,8 @@ my-site/
 │       ├── pages/about.md
 │       └── posts/hallo-welt.md
 ├── static/                  # copied verbatim into dist/
-│   └── assets/css/main.css
+│   ├── assets/css/main.css
+│   └── robots.txt
 ├── templates/               # HTML templates (see blyss.config.js)
 │   ├── document.html
 │   ├── page.html
@@ -160,18 +161,16 @@ export default {
   },
   directories: {
     content: "content",
-    public: "public",
+    public: "dist",
     static: "static",
-    templates: "node_modules/@blooniverse/blyss/src/templates"
+    templates: "templates"
   },
   build: { cleanUrls: true },
   server: { fallbackPort: 3000 }
 };
 ```
 
-> **Tip:** Set `directories.templates` to a local `templates/` folder to fully customise the HTML output.
-
-`directories.public` names the generated output directory. The starter uses `dist/`; the example above uses `public/`.
+All directories are resolved relative to the website's root. `directories.public` names the generated output directory, which every build deletes and recreates. Templates belong to each website: Blyss ships no default templates, so customise the ones `blyss init` copies into `templates/`.
 
 ## Commands
 
@@ -191,6 +190,19 @@ Set `site.baseUrl`, publisher data, and language details in `blyss.config.js` be
 Keep translations linked with the same `translationKey`.
 
 Titles come from front matter, so Markdown body text should begin below the title rather than with another H1.
+
+## Developing Blyss
+
+This repository contains the engine (`bin/`, `src/`), the bundled starter (`starters/lean/`) and the tests (`test/`), but no website. Its `blyss.config.js` previews the starter in place:
+
+```bash
+npm install     # install the engine's dependencies; nothing is scaffolded
+npm run build   # render starters/lean/ into public/ (git-ignored)
+npm start       # serve public/ on http://localhost:3000
+npm test        # build, then run the test suite
+```
+
+Website content, static assets and templates belong in `starters/lean/`, from where `blyss init` copies them into new websites.
 
 ## Acknowledgments
 

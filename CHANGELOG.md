@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+### Breaking changes
+
+- **No bundled default templates**: `src/templates/` was removed because it
+  duplicated the starter's templates. Each website keeps its own templates;
+  `blyss init` copies them into `templates/`. Point a `directories.templates`
+  value of `node_modules/@blooniverse/blyss/src/templates` at a local copy.
+
 ### New features
 
 - **`blyss init [directory]`**: copies the bundled bilingual starter website
@@ -19,6 +26,16 @@
   printing `ERR_MODULE_NOT_FOUND`.
 - **Tests**: `npm test` runs the CLI test suite in `test/` with `node:test`
   after the build.
+
+### Changes
+
+- **Engine-only repository**: the repository's own website (root `content/`,
+  `static/` and the production deploy workflow) was removed. The root
+  `blyss.config.js` now previews `starters/lean/` in place: `npm run build`
+  renders it into `public/` and `npm start` serves it.
+- **Starter**: adds `static/robots.txt`.
+- **Tests**: recent posts are checked to be the three newest of each language,
+  ordered by `datePublished`.
 
 ## 0.5.0 — 2026-10-28
 
