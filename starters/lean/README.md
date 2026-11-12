@@ -51,12 +51,14 @@ tags: [Blyss, Markdown]
 
 ## Layout
 
-`layout` in `blyss.config.js` sets the space around the content and its alignment on every page:
+`layout` in `blyss.config.js` sets the space around the content and its alignment, separately for the home pages and for all other pages: pages, posts, lists and not-found pages.
 
 - `margin` is the space between the coloured frame and the content on every side: a CSS length in `px`, `rem`, `vw`, `vh`, `vmin` or `vmax`, such as `"2vmin"` (the default) or `"2rem"`. The top bar spans the side margins.
-- `align` is `"left"` (the default) or `"center"`, which centers everything below the top bar: the text column, headings, paragraphs, lists and the overlay. Code blocks stay left-aligned.
+- `alignHome` aligns the title, slogan and text of the home pages and their footer: `"center"` (the default) or `"left"`.
+- `alignOther` aligns the content of all other pages and their footer: `"left"` (the default), `"center"`, or `"centerLeft"`, which centers the text column but keeps its text left-aligned; the footer lines up with the column.
+- `alignHeroHome` and `alignHeroOther` align the hero of the home pages and the overlay of all other pages: `"centerExtra"` (the default) centers everything but the texts of `hero.md`, which stay left-aligned with their headings, `"center"` centers everything and `"left"` nothing, not even the slider.
 
-`templates/document.html` passes both to `static/assets/css/main.css` through `<body data-align="…" style="--site-margin: …">`.
+Centered lists keep their markers next to their items, and code blocks stay left-aligned. `templates/document.html` passes the margin and each page's alignments to `static/assets/css/main.css` through `<body data-align="…" data-align-hero="…" style="--site-margin: …">`.
 
 ## Top bar
 
@@ -70,10 +72,11 @@ tags: [Blyss, Markdown]
 
 `templates/document.html` contains an overlay with the hero component, so far a slider, and the texts of `content/<language>/hero.md`.
 
-- On the home pages, the overlay is open and serves as the hero below the page, which starts with the site's title and slogan, centered. On screens of at least 1024×640 pixels, the page stops below the top bar, or once its end is in view if it is taller than the window, while the hero slides up over it and fades it out. Keyboard focus in the page turns this effect off, so that the hero never covers the focused element. With reduced motion, on smaller screens and in browsers without scroll-driven animations, the hero is a static block below the page.
+- On the home pages, the overlay is open and serves as the hero below the page, which starts with the site's title and slogan. On screens of at least 1024×640 pixels, the page stops below the top bar, or once its end is in view if it is taller than the window, while the hero slides up over it and fades it out. Keyboard focus in the page turns this effect off, so that the hero never covers the focused element. With reduced motion, on smaller screens and in browsers without scroll-driven animations, the hero is a static block below the page.
 - On every other page, it is collapsed into a bar at the bottom of the window. Its button opens the overlay as a panel; the Close button, the Escape key or a click outside closes it again. The browser's [Popover API](https://developer.mozilla.org/docs/Web/API/Popover_API) does this without JavaScript.
 - `content/<language>/hero.md` holds the hero's texts: its `title` is their heading, and each `###` heading starts a text that runs up to the next one. The hero shows up to seven texts in full length, side by side in as many columns as fit. Blyss refuses more than seven and any content before the first `###` heading, except comments. The starter has three texts in each language.
-- The hero component is the interactive part of the overlay. Its variant, the slider, is centered below its heading, with its value above it and its steps and text below it; the `title` and text of `content/<language>/heroComponentSlider.md` are its heading and text. `heroComponent.slider` in `blyss.config.js` sets its whole-number `start` and `end` and its `steps`: each step has a `value` from `start` to `end` and a `description` in every language, and both appear below the slider at that value. The starter defines four steps; change, add or remove them as you like. The slider starts halfway between `start` and `end`.
+- All headings in the overlay are `<h3>`: the hero's title, the slider's heading and the headings of the texts. As the overlay is on every page, its headings rank below each page's own `<h1>` and `<h2>`.
+- The hero component is the interactive part of the overlay. Its variant, the slider, follows its heading, with its value above it and its steps and text below it; the `title` and text of `content/<language>/heroComponentSlider.md` are its heading and text. `heroComponent.slider` in `blyss.config.js` sets its whole-number `start` and `end` and its `steps`: each step has a `value` from `start` to `end` and a `description` in every language, and both appear below the slider at that value. The starter defines four steps; change, add or remove them as you like. The slider starts halfway between `start` and `end`.
 - `static/assets/js/overlay.js` shows the slider's value above it and highlights the last step it has reached.
 - The labels `overlay` and `close` in `blyss.config.js` hold the texts of the overlay's buttons. Templates can use every label as `{{<key>Label}}`, such as `{{overlayLabel}}`.
 - `templates/document.html` sets `<body data-kind="…">` to `home`, `page`, `post`, `list` or `not-found`; `static/assets/css/main.css` uses it to style the overlay per kind of page.
