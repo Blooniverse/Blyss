@@ -93,11 +93,11 @@ footer { margin-top: 4vh; font-size: .9rem; color: var(--color202grey); letter-s
 [data-align="center"] > :not(.site-bar) { text-align: center; }
 [data-align="center"] main { width: 100%; margin-inline: auto; }
 [data-align="center"] table { margin-inline: auto; }
-[data-align="center"] .page :is(ul, ol) { padding-left: 0; list-style-position: inside; }
+[data-align="center"] :is(.page, .hero-texts) :is(ul, ol) { padding-left: 0; list-style-position: inside; }
 [data-align="center"] .page nav ul { justify-content: center; }
 [data-align="center"] pre { text-align: start; }
 
-/* The overlay: open as the hero of the home page; elsewhere a bar at the bottom of the window
+/* The overlay: open as the hero below the home page; elsewhere a bar at the bottom of the window
    whose button opens it as a popover, closed by its own button, by Escape or by a click outside. */
 .overlay-toggle {
   padding: .15em .6em;
@@ -141,13 +141,24 @@ body:not([data-kind="home"]) > .overlay:is(:hover, :focus-within) { opacity: 1; 
   box-shadow: 0 -12px 32px rgb(0 0 0 / .18);
 }
 .overlay-toggle[popovertargetaction="hide"] { position: sticky; top: 0; z-index: 1; display: block; margin: 0 0 .5rem auto; }
-#overlay > :is(p, h3) { max-width: 70ch; }
-/* The slider is centered under its heading, with its value above it and its steps below it, each at its value. */
-.slider { max-width: 40rem; margin: 0 auto 1rem; text-align: center; }
-.slider h3 { margin-top: 0; }
-.slider output { display: block; font-size: 1.25rem; font-variant-numeric: tabular-nums; }
-.slider input { display: block; width: 100%; accent-color: var(--color202); }
-.slider ol {
+/* The overlay's headings look like labels. */
+#overlay h2 {
+  display: inline-block;
+  margin: 0 0 .3em;
+  padding: 0 .3em;
+  font-size: 1.17rem;
+  letter-spacing: normal;
+  line-height: inherit;
+  color: #fff;
+  background-color: var(--color202black);
+}
+#overlay h2:empty { display: none; } /* such as the hero's title when hero.md has none */
+/* The hero component, so far a slider: centered under its heading, with its value above it and its steps below it,
+   each at its value. */
+.hero-component { max-width: 40rem; margin: 0 auto 1rem; text-align: center; }
+.hero-component-slider output { display: block; font-size: 1.25rem; font-variant-numeric: tabular-nums; }
+.hero-component-slider input { display: block; width: 100%; accent-color: var(--color202); }
+.hero-component-slider ol {
   position: relative;
   height: 2.6em;
   margin: 0 8px .6rem; /* half the width of the slider's thumb, whose centre the steps line up with */
@@ -156,22 +167,20 @@ body:not([data-kind="home"]) > .overlay:is(:hover, :focus-within) { opacity: 1; 
   line-height: 1.2;
   list-style: none;
 }
-.slider li { position: absolute; left: var(--position); translate: -50%; white-space: nowrap; color: var(--color202grey); }
-.slider li::before { content: ""; display: block; width: 1px; height: .4em; margin: 0 auto .15em; background: currentColor; }
-.slider data { display: block; font-variant-numeric: tabular-nums; }
-.slider [aria-current] { font-weight: 700; color: var(--color202); }
-#overlay > ul {
+.hero-component-slider li { position: absolute; left: var(--position); translate: -50%; white-space: nowrap; color: var(--color202grey); }
+.hero-component-slider li::before { content: ""; display: block; width: 1px; height: .4em; margin: 0 auto .15em; background: currentColor; }
+.hero-component-slider data { display: block; font-variant-numeric: tabular-nums; }
+.hero-component-slider [aria-current] { font-weight: 700; color: var(--color202); }
+/* The texts of hero.md, side by side in as many columns as fit, each in full length. */
+.hero-texts {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
   gap: 1rem;
-  margin: 0;
-  padding: 0;
   font-size: .8rem;
-  list-style: none;
 }
-#overlay > ul > li { padding: .5rem .75rem; border: 1px solid var(--card-border); border-radius: var(--radius); background: var(--card); }
-#overlay h4 { margin-bottom: .3em; font-size: 1.1em; line-height: 1.2; }
-#overlay li p { margin: 0; }
+.hero-texts > div { padding: .5rem .75rem; border: 1px solid var(--card-border); border-radius: var(--radius); background: var(--card); }
+.hero-texts > div > :last-child { margin-bottom: 0; }
+.hero-texts h3 { display: block; margin: 0 0 .3em; padding: 0; font-size: 1.1em; line-height: 1.2; color: var(--color202); background: none; }
 
 @media (prefers-reduced-motion: no-preference) {
   #overlay { translate: 0 100%; transition: translate .28s ease, display .28s allow-discrete, overlay .28s allow-discrete; }
@@ -179,48 +188,41 @@ body:not([data-kind="home"]) > .overlay:is(:hover, :focus-within) { opacity: 1; 
   @starting-style { #overlay:popover-open { translate: 0 100%; } }
 }
 
-/* Home: author styles override the browser's rule that hides a closed popover. */
+/* Home: the title and slogan are centered above the article, and the overlay follows as the hero.
+   Author styles override the browser's rule that hides a closed popover. */
+[data-kind="home"] > .page > header { text-align: center; }
 body[data-kind="home"] .overlay-toggle { display: none; }
+[data-kind="home"] > .overlay { margin-top: 1rem; }
 [data-kind="home"] #overlay {
   display: block;
   position: static;
   height: auto;
-  margin-bottom: 1rem;
   overflow: visible;
   border: 0;
   border-radius: var(--radius);
-  background: var(--tint);
   box-shadow: none;
   translate: none;
   transition: none;
 }
 
-/* Like aspire.dev: on large screens the hero stays below the top bar while the page slides up over it and fades it out. */
+/* On large screens, the hero slides up over the page and fades it out. The page stops below the top bar, or once its
+   end is in view if it is taller than the window, and stays there while the hero covers it. */
 @media (prefers-reduced-motion: no-preference) and (min-width: 64rem) and (min-height: 40rem) {
-  @supports (animation-timeline: scroll()) {
-    [data-kind="home"] > .overlay { position: sticky; top: calc(var(--bar-height) + 1rem); }
-    [data-kind="home"] #overlay {
-      min-height: calc(100svh - var(--bar-height) - 7rem);
-      align-content: center;
-      animation: hero-fade linear both;
-      animation-timeline: scroll(root);
-      animation-range: 0 calc(100svh - 4rem);
-    }
-    [data-kind="home"] #overlay > ul { font-size: .7rem; }
+  @supports (animation-timeline: view()) {
     [data-kind="home"] > .page {
-      position: relative;
-      z-index: 1;
-      display: flex;
-      flex-direction: column;
-      min-height: 100svh;
-      padding: 1rem 0;
-      background: #fff;
+      animation: page-covered linear both;
+      animation-timeline: view(block calc(var(--bar-height) + 1rem) 0px);
+      animation-range: exit;
     }
-    [data-kind="home"] > .page > main { flex: 1; }
+    /* Keyboard focus in the page turns the effect off, so that the hero never covers the focused element. */
+    [data-kind="home"] > .page:has(:focus-visible) { animation: none; }
+    [data-kind="home"] > .overlay { position: relative; z-index: 1; background: #fff; }
+    /* At least as tall as the window below the top bar, so that it can cover the page completely. */
+    [data-kind="home"] #overlay { min-height: calc(100svh - var(--bar-height) - 1rem); align-content: center; }
   }
 }
 
-/* Hidden at the end, so that keyboard focus skips the covered links. */
-@keyframes hero-fade {
-  to { opacity: .12; transform: translateY(-2rem) scale(.955); visibility: hidden; }
+/* While the page leaves the window, it moves down as far as the window scrolls, which keeps it in place. */
+@keyframes page-covered {
+  to { translate: 0 min(100%, 100svh - var(--bar-height) - 1rem); opacity: .12; scale: .955; }
 }

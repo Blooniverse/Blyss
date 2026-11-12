@@ -38,9 +38,9 @@ Automation Platform
 - clean localized URLs under `/en/` and `/de/`
 - default language redirect from `/` to `/${site.defaultLanguage}/`
 - recent-post placeholders via `{{recentPosts}}` that render the newest three posts for the current language
-- `{{recentContent}}` for templates: the newest three posts of the language with 80-word teasers
+- fragments for templates: each Markdown file directly in `content/<language>/`, such as `hero.md`, with up to seven hero texts
 - an optional home-page template and a `{{kind}}` placeholder for page-specific styles
-- `layout` and `slider` settings for templates: the site's margin and alignment, and a slider's range and described steps
+- `layout` and `heroComponent` settings for templates: the site's margin and alignment, and a slider's range and described steps
 - every configured label available in templates as `{{<key>Label}}`
 - a paginated post archive and post tags with generated tag pages for each language
 - localized “not found” pages, served by `blyss serve` for missing URLs
@@ -120,6 +120,8 @@ my-site/
 ├── package.json
 ├── content/
 │   ├── en/
+│   │   ├── hero.md          # the hero's title and texts, a fragment (see Templates)
+│   │   ├── heroComponentSlider.md # the slider's title and text, a fragment
 │   │   ├── pages/index.md
 │   │   ├── pages/about.md
 │   │   ├── pages/404.md     # "not found" page
@@ -127,6 +129,8 @@ my-site/
 │   │   ├── posts/templates.md
 │   │   └── posts/translations.md
 │   └── de/
+│       ├── hero.md
+│       ├── heroComponentSlider.md
 │       ├── pages/index.md
 │       ├── pages/about.md
 │       ├── pages/404.md
@@ -136,7 +140,7 @@ my-site/
 ├── static/                  # copied verbatim into public/
 │   ├── assets/css/main.css
 │   ├── assets/img/logo.svg  # placeholder logo
-│   ├── assets/js/overlay.js # slider value and current step; keeps keyboard focus on the hero visible
+│   ├── assets/js/overlay.js # the slider's value and current step
 │   ├── robots.txt           # references the sitemap
 │   └── staticwebapp.config.json  # Azure Static Web Apps redirect and 404 page
 ├── templates/               # HTML templates (see Templates below)
@@ -179,19 +183,21 @@ export default {
           pagination: "Pagination",
           newerPosts: "Newer posts",
           olderPosts: "Older posts",
-          recentContent: "Most recent content" // any further label, used in templates as {{recentContentLabel}}
+          overlay: "Overlay" // any further label, used in templates as {{overlayLabel}}
         }
       }
     }
   },
   pagination: { pageSize: 10 }, // optional: posts per archive and tag page
   layout: { margin: "2vmin", align: "left" }, // optional: the space around the content; "center" centers it
-  slider: { // optional: the range of a slider in templates and the steps marked on it
-    start: 1,
-    end: 1000,
-    steps: [
-      { value: 250, description: { en: "Quarter" } } // a description in every language
-    ]
+  heroComponent: { // optional: the interactive part of a template's hero; so far a slider
+    slider: { // its range and the steps marked on it
+      start: 1,
+      end: 1000,
+      steps: [
+        { value: 250, description: { en: "Quarter" } } // a description in every language
+      ]
+    }
   },
   directories: {
     content: "content",
@@ -206,7 +212,7 @@ export default {
 
 All directories are resolved relative to the website's root. `directories.public` names the generated output directory, which every build deletes and recreates. It must therefore be a subdirectory of the website's root that neither contains nor lies inside `content`, `static` or `templates`; `blyss build` and `blyss serve` refuse other values, such as `"."`, without deleting anything. `pagination.pageSize` defaults to 10 and must be a whole number greater than 0.
 
-`layout.margin` defaults to `"2vmin"` and must be a CSS length in `px`, `rem`, `vw`, `vh`, `vmin` or `vmax`; `layout.align` is `"left"` (the default) or `"center"`. `slider.start` and `slider.end` are whole numbers, 0 and 100 by default, and `end` must be greater than `start`. Each of the optional `slider.steps` needs a whole-number `value` from `start` to `end` and a `description` for every language. Blyss refuses other values before it deletes the previous output.
+`layout.margin` defaults to `"2vmin"` and must be a CSS length in `px`, `rem`, `vw`, `vh`, `vmin` or `vmax`; `layout.align` is `"left"` (the default) or `"center"`. `heroComponent.slider.start` and `heroComponent.slider.end` are whole numbers, 0 and 100 by default, and `end` must be greater than `start`. Each of the optional `heroComponent.slider.steps` needs a whole-number `value` from `start` to `end` and a `description` for every language. Blyss refuses other values before it deletes the previous output.
 
 ### Templates
 
@@ -215,13 +221,14 @@ Templates belong to each website: Blyss ships no default templates, so customise
 | Template | Placeholders |
 | --- | --- |
 | `home.html` (optional, for `/<language>/`), `page.html`, `post.html` | `{{title}}`, `{{description}}`, `{{dateBlock}}`, `{{tags}}` (a post's tag links), `{{content}}` (the Markdown body) |
-| `document.html` | `{{content}}`, `{{pageTitle}}`, `{{description}}`, `{{locale}}`, `{{languageKey}}`, `{{canonicalUrl}}`, `{{alternateLinks}}`, `{{jsonLd}}`, `{{languageSwitcher}}`, `{{kind}}`, `{{recentContent}}`, `{{layoutMargin}}`, `{{layoutAlign}}`, `{{sliderStart}}`, `{{sliderEnd}}`, `{{sliderValue}}`, `{{sliderSteps}}`, `{{<key>Label}}` |
+| `document.html` | `{{content}}`, `{{pageTitle}}`, `{{description}}`, `{{locale}}`, `{{languageKey}}`, `{{canonicalUrl}}`, `{{alternateLinks}}`, `{{jsonLd}}`, `{{languageSwitcher}}`, `{{kind}}`, `{{layoutMargin}}`, `{{layoutAlign}}`, `{{heroComponentSliderStart}}`, `{{heroComponentSliderEnd}}`, `{{heroComponentSliderValue}}`, `{{heroComponentSliderSteps}}`, `{{<key>Label}}`, `{{<name>Title}}`, `{{<name>Content}}`, `{{heroTexts}}` |
 
 - Without `home.html`, the home pages use `page.html`.
 - `{{kind}}` is `home`, `page`, `post`, `list` (archive and tag pages) or `not-found`, for kind-specific styles such as `<body data-kind="{{kind}}">`.
-- `{{recentContent}}` lists the three newest posts of the language, each with its title as an `<h4>` link and a plain-text teaser of up to 80 words, without headings and code blocks.
+- Each Markdown file directly in `content/<language>/`, such as `hero.md`, is a fragment: Blyss publishes no page for it, but `document.html` shows it on every page of that language as `{{<name>Title}}`, its front matter's `title`, and `{{<name>Content}}`, its Markdown as HTML, such as `{{heroTitle}}` and `{{heroContent}}`. Its name must start with a Latin letter and contain only Latin letters and digits. Without the file, both placeholders are empty, and the other placeholders of `document.html`, such as `{{pageTitle}}`, take precedence.
+- `{{heroTexts}}` holds the texts of `hero.md`, at most seven: each `###` heading starts a text, which runs up to the next one and is never shortened. Each text is a `<div>` that starts with its heading as `<h3>`. Only whitespace and HTML comments may precede the first `###` heading; Blyss refuses other content there and more than seven texts.
 - `{{layoutMargin}}` and `{{layoutAlign}}` are `layout.margin` and `layout.align`, for example for `<body data-align="{{layoutAlign}}" style="--site-margin: {{layoutMargin}}">`.
-- `{{sliderStart}}` and `{{sliderEnd}}` are `slider.start` and `slider.end`; `{{sliderValue}}` is the whole number halfway between them, the slider's initial value. `{{sliderSteps}}` is an `<ol>` of the steps in ascending order, or nothing without steps. Each `<li>` holds the step's value as `<data>` and its description in the page's language and sets `--position` to the value's place on the slider, from `0%` to `100%`; `aria-current="step"` marks the last step that the initial value reaches.
+- `{{heroComponentSliderStart}}` and `{{heroComponentSliderEnd}}` are `heroComponent.slider.start` and `heroComponent.slider.end`; `{{heroComponentSliderValue}}` is the whole number halfway between them, the slider's initial value. `{{heroComponentSliderSteps}}` is an `<ol>` of the steps in ascending order, or nothing without steps. Each `<li>` holds the step's value as `<data>` and its description in the page's language and sets `--position` to the value's place on the slider, from `0%` to `100%`; `aria-current="step"` marks the last step that the initial value reaches. The slider's title and text are the fragment `heroComponentSlider.md`.
 - Every label of the language is available as `{{<key>Label}}`, such as `{{postsLabel}}` for `labels.posts`. `{{postsLabel}}` and `{{tagsLabel}}` default to “Posts” and “Tags”.
 
 ## Commands

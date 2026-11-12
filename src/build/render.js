@@ -41,11 +41,8 @@ export function newestFirst(posts) {
   return [...posts].sort((left, right) => compare(date(right), date(left)) || compare(left.url, right.url));
 }
 
-const recentPostsOf = (record, records) =>
-  newestFirst(records.filter(item => item.type === "post" && item.languageKey === record.languageKey)).slice(0, 3);
-
 export function renderRecentPosts(record, records) {
-  const posts = recentPostsOf(record, records);
+  const posts = newestFirst(records.filter(item => item.type === "post" && item.languageKey === record.languageKey)).slice(0, 3);
 
   if (!posts.length) return "";
 
@@ -57,34 +54,9 @@ export function renderRecentPosts(record, records) {
   return `\n<section aria-label="${escapeHtml(record.languageConfig.labels.recentPosts || "Recent posts")}">\n  <h2>${escapeHtml(record.languageConfig.labels.recentPosts || "Recent posts")}</h2>\n  <ul>\n${listItems}\n  </ul>\n</section>\n`;
 }
 
-// The first words of rendered HTML as plain text, without headings and code blocks.
-function teaser(html, wordCount = 80) {
-  const words = html
-    .replace(/<!--[\s\S]*?-->|<(h[1-6]|pre|script|style)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, " ")
-    .replace(/<br\b[^>]*>/gi, " ")
-    .replace(/<[^>]*>/g, "")
-    .replaceAll("<", "&lt;").replaceAll(">", "&gt;")
-    .split(/\s+/).filter(Boolean);
-  return words.length > wordCount ? `${words.slice(0, wordCount).join(" ")}…` : words.join(" ");
-}
-
-// Each body is rendered once, because the teasers of {{recentContent}} appear on every page of a language.
-const bodies = new WeakMap();
 function renderBody(record, records) {
   if (record.type === "list") return record.html;
-  if (!bodies.has(record)) {
-    bodies.set(record, marked.parse(record.markdown.replace(/{{recentPosts}}/g, renderRecentPosts(record, records))));
-  }
-  return bodies.get(record);
-}
-
-function renderRecentContent(record, records) {
-  const items = recentPostsOf(record, records).map(post => {
-    const text = teaser(renderBody(post, records));
-    return `  <li>\n    <h4><a href="${escapeHtml(post.url)}">${escapeHtml(post.metadata.title || post.url)}</a></h4>\n` +
-      (text ? `    <p>${text}</p>\n` : "") + "  </li>";
-  });
-  return items.length ? `<ul>\n${items.join("\n")}\n</ul>` : "";
+  return marked.parse(record.markdown.replace(/{{recentPosts}}/g, renderRecentPosts(record, records)));
 }
 
 // Each step is placed at its value along the slider; the last step that the initial value reaches is current.
@@ -111,7 +83,7 @@ function renderTags(record) {
   return `    <p>${escapeHtml(record.languageConfig.labels.tags || "Tags")}: ${links.join(", ")}</p>`;
 }
 
-export function renderRecord({ record, templates, translationIndex, site, records = [], layout, slider }) {
+export function renderRecord({ record, templates, translationIndex, site, records = [], layout, heroComponent, fragments = {} }) {
   const metadata = record.metadata;
   const title = metadata.title || site.name;
   const description = metadata.description || record.languageConfig.description;
@@ -129,7 +101,9 @@ export function renderRecord({ record, templates, translationIndex, site, record
   const labelValues = Object.entries({ ...labels, posts: labels.posts || "Posts", tags: labels.tags || "Tags" })
     .map(([key, value]) => [`${key}Label`, escapeHtml(value)]);
 
+  // The fragments of the language, such as {{heroTitle}}, cannot replace the labels or the placeholders below.
   return applyTemplate(templates.document, {
+    ...fragments,
     ...Object.fromEntries(labelValues),
     locale: escapeHtml(record.languageConfig.locale),
     pageTitle: escapeHtml(pageTitle),
@@ -140,13 +114,12 @@ export function renderRecord({ record, templates, translationIndex, site, record
     languageKey: escapeHtml(record.languageKey),
     kind,
     languageSwitcher: renderLanguageSwitcher(record, translationIndex, site),
-    recentContent: renderRecentContent(record, records),
     layoutMargin: escapeHtml(layout.margin),
     layoutAlign: layout.align,
-    sliderStart: String(slider.start),
-    sliderEnd: String(slider.end),
-    sliderValue: String(slider.value),
-    sliderSteps: renderSliderSteps(slider, record.languageKey),
+    heroComponentSliderStart: String(heroComponent.slider.start),
+    heroComponentSliderEnd: String(heroComponent.slider.end),
+    heroComponentSliderValue: String(heroComponent.slider.value),
+    heroComponentSliderSteps: renderSliderSteps(heroComponent.slider, record.languageKey),
     content
   });
 }

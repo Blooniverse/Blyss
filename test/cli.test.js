@@ -195,11 +195,12 @@ describe("a generated starter", () => {
     assert.match(await readFile(join(site, "public", "de", "404.html"), "utf8"), /<h1>Seite nicht gefunden<\/h1>/);
   });
 
-  test("renders the home pages with home.html: title and slogan in the header, then the article", async () => {
-    assert.match(await readFile(join(site, "public", "en", "index.html"), "utf8"), new RegExp("</aside>\\s*<div class=\"page\">\\s*" +
-      "<header>\\s*<h1>Blyss</h1>\\s*<h2>Blyss slogan</h2>\\s*</header>\\s*<main>\\s*<article>\\s*<h3>Blyss about or description</h3>"));
+  test("renders the home pages with home.html: title and slogan in the header, then the article, the hero and the footer", async () => {
+    assert.match(await readFile(join(site, "public", "en", "index.html"), "utf8"), new RegExp("</div>\\s*<div class=\"page\">\\s*" +
+      "<header>\\s*<h1>Blyss</h1>\\s*<h2>Blyss slogan</h2>\\s*</header>\\s*<main>\\s*<article>\\s*<h3>Blyss about or description</h3>" +
+      "[\\s\\S]*</main>\\s*</div>\\s*<aside class=\"overlay\"[\\s\\S]*</aside>\\s*<footer>"));
     const german = await readFile(join(site, "public", "de", "index.html"), "utf8");
-    for (const label of ['<label for="overlay-slider">Schieberegler</label>', "<h3>Neueste Inhalte</h3>",
+    for (const label of ['<h2><label for="hero-component-slider-input">Schieberegler</label></h2>', "<h2>Warum Blyss</h2>",
       '<input type="search" aria-label="Suchen" placeholder="Suchen">']) {
       assert.ok(german.includes(label), label);
     }
@@ -285,11 +286,10 @@ describe("a site with several tagged posts", () => {
       const home = join(site, "content", language, "pages", "index.md");
       await writeFile(home, `${await readFile(home, "utf8")}\n{{recentPosts}}\n`);
     }
-    const words = Array.from({ length: 80 }, (_, index) => `w${index + 1}`).join(" ");
     const posts = {
       oldest: ["title: Oldest\ndatePublished: 2026-01-01\ntags: Blyss", "Text."],
       newest: ['title: </script><script>alert(1)</script>\ndatePublished: 2026-12-31\ntags:\n  - Static Sites\n  - "Über Blyss"',
-        `## Heading\n\nOne *two* \`three\` [four](/en/) <b>five</b> 6 < 7 & 8.\n\n\`\`\`\ncode block\n\`\`\`\n\n${words}`],
+        "Text."],
       older: ["title: Older\ndatePublished: 2026-06-30\ntags: [blyss, static sites]", "Text."]
     };
     for (const [slug, [frontMatter, body]] of Object.entries(posts)) {
@@ -304,21 +304,19 @@ describe("a site with several tagged posts", () => {
     assert.deepEqual(await postSlugs("de"), ["vorlagen", "uebersetzungen", "hallo-welt"]);
   });
 
-  test("shows the three newest posts with an 80-word teaser in the overlay of every page", async () => {
+  test("shows the texts of hero.md in the overlay of every page of a language", async () => {
     const overlay = async path => {
       const html = await readFile(join(site, "public", path), "utf8");
       return html.slice(html.indexOf('<div id="overlay"'), html.indexOf("</aside>"));
     };
+    const texts = async path => [...(await overlay(path)).matchAll(/<div>\n<h3>([^<]+)<\/h3>/g)].map(match => match[1]);
     const home = await overlay("en/index.html");
     for (const path of ["en/about/index.html", "en/posts/older/index.html", "en/tags/index.html", "en/404.html"]) {
       assert.equal(await overlay(path), home, path);
     }
-    assert.deepEqual([...home.matchAll(/<h4><a href="\/en\/posts\/([^/]+)\/">/g)].map(match => match[1]),
-      ["newest", "templates", "translations"]);
-    const words = Array.from({ length: 70 }, (_, index) => `w${index + 1}`).join(" ");
-    assert.ok(home.includes('<h4><a href="/en/posts/newest/">&lt;/script&gt;&lt;script&gt;alert(1)&lt;/script&gt;</a></h4>\n' +
-      `    <p>One two three four five 6 &lt; 7 &amp; 8. ${words}…</p>\n  </li>`));
-    assert.match(await overlay("de/index.html"), /<h4><a href="\/de\/posts\/vorlagen\/">Vorlagen und Stile<\/a><\/h4>/);
+    assert.ok(home.includes("<h2>Why Blyss</h2>"));
+    assert.deepEqual(await texts("en/index.html"), ["Markdown in, HTML out", "Two languages", "Your own texts"]);
+    assert.deepEqual(await texts("de/posts/index.html"), ["Markdown rein, HTML raus", "Zwei Sprachen", "Ihre eigenen Texte"]);
   });
 
   test("archives all posts newest first, pageSize posts per page", async () => {
@@ -395,13 +393,54 @@ describe("a site without templates/home.html", () => {
   });
 });
 
+describe("a site with its own hero texts and fragments", () => {
+  let site;
+  const page = path => readFile(join(site, "public", path), "utf8");
+  const long = Array.from({ length: 300 }, (_, index) => `w${index + 1}`).join(" ");
+
+  before(async () => {
+    site = join(sandbox, "hero");
+    assert.equal(run(["init", site], sandbox).status, 0);
+    const texts = [`### One\n\n${long}\n\n#### Part of one\n\nMore.`, "### Two\n\n```md\n### Not a text\n```",
+      ...[3, 4, 5, 6, 7].map(number => `### Text ${number}\n\nText.`)];
+    await writeFile(join(site, "content", "en", "hero.md"),
+      `---\ntitle: Seven <texts>\n---\n\n<!-- Each ### heading starts a text. -->\n\n${texts.join("\n\n")}\n`);
+    await writeFile(join(site, "content", "en", "notice.md"), "---\ntitle: Notice\n---\n\nClosed on *Monday*.\n");
+    const documentFile = join(site, "templates", "document.html");
+    const template = await readFile(documentFile, "utf8");
+    await writeFile(documentFile, template.replace('  <div class="page">',
+      '  <section class="notice"><h2>{{noticeTitle}}</h2>{{noticeContent}}</section>\n  <div class="page">'));
+    const result = run(["build"], site);
+    assert.equal(result.status, 0, result.stderr);
+  });
+
+  test("shows up to seven texts in full, each from one ### heading to the next", async () => {
+    const html = await page("en/about/index.html");
+    const hero = html.slice(html.indexOf("<h2>Seven"), html.indexOf("</aside>"));
+    assert.ok(hero.startsWith("<h2>Seven &lt;texts&gt;</h2>"));
+    assert.equal(hero.match(/<div>\n<h3>/g).length, 7);
+    assert.ok(hero.includes(`<div>\n<h3>One</h3>\n<p>${long}</p>\n<h4>Part of one</h4>\n<p>More.</p>\n</div>`));
+    assert.ok(hero.includes('<div>\n<h3>Two</h3>\n<pre><code class="language-md">### Not a text\n</code></pre>\n</div>'));
+  });
+
+  test("gives templates each Markdown file directly in content/<language>/ without publishing it", async () => {
+    assert.ok((await page("en/posts/index.html")).includes(
+      '<section class="notice"><h2>Notice</h2><p>Closed on <em>Monday</em>.</p>\n</section>'));
+    assert.ok((await page("de/posts/index.html")).includes('<section class="notice"><h2></h2></section>'));
+    for (const name of ["hero", "notice"]) {
+      await assert.rejects(stat(join(site, "public", "en", name)), { code: "ENOENT" });
+    }
+  });
+});
+
 describe("a site with its own layout and slider", () => {
   let site;
   let configFile;
   const page = path => readFile(join(site, "public", path), "utf8");
   const slider = async path => {
     const html = await page(path);
-    return html.slice(html.indexOf('<div class="slider">'), html.indexOf("<p>", html.indexOf('<div class="slider">')));
+    const start = html.indexOf('<div class="hero-component hero-component-slider">');
+    return html.slice(start, html.indexOf("<p>", start));
   };
   const settings = config => config.slice(config.indexOf("  layout: {"), config.indexOf("  directories: {"));
 
@@ -411,14 +450,16 @@ describe("a site with its own layout and slider", () => {
     configFile = join(site, "blyss.config.js");
     const config = await readFile(configFile, "utf8");
     await writeFile(configFile, config.replace(settings(config), `  layout: { margin: "3rem", align: "center" },
-  slider: {
-    start: -10,
-    end: 30,
-    steps: [
-      { value: 30, description: { en: "Hot", de: "Heiß" } },
-      { value: -10, description: { en: "Cold & <icy>", de: "Kalt" } },
-      { value: 0, description: { en: "Frost", de: "Frost" } }
-    ]
+  heroComponent: {
+    slider: {
+      start: -10,
+      end: 30,
+      steps: [
+        { value: 30, description: { en: "Hot", de: "Heiß" } },
+        { value: -10, description: { en: "Cold & <icy>", de: "Kalt" } },
+        { value: 0, description: { en: "Frost", de: "Frost" } }
+      ]
+    }
   },
 `));
     const result = run(["build"], site);
@@ -432,14 +473,14 @@ describe("a site with its own layout and slider", () => {
   });
 
   test("runs the slider from start to end, starting halfway, with its steps sorted and described in each language", async () => {
-    const steps = (cold, frost, hot) => '<output for="overlay-slider" aria-hidden="true">10</output>\n' +
-      '        <input id="overlay-slider" type="range" min="-10" max="30" value="10">\n<ol>\n' +
+    const steps = (cold, frost, hot) => '<output for="hero-component-slider-input" aria-hidden="true">10</output>\n' +
+      '        <input id="hero-component-slider-input" type="range" min="-10" max="30" value="10">\n<ol>\n' +
       `  <li style="--position: 0%"><data value="-10">-10</data> ${cold}</li>\n` +
       `  <li style="--position: 25%" aria-current="step"><data value="0">0</data> ${frost}</li>\n` +
       `  <li style="--position: 100%"><data value="30">30</data> ${hot}</li>\n</ol>`;
     assert.ok((await slider("en/index.html")).includes(steps("Cold &amp; &lt;icy&gt;", "Frost", "Hot")));
     assert.ok((await slider("de/about/index.html")).includes(steps("Kalt", "Frost", "Heiß")));
-    assert.ok((await slider("de/index.html")).includes('<h3><label for="overlay-slider">Schieberegler</label></h3>'));
+    assert.ok((await slider("de/index.html")).includes('<h2><label for="hero-component-slider-input">Schieberegler</label></h2>'));
   });
 
   test("falls back to a left-aligned layout and a slider from 0 to 100 without steps, and accepts a margin of 0", async () => {
@@ -449,7 +490,7 @@ describe("a site with its own layout and slider", () => {
     assert.equal(result.status, 0, result.stderr);
     assert.ok((await page("en/index.html")).includes('<body data-kind="home" data-align="left" style="--site-margin: 0px">'));
     const fallback = await slider("en/index.html");
-    assert.ok(fallback.includes('<input id="overlay-slider" type="range" min="0" max="100" value="50">'));
+    assert.ok(fallback.includes('<input id="hero-component-slider-input" type="range" min="0" max="100" value="50">'));
     assert.doesNotMatch(fallback, /<ol>/);
   });
 });
@@ -464,14 +505,24 @@ describe("invalid content", () => {
 
   const page = join("content", "en", "pages", "posts.md");
   const post = join("content", "en", "posts", "symbols.md");
+  const hero = join("content", "en", "hero.md");
+  const fragment = join("content", "en", "my-hero.md");
   const cases = [
     ["a page with the URL of a generated page", page, "---\ntitle: Posts\n---\n",
       `Cannot build /en/posts/: ${page} and the generated page "Posts" have the same URL.\nRename ${page} or give it a different slug.\n`],
     ["a tag without a Latin letter or digit", post, '---\ntitle: Symbols\ntags: [Blyss, "#"]\n---\n',
-      `Cannot build ${post}: the tag "#" needs a Latin letter or digit for its URL.\n`]
+      `Cannot build ${post}: the tag "#" needs a Latin letter or digit for its URL.\n`],
+    ["a hero with more than seven texts", hero, Array.from({ length: 8 }, (_, index) => `### Text ${index + 1}\n\nText.\n`).join("\n"),
+      `Cannot build ${hero}: it has 8 texts, but the hero shows at most 7.\nRemove 1 of its ### headings and their texts.\n`],
+    ["a hero with content before its first ### heading", hero, "Introduction.\n\n### Text\n\nText.\n",
+      `Cannot build ${hero}: each text of the hero starts with a ### heading, but there is content before the first one.\n`],
+    ["a fragment whose name templates cannot use", fragment, "---\ntitle: Mine\n---\n",
+      `Cannot build ${fragment}: templates use its name in placeholders, so it must start with a Latin letter and contain ` +
+      "only Latin letters and digits, such as hero.md.\n"]
   ];
   for (const [name, file, source, message] of cases) {
     test(`rejects ${name} and keeps the previous output`, async () => {
+      const original = await readFile(join(site, file), "utf8").catch(() => null);
       await writeFile(join(site, file), source);
       try {
         const result = run(["build"], site);
@@ -479,7 +530,8 @@ describe("invalid content", () => {
         assert.equal(result.stderr, message);
         assert.ok((await stat(join(site, "public", "en", "index.html"))).isFile());
       } finally {
-        await rm(join(site, file));
+        if (original === null) await rm(join(site, file));
+        else await writeFile(join(site, file), original);
       }
     });
   }
@@ -535,16 +587,16 @@ describe("invalid configuration", () => {
     }
   });
 
-  test("refuses a layout or slider setting that the templates cannot use", async () => {
+  test("refuses a layout or hero component setting that the templates cannot use", async () => {
     for (const [search, replacement, message] of [
       ['margin: "2vmin"', 'margin: "2em"', 'layout.margin "2em": it must be a CSS length in px, rem, vw, vh, vmin or vmax, such as "2vmin"'],
       ['margin: "2vmin"', 'margin: "2vmin; color: red"',
         'layout.margin "2vmin; color: red": it must be a CSS length in px, rem, vw, vh, vmin or vmax, such as "2vmin"'],
       ['align: "left"', 'align: "right"', 'layout.align "right": it must be "left" or "center"'],
-      ["start: 1,", "start: 1.5,", "slider.start 1.5: it must be a whole number"],
-      ["end: 1000", "end: 1", "slider.end 1: it must be a whole number greater than slider.start (1)"],
-      ["value: 250,", "value: 1001,", "slider.steps[1].value 1001: it must be a whole number from 1 to 1000"],
-      ['de: "Viertel"', 'fr: "Quart"', 'slider.steps[1].description: it needs a text for the language "de"']
+      ["start: 1,", "start: 1.5,", "heroComponent.slider.start 1.5: it must be a whole number"],
+      ["end: 1000", "end: 1", "heroComponent.slider.end 1: it must be a whole number greater than heroComponent.slider.start (1)"],
+      ["value: 250,", "value: 1001,", "heroComponent.slider.steps[1].value 1001: it must be a whole number from 1 to 1000"],
+      ['de: "Viertel"', 'fr: "Quart"', 'heroComponent.slider.steps[1].description: it needs a text for the language "de"']
     ]) {
       await withConfig(search, replacement, async () => {
         const result = run(["build"], site);
