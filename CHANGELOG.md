@@ -78,10 +78,14 @@
 - **Labels**: every label of a language is available in templates as
   `{{<key>Label}}`, such as `{{overlayLabel}}`; previously only six labels
   were.
-- **Layout**: `layout.margin` sets the space around the content and
-  `layout.align: "center"` centers it. Templates receive them as
-  `{{layoutMargin}}` and `{{layoutAlign}}`; the defaults are `"2vmin"` and
-  `"left"`.
+- **Layout**: `layout.margin` sets the space around the content, `"2vmin"`
+  by default. `layout.alignHome` (`"center"` or `"left"`) and
+  `layout.alignOther` (`"left"`, `"center"` or `"centerLeft"`) align the
+  content of the home pages and of all other pages, `layout.alignHeroHome`
+  and `layout.alignHeroOther` (`"centerExtra"`, `"left"` or `"center"`) their
+  hero; the first value is the default. Templates receive the margin as
+  `{{layoutMargin}}` and the current page's alignments as `{{layoutAlign}}`
+  and `{{layoutAlignHero}}`.
 - **Hero component**: `heroComponent.slider` sets the whole-number `start`
   and `end` of a slider, the hero component's first variant, and the `steps`
   marked on it, each with a description in every language. Templates receive
@@ -103,7 +107,7 @@
   `pagination: { pageSize: 10 }`.
 - **Starter design**: a new stylesheet modelled on philippschaffner.ch, with
   the font Titillium Web from Google Fonts and a `70ch` text column. The home
-  pages start with the site's title and slogan, centered. Below the page
+  pages start with the site's title and slogan. Below the page
   follows the hero, an overlay with a slider and the texts of `hero.md`,
   which slides up over the page on large screens and fades it out; elsewhere
   the overlay collapses into a bar that opens it as a panel. Each language
@@ -113,15 +117,19 @@
   every page. It shows a placeholder logo, `static/assets/img/logo.svg`, next
   to the navigation and a search field without a function yet, whose text is
   the new label `search`.
-- **Starter slider**: the overlay's slider is centered below its heading, an
-  `<h2>` with the `title` of `heroComponentSlider.md`, with its value above
-  it and its steps and the text of `heroComponentSlider.md` below it. It runs
-  from 1 to 1000 with four described steps, all set in `blyss.config.js`, and
-  `overlay.js` highlights the last step reached.
-- **Starter layout**: `blyss.config.js` sets `layout: { margin: "2vmin",
-  align: "left" }`. The margin now applies on every side, replacing the fixed
-  `3vmin` at the top and `1.5vmin` and `2vmin` at the sides, and
-  `align: "center"` centers everything below the top bar.
+- **Starter slider**: the overlay's slider follows its heading, the `title`
+  of `heroComponentSlider.md`, with its value above it and its steps and the
+  text of `heroComponentSlider.md` below it. It runs from 1 to 1000 with four
+  described steps, all set in `blyss.config.js`, and `overlay.js` highlights
+  the last step reached. All headings in the overlay are `<h3>`, so that they
+  rank below each page's own `<h1>` and `<h2>`.
+- **Starter layout**: `blyss.config.js` sets `layout.margin` to `"2vmin"`,
+  which now applies on every side, replacing the fixed `3vmin` at the top and
+  `1.5vmin` and `2vmin` at the sides. The home pages are centered and all
+  other pages left-aligned, each with its footer; `"centerLeft"` centers the
+  text column but keeps its text left-aligned. The hero is centered except
+  for the texts of `hero.md`, which stay left-aligned with their headings
+  (`"centerExtra"`).
 - **Build**: content is read and validated before the previous output is
   deleted, and files are processed in sorted order for reproducible output.
   Two content files with the same URL stop the build with an error instead of

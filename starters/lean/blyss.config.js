@@ -62,7 +62,10 @@ export default {
   pagination: { pageSize: 10 }, // posts per archive and tag page; later pages are at <list>/page/<n>/
   layout: {
     margin: "2vmin", // the space between the frame and the content: a CSS length in px, rem, vw, vh, vmin or vmax
-    align: "left" // or "center", which centers all content below the top bar
+    alignHome: "center", // or "left", which aligns all content of the home pages (only the home pages)
+    alignOther: "left", // or "center" or "centerLeft" (which centers the content, but aligns its text left nonetheless), which aligns all content of the other pages (pages, posts, lists and not-found pages)
+    alignHeroHome: "centerExtra", // or "left" or "center" ("centerExtra" centers everything apart from the left-aligned text boxes of hero.md, including their headings), which aligns the content of the home pages' hero
+    alignHeroOther: "centerExtra" // or "left" or "center" (as above), which aligns the content of the other pages' hero
   },
   // The hero component is the interactive part of the overlay; its variant "slider" runs through the whole numbers
   // from start to end. Each step marks a value on the way and has a description in every language; change, add or

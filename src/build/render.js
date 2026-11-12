@@ -88,10 +88,11 @@ export function renderRecord({ record, templates, translationIndex, site, record
   const title = metadata.title || site.name;
   const description = metadata.description || record.languageConfig.description;
   const kind = kindOf(record);
+  const home = kind === "home";
   const dateBlock = metadata.datePublished
     ? `    <p><time datetime="${escapeHtml(metadata.datePublished)}">${escapeHtml(metadata.datePublished)}</time></p>` : "";
   // Without a home.html template, home pages use page.html.
-  const innerTemplate = record.type === "post" ? templates.post : (kind === "home" && templates.home) || templates.page;
+  const innerTemplate = record.type === "post" ? templates.post : (home && templates.home) || templates.page;
   const content = applyTemplate(innerTemplate, {
     title: escapeHtml(title), description: escapeHtml(description), dateBlock, tags: renderTags(record), content: renderBody(record, records)
   });
@@ -115,7 +116,8 @@ export function renderRecord({ record, templates, translationIndex, site, record
     kind,
     languageSwitcher: renderLanguageSwitcher(record, translationIndex, site),
     layoutMargin: escapeHtml(layout.margin),
-    layoutAlign: layout.align,
+    layoutAlign: home ? layout.alignHome : layout.alignOther,
+    layoutAlignHero: home ? layout.alignHeroHome : layout.alignHeroOther,
     heroComponentSliderStart: String(heroComponent.slider.start),
     heroComponentSliderEnd: String(heroComponent.slider.end),
     heroComponentSliderValue: String(heroComponent.slider.value),

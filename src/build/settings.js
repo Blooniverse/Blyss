@@ -6,15 +6,30 @@ const refuse = (setting, value, requirement) =>
 // Unlike em or %, these units mean the same on every element, so a top bar can span the margin it is placed in.
 const cssLength = /^(?:0|\d*\.?\d+(?:px|rem|vw|vh|vmin|vmax))$/i;
 
-// layout.margin is the space around the content; layout.align "center" centers the content.
+// The alignments of the content and of the hero, on the home pages and on all other pages; the first value is the default.
+const alignments = {
+  alignHome: ["center", "left"],
+  alignOther: ["left", "center", "centerLeft"],
+  alignHeroHome: ["centerExtra", "left", "center"],
+  alignHeroOther: ["centerExtra", "left", "center"]
+};
+
+// Lists values as in '"left", "center" or "centerLeft"'.
+const either = values => values.map(value => JSON.stringify(value)).join(", ").replace(/, (?=[^,]*$)/, " or ");
+
+// layout.margin is the space around the content; each alignment is one of its values above.
 export function layoutOf(config) {
-  const { margin = "2vmin", align = "left" } = config.layout ?? {};
+  const { margin = "2vmin", ...settings } = config.layout ?? {};
   if (!cssLength.test(String(margin))) {
     throw refuse("layout.margin", margin, 'a CSS length in px, rem, vw, vh, vmin or vmax, such as "2vmin"');
   }
-  if (align !== "left" && align !== "center") throw refuse("layout.align", align, '"left" or "center"');
   // In a stylesheet's calc(), a unitless 0 is a number, not a length.
-  return { margin: String(margin) === "0" ? "0px" : String(margin), align };
+  const layout = { margin: String(margin) === "0" ? "0px" : String(margin) };
+  for (const [name, values] of Object.entries(alignments)) {
+    layout[name] = settings[name] ?? values[0];
+    if (!values.includes(layout[name])) throw refuse(`layout.${name}`, layout[name], either(values));
+  }
+  return layout;
 }
 
 // heroComponent holds the settings of each variant of the interactive part of the overlay, so far only its slider.

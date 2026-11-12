@@ -200,7 +200,7 @@ describe("a generated starter", () => {
       "<header>\\s*<h1>Blyss</h1>\\s*<h2>Blyss slogan</h2>\\s*</header>\\s*<main>\\s*<article>\\s*<h3>Blyss about or description</h3>" +
       "[\\s\\S]*</main>\\s*</div>\\s*<aside class=\"overlay\"[\\s\\S]*</aside>\\s*<footer>"));
     const german = await readFile(join(site, "public", "de", "index.html"), "utf8");
-    for (const label of ['<h2><label for="hero-component-slider-input">Schieberegler</label></h2>', "<h2>Warum Blyss</h2>",
+    for (const label of ['<h3><label for="hero-component-slider-input">Schieberegler</label></h3>', "<h3>Warum Blyss</h3>",
       '<input type="search" aria-label="Suchen" placeholder="Suchen">']) {
       assert.ok(german.includes(label), label);
     }
@@ -211,7 +211,8 @@ describe("a generated starter", () => {
       "de/posts/index.html": "list", "en/tags/blyss/index.html": "list", "de/404.html": "not-found" };
     for (const [path, kind] of Object.entries(kinds)) {
       const html = await readFile(join(site, "public", path), "utf8");
-      assert.ok(html.includes(`<body data-kind="${kind}" data-align="left" style="--site-margin: 2vmin">`), path);
+      const align = kind === "home" ? "center" : "left";
+      assert.ok(html.includes(`<body data-kind="${kind}" data-align="${align}" data-align-hero="centerExtra" style="--site-margin: 2vmin">`), path);
     }
   });
 
@@ -314,7 +315,7 @@ describe("a site with several tagged posts", () => {
     for (const path of ["en/about/index.html", "en/posts/older/index.html", "en/tags/index.html", "en/404.html"]) {
       assert.equal(await overlay(path), home, path);
     }
-    assert.ok(home.includes("<h2>Why Blyss</h2>"));
+    assert.ok(home.includes("<h3>Why Blyss</h3>"));
     assert.deepEqual(await texts("en/index.html"), ["Markdown in, HTML out", "Two languages", "Your own texts"]);
     assert.deepEqual(await texts("de/posts/index.html"), ["Markdown rein, HTML raus", "Zwei Sprachen", "Ihre eigenen Texte"]);
   });
@@ -416,8 +417,8 @@ describe("a site with its own hero texts and fragments", () => {
 
   test("shows up to seven texts in full, each from one ### heading to the next", async () => {
     const html = await page("en/about/index.html");
-    const hero = html.slice(html.indexOf("<h2>Seven"), html.indexOf("</aside>"));
-    assert.ok(hero.startsWith("<h2>Seven &lt;texts&gt;</h2>"));
+    const hero = html.slice(html.indexOf("<h3>Seven"), html.indexOf("</aside>"));
+    assert.ok(hero.startsWith("<h3>Seven &lt;texts&gt;</h3>"));
     assert.equal(hero.match(/<div>\n<h3>/g).length, 7);
     assert.ok(hero.includes(`<div>\n<h3>One</h3>\n<p>${long}</p>\n<h4>Part of one</h4>\n<p>More.</p>\n</div>`));
     assert.ok(hero.includes('<div>\n<h3>Two</h3>\n<pre><code class="language-md">### Not a text\n</code></pre>\n</div>'));
@@ -449,7 +450,7 @@ describe("a site with its own layout and slider", () => {
     assert.equal(run(["init", site], sandbox).status, 0);
     configFile = join(site, "blyss.config.js");
     const config = await readFile(configFile, "utf8");
-    await writeFile(configFile, config.replace(settings(config), `  layout: { margin: "3rem", align: "center" },
+    await writeFile(configFile, config.replace(settings(config), `  layout: { margin: "3rem", alignHome: "left", alignOther: "centerLeft", alignHeroHome: "center", alignHeroOther: "left" },
   heroComponent: {
     slider: {
       start: -10,
@@ -466,9 +467,11 @@ describe("a site with its own layout and slider", () => {
     assert.equal(result.status, 0, result.stderr);
   });
 
-  test("applies layout.margin and layout.align to every page", async () => {
-    for (const path of ["en/index.html", "de/posts/index.html", "en/posts/hello-world/index.html", "404.html"]) {
-      assert.match(await page(path), /<body data-kind="[\w-]+" data-align="center" style="--site-margin: 3rem">/, path);
+  test("applies layout.margin and the alignments of the home pages and of all other pages", async () => {
+    const body = (kind, align, hero) => `<body data-kind="${kind}" data-align="${align}" data-align-hero="${hero}" style="--site-margin: 3rem">`;
+    assert.ok((await page("de/index.html")).includes(body("home", "left", "center")));
+    for (const [path, kind] of [["de/posts/index.html", "list"], ["en/posts/hello-world/index.html", "post"], ["404.html", "not-found"]]) {
+      assert.ok((await page(path)).includes(body(kind, "centerLeft", "left")), path);
     }
   });
 
@@ -480,15 +483,16 @@ describe("a site with its own layout and slider", () => {
       `  <li style="--position: 100%"><data value="30">30</data> ${hot}</li>\n</ol>`;
     assert.ok((await slider("en/index.html")).includes(steps("Cold &amp; &lt;icy&gt;", "Frost", "Hot")));
     assert.ok((await slider("de/about/index.html")).includes(steps("Kalt", "Frost", "Heiß")));
-    assert.ok((await slider("de/index.html")).includes('<h2><label for="hero-component-slider-input">Schieberegler</label></h2>'));
+    assert.ok((await slider("de/index.html")).includes('<h3><label for="hero-component-slider-input">Schieberegler</label></h3>'));
   });
 
-  test("falls back to a left-aligned layout and a slider from 0 to 100 without steps, and accepts a margin of 0", async () => {
+  test("falls back to the default alignments and a slider from 0 to 100 without steps, and accepts a margin of 0", async () => {
     const config = await readFile(configFile, "utf8");
     await writeFile(configFile, config.replace(settings(config), "  layout: { margin: 0 },\n"));
     const result = run(["build"], site);
     assert.equal(result.status, 0, result.stderr);
-    assert.ok((await page("en/index.html")).includes('<body data-kind="home" data-align="left" style="--site-margin: 0px">'));
+    assert.ok((await page("en/index.html")).includes('<body data-kind="home" data-align="center" data-align-hero="centerExtra" style="--site-margin: 0px">'));
+    assert.ok((await page("en/about/index.html")).includes('<body data-kind="page" data-align="left" data-align-hero="centerExtra" style="--site-margin: 0px">'));
     const fallback = await slider("en/index.html");
     assert.ok(fallback.includes('<input id="hero-component-slider-input" type="range" min="0" max="100" value="50">'));
     assert.doesNotMatch(fallback, /<ol>/);
@@ -592,7 +596,9 @@ describe("invalid configuration", () => {
       ['margin: "2vmin"', 'margin: "2em"', 'layout.margin "2em": it must be a CSS length in px, rem, vw, vh, vmin or vmax, such as "2vmin"'],
       ['margin: "2vmin"', 'margin: "2vmin; color: red"',
         'layout.margin "2vmin; color: red": it must be a CSS length in px, rem, vw, vh, vmin or vmax, such as "2vmin"'],
-      ['align: "left"', 'align: "right"', 'layout.align "right": it must be "left" or "center"'],
+      ['alignHome: "center"', 'alignHome: "centerLeft"', 'layout.alignHome "centerLeft": it must be "center" or "left"'],
+      ['alignHeroOther: "centerExtra"', 'alignHeroOther: "centerLeft"',
+        'layout.alignHeroOther "centerLeft": it must be "centerExtra", "left" or "center"'],
       ["start: 1,", "start: 1.5,", "heroComponent.slider.start 1.5: it must be a whole number"],
       ["end: 1000", "end: 1", "heroComponent.slider.end 1: it must be a whole number greater than heroComponent.slider.start (1)"],
       ["value: 250,", "value: 1001,", "heroComponent.slider.steps[1].value 1001: it must be a whole number from 1 to 1000"],

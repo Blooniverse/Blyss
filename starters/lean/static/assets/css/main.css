@@ -12,7 +12,11 @@
   --card-border: #e5e7eb;
   --radius: 8px;
   --bar-height: 2.25rem;
+  --column: 70ch; /* the width of the text column */
 }
+/* Registered as a length, --column is computed where it is set, in the font of the page's text, so that the footer,
+   whose text is smaller, can line up with the text column. */
+@property --column { syntax: "<length>"; inherits: true; initial-value: 0px; }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -40,7 +44,7 @@ h2 { font-size: 1.5rem; letter-spacing: .04em; line-height: 1.1; margin-bottom: 
 h3 { display: inline-block; margin: 3vh 0 .3em; padding: 0 .3em; color: #fff; background-color: var(--color202black); }
 article h2 { margin-top: 1em; }
 
-main { max-width: 70ch; }
+main { max-width: var(--column); }
 :is(p, ul, ol, pre, blockquote, table) { margin-bottom: .6em; }
 :is(ul, ol) { padding-left: 1.2em; }
 blockquote { padding-left: 1em; border-left: 3px solid var(--color202border); }
@@ -48,7 +52,8 @@ a { color: inherit; text-decoration: underline var(--color202) dotted; }
 :focus-visible { outline: 2px solid var(--color202); outline-offset: 2px; }
 img { max-width: 100%; height: auto; }
 code { padding: .1em .25em; border-radius: 4px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .85em; background: #f3f4f6; }
-pre { padding: .5em .75em; overflow: auto; border: 1px solid var(--card-border); border-radius: 6px; background: #f6f8fa; }
+/* Code keeps its indentation in centered text. */
+pre { padding: .5em .75em; overflow: auto; border: 1px solid var(--card-border); border-radius: 6px; text-align: start; background: #f6f8fa; }
 pre code { padding: 0; background: none; }
 time { color: var(--color202grey); }
 article > header { margin-bottom: 1rem; }
@@ -89,13 +94,12 @@ nav ul { display: flex; flex-wrap: wrap; gap: .25rem 1rem; padding: 0; list-styl
 
 footer { margin-top: 4vh; font-size: .9rem; color: var(--color202grey); letter-spacing: -.03em; line-height: 1.1; }
 
-/* layout.align "center" in blyss.config.js centers all content below the top bar; code keeps its indentation. */
-[data-align="center"] > :not(.site-bar) { text-align: center; }
-[data-align="center"] main { width: 100%; margin-inline: auto; }
-[data-align="center"] table { margin-inline: auto; }
-[data-align="center"] :is(.page, .hero-texts) :is(ul, ol) { padding-left: 0; list-style-position: inside; }
+/* layout.alignHome and layout.alignOther in blyss.config.js align the page and the footer: "center" centers the text
+   column and its text, and "centerLeft" only the column, with which the footer lines up. */
+[data-align="center"] > :is(.page, footer) { text-align: center; }
 [data-align="center"] .page nav ul { justify-content: center; }
-[data-align="center"] pre { text-align: start; }
+:is([data-align="center"], [data-align="centerLeft"]) main { margin-inline: auto; }
+[data-align="centerLeft"] > footer { max-width: var(--column); margin-inline: auto; }
 
 /* The overlay: open as the hero below the home page; elsewhere a bar at the bottom of the window
    whose button opens it as a popover, closed by its own button, by Escape or by a click outside. */
@@ -141,21 +145,12 @@ body:not([data-kind="home"]) > .overlay:is(:hover, :focus-within) { opacity: 1; 
   box-shadow: 0 -12px 32px rgb(0 0 0 / .18);
 }
 .overlay-toggle[popovertargetaction="hide"] { position: sticky; top: 0; z-index: 1; display: block; margin: 0 0 .5rem auto; }
-/* The overlay's headings look like labels. */
-#overlay h2 {
-  display: inline-block;
-  margin: 0 0 .3em;
-  padding: 0 .3em;
-  font-size: 1.17rem;
-  letter-spacing: normal;
-  line-height: inherit;
-  color: #fff;
-  background-color: var(--color202black);
-}
-#overlay h2:empty { display: none; } /* such as the hero's title when hero.md has none */
-/* The hero component, so far a slider: centered under its heading, with its value above it and its steps below it,
-   each at its value. */
-.hero-component { max-width: 40rem; margin: 0 auto 1rem; text-align: center; }
+/* The hero's headings look like labels, as h3 does everywhere, except for the headings of the texts of hero.md. */
+#overlay h3 { margin-top: 0; }
+#overlay h3:empty { display: none; } /* such as the hero's title when hero.md has none */
+/* The hero component, so far a slider below its heading, with its value above it and its steps below it, each at its
+   value. */
+.hero-component { max-width: 40rem; margin: 0 auto 1rem; }
 .hero-component-slider output { display: block; font-size: 1.25rem; font-variant-numeric: tabular-nums; }
 .hero-component-slider input { display: block; width: 100%; accent-color: var(--color202); }
 .hero-component-slider ol {
@@ -182,15 +177,27 @@ body:not([data-kind="home"]) > .overlay:is(:hover, :focus-within) { opacity: 1; 
 .hero-texts > div > :last-child { margin-bottom: 0; }
 .hero-texts h3 { display: block; margin: 0 0 .3em; padding: 0; font-size: 1.1em; line-height: 1.2; color: var(--color202); background: none; }
 
+/* layout.alignHeroHome and layout.alignHeroOther align the hero: "center" centers all of it, "centerExtra" all but the
+   texts of hero.md, which stay left-aligned with their headings, and "left" none of it. */
+:is([data-align-hero="center"], [data-align-hero="centerExtra"]) #overlay { text-align: center; }
+[data-align-hero="centerExtra"] .hero-texts { text-align: start; }
+[data-align-hero="left"] .hero-component { margin-inline: 0; }
+/* In centered text, lists keep their markers next to their items, and tables are centered too. */
+:is([data-align="center"] .page, [data-align-hero="center"] #overlay, [data-align-hero="centerExtra"] .hero-component) :is(ul, ol) {
+  padding-left: 0;
+  list-style-position: inside;
+}
+:is([data-align="center"] .page, [data-align-hero="center"] #overlay, [data-align-hero="centerExtra"] .hero-component) table {
+  margin-inline: auto;
+}
+
 @media (prefers-reduced-motion: no-preference) {
   #overlay { translate: 0 100%; transition: translate .28s ease, display .28s allow-discrete, overlay .28s allow-discrete; }
   #overlay:popover-open { translate: none; }
   @starting-style { #overlay:popover-open { translate: 0 100%; } }
 }
 
-/* Home: the title and slogan are centered above the article, and the overlay follows as the hero.
-   Author styles override the browser's rule that hides a closed popover. */
-[data-kind="home"] > .page > header { text-align: center; }
+/* Home: the overlay follows the page as the hero. Author styles override the browser's rule that hides a closed popover. */
 body[data-kind="home"] .overlay-toggle { display: none; }
 [data-kind="home"] > .overlay { margin-top: 1rem; }
 [data-kind="home"] #overlay {
