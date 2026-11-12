@@ -66,6 +66,22 @@ export default {
     }
   },
   pagination: { pageSize: 10 }, // posts per archive and tag page; later pages are at <list>/page/<n>/
+  layout: {
+    margin: "2vmin", // the space between the frame and the content: a CSS length in px, rem, vw, vh, vmin or vmax
+    align: "left" // or "center", which centers all content below the top bar
+  },
+  // The overlay's slider runs through the whole numbers from start to end. Each step marks a value on the way
+  // and has a description in every language; change, add or remove steps as you like.
+  slider: {
+    start: 1,
+    end: 1000,
+    steps: [
+      { value: 1, description: { en: "Start", de: "Anfang" } },
+      { value: 250, description: { en: "Quarter", de: "Viertel" } },
+      { value: 500, description: { en: "Half", de: "Hälfte" } },
+      { value: 1000, description: { en: "Full", de: "Voll" } }
+    ]
+  },
   directories: {
     content: "content",
     public: "public", // generated output: deleted and recreated by every build, so keep it a separate subdirectory

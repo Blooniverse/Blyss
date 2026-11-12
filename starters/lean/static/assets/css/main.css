@@ -29,7 +29,7 @@ html {
 
 body {
   min-height: 100svh;
-  padding: 3vmin 1.5vmin 0 2vmin;
+  padding: var(--site-margin); /* layout.margin in blyss.config.js, set by templates/document.html */
   border: 1.6vmin solid;
   border-image: linear-gradient(15deg, var(--color040border), var(--color202border)) 1% 1 1 stretch;
 }
@@ -66,8 +66,8 @@ nav ul { display: flex; flex-wrap: wrap; gap: .25rem 1rem; padding: 0; list-styl
   align-items: center;
   gap: .25rem 1rem;
   min-height: var(--bar-height);
-  margin: 0 -1.5vmin 1rem -2vmin; /* the negative of the body's side padding */
-  padding: .25rem 1.5vmin .25rem 2vmin;
+  margin: 0 calc(-1 * var(--site-margin)) 1rem; /* spans the side margins up to the frame */
+  padding: .25rem var(--site-margin);
   font-size: .8rem;
   background: #fff;
   box-shadow: 0 1px 0 var(--card-border);
@@ -89,6 +89,14 @@ nav ul { display: flex; flex-wrap: wrap; gap: .25rem 1rem; padding: 0; list-styl
 
 footer { margin-top: 4vh; font-size: .9rem; color: var(--color202grey); letter-spacing: -.03em; line-height: 1.1; }
 
+/* layout.align "center" in blyss.config.js centers all content below the top bar; code keeps its indentation. */
+[data-align="center"] > :not(.site-bar) { text-align: center; }
+[data-align="center"] main { width: 100%; margin-inline: auto; }
+[data-align="center"] table { margin-inline: auto; }
+[data-align="center"] .page :is(ul, ol) { padding-left: 0; list-style-position: inside; }
+[data-align="center"] .page nav ul { justify-content: center; }
+[data-align="center"] pre { text-align: start; }
+
 /* The overlay: open as the hero of the home page; elsewhere a bar at the bottom of the window
    whose button opens it as a popover, closed by its own button, by Escape or by a click outside. */
 .overlay-toggle {
@@ -102,7 +110,7 @@ footer { margin-top: 4vh; font-size: .9rem; color: var(--color202grey); letter-s
   cursor: pointer;
 }
 
-body:not([data-kind="home"]) { padding-bottom: 2.5rem; }
+body:not([data-kind="home"]) { padding-bottom: calc(var(--site-margin) + 2rem); } /* leaves room for the overlay bar */
 body:not([data-kind="home"]) > .overlay {
   position: fixed;
   inset: auto 0 0;
@@ -134,9 +142,24 @@ body:not([data-kind="home"]) > .overlay:is(:hover, :focus-within) { opacity: 1; 
 }
 .overlay-toggle[popovertargetaction="hide"] { position: sticky; top: 0; z-index: 1; display: block; margin: 0 0 .5rem auto; }
 #overlay > :is(p, h3) { max-width: 70ch; }
-.slider { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
-.slider input { flex: 1; min-width: 8rem; accent-color: var(--color202); }
-.slider output { min-width: 4ch; text-align: end; font-variant-numeric: tabular-nums; }
+/* The slider is centered under its heading, with its value above it and its steps below it, each at its value. */
+.slider { max-width: 40rem; margin: 0 auto 1rem; text-align: center; }
+.slider h3 { margin-top: 0; }
+.slider output { display: block; font-size: 1.25rem; font-variant-numeric: tabular-nums; }
+.slider input { display: block; width: 100%; accent-color: var(--color202); }
+.slider ol {
+  position: relative;
+  height: 2.6em;
+  margin: 0 8px .6rem; /* half the width of the slider's thumb, whose centre the steps line up with */
+  padding: 0;
+  font-size: .7rem;
+  line-height: 1.2;
+  list-style: none;
+}
+.slider li { position: absolute; left: var(--position); translate: -50%; white-space: nowrap; color: var(--color202grey); }
+.slider li::before { content: ""; display: block; width: 1px; height: .4em; margin: 0 auto .15em; background: currentColor; }
+.slider data { display: block; font-variant-numeric: tabular-nums; }
+.slider [aria-current] { font-weight: 700; color: var(--color202); }
 #overlay > ul {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
@@ -146,7 +169,7 @@ body:not([data-kind="home"]) > .overlay:is(:hover, :focus-within) { opacity: 1; 
   font-size: .8rem;
   list-style: none;
 }
-#overlay li { padding: .5rem .75rem; border: 1px solid var(--card-border); border-radius: var(--radius); background: var(--card); }
+#overlay > ul > li { padding: .5rem .75rem; border: 1px solid var(--card-border); border-radius: var(--radius); background: var(--card); }
 #overlay h4 { margin-bottom: .3em; font-size: 1.1em; line-height: 1.2; }
 #overlay li p { margin: 0; }
 

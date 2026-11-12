@@ -205,11 +205,12 @@ describe("a generated starter", () => {
     }
   });
 
-  test("marks every page with its kind", async () => {
+  test("marks every page with its kind and the layout of blyss.config.js", async () => {
     const kinds = { "en/index.html": "home", "de/about/index.html": "page", "en/posts/hello-world/index.html": "post",
       "de/posts/index.html": "list", "en/tags/blyss/index.html": "list", "de/404.html": "not-found" };
     for (const [path, kind] of Object.entries(kinds)) {
-      assert.ok((await readFile(join(site, "public", path), "utf8")).includes(`<body data-kind="${kind}">`), path);
+      const html = await readFile(join(site, "public", path), "utf8");
+      assert.ok(html.includes(`<body data-kind="${kind}" data-align="left" style="--site-margin: 2vmin">`), path);
     }
   });
 
@@ -389,8 +390,67 @@ describe("a site without templates/home.html", () => {
     const result = run(["build"], site);
     assert.equal(result.status, 0, result.stderr);
     const html = await readFile(join(site, "public", "en", "index.html"), "utf8");
-    assert.ok(html.includes('<body data-kind="home">'));
+    assert.ok(html.includes('<body data-kind="home" '));
     assert.match(html, /<main>\s*<article>\s*<header>\s*<h1>Blyss<\/h1>\s*<\/header>\s*<h3>Blyss about or description<\/h3>/);
+  });
+});
+
+describe("a site with its own layout and slider", () => {
+  let site;
+  let configFile;
+  const page = path => readFile(join(site, "public", path), "utf8");
+  const slider = async path => {
+    const html = await page(path);
+    return html.slice(html.indexOf('<div class="slider">'), html.indexOf("<p>", html.indexOf('<div class="slider">')));
+  };
+  const settings = config => config.slice(config.indexOf("  layout: {"), config.indexOf("  directories: {"));
+
+  before(async () => {
+    site = join(sandbox, "custom-layout");
+    assert.equal(run(["init", site], sandbox).status, 0);
+    configFile = join(site, "blyss.config.js");
+    const config = await readFile(configFile, "utf8");
+    await writeFile(configFile, config.replace(settings(config), `  layout: { margin: "3rem", align: "center" },
+  slider: {
+    start: -10,
+    end: 30,
+    steps: [
+      { value: 30, description: { en: "Hot", de: "Heiß" } },
+      { value: -10, description: { en: "Cold & <icy>", de: "Kalt" } },
+      { value: 0, description: { en: "Frost", de: "Frost" } }
+    ]
+  },
+`));
+    const result = run(["build"], site);
+    assert.equal(result.status, 0, result.stderr);
+  });
+
+  test("applies layout.margin and layout.align to every page", async () => {
+    for (const path of ["en/index.html", "de/posts/index.html", "en/posts/hello-world/index.html", "404.html"]) {
+      assert.match(await page(path), /<body data-kind="[\w-]+" data-align="center" style="--site-margin: 3rem">/, path);
+    }
+  });
+
+  test("runs the slider from start to end, starting halfway, with its steps sorted and described in each language", async () => {
+    const steps = (cold, frost, hot) => '<output for="overlay-slider" aria-hidden="true">10</output>\n' +
+      '        <input id="overlay-slider" type="range" min="-10" max="30" value="10">\n<ol>\n' +
+      `  <li style="--position: 0%"><data value="-10">-10</data> ${cold}</li>\n` +
+      `  <li style="--position: 25%" aria-current="step"><data value="0">0</data> ${frost}</li>\n` +
+      `  <li style="--position: 100%"><data value="30">30</data> ${hot}</li>\n</ol>`;
+    assert.ok((await slider("en/index.html")).includes(steps("Cold &amp; &lt;icy&gt;", "Frost", "Hot")));
+    assert.ok((await slider("de/about/index.html")).includes(steps("Kalt", "Frost", "Heiß")));
+    assert.ok((await slider("de/index.html")).includes('<h3><label for="overlay-slider">Schieberegler</label></h3>'));
+  });
+
+  test("falls back to a left-aligned layout and a slider from 0 to 100 without steps, and accepts a margin of 0", async () => {
+    const config = await readFile(configFile, "utf8");
+    await writeFile(configFile, config.replace(settings(config), "  layout: { margin: 0 },\n"));
+    const result = run(["build"], site);
+    assert.equal(result.status, 0, result.stderr);
+    assert.ok((await page("en/index.html")).includes('<body data-kind="home" data-align="left" style="--site-margin: 0px">'));
+    const fallback = await slider("en/index.html");
+    assert.ok(fallback.includes('<input id="overlay-slider" type="range" min="0" max="100" value="50">'));
+    assert.doesNotMatch(fallback, /<ol>/);
   });
 });
 
@@ -470,6 +530,26 @@ describe("invalid configuration", () => {
         const result = run(["build"], site);
         assert.equal(result.status, 1, value);
         assert.equal(result.stderr, `Cannot use pagination.pageSize ${value}: it must be a whole number greater than 0.\n`);
+        assert.ok((await stat(join(site, "public", "en", "index.html"))).isFile());
+      });
+    }
+  });
+
+  test("refuses a layout or slider setting that the templates cannot use", async () => {
+    for (const [search, replacement, message] of [
+      ['margin: "2vmin"', 'margin: "2em"', 'layout.margin "2em": it must be a CSS length in px, rem, vw, vh, vmin or vmax, such as "2vmin"'],
+      ['margin: "2vmin"', 'margin: "2vmin; color: red"',
+        'layout.margin "2vmin; color: red": it must be a CSS length in px, rem, vw, vh, vmin or vmax, such as "2vmin"'],
+      ['align: "left"', 'align: "right"', 'layout.align "right": it must be "left" or "center"'],
+      ["start: 1,", "start: 1.5,", "slider.start 1.5: it must be a whole number"],
+      ["end: 1000", "end: 1", "slider.end 1: it must be a whole number greater than slider.start (1)"],
+      ["value: 250,", "value: 1001,", "slider.steps[1].value 1001: it must be a whole number from 1 to 1000"],
+      ['de: "Viertel"', 'fr: "Quart"', 'slider.steps[1].description: it needs a text for the language "de"']
+    ]) {
+      await withConfig(search, replacement, async () => {
+        const result = run(["build"], site);
+        assert.equal(result.status, 1, replacement);
+        assert.equal(result.stderr, `Cannot use ${message}.\n`);
         assert.ok((await stat(join(site, "public", "en", "index.html"))).isFile());
       });
     }

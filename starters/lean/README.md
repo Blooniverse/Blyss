@@ -18,7 +18,7 @@ npm start       # serve public/ on http://localhost:3000
 | `content/de/pages/`, `content/de/posts/` | German Markdown pages and posts |
 | `templates/` | HTML templates: `document.html`, `home.html`, `page.html`, `post.html` |
 | `static/` | Static files such as `static/assets/css/main.css`, `static/assets/img/logo.svg`, `static/assets/js/overlay.js`, `static/robots.txt` and `static/staticwebapp.config.json`, copied unchanged into `public/` |
-| `blyss.config.js` | Site, language, pagination and directory configuration |
+| `blyss.config.js` | Site, language, pagination, layout, slider and directory configuration |
 | `public/` | Generated website — do not edit |
 
 ## Content
@@ -47,6 +47,15 @@ tags: [Blyss, Markdown]
 - `pages/404.md` is the “not found” page. It is published at `/<language>/404.html`; the default language's page, English, is also published as `/404.html`, which `npm start` and most static hosts show for every missing URL. Because it appears at any URL, link from it with absolute paths such as `/en/`.
 - Keep `index.md` and `about.md` in both languages without a different slug: the navigation in `templates/document.html` links to `/<language>/` and `/<language>/about/`.
 
+## Layout
+
+`layout` in `blyss.config.js` sets the space around the content and its alignment on every page:
+
+- `margin` is the space between the coloured frame and the content on every side: a CSS length in `px`, `rem`, `vw`, `vh`, `vmin` or `vmax`, such as `"2vmin"` (the default) or `"2rem"`. The top bar spans the side margins.
+- `align` is `"left"` (the default) or `"center"`, which centers everything below the top bar: the text column, headings, paragraphs, lists and the overlay. Code blocks stay left-aligned.
+
+`templates/document.html` passes both to `static/assets/css/main.css` through `<body data-align="…" style="--site-margin: …">`.
+
 ## Top bar
 
 `templates/document.html` starts every page with a bar that stays at the top of the window while the page scrolls. It holds the logo, the navigation, a search field and the language switcher.
@@ -61,7 +70,8 @@ tags: [Blyss, Markdown]
 
 - On the home pages, the overlay is open and serves as the hero. On screens of at least 1024×640 pixels, it stays in place below the top bar while the page slides up over it and fades it out. With reduced motion, on smaller screens and in browsers without scroll-driven animations, it is a static block above the page.
 - On every other page, it is collapsed into a bar at the bottom of the window. Its button opens the overlay as a panel; the Close button, the Escape key or a click outside closes it again. The browser's [Popover API](https://developer.mozilla.org/docs/Web/API/Popover_API) does this without JavaScript.
-- `static/assets/js/overlay.js` shows the slider's value next to it. When keyboard focus enters the hero, it also scrolls back to the top, so that the page cannot cover the focused element.
+- The slider is centered below its name, a third-level heading, with its value above it and its description below it. `slider` in `blyss.config.js` sets its whole-number `start` and `end` and its `steps`: each step has a `value` from `start` to `end` and a `description` in every language, and both appear below the slider at that value. The starter defines four steps; change, add or remove them as you like. The slider starts halfway between `start` and `end`.
+- `static/assets/js/overlay.js` shows the slider's value above it and highlights the last step it has reached. When keyboard focus enters the hero, it also scrolls back to the top, so that the page cannot cover the focused element.
 - The labels `overlay`, `close`, `slider`, `sliderDescription` and `recentContent` in `blyss.config.js` hold its texts. Templates can use every label as `{{<key>Label}}`, such as `{{sliderLabel}}`.
 - `templates/document.html` sets `<body data-kind="…">` to `home`, `page`, `post`, `list` or `not-found`; `static/assets/css/main.css` uses it to style the overlay per kind of page.
 

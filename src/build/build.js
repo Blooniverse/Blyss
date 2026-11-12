@@ -5,6 +5,7 @@ import { BlyssError } from "../errors.js";
 import { createListRecords, parseTags } from "./lists.js";
 import { resolvePaths } from "./paths.js";
 import { parseFrontMatter, renderRecord } from "./render.js";
+import { layoutOf, sliderOf } from "./settings.js";
 import { renderSitemap } from "./sitemap.js";
 import { indexTranslations } from "./translations.js";
 
@@ -74,6 +75,8 @@ export async function build(projectDir, configPath = './blyss.config.js') {
   const config = await loadConfig(projectDir, configPath);
   const { contentDirectory, publicDirectory, staticDirectory, templatesDirectory } = resolvePaths(projectDir, config);
   const locate = createLocator(config, publicDirectory);
+  const layout = layoutOf(config);
+  const slider = sliderOf(config);
 
   // Content is read and validated before the previous output is deleted.
   const readTemplate = name => readFile(join(templatesDirectory, name), 'utf8');
@@ -98,7 +101,7 @@ export async function build(projectDir, configPath = './blyss.config.js') {
   await cp(staticDirectory, publicDirectory, { recursive: true, force: true });
 
   for (const record of records) {
-    const html = renderRecord({ record, templates, translationIndex, site: config.site, records: content });
+    const html = renderRecord({ record, templates, translationIndex, site: config.site, records: content, layout, slider });
     await mkdir(join(record.outputFile, '..'), { recursive: true });
     await writeFile(record.outputFile, html, 'utf8');
     console.log(`Built ${record.url}`);
