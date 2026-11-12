@@ -87,6 +87,18 @@ function renderRecentContent(record, records) {
   return items.length ? `<ul>\n${items.join("\n")}\n</ul>` : "";
 }
 
+// Each step is placed at its value along the slider; the last step that the initial value reaches is current.
+function renderSliderSteps(slider, languageKey) {
+  const reached = slider.steps.findLast(step => step.value <= slider.value);
+  const items = slider.steps.map(step => {
+    const position = +((step.value - slider.start) / (slider.end - slider.start) * 100).toFixed(2);
+    const current = step === reached ? ' aria-current="step"' : "";
+    return `  <li style="--position: ${position}%"${current}><data value="${step.value}">${step.value}</data> ` +
+      `${escapeHtml(step.description[languageKey])}</li>`;
+  });
+  return items.length ? `<ol>\n${items.join("\n")}\n</ol>` : "";
+}
+
 // "home" is the index page of a language; templates can style each kind, e.g. with <body data-kind="{{kind}}">.
 function kindOf(record) {
   if (record.notFound) return "not-found";
@@ -99,7 +111,7 @@ function renderTags(record) {
   return `    <p>${escapeHtml(record.languageConfig.labels.tags || "Tags")}: ${links.join(", ")}</p>`;
 }
 
-export function renderRecord({ record, templates, translationIndex, site, records = [] }) {
+export function renderRecord({ record, templates, translationIndex, site, records = [], layout, slider }) {
   const metadata = record.metadata;
   const title = metadata.title || site.name;
   const description = metadata.description || record.languageConfig.description;
@@ -129,6 +141,12 @@ export function renderRecord({ record, templates, translationIndex, site, record
     kind,
     languageSwitcher: renderLanguageSwitcher(record, translationIndex, site),
     recentContent: renderRecentContent(record, records),
+    layoutMargin: escapeHtml(layout.margin),
+    layoutAlign: layout.align,
+    sliderStart: String(slider.start),
+    sliderEnd: String(slider.end),
+    sliderValue: String(slider.value),
+    sliderSteps: renderSliderSteps(slider, record.languageKey),
     content
   });
 }

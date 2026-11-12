@@ -72,6 +72,16 @@
 - **Labels**: every label of a language is available in templates as
   `{{<key>Label}}`, such as `{{sliderLabel}}`; previously only six labels
   were.
+- **Layout**: `layout.margin` sets the space around the content and
+  `layout.align: "center"` centers it. Templates receive them as
+  `{{layoutMargin}}` and `{{layoutAlign}}`; the defaults are `"2vmin"` and
+  `"left"`.
+- **Slider**: `slider.start`, `slider.end` and `slider.steps` set the
+  whole-number range of a slider and the steps marked on it, each with a
+  description in every language. Templates receive `{{sliderStart}}`,
+  `{{sliderEnd}}`, `{{sliderValue}}` (halfway between them) and
+  `{{sliderSteps}}`. Invalid layout and slider settings stop the build
+  before the previous output is deleted.
 
 ### Changes
 
@@ -96,6 +106,14 @@
   every page. It shows a placeholder logo, `static/assets/img/logo.svg`, next
   to the navigation and a search field without a function yet, whose text is
   the new label `search`.
+- **Starter slider**: the overlay's slider is centered below its name, now an
+  `<h3>`, with its value above it and its description below it. It runs from
+  1 to 1000 with four described steps, all set in `blyss.config.js`, and
+  `overlay.js` highlights the last step reached.
+- **Starter layout**: `blyss.config.js` sets `layout: { margin: "2vmin",
+  align: "left" }`. The margin now applies on every side, replacing the fixed
+  `3vmin` at the top and `1.5vmin` and `2vmin` at the sides, and
+  `align: "center"` centers everything below the top bar.
 - **Build**: content is read and validated before the previous output is
   deleted, and files are processed in sorted order for reproducible output.
   Two content files with the same URL stop the build with an error instead of
@@ -105,7 +123,8 @@
   ordered by `datePublished`; the archive, tags, sitemap, JSON-LD escaping and
   build errors are covered too, as are pagination, not-found pages, the Azure
   configuration, refused output directories, the home template and its
-  fallback, page kinds and the teasers of `{{recentContent}}`.
+  fallback, page kinds, the teasers of `{{recentContent}}` and the layout and
+  slider settings.
 
 ### Fixes
 

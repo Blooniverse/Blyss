@@ -14,7 +14,7 @@
   <script type="module" src="/assets/js/overlay.js"></script>
 {{jsonLd}}
 </head>
-<body data-kind="{{kind}}">
+<body data-kind="{{kind}}" data-align="{{layoutAlign}}" style="--site-margin: {{layoutMargin}}">
   <div class="site-bar">
     <a class="logo" href="/{{languageKey}}/"><img src="/assets/img/logo.svg" alt="Blyss" width="93" height="32"></a>
     <nav aria-label="{{mainNavigationLabel}}">
@@ -32,12 +32,13 @@
     <button class="overlay-toggle" type="button" popovertarget="overlay">{{overlayLabel}} <span aria-hidden="true">⤒</span></button>
     <div id="overlay" popover>
       <button class="overlay-toggle" type="button" popovertarget="overlay" popovertargetaction="hide">{{closeLabel}} <span aria-hidden="true">⤓</span></button>
-      <p class="slider">
-        <label for="overlay-slider">{{sliderLabel}}</label>
-        <input id="overlay-slider" type="range" min="1" max="1000" value="500">
-        <output for="overlay-slider" aria-hidden="true">500</output>
-      </p>
-      <p>{{sliderDescriptionLabel}}</p>
+      <div class="slider">
+        <h3><label for="overlay-slider">{{sliderLabel}}</label></h3>
+        <output for="overlay-slider" aria-hidden="true">{{sliderValue}}</output>
+        <input id="overlay-slider" type="range" min="{{sliderStart}}" max="{{sliderEnd}}" value="{{sliderValue}}">
+{{sliderSteps}}
+        <p>{{sliderDescriptionLabel}}</p>
+      </div>
       <h3>{{recentContentLabel}}</h3>
 {{recentContent}}
     </div>
