@@ -16,9 +16,10 @@ npm start       # serve public/ on http://localhost:3000
 | --- | --- |
 | `content/en/pages/`, `content/en/posts/` | English Markdown pages and posts |
 | `content/de/pages/`, `content/de/posts/` | German Markdown pages and posts |
+| `content/en/hero.md`, `content/en/heroComponentSlider.md` and the same in `content/de/` | The texts of the hero and its slider (see [Overlay](#overlay)) |
 | `templates/` | HTML templates: `document.html`, `home.html`, `page.html`, `post.html` |
 | `static/` | Static files such as `static/assets/css/main.css`, `static/assets/img/logo.svg`, `static/assets/js/overlay.js`, `static/robots.txt` and `static/staticwebapp.config.json`, copied unchanged into `public/` |
-| `blyss.config.js` | Site, language, pagination, layout, slider and directory configuration |
+| `blyss.config.js` | Site, language, pagination, layout, hero component and directory configuration |
 | `public/` | Generated website — do not edit |
 
 ## Content
@@ -44,6 +45,7 @@ tags: [Blyss, Markdown]
 - A page containing `{{recentPosts}}` lists the three newest posts of its language, ordered by `datePublished`.
 - Posts can have `tags`. Blyss generates the archive `/<language>/posts/`, the tag index `/<language>/tags/` and one page per tag, such as `/en/tags/markdown/`. Do not create content at these URLs.
 - The archive and tag pages show `pagination.pageSize` posts (10 by default, set in `blyss.config.js`). Older posts continue on `/<language>/posts/page/2/`, `/<language>/tags/<tag>/page/2/` and so on, linked by “Newer posts” and “Older posts”.
+- Markdown files directly in `content/<language>/`, such as `hero.md`, are fragments: Blyss publishes no page for them, but `templates/document.html` shows them on every page of their language as `{{<name>Title}}`, the `title` of their front matter, and `{{<name>Content}}`, their text, such as `{{heroTitle}}` and `{{heroContent}}`. Their file names must start with a Latin letter and contain only Latin letters and digits.
 - `pages/404.md` is the “not found” page. It is published at `/<language>/404.html`; the default language's page, English, is also published as `/404.html`, which `npm start` and most static hosts show for every missing URL. Because it appears at any URL, link from it with absolute paths such as `/en/`.
 - Keep `index.md` and `about.md` in both languages without a different slug: the navigation in `templates/document.html` links to `/<language>/` and `/<language>/about/`.
 
@@ -66,13 +68,14 @@ tags: [Blyss, Markdown]
 
 ## Overlay
 
-`templates/document.html` contains an overlay with a slider, a short description and the three newest posts of the language, each with a teaser of up to 80 words.
+`templates/document.html` contains an overlay with the hero component, so far a slider, and the texts of `content/<language>/hero.md`.
 
-- On the home pages, the overlay is open and serves as the hero. On screens of at least 1024×640 pixels, it stays in place below the top bar while the page slides up over it and fades it out. With reduced motion, on smaller screens and in browsers without scroll-driven animations, it is a static block above the page.
+- On the home pages, the overlay is open and serves as the hero below the page, which starts with the site's title and slogan, centered. On screens of at least 1024×640 pixels, the page stops below the top bar, or once its end is in view if it is taller than the window, while the hero slides up over it and fades it out. Keyboard focus in the page turns this effect off, so that the hero never covers the focused element. With reduced motion, on smaller screens and in browsers without scroll-driven animations, the hero is a static block below the page.
 - On every other page, it is collapsed into a bar at the bottom of the window. Its button opens the overlay as a panel; the Close button, the Escape key or a click outside closes it again. The browser's [Popover API](https://developer.mozilla.org/docs/Web/API/Popover_API) does this without JavaScript.
-- The slider is centered below its name, a third-level heading, with its value above it and its description below it. `slider` in `blyss.config.js` sets its whole-number `start` and `end` and its `steps`: each step has a `value` from `start` to `end` and a `description` in every language, and both appear below the slider at that value. The starter defines four steps; change, add or remove them as you like. The slider starts halfway between `start` and `end`.
-- `static/assets/js/overlay.js` shows the slider's value above it and highlights the last step it has reached. When keyboard focus enters the hero, it also scrolls back to the top, so that the page cannot cover the focused element.
-- The labels `overlay`, `close`, `slider`, `sliderDescription` and `recentContent` in `blyss.config.js` hold its texts. Templates can use every label as `{{<key>Label}}`, such as `{{sliderLabel}}`.
+- `content/<language>/hero.md` holds the hero's texts: its `title` is their heading, and each `###` heading starts a text that runs up to the next one. The hero shows up to seven texts in full length, side by side in as many columns as fit. Blyss refuses more than seven and any content before the first `###` heading, except comments. The starter has three texts in each language.
+- The hero component is the interactive part of the overlay. Its variant, the slider, is centered below its heading, with its value above it and its steps and text below it; the `title` and text of `content/<language>/heroComponentSlider.md` are its heading and text. `heroComponent.slider` in `blyss.config.js` sets its whole-number `start` and `end` and its `steps`: each step has a `value` from `start` to `end` and a `description` in every language, and both appear below the slider at that value. The starter defines four steps; change, add or remove them as you like. The slider starts halfway between `start` and `end`.
+- `static/assets/js/overlay.js` shows the slider's value above it and highlights the last step it has reached.
+- The labels `overlay` and `close` in `blyss.config.js` hold the texts of the overlay's buttons. Templates can use every label as `{{<key>Label}}`, such as `{{overlayLabel}}`.
 - `templates/document.html` sets `<body data-kind="…">` to `home`, `page`, `post`, `list` or `not-found`; `static/assets/css/main.css` uses it to style the overlay per kind of page.
 
 ## Fonts

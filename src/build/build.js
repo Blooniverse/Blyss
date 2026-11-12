@@ -3,9 +3,10 @@ import { basename, extname, join, relative, sep } from "node:path";
 import { loadConfig } from "../config.js";
 import { BlyssError } from "../errors.js";
 import { createListRecords, parseTags } from "./lists.js";
+import { renderFragments } from "./fragments.js";
 import { resolvePaths } from "./paths.js";
 import { parseFrontMatter, renderRecord } from "./render.js";
-import { layoutOf, sliderOf } from "./settings.js";
+import { heroComponentOf, layoutOf } from "./settings.js";
 import { renderSitemap } from "./sitemap.js";
 import { indexTranslations } from "./translations.js";
 
@@ -39,10 +40,13 @@ async function discoverContent(projectDir, config, contentDirectory, locate) {
     const [languageKey, section] = parts;
     const languageConfig = config.site.languages[languageKey];
     if (!languageConfig) throw new Error(`Unknown language directory: ${languageKey}`);
-    if (!['pages', 'posts'].includes(section)) throw new Error(`Unknown content section: ${section}`);
+    // Files directly in content/<language>/, such as hero.md, are fragments for templates (see fragments.js).
+    const fragment = parts.length === 2;
+    if (!fragment && !['pages', 'posts'].includes(section)) throw new Error(`Unknown content section: ${section}`);
     const { metadata, markdown } = parseFrontMatter(await readFile(sourceFile, "utf8"));
-    const type = section === 'posts' ? 'post' : 'page';
     const filename = basename(sourceFile, '.md');
+    if (fragment) return { sourceFile, languageKey, type: 'fragment', name: filename, metadata, markdown };
+    const type = section === 'posts' ? 'post' : 'page';
     const nested = parts.slice(2, -1);
     const tags = type === 'post' ? parseTags(metadata.tags, languageKey, relative(projectDir, sourceFile)) : [];
     // pages/404.md becomes /<language>/404.html, the file name static hosts expect for "not found" pages.
@@ -76,11 +80,11 @@ export async function build(projectDir, configPath = './blyss.config.js') {
   const { contentDirectory, publicDirectory, staticDirectory, templatesDirectory } = resolvePaths(projectDir, config);
   const locate = createLocator(config, publicDirectory);
   const layout = layoutOf(config);
-  const slider = sliderOf(config);
+  const heroComponent = heroComponentOf(config);
 
   // Content is read and validated before the previous output is deleted.
   const readTemplate = name => readFile(join(templatesDirectory, name), 'utf8');
-  const [content, document, page, post, home] = await Promise.all([
+  const [discovered, document, page, post, home] = await Promise.all([
     discoverContent(projectDir, config, contentDirectory, locate),
     readTemplate('document.html'),
     readTemplate('page.html'),
@@ -91,6 +95,8 @@ export async function build(projectDir, configPath = './blyss.config.js') {
       throw error;
     })
   ]);
+  const content = discovered.filter(record => record.type !== 'fragment');
+  const fragments = renderFragments(projectDir, discovered.filter(record => record.type === 'fragment'));
   const records = [...content, ...createListRecords(config, content, locate)];
   assertUniqueUrls(projectDir, records);
   const templates = { document, page, post, home };
@@ -101,7 +107,10 @@ export async function build(projectDir, configPath = './blyss.config.js') {
   await cp(staticDirectory, publicDirectory, { recursive: true, force: true });
 
   for (const record of records) {
-    const html = renderRecord({ record, templates, translationIndex, site: config.site, records: content, layout, slider });
+    const html = renderRecord({
+      record, templates, translationIndex, site: config.site, records: content, layout, heroComponent,
+      fragments: fragments.get(record.languageKey)
+    });
     await mkdir(join(record.outputFile, '..'), { recursive: true });
     await writeFile(record.outputFile, html, 'utf8');
     console.log(`Built ${record.url}`);

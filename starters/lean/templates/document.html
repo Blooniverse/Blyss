@@ -28,24 +28,26 @@
     <search><input type="search" aria-label="{{searchLabel}}" placeholder="{{searchLabel}}"></search>
     {{languageSwitcher}}
   </div>
+  <div class="page">
+{{content}}
+  </div>
   <aside class="overlay" aria-label="{{overlayLabel}}">
     <button class="overlay-toggle" type="button" popovertarget="overlay">{{overlayLabel}} <span aria-hidden="true">⤒</span></button>
     <div id="overlay" popover>
       <button class="overlay-toggle" type="button" popovertarget="overlay" popovertargetaction="hide">{{closeLabel}} <span aria-hidden="true">⤓</span></button>
-      <div class="slider">
-        <h3><label for="overlay-slider">{{sliderLabel}}</label></h3>
-        <output for="overlay-slider" aria-hidden="true">{{sliderValue}}</output>
-        <input id="overlay-slider" type="range" min="{{sliderStart}}" max="{{sliderEnd}}" value="{{sliderValue}}">
-{{sliderSteps}}
-        <p>{{sliderDescriptionLabel}}</p>
+      <div class="hero-component hero-component-slider">
+        <h2><label for="hero-component-slider-input">{{heroComponentSliderTitle}}</label></h2>
+        <output for="hero-component-slider-input" aria-hidden="true">{{heroComponentSliderValue}}</output>
+        <input id="hero-component-slider-input" type="range" min="{{heroComponentSliderStart}}" max="{{heroComponentSliderEnd}}" value="{{heroComponentSliderValue}}">
+{{heroComponentSliderSteps}}
+{{heroComponentSliderContent}}
       </div>
-      <h3>{{recentContentLabel}}</h3>
-{{recentContent}}
+      <h2>{{heroTitle}}</h2>
+      <div class="hero-texts">
+{{heroTexts}}
+      </div>
     </div>
   </aside>
-  <div class="page">
-{{content}}
-    <footer><small>{{generatedByLabel}}</small></footer>
-  </div>
+  <footer><small>{{generatedByLabel}}</small></footer>
 </body>
 </html>

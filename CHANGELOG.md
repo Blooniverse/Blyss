@@ -66,22 +66,29 @@
   receive `{{description}}`.
 - **Page kinds**: `{{kind}}` in `document.html` is `home`, `page`, `post`,
   `list` or `not-found`, for example for `<body data-kind="{{kind}}">`.
-- **Recent content**: `{{recentContent}}` in `document.html` lists the three
-  newest posts of the language, each with its title and a plain-text teaser of
-  up to 80 words.
+- **Fragments**: each Markdown file directly in `content/<language>/`, such
+  as `hero.md`, is not published as a page; instead, `document.html` shows it
+  on every page of its language as `{{<name>Title}}`, the `title` of its
+  front matter, and `{{<name>Content}}`. Its name must consist of Latin
+  letters and digits and start with a letter.
+- **Hero texts**: `{{heroTexts}}` splits `hero.md` at its `###` headings into
+  at most seven texts, each a `<div>` in full length. More texts or content
+  before the first `###` heading stop the build before the previous output
+  is deleted.
 - **Labels**: every label of a language is available in templates as
-  `{{<key>Label}}`, such as `{{sliderLabel}}`; previously only six labels
+  `{{<key>Label}}`, such as `{{overlayLabel}}`; previously only six labels
   were.
 - **Layout**: `layout.margin` sets the space around the content and
   `layout.align: "center"` centers it. Templates receive them as
   `{{layoutMargin}}` and `{{layoutAlign}}`; the defaults are `"2vmin"` and
   `"left"`.
-- **Slider**: `slider.start`, `slider.end` and `slider.steps` set the
-  whole-number range of a slider and the steps marked on it, each with a
-  description in every language. Templates receive `{{sliderStart}}`,
-  `{{sliderEnd}}`, `{{sliderValue}}` (halfway between them) and
-  `{{sliderSteps}}`. Invalid layout and slider settings stop the build
-  before the previous output is deleted.
+- **Hero component**: `heroComponent.slider` sets the whole-number `start`
+  and `end` of a slider, the hero component's first variant, and the `steps`
+  marked on it, each with a description in every language. Templates receive
+  `{{heroComponentSliderStart}}`, `{{heroComponentSliderEnd}}`,
+  `{{heroComponentSliderValue}}` (halfway between them) and
+  `{{heroComponentSliderSteps}}`. Invalid layout and hero component settings
+  stop the build before the previous output is deleted.
 
 ### Changes
 
@@ -95,20 +102,21 @@
   `static/staticwebapp.config.json`, pagination labels and
   `pagination: { pageSize: 10 }`.
 - **Starter design**: a new stylesheet modelled on philippschaffner.ch, with
-  the font Titillium Web from Google Fonts and a `70ch` text column. An
-  overlay with a slider, a description and the three newest
-  posts opens as the hero of the home pages and fades out while the page
-  scrolls over it; elsewhere it collapses into a bar that opens it as a
-  panel. The home pages show the site's title and slogan in a header, and
-  each language has two more sample posts. `<main>` moved from
-  `document.html` into the content templates.
+  the font Titillium Web from Google Fonts and a `70ch` text column. The home
+  pages start with the site's title and slogan, centered. Below the page
+  follows the hero, an overlay with a slider and the texts of `hero.md`,
+  which slides up over the page on large screens and fades it out; elsewhere
+  the overlay collapses into a bar that opens it as a panel. Each language
+  has two more sample posts. `<main>` moved from `document.html` into the
+  content templates, and the footer follows the overlay.
 - **Top bar**: the starter's navigation bar stays at the top of the window on
   every page. It shows a placeholder logo, `static/assets/img/logo.svg`, next
   to the navigation and a search field without a function yet, whose text is
   the new label `search`.
-- **Starter slider**: the overlay's slider is centered below its name, now an
-  `<h3>`, with its value above it and its description below it. It runs from
-  1 to 1000 with four described steps, all set in `blyss.config.js`, and
+- **Starter slider**: the overlay's slider is centered below its heading, an
+  `<h2>` with the `title` of `heroComponentSlider.md`, with its value above
+  it and its steps and the text of `heroComponentSlider.md` below it. It runs
+  from 1 to 1000 with four described steps, all set in `blyss.config.js`, and
   `overlay.js` highlights the last step reached.
 - **Starter layout**: `blyss.config.js` sets `layout: { margin: "2vmin",
   align: "left" }`. The margin now applies on every side, replacing the fixed
@@ -123,8 +131,8 @@
   ordered by `datePublished`; the archive, tags, sitemap, JSON-LD escaping and
   build errors are covered too, as are pagination, not-found pages, the Azure
   configuration, refused output directories, the home template and its
-  fallback, page kinds, the teasers of `{{recentContent}}` and the layout and
-  slider settings.
+  fallback, page kinds, the hero texts, fragments and the layout and hero
+  component settings.
 
 ### Fixes
 
