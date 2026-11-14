@@ -29,8 +29,18 @@ export function parseFrontMatter(source) {
   return { metadata, markdown: normalized.slice(end + 5) };
 }
 
+// A value can be a function, which is called for each of its placeholders.
 export function applyTemplate(template, values) {
-  return template.replace(/{{([a-zA-Z][a-zA-Z0-9]*)}}/g, (_, key) => values[key] ?? "");
+  return template.replace(/{{([a-zA-Z][a-zA-Z0-9]*)}}/g, (_, key) => {
+    const value = Object.hasOwn(values, key) ? values[key] : undefined;
+    return (typeof value === "function" ? value() : value) ?? "";
+  });
+}
+
+// Every label of a language is available as {{<key>Label}}, such as {{postsLabel}}.
+export function labelValues(labels = {}) {
+  return Object.fromEntries(Object.entries({ ...labels, posts: labels.posts || "Posts", tags: labels.tags || "Tags" })
+    .map(([key, value]) => [`${key}Label`, escapeHtml(value)]));
 }
 
 const compare = (left, right) => (left < right ? -1 : left > right ? 1 : 0);
@@ -54,21 +64,15 @@ export function renderRecentPosts(record, records) {
   return `\n<section aria-label="${escapeHtml(record.languageConfig.labels.recentPosts || "Recent posts")}">\n  <h2>${escapeHtml(record.languageConfig.labels.recentPosts || "Recent posts")}</h2>\n  <ul>\n${listItems}\n  </ul>\n</section>\n`;
 }
 
-function renderBody(record, records) {
+// A paragraph that consists of {{<name>}} alone shows the component of that name; code keeps the placeholder as text.
+function renderBody(record, records, components) {
   if (record.type === "list") return record.html;
-  return marked.parse(record.markdown.replace(/{{recentPosts}}/g, renderRecentPosts(record, records)));
-}
-
-// Each step is placed at its value along the slider; the last step that the initial value reaches is current.
-function renderSliderSteps(slider, languageKey) {
-  const reached = slider.steps.findLast(step => step.value <= slider.value);
-  const items = slider.steps.map(step => {
-    const position = +((step.value - slider.start) / (slider.end - slider.start) * 100).toFixed(2);
-    const current = step === reached ? ' aria-current="step"' : "";
-    return `  <li style="--position: ${position}%"${current}><data value="${step.value}">${step.value}</data> ` +
-      `${escapeHtml(step.description[languageKey])}</li>`;
-  });
-  return items.length ? `<ol>\n${items.join("\n")}\n</ol>` : "";
+  const tokens = marked.lexer(record.markdown.replace(/{{recentPosts}}/g, renderRecentPosts(record, records)));
+  for (const [index, token] of tokens.entries()) {
+    const name = token.type === "paragraph" && /^{{([a-zA-Z][a-zA-Z0-9]*)}}$/.exec(token.text.trim())?.[1];
+    if (name && Object.hasOwn(components, name)) tokens[index] = { type: "html", block: true, raw: token.raw, text: components[name]() };
+  }
+  return marked.parser(tokens);
 }
 
 // "home" is the index page of a language; templates can style each kind, e.g. with <body data-kind="{{kind}}">.
@@ -83,7 +87,8 @@ function renderTags(record) {
   return `    <p>${escapeHtml(record.languageConfig.labels.tags || "Tags")}: ${links.join(", ")}</p>`;
 }
 
-export function renderRecord({ record, templates, translationIndex, site, records = [], layout, heroComponent, fragments = {} }) {
+// components holds a function for each component of the website, which renders it in the language of the record.
+export function renderRecord({ record, templates, translationIndex, site, records = [], layout, fragments = {}, components = {} }) {
   const metadata = record.metadata;
   const title = metadata.title || site.name;
   const description = metadata.description || record.languageConfig.description;
@@ -94,18 +99,18 @@ export function renderRecord({ record, templates, translationIndex, site, record
   // Without a home.html template, home pages use page.html.
   const innerTemplate = record.type === "post" ? templates.post : (home && templates.home) || templates.page;
   const content = applyTemplate(innerTemplate, {
-    title: escapeHtml(title), description: escapeHtml(description), dateBlock, tags: renderTags(record), content: renderBody(record, records)
+    ...components,
+    title: escapeHtml(title), description: escapeHtml(description), dateBlock, tags: renderTags(record),
+    content: renderBody(record, records, components)
   });
   const pageTitle = title === site.name ? title : `${title} | ${site.name}`;
-  // Every label of the language is available as {{<key>Label}}, such as {{postsLabel}}.
-  const { labels } = record.languageConfig;
-  const labelValues = Object.entries({ ...labels, posts: labels.posts || "Posts", tags: labels.tags || "Tags" })
-    .map(([key, value]) => [`${key}Label`, escapeHtml(value)]);
 
-  // The fragments of the language, such as {{heroTitle}}, cannot replace the labels or the placeholders below.
+  // The components and the fragments of the language, such as {{heroTitle}}, cannot replace the labels or the
+  // placeholders below.
   return applyTemplate(templates.document, {
+    ...components,
     ...fragments,
-    ...Object.fromEntries(labelValues),
+    ...labelValues(record.languageConfig.labels),
     locale: escapeHtml(record.languageConfig.locale),
     pageTitle: escapeHtml(pageTitle),
     description: escapeHtml(description),
@@ -116,12 +121,9 @@ export function renderRecord({ record, templates, translationIndex, site, record
     kind,
     languageSwitcher: renderLanguageSwitcher(record, translationIndex, site),
     layoutMargin: escapeHtml(layout.margin),
+    layoutPaddingHero: escapeHtml(layout.paddingHero),
     layoutAlign: home ? layout.alignHome : layout.alignOther,
     layoutAlignHero: home ? layout.alignHeroHome : layout.alignHeroOther,
-    heroComponentSliderStart: String(heroComponent.slider.start),
-    heroComponentSliderEnd: String(heroComponent.slider.end),
-    heroComponentSliderValue: String(heroComponent.slider.value),
-    heroComponentSliderSteps: renderSliderSteps(heroComponent.slider, record.languageKey),
     content
   });
 }

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 250">
+<!-- Placeholder image of the gallery, four by five: replace it with your own. -->
+<rect width="200" height="250" fill="#0d1f26"/>
+<path fill="#a3d7f5" d="M40 228V112a60 60 0 0 1 120 0v116z"/>
+<path fill="none" stroke="#0d1f26" stroke-width="8" d="M100 52v176M40 140h120"/>
+</svg>

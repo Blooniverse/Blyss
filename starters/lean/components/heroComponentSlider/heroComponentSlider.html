@@ -1,0 +1,9 @@
+<link rel="stylesheet" href="/components/heroComponentSlider/heroComponentSlider.css">
+<script type="module" src="/components/heroComponentSlider/heroComponentSlider.js"></script>
+<hero-component-slider class="hero-component">
+  <h3><label for="{{id}}-input">{{title}}</label></h3>
+  <output for="{{id}}-input" aria-hidden="true">{{value}}</output>
+  <input id="{{id}}-input" type="range" min="{{start}}" max="{{end}}" value="{{value}}">
+{{steps}}
+{{content}}
+</hero-component-slider>

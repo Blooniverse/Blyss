@@ -10,6 +10,7 @@ function within(parent, child) {
 export function resolvePaths(projectDir, config) {
   const root = resolve(projectDir);
   const paths = {
+    componentsDirectory: resolve(root, config.directories.components ?? "components"),
     contentDirectory: resolve(root, config.directories.content),
     publicDirectory: resolve(root, config.directories.public),
     staticDirectory: resolve(root, config.directories.static),
@@ -21,7 +22,7 @@ export function resolvePaths(projectDir, config) {
   const refuse = requirement => new BlyssError(`Cannot use directories.public "${config.directories.public}": ` +
     `every build deletes it, so it must be ${requirement}.\nUse a dedicated directory such as "public".`);
   if (publicDirectory === root || !within(root, publicDirectory)) throw refuse(`a subdirectory of ${root}`);
-  for (const name of ["content", "static", "templates"]) {
+  for (const name of ["components", "content", "static", "templates"]) {
     const directory = paths[`${name}Directory`];
     if (within(publicDirectory, directory) || within(directory, publicDirectory)) throw refuse(`separate from directories.${name}`);
   }

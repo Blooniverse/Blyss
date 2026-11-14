@@ -181,8 +181,11 @@ describe("a generated starter", () => {
       .flatMap(([language, ...posts]) => ["", "about/", "posts/", ...posts.map(post => `posts/${post}/`), "tags/", "tags/blyss/",
         "tags/markdown/"].map(path => `${language}/${path}index.html`));
     const notFoundPages = ["404.html", "en/404.html", "de/404.html"];
-    assert.deepEqual(await listFiles(join(site, "public")), ["assets/css/main.css", "assets/img/logo.svg", "assets/js/overlay.js",
-      "robots.txt", "sitemap.xml", "staticwebapp.config.json", ...pages, ...notFoundPages].sort());
+    // Static files are copied as they are; components publish their files but their templates and data files.
+    const componentFiles = (await listFiles(join(starter, "components"))).filter(file => !/\.(?:html|data\.js)$/.test(file));
+    assert.deepEqual(componentFiles, ["Gallery", "Slider"].flatMap(name => ["css", "js"].map(type => `heroComponent${name}/heroComponent${name}.${type}`)));
+    assert.deepEqual(await listFiles(join(site, "public")), [...await listFiles(join(starter, "static")),
+      ...componentFiles.map(file => `components/${file}`), "sitemap.xml", ...pages, ...notFoundPages].sort());
     for (const page of [...pages, ...notFoundPages]) {
       const html = await readFile(join(site, "public", page), "utf8");
       assert.doesNotMatch(html, /{{\w+}}/, page);
@@ -200,10 +203,29 @@ describe("a generated starter", () => {
       "<header>\\s*<h1>Blyss</h1>\\s*<h2>Blyss slogan</h2>\\s*</header>\\s*<main>\\s*<article>\\s*<h3>Blyss about or description</h3>" +
       "[\\s\\S]*</main>\\s*</div>\\s*<aside class=\"overlay\"[\\s\\S]*</aside>\\s*<footer>"));
     const german = await readFile(join(site, "public", "de", "index.html"), "utf8");
-    for (const label of ['<h3><label for="hero-component-slider-input">Schieberegler</label></h3>', "<h3>Warum Blyss</h3>",
+    for (const label of ['<h3><label for="heroComponentSlider-1-input">Schieberegler</label></h3>',
+      '<h3 id="heroComponentGallery-1-title">Galerie</h3>', "<h3>Warum Blyss</h3>",
       '<input type="search" aria-label="Suchen" placeholder="Suchen">']) {
       assert.ok(german.includes(label), label);
     }
+  });
+
+  test("shows the gallery with its settings, its texts and its images, which load lazily", async () => {
+    const html = await readFile(join(site, "public", "de", "about", "index.html"), "utf8");
+    assert.ok(html.includes('<hero-component-gallery class="hero-component" role="group" aria-labelledby="heroComponentGallery-1-title" ' +
+      'style="--height-overall: 8rem; --scale-center: 1.3; --speed-scrolling: 400ms; --speed-enlargement: 300ms">'));
+    for (const label of ["Vorheriges Bild", "Nächstes Bild"]) assert.ok(html.includes(`<button type="button" aria-label="${label}">`), label);
+    const images = [...html.matchAll(/<li><img loading="lazy" src="\/(assets\/img\/gallery\/[^"]+)" alt="[^"]+"><\/li>/g)].map(match => match[1]);
+    assert.equal(images.length, 7);
+    for (const image of images) assert.ok((await stat(join(site, "public", image))).isFile(), image);
+  });
+
+  test("shows a component in a post that names it in a paragraph of its own, next to the one in the overlay", async () => {
+    const html = await readFile(join(site, "public", "en", "posts", "templates", "index.html"), "utf8");
+    const [article, overlay] = html.split('<aside class="overlay"');
+    assert.match(article, /like the slider here:<\/p>\n<link [^>]+>\n<script [^>]+><\/script>\n<hero-component-slider class="hero-component">\n {2}<h3><label for="heroComponentSlider-1-input">Slider<\/label><\/h3>/);
+    assert.ok(overlay.includes('<input id="heroComponentSlider-2-input" type="range" min="1" max="1000" value="500">'));
+    assert.equal(html.match(/ id="[^"]+"/g).length, new Set(html.match(/ id="[^"]+"/g)).size);
   });
 
   test("marks every page with its kind and the layout of blyss.config.js", async () => {
@@ -212,7 +234,7 @@ describe("a generated starter", () => {
     for (const [path, kind] of Object.entries(kinds)) {
       const html = await readFile(join(site, "public", path), "utf8");
       const align = kind === "home" ? "center" : "left";
-      assert.ok(html.includes(`<body data-kind="${kind}" data-align="${align}" data-align-hero="centerExtra" style="--site-margin: 2vmin">`), path);
+      assert.ok(html.includes(`<body data-kind="${kind}" data-align="${align}" data-align-hero="centerExtra" style="--site-margin: 2vmin; --hero-padding: 1rem">`), path);
     }
   });
 
@@ -244,8 +266,9 @@ describe("a generated starter", () => {
       assert.equal(home.status, 302);
       assert.equal(home.headers.get("location"), "/en/");
       for (const [path, status] of [["/en/", 200], ["/de/posts/hallo-welt/", 200], ["/en/posts/", 200], ["/de/tags/blyss/", 200],
-        ["/de/404.html", 200], ["/sitemap.xml", 200], ["/assets/css/main.css", 200], ["/assets/js/overlay.js", 200],
-        ["/assets/img/logo.svg", 200], ["/missing/", 404]]) {
+        ["/de/404.html", 200], ["/sitemap.xml", 200], ["/assets/css/main.css", 200], ["/assets/img/logo.svg", 200],
+        ["/components/heroComponentSlider/heroComponentSlider.js", 200], ["/components/heroComponentSlider/heroComponentSlider.html", 404],
+        ["/components/heroComponentSlider/heroComponentSlider.data.js", 404], ["/missing/", 404]]) {
         const response = await fetch(base + path);
         await response.text();
         assert.equal(response.status, status, path);
@@ -373,7 +396,7 @@ describe("a site with several tagged posts", () => {
 
   test("escapes JSON-LD so that content cannot close its script element", async () => {
     const html = await page("en/posts/newest");
-    assert.equal(html.match(/<\/script/gi).length, 2, "the scripts of overlay.js and JSON-LD");
+    assert.equal(html.match(/<\/script/gi).length, 3, "the scripts of the two components and JSON-LD");
     const jsonLd = JSON.parse(html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)[1]);
     const post = jsonLd["@graph"].find(node => node["@type"] === "BlogPosting");
     assert.equal(post.name, "</script><script>alert(1)</script>");
@@ -403,9 +426,9 @@ describe("a site with its own hero texts and fragments", () => {
     site = join(sandbox, "hero");
     assert.equal(run(["init", site], sandbox).status, 0);
     const texts = [`### One\n\n${long}\n\n#### Part of one\n\nMore.`, "### Two\n\n```md\n### Not a text\n```",
-      ...[3, 4, 5, 6, 7].map(number => `### Text ${number}\n\nText.`)];
+      ...[3, 4, 5, 6, 7, 8, 9].map(number => `### Text ${number}\n\nText.`)];
     await writeFile(join(site, "content", "en", "hero.md"),
-      `---\ntitle: Seven <texts>\n---\n\n<!-- Each ### heading starts a text. -->\n\n${texts.join("\n\n")}\n`);
+      `---\ntitle: Nine <texts>\n---\n\n<!-- Each ### heading starts a text. -->\n\n${texts.join("\n\n")}\n`);
     await writeFile(join(site, "content", "en", "notice.md"), "---\ntitle: Notice\n---\n\nClosed on *Monday*.\n");
     const documentFile = join(site, "templates", "document.html");
     const template = await readFile(documentFile, "utf8");
@@ -415,11 +438,11 @@ describe("a site with its own hero texts and fragments", () => {
     assert.equal(result.status, 0, result.stderr);
   });
 
-  test("shows up to seven texts in full, each from one ### heading to the next", async () => {
+  test("shows every text of hero.md in full, each from one ### heading to the next", async () => {
     const html = await page("en/about/index.html");
-    const hero = html.slice(html.indexOf("<h3>Seven"), html.indexOf("</aside>"));
-    assert.ok(hero.startsWith("<h3>Seven &lt;texts&gt;</h3>"));
-    assert.equal(hero.match(/<div>\n<h3>/g).length, 7);
+    const hero = html.slice(html.indexOf("<h3>Nine"), html.indexOf("</aside>"));
+    assert.ok(hero.startsWith("<h3>Nine &lt;texts&gt;</h3>"));
+    assert.equal(hero.match(/<div>\n<h3>/g).length, 9);
     assert.ok(hero.includes(`<div>\n<h3>One</h3>\n<p>${long}</p>\n<h4>Part of one</h4>\n<p>More.</p>\n</div>`));
     assert.ok(hero.includes('<div>\n<h3>Two</h3>\n<pre><code class="language-md">### Not a text\n</code></pre>\n</div>'));
   });
@@ -434,15 +457,16 @@ describe("a site with its own hero texts and fragments", () => {
   });
 });
 
-describe("a site with its own layout and slider", () => {
+describe("a site with its own layout and component settings", () => {
   let site;
   let configFile;
   const page = path => readFile(join(site, "public", path), "utf8");
   const slider = async path => {
     const html = await page(path);
-    const start = html.indexOf('<div class="hero-component hero-component-slider">');
+    const start = html.indexOf('<hero-component-slider class="hero-component">');
     return html.slice(start, html.indexOf("<p>", start));
   };
+  const gallery = async path => (await page(path)).match(/<hero-component-gallery [^>]+>/)[0];
   const settings = config => config.slice(config.indexOf("  layout: {"), config.indexOf("  directories: {"));
 
   before(async () => {
@@ -450,9 +474,9 @@ describe("a site with its own layout and slider", () => {
     assert.equal(run(["init", site], sandbox).status, 0);
     configFile = join(site, "blyss.config.js");
     const config = await readFile(configFile, "utf8");
-    await writeFile(configFile, config.replace(settings(config), `  layout: { margin: "3rem", alignHome: "left", alignOther: "centerLeft", alignHeroHome: "center", alignHeroOther: "left" },
-  heroComponent: {
-    slider: {
+    await writeFile(configFile, config.replace(settings(config), `  layout: { margin: "3rem", paddingHero: "4vh", alignHome: "left", alignOther: "centerLeft", alignHeroHome: "center", alignHeroOther: "left" },
+  components: {
+    heroComponentSlider: {
       start: -10,
       end: 30,
       steps: [
@@ -460,15 +484,17 @@ describe("a site with its own layout and slider", () => {
         { value: -10, description: { en: "Cold & <icy>", de: "Kalt" } },
         { value: 0, description: { en: "Frost", de: "Frost" } }
       ]
-    }
+    },
+    heroComponentGallery: { heightOverall: "200px", heightCenter: "150%", animationSpeedScrolling: "1s", animationSpeedImgEnlargement: ".2s" }
   },
 `));
     const result = run(["build"], site);
     assert.equal(result.status, 0, result.stderr);
   });
 
-  test("applies layout.margin and the alignments of the home pages and of all other pages", async () => {
-    const body = (kind, align, hero) => `<body data-kind="${kind}" data-align="${align}" data-align-hero="${hero}" style="--site-margin: 3rem">`;
+  test("applies layout.margin, layout.paddingHero and the alignments of the home pages and of all other pages", async () => {
+    const body = (kind, align, hero) =>
+      `<body data-kind="${kind}" data-align="${align}" data-align-hero="${hero}" style="--site-margin: 3rem; --hero-padding: 4vh">`;
     assert.ok((await page("de/index.html")).includes(body("home", "left", "center")));
     for (const [path, kind] of [["de/posts/index.html", "list"], ["en/posts/hello-world/index.html", "post"], ["404.html", "not-found"]]) {
       assert.ok((await page(path)).includes(body(kind, "centerLeft", "left")), path);
@@ -476,26 +502,91 @@ describe("a site with its own layout and slider", () => {
   });
 
   test("runs the slider from start to end, starting halfway, with its steps sorted and described in each language", async () => {
-    const steps = (cold, frost, hot) => '<output for="hero-component-slider-input" aria-hidden="true">10</output>\n' +
-      '        <input id="hero-component-slider-input" type="range" min="-10" max="30" value="10">\n<ol>\n' +
-      `  <li style="--position: 0%"><data value="-10">-10</data> ${cold}</li>\n` +
-      `  <li style="--position: 25%" aria-current="step"><data value="0">0</data> ${frost}</li>\n` +
-      `  <li style="--position: 100%"><data value="30">30</data> ${hot}</li>\n</ol>`;
+    const steps = (cold, frost, hot) => '  <output for="heroComponentSlider-1-input" aria-hidden="true">10</output>\n' +
+      '  <input id="heroComponentSlider-1-input" type="range" min="-10" max="30" value="10">\n<ol class="steps">\n' +
+      `  <li style="--position: 0%"><data value="-10">-10</data> <span>${cold}</span></li>\n` +
+      `  <li style="--position: 25%" aria-current="step"><data value="0">0</data> <span>${frost}</span></li>\n` +
+      `  <li style="--position: 100%"><data value="30">30</data> <span>${hot}</span></li>\n</ol>`;
     assert.ok((await slider("en/index.html")).includes(steps("Cold &amp; &lt;icy&gt;", "Frost", "Hot")));
     assert.ok((await slider("de/about/index.html")).includes(steps("Kalt", "Frost", "Heiß")));
-    assert.ok((await slider("de/index.html")).includes('<h3><label for="hero-component-slider-input">Schieberegler</label></h3>'));
+    assert.ok((await slider("de/index.html")).includes('<h3><label for="heroComponentSlider-1-input">Schieberegler</label></h3>'));
   });
 
-  test("falls back to the default alignments and a slider from 0 to 100 without steps, and accepts a margin of 0", async () => {
+  test("gives the gallery its heights and speeds, the height of the image in the centre as a factor", async () => {
+    assert.ok((await gallery("de/index.html")).endsWith(
+      'style="--height-overall: 200px; --scale-center: 1.5; --speed-scrolling: 1s; --speed-enlargement: .2s">'));
+  });
+
+  test("falls back to the default layout and component settings, and accepts a margin of 0", async () => {
     const config = await readFile(configFile, "utf8");
     await writeFile(configFile, config.replace(settings(config), "  layout: { margin: 0 },\n"));
     const result = run(["build"], site);
     assert.equal(result.status, 0, result.stderr);
-    assert.ok((await page("en/index.html")).includes('<body data-kind="home" data-align="center" data-align-hero="centerExtra" style="--site-margin: 0px">'));
-    assert.ok((await page("en/about/index.html")).includes('<body data-kind="page" data-align="left" data-align-hero="centerExtra" style="--site-margin: 0px">'));
+    const style = 'style="--site-margin: 0px; --hero-padding: 1rem"';
+    assert.ok((await page("en/index.html")).includes(`<body data-kind="home" data-align="center" data-align-hero="centerExtra" ${style}>`));
+    assert.ok((await page("en/about/index.html")).includes(`<body data-kind="page" data-align="left" data-align-hero="centerExtra" ${style}>`));
     const fallback = await slider("en/index.html");
-    assert.ok(fallback.includes('<input id="hero-component-slider-input" type="range" min="0" max="100" value="50">'));
-    assert.doesNotMatch(fallback, /<ol>/);
+    assert.ok(fallback.includes('<input id="heroComponentSlider-1-input" type="range" min="0" max="100" value="50">'));
+    assert.doesNotMatch(fallback, /<ol/);
+    assert.ok((await gallery("en/index.html")).endsWith(
+      'style="--height-overall: 8rem; --scale-center: 1.3; --speed-scrolling: 400ms; --speed-enlargement: 300ms">'));
+  });
+});
+
+describe("a site with a component of its own", () => {
+  let site;
+  let configFile;
+  const page = path => readFile(join(site, "public", path), "utf8");
+
+  before(async () => {
+    site = join(sandbox, "component");
+    assert.equal(run(["init", site], sandbox).status, 0);
+    const component = join(site, "components", "notice");
+    await mkdir(component);
+    await writeFile(join(component, "notice.html"),
+      '<aside id="{{id}}" data-level="{{level}}"><h2>{{title}}</h2><small>{{hint}} {{closeLabel}}</small>{{content}}{{hours}}</aside>\n');
+    await writeFile(join(component, "notice.css"), "aside { color: red; }\n");
+    await writeFile(join(component, "notice.data.js"), `export default ({ settings, languageKey, escapeHtml, refuse }) => {
+  if (!Array.isArray(settings.hours)) throw refuse("hours", settings.hours, "a list of hours");
+  return { hours: \`<p>\${escapeHtml(settings.hours.join(" & "))} (\${languageKey})</p>\` };
+};
+`);
+    configFile = join(site, "blyss.config.js");
+    const config = await readFile(configFile, "utf8");
+    assert.ok(config.includes("  components: {"));
+    await writeFile(configFile, config.replace("  components: {", '  components: {\n    notice: { level: "high & <dry>", hours: ["9", "17"] },'));
+    await writeFile(join(site, "content", "en", "components", "notice.md"), "---\ntitle: Notice\nhint: Read <this>\n---\n\nClosed on *Monday*.\n");
+    const about = join(site, "content", "en", "pages", "about.md");
+    await writeFile(about, `${await readFile(about, "utf8")}\n{{notice}}\n\nWrite \`{{notice}}\` in a paragraph of its own:\n\n  {{notice}}\n`);
+    const documentFile = join(site, "templates", "document.html");
+    await writeFile(documentFile, (await readFile(documentFile, "utf8")).replace("  <footer>", "{{notice}}  <footer>"));
+    const result = run(["build"], site);
+    assert.equal(result.status, 0, result.stderr);
+  });
+
+  test("shows it in Markdown and in a template, filled with its settings, its texts, the labels and its data", async () => {
+    const notice = (id, texts, language) =>
+      `<aside id="notice-${id}" data-level="high &amp; &lt;dry&gt;">${texts}<p>9 &amp; 17 (${language})</p></aside>`;
+    const about = await page("en/about/index.html");
+    for (const id of [1, 2, 3]) {
+      assert.ok(about.includes(notice(id, "<h2>Notice</h2><small>Read &lt;this&gt; Close</small><p>Closed on <em>Monday</em>.</p>\n", "en")), id);
+    }
+    assert.ok(about.indexOf('id="notice-2"') < about.indexOf("</main>") && about.indexOf("</main>") < about.indexOf('id="notice-3"'));
+    assert.ok(about.includes("<p>Write <code>{{notice}}</code> in a paragraph of its own:</p>"));
+    assert.ok((await page("de/about/index.html")).includes(notice(1, "<h2></h2><small> Schließen</small>", "de")));
+  });
+
+  test("publishes its files but its template and its data file", async () => {
+    assert.deepEqual(await listFiles(join(site, "public", "components", "notice")), ["notice.css"]);
+  });
+
+  test("refuses a setting that its data file refuses and keeps the previous output", async () => {
+    const config = await readFile(configFile, "utf8");
+    await writeFile(configFile, config.replace('hours: ["9", "17"]', "hours: 9"));
+    const result = run(["build"], site);
+    assert.equal(result.status, 1);
+    assert.equal(result.stderr, "Cannot use components.notice.hours 9: it must be a list of hours.\n");
+    assert.ok((await stat(join(site, "public", "en", "index.html"))).isFile());
   });
 });
 
@@ -511,18 +602,19 @@ describe("invalid content", () => {
   const post = join("content", "en", "posts", "symbols.md");
   const hero = join("content", "en", "hero.md");
   const fragment = join("content", "en", "my-hero.md");
+  const text = join("content", "en", "components", "heroComponentSlyder.md");
   const cases = [
     ["a page with the URL of a generated page", page, "---\ntitle: Posts\n---\n",
       `Cannot build /en/posts/: ${page} and the generated page "Posts" have the same URL.\nRename ${page} or give it a different slug.\n`],
     ["a tag without a Latin letter or digit", post, '---\ntitle: Symbols\ntags: [Blyss, "#"]\n---\n',
       `Cannot build ${post}: the tag "#" needs a Latin letter or digit for its URL.\n`],
-    ["a hero with more than seven texts", hero, Array.from({ length: 8 }, (_, index) => `### Text ${index + 1}\n\nText.\n`).join("\n"),
-      `Cannot build ${hero}: it has 8 texts, but the hero shows at most 7.\nRemove 1 of its ### headings and their texts.\n`],
     ["a hero with content before its first ### heading", hero, "Introduction.\n\n### Text\n\nText.\n",
       `Cannot build ${hero}: each text of the hero starts with a ### heading, but there is content before the first one.\n`],
     ["a fragment whose name templates cannot use", fragment, "---\ntitle: Mine\n---\n",
       `Cannot build ${fragment}: templates use its name in placeholders, so it must start with a Latin letter and contain ` +
-      "only Latin letters and digits, such as hero.md.\n"]
+      "only Latin letters and digits, such as hero.md.\n"],
+    ["a text for a component that does not exist", text, "---\ntitle: Slider\n---\n",
+      `Cannot build ${text}: there is no component "heroComponentSlyder" in components/.\n`]
   ];
   for (const [name, file, source, message] of cases) {
     test(`rejects ${name} and keeps the previous output`, async () => {
@@ -591,18 +683,28 @@ describe("invalid configuration", () => {
     }
   });
 
-  test("refuses a layout or hero component setting that the templates cannot use", async () => {
+  test("refuses a layout or component setting that the templates cannot use", async () => {
+    const length = 'it must be a CSS length in px, rem, vw, vh, vmin or vmax, such as';
     for (const [search, replacement, message] of [
-      ['margin: "2vmin"', 'margin: "2em"', 'layout.margin "2em": it must be a CSS length in px, rem, vw, vh, vmin or vmax, such as "2vmin"'],
-      ['margin: "2vmin"', 'margin: "2vmin; color: red"',
-        'layout.margin "2vmin; color: red": it must be a CSS length in px, rem, vw, vh, vmin or vmax, such as "2vmin"'],
+      ['margin: "2vmin"', 'margin: "2em"', `layout.margin "2em": ${length} "2vmin"`],
+      ['margin: "2vmin"', 'margin: "2vmin; color: red"', `layout.margin "2vmin; color: red": ${length} "2vmin"`],
+      ['paddingHero: "1rem"', 'paddingHero: "5%"', `layout.paddingHero "5%": ${length} "2vmin"`],
       ['alignHome: "center"', 'alignHome: "centerLeft"', 'layout.alignHome "centerLeft": it must be "center" or "left"'],
       ['alignHeroOther: "centerExtra"', 'alignHeroOther: "centerLeft"',
         'layout.alignHeroOther "centerLeft": it must be "centerExtra", "left" or "center"'],
-      ["start: 1,", "start: 1.5,", "heroComponent.slider.start 1.5: it must be a whole number"],
-      ["end: 1000", "end: 1", "heroComponent.slider.end 1: it must be a whole number greater than heroComponent.slider.start (1)"],
-      ["value: 250,", "value: 1001,", "heroComponent.slider.steps[1].value 1001: it must be a whole number from 1 to 1000"],
-      ['de: "Viertel"', 'fr: "Quart"', 'heroComponent.slider.steps[1].description: it needs a text for the language "de"']
+      ["heroComponentGallery: {", "heroComponentGalery: {", 'components.heroComponentGalery: there is no component "heroComponentGalery" in components/'],
+      ["start: 1,", "start: 1.5,", "components.heroComponentSlider.start 1.5: it must be a whole number"],
+      ["end: 1000", "end: 1", "components.heroComponentSlider.end 1: it must be a whole number greater than start (1)"],
+      ["value: 250,", "value: 1001,", "components.heroComponentSlider.steps[1].value 1001: it must be a whole number from 1 to 1000"],
+      ['de: "Viertel"', 'fr: "Quart"', 'components.heroComponentSlider.steps[1].description {"en":"Quarter","fr":"Quart"}: ' +
+        'it must be an object with a text for the language "de"'],
+      ['heightOverall: "8rem"', 'heightOverall: "8em"', `components.heroComponentGallery.heightOverall "8em": ${length} "8rem"`],
+      ['heightCenter: "130%"', 'heightCenter: "13rem"', 'components.heroComponentGallery.heightCenter "13rem": ' +
+        'it must be a percentage of heightOverall from 100% up, such as "130%"'],
+      ['animationSpeedScrolling: "400ms"', 'animationSpeedScrolling: "400MS"', 'components.heroComponentGallery.animationSpeedScrolling "400MS": ' +
+        'it must be a duration in ms or s, such as "400ms"'],
+      ['animationSpeedImgEnlargement: "300ms"', "animationSpeedImgEnlargement: 300", 'components.heroComponentGallery.animationSpeedImgEnlargement 300: ' +
+        'it must be a duration in ms or s, such as "400ms"']
     ]) {
       await withConfig(search, replacement, async () => {
         const result = run(["build"], site);

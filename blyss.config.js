@@ -9,6 +9,7 @@ export default {
   ...starter,
   directories: {
     ...starter.directories,
+    components: fromStarter("components"),
     content: fromStarter("content"),
     static: fromStarter("static"),
     templates: fromStarter("templates")

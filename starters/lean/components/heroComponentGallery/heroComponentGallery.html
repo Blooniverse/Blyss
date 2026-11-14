@@ -1,0 +1,10 @@
+<link rel="stylesheet" href="/components/heroComponentGallery/heroComponentGallery.css">
+<script type="module" src="/components/heroComponentGallery/heroComponentGallery.js"></script>
+<hero-component-gallery class="hero-component" role="group" aria-labelledby="{{id}}-title" style="--height-overall: {{heightOverall}}; --scale-center: {{scaleCenter}}; --speed-scrolling: {{animationSpeedScrolling}}; --speed-enlargement: {{animationSpeedImgEnlargement}}">
+  <h3 id="{{id}}-title">{{title}}</h3>
+  <div class="stage">
+    <button type="button" aria-label="{{previous}}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg></button>
+{{content}}
+    <button type="button" aria-label="{{next}}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg></button>
+  </div>
+</hero-component-gallery>

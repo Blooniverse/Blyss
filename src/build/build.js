@@ -2,11 +2,12 @@ import { cp, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { basename, extname, join, relative, sep } from "node:path";
 import { loadConfig } from "../config.js";
 import { BlyssError } from "../errors.js";
+import { loadComponents } from "./components.js";
 import { createListRecords, parseTags } from "./lists.js";
 import { renderFragments } from "./fragments.js";
 import { resolvePaths } from "./paths.js";
 import { parseFrontMatter, renderRecord } from "./render.js";
-import { heroComponentOf, layoutOf } from "./settings.js";
+import { layoutOf } from "./settings.js";
 import { renderSitemap } from "./sitemap.js";
 import { indexTranslations } from "./translations.js";
 
@@ -40,12 +41,17 @@ async function discoverContent(projectDir, config, contentDirectory, locate) {
     const [languageKey, section] = parts;
     const languageConfig = config.site.languages[languageKey];
     if (!languageConfig) throw new Error(`Unknown language directory: ${languageKey}`);
-    // Files directly in content/<language>/, such as hero.md, are fragments for templates (see fragments.js).
-    const fragment = parts.length === 2;
-    if (!fragment && !['pages', 'posts'].includes(section)) throw new Error(`Unknown content section: ${section}`);
     const { metadata, markdown } = parseFrontMatter(await readFile(sourceFile, "utf8"));
     const filename = basename(sourceFile, '.md');
-    if (fragment) return { sourceFile, languageKey, type: 'fragment', name: filename, metadata, markdown };
+    // Files directly in content/<language>/, such as hero.md, are fragments for templates (see fragments.js).
+    if (parts.length === 2) return { sourceFile, languageKey, type: 'fragment', name: filename, metadata, markdown };
+    // Those directly in content/<language>/components/ hold the texts of the components (see components.js).
+    if (section === 'components') {
+      if (parts.length === 3) return { sourceFile, languageKey, type: 'component', name: filename, metadata, markdown };
+      throw new BlyssError(`Cannot build ${relative(projectDir, sourceFile)}: the text of a component lies directly in ` +
+        `${join(relative(projectDir, contentDirectory), languageKey, 'components')}.`);
+    }
+    if (!['pages', 'posts'].includes(section)) throw new Error(`Unknown content section: ${section}`);
     const type = section === 'posts' ? 'post' : 'page';
     const nested = parts.slice(2, -1);
     const tags = type === 'post' ? parseTags(metadata.tags, languageKey, relative(projectDir, sourceFile)) : [];
@@ -77,10 +83,9 @@ function assertUniqueUrls(projectDir, records) {
 
 export async function build(projectDir, configPath = './blyss.config.js') {
   const config = await loadConfig(projectDir, configPath);
-  const { contentDirectory, publicDirectory, staticDirectory, templatesDirectory } = resolvePaths(projectDir, config);
+  const { componentsDirectory, contentDirectory, publicDirectory, staticDirectory, templatesDirectory } = resolvePaths(projectDir, config);
   const locate = createLocator(config, publicDirectory);
   const layout = layoutOf(config);
-  const heroComponent = heroComponentOf(config);
 
   // Content is read and validated before the previous output is deleted.
   const readTemplate = name => readFile(join(templatesDirectory, name), 'utf8');
@@ -95,8 +100,9 @@ export async function build(projectDir, configPath = './blyss.config.js') {
       throw error;
     })
   ]);
-  const content = discovered.filter(record => record.type !== 'fragment');
+  const content = discovered.filter(record => record.type === 'page' || record.type === 'post');
   const fragments = renderFragments(projectDir, discovered.filter(record => record.type === 'fragment'));
+  const components = await loadComponents(projectDir, config, componentsDirectory, discovered.filter(record => record.type === 'component'));
   const records = [...content, ...createListRecords(config, content, locate)];
   assertUniqueUrls(projectDir, records);
   const templates = { document, page, post, home };
@@ -105,11 +111,12 @@ export async function build(projectDir, configPath = './blyss.config.js') {
   await rm(publicDirectory, { recursive: true, force: true });
   await mkdir(publicDirectory, { recursive: true });
   await cp(staticDirectory, publicDirectory, { recursive: true, force: true });
+  await components.publish(publicDirectory);
 
   for (const record of records) {
     const html = renderRecord({
-      record, templates, translationIndex, site: config.site, records: content, layout, heroComponent,
-      fragments: fragments.get(record.languageKey)
+      record, templates, translationIndex, site: config.site, records: content, layout,
+      fragments: fragments.get(record.languageKey), components: components.placeholders(record.languageKey)
     });
     await mkdir(join(record.outputFile, '..'), { recursive: true });
     await writeFile(record.outputFile, html, 'utf8');

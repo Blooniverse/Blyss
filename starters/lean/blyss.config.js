@@ -62,16 +62,18 @@ export default {
   pagination: { pageSize: 10 }, // posts per archive and tag page; later pages are at <list>/page/<n>/
   layout: {
     margin: "2vmin", // the space between the frame and the content: a CSS length in px, rem, vw, vh, vmin or vmax
+    paddingHero: "1rem", // the space above and below the content of the hero: a CSS length as above
     alignHome: "center", // or "left", which aligns all content of the home pages (only the home pages)
     alignOther: "left", // or "center" or "centerLeft" (which centers the content, but aligns its text left nonetheless), which aligns all content of the other pages (pages, posts, lists and not-found pages)
     alignHeroHome: "centerExtra", // or "left" or "center" ("centerExtra" centers everything apart from the left-aligned text boxes of hero.md, including their headings), which aligns the content of the home pages' hero
     alignHeroOther: "centerExtra" // or "left" or "center" (as above), which aligns the content of the other pages' hero
   },
-  // The hero component is the interactive part of the overlay; its variant "slider" runs through the whole numbers
-  // from start to end. Each step marks a value on the way and has a description in every language; change, add or
-  // remove steps as you like. The slider's title and text are in content/<language>/heroComponentSlider.md.
-  heroComponent: {
-    slider: {
+  // The settings of the components in components/<name>/. {{<name>}} shows a component in a template or, in a paragraph
+  // of its own, in the Markdown of a page or post; its texts are in content/<language>/components/<name>.md.
+  components: {
+    // The slider runs through the whole numbers from start to end. Each step marks a value on the way and has a
+    // description in every language; change, add or remove steps as you like.
+    heroComponentSlider: {
       start: 1,
       end: 1000,
       steps: [
@@ -80,9 +82,17 @@ export default {
         { value: 500, description: { en: "Half", de: "Hälfte" } },
         { value: 1000, description: { en: "Full", de: "Voll" } }
       ]
+    },
+    // The gallery shows the images that its text lists, side by side, and enlarges the image in its centre.
+    heroComponentGallery: {
+      heightOverall: "8rem", // the height of the images: a CSS length in px, rem, vw, vh, vmin or vmax
+      heightCenter: "130%", // the height of the image in the centre: a percentage of heightOverall, from 100% up
+      animationSpeedScrolling: "400ms", // the time an arrow takes to bring the next image to the centre, in ms or s
+      animationSpeedImgEnlargement: "300ms" // the time the image in the centre takes to grow, in ms or s
     }
   },
   directories: {
+    components: "components",
     content: "content",
     public: "public", // generated output: deleted and recreated by every build, so keep it a separate subdirectory
     static: "static",
