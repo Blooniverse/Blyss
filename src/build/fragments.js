@@ -3,8 +3,6 @@ import { marked } from "marked";
 import { BlyssError } from "../errors.js";
 import { escapeHtml } from "./render.js";
 
-const maxHeroTexts = 7;
-
 // Whitespace, link reference definitions and comments may precede the first text of the hero.
 const isBlank = token =>
   token.type === "space" || token.type === "def" || (token.type === "html" && /^(?:\s*<!--[\s\S]*?-->)+\s*$/.test(token.raw));
@@ -18,10 +16,6 @@ function renderHeroTexts(markdown, file) {
     else if (!isBlank(token)) {
       throw new BlyssError(`Cannot build ${file}: each text of the hero starts with a ### heading, but there is content before the first one.`);
     }
-  }
-  if (texts.length > maxHeroTexts) {
-    throw new BlyssError(`Cannot build ${file}: it has ${texts.length} texts, but the hero shows at most ${maxHeroTexts}.\n` +
-      `Remove ${texts.length - maxHeroTexts} of its ### headings and their texts.`);
   }
   return texts.map(tokens => `<div>\n${marked.parser(tokens)}</div>`).join("\n");
 }

@@ -8,7 +8,7 @@ Blyss is a lean bilingual Markdown transformer and static-site server.
 - Prefer built-in Node.js APIs.
 - Do not introduce dependencies without a demonstrated requirement.
 - Preserve compatibility with Node.js 25 and newer.
-- Keep authored content, static assets, source code, templates, and generated output separate.
+- Keep authored content, static assets, source code, templates, and generated output separate; only a component in components/<name>/ keeps its template, stylesheet and script together, while its texts stay in content/.
 - Treat public/ as disposable generated output.
 - Preserve English and German language support.
 - Preserve clean localized URLs.
@@ -19,7 +19,7 @@ Blyss is a lean bilingual Markdown transformer and static-site server.
 - Prevent filesystem access outside public/.
 - `blyss init` must never overwrite or delete files that existed before it ran.
 - Keep the starter in starters/lean/ buildable and free of unreplaced tokens.
-- Keep this repository engine-only: website content, static assets and templates belong in starters/lean/; the root blyss.config.js only previews the starter.
+- Keep this repository engine-only: website content, static assets, templates and components belong in starters/lean/; the root blyss.config.js only previews the starter.
 
 ## Validation
 

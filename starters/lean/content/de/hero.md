@@ -12,4 +12,4 @@ Deutsche und englische Inhalte liegen nebeneinander. Übersetzungen teilen sich 
 
 ### Ihre eigenen Texte
 
-Diese Texte stammen aus `content/de/hero.md`: Der `title` der Datei ist die Überschrift darüber, und jede `###`-Überschrift beginnt einen neuen Text. Der Hero zeigt bis zu sieben Texte, jeden so lang, wie Sie ihn schreiben.
+Diese Texte stammen aus `content/de/hero.md`: Der `title` der Datei ist die Überschrift darüber, und jede `###`-Überschrift beginnt einen neuen Text. Der Hero zeigt so viele Texte, wie Sie schreiben, jeden in voller Länge.

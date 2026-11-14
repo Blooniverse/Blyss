@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 300">
+<!-- Placeholder image of the gallery, two by three: replace it with your own. -->
+<rect width="200" height="300" fill="#f5b83d"/>
+<circle cx="100" cy="72" r="34" fill="#fff"/>
+<path fill="#005180" d="M82 280 91 96h18l9 184zM80 76h40v20H80z"/>
+<rect y="278" width="200" height="22" fill="#0d1f26"/>
+</svg>

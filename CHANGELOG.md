@@ -16,7 +16,8 @@
   `<list>/page/<n>/`, which is reserved like the other list URLs.
 - **Safe output directory**: `blyss build` and `blyss serve` refuse a
   `directories.public` that is the website's root, lies outside it, or
-  contains or lies inside `directories.content`, `static` or `templates`.
+  contains or lies inside `directories.components`, `content`, `static` or
+  `templates`.
   Every build deletes this directory, so `public: "."` used to delete the
   whole website.
 - **Not-found page URL**: a top-level `pages/404.md` is published at
@@ -72,26 +73,32 @@
   front matter, and `{{<name>Content}}`. Its name must consist of Latin
   letters and digits and start with a letter.
 - **Hero texts**: `{{heroTexts}}` splits `hero.md` at its `###` headings into
-  at most seven texts, each a `<div>` in full length. More texts or content
-  before the first `###` heading stop the build before the previous output
-  is deleted.
+  its texts, as many as it has, each a `<div>` in full length. Content before
+  the first `###` heading stops the build before the previous output is
+  deleted.
 - **Labels**: every label of a language is available in templates as
   `{{<key>Label}}`, such as `{{overlayLabel}}`; previously only six labels
   were.
 - **Layout**: `layout.margin` sets the space around the content, `"2vmin"`
-  by default. `layout.alignHome` (`"center"` or `"left"`) and
-  `layout.alignOther` (`"left"`, `"center"` or `"centerLeft"`) align the
-  content of the home pages and of all other pages, `layout.alignHeroHome`
-  and `layout.alignHeroOther` (`"centerExtra"`, `"left"` or `"center"`) their
-  hero; the first value is the default. Templates receive the margin as
-  `{{layoutMargin}}` and the current page's alignments as `{{layoutAlign}}`
-  and `{{layoutAlignHero}}`.
-- **Hero component**: `heroComponent.slider` sets the whole-number `start`
-  and `end` of a slider, the hero component's first variant, and the `steps`
-  marked on it, each with a description in every language. Templates receive
-  `{{heroComponentSliderStart}}`, `{{heroComponentSliderEnd}}`,
-  `{{heroComponentSliderValue}}` (halfway between them) and
-  `{{heroComponentSliderSteps}}`. Invalid layout and hero component settings
+  by default, and `layout.paddingHero` the space above and below the content
+  of the hero, `"1rem"` by default. `layout.alignHome` (`"center"` or
+  `"left"`) and `layout.alignOther` (`"left"`, `"center"` or `"centerLeft"`)
+  align the content of the home pages and of all other pages,
+  `layout.alignHeroHome` and `layout.alignHeroOther` (`"centerExtra"`,
+  `"left"` or `"center"`) their hero; the first value is the default.
+  Templates receive the margin as `{{layoutMargin}}`, the padding as
+  `{{layoutPaddingHero}}` and the current page's alignments as
+  `{{layoutAlign}}` and `{{layoutAlignHero}}`.
+- **Components**: a directory `components/<name>/` holds a component: its
+  template `<name>.html`, an optional data file `<name>.data.js`, which checks
+  its settings and prepares values for the template, and further files such
+  as its stylesheet and its script, which are published at
+  `/components/<name>/`. Its texts are `content/<language>/components/<name>.md`
+  and its settings `components.<name>` in `blyss.config.js`. `{{<name>}}`
+  shows the component in every template and, in a paragraph of its own, in
+  the Markdown of pages and posts, any number of times per page; `{{id}}` in
+  its template is unique on the page. `directories.components` names the
+  directory, `"components"` by default. Invalid layout and component settings
   stop the build before the previous output is deleted.
 
 ### Changes
@@ -108,21 +115,33 @@
 - **Starter design**: a new stylesheet modelled on philippschaffner.ch, with
   the font Titillium Web from Google Fonts and a `70ch` text column. The home
   pages start with the site's title and slogan. Below the page
-  follows the hero, an overlay with a slider and the texts of `hero.md`,
-  which slides up over the page on large screens and fades it out; elsewhere
-  the overlay collapses into a bar that opens it as a panel. Each language
-  has two more sample posts. `<main>` moved from `document.html` into the
-  content templates, and the footer follows the overlay.
+  follows the hero, an overlay with a slider, a gallery and the texts of
+  `hero.md`, which slides up over the page on large screens and fades it out;
+  elsewhere the overlay collapses into a bar that opens it as a panel. The
+  hero is as tall as its content with `layout.paddingHero` above and below
+  it; if it is shorter than the window, it stops below the top bar while the
+  footer follows it. Each language has two more sample posts. `<main>` moved
+  from `document.html` into the content templates, and the footer follows the
+  overlay.
 - **Top bar**: the starter's navigation bar stays at the top of the window on
   every page. It shows a placeholder logo, `static/assets/img/logo.svg`, next
   to the navigation and a search field without a function yet, whose text is
   the new label `search`.
-- **Starter slider**: the overlay's slider follows its heading, the `title`
-  of `heroComponentSlider.md`, with its value above it and its steps and the
-  text of `heroComponentSlider.md` below it. It runs from 1 to 1000 with four
-  described steps, all set in `blyss.config.js`, and `overlay.js` highlights
-  the last step reached. All headings in the overlay are `<h3>`, so that they
-  rank below each page's own `<h1>` and `<h2>`.
+- **Starter slider**: the component `heroComponentSlider` follows its
+  heading, the `title` of `components/heroComponentSlider.md`, with its value
+  above it and its steps and the text of that file below it. It runs from 1
+  to 1000 with four described steps, set as `components.heroComponentSlider`
+  in `blyss.config.js`, and its script highlights the last step reached. The
+  post “Templates and styles” shows a second slider in its text. All headings
+  in the overlay are `<h3>`, so that they rank below each page's own `<h1>`
+  and `<h2>`.
+- **Starter gallery**: the component `heroComponentGallery` shows the images
+  listed in `components/heroComponentGallery.md` in a strip that its arrows,
+  the arrow keys, swiping and scrolling move sideways, and enlarges the image
+  in its centre. `components.heroComponentGallery` sets `heightOverall`,
+  `heightCenter` (`"130%"` of it by default), `animationSpeedScrolling` and
+  `animationSpeedImgEnlargement`. Images load lazily, and seven placeholder
+  images come with the starter.
 - **Starter layout**: `blyss.config.js` sets `layout.margin` to `"2vmin"`,
   which now applies on every side, replacing the fixed `3vmin` at the top and
   `1.5vmin` and `2vmin` at the sides. The home pages are centered and all
@@ -135,12 +154,13 @@
   Two content files with the same URL stop the build with an error instead of
   one silently overwriting the other. Generated list pages use the JSON-LD
   type `CollectionPage`.
+- **Server**: `blyss serve` sends AVIF images as `image/avif`.
 - **Tests**: recent posts are checked to be the three newest of each language,
   ordered by `datePublished`; the archive, tags, sitemap, JSON-LD escaping and
   build errors are covered too, as are pagination, not-found pages, the Azure
   configuration, refused output directories, the home template and its
-  fallback, page kinds, the hero texts, fragments and the layout and hero
-  component settings.
+  fallback, page kinds, the hero texts, fragments, components and the layout
+  and component settings.
 
 ### Fixes
 

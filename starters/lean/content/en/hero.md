@@ -12,4 +12,4 @@ English and German content lives side by side. Translations share a `translation
 
 ### Your own texts
 
-These texts come from `content/en/hero.md`: its `title` is the heading above them, and each `###` heading starts a new text. The hero shows up to seven texts, each as long as you write it.
+These texts come from `content/en/hero.md`: its `title` is the heading above them, and each `###` heading starts a new text. The hero shows as many texts as you write, each in full length.

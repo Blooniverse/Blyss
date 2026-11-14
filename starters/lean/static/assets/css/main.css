@@ -137,7 +137,7 @@ body:not([data-kind="home"]) > .overlay:is(:hover, :focus-within) { opacity: 1; 
   width: auto;
   height: 80vh;
   margin: 0;
-  padding: 1rem;
+  padding: var(--hero-padding) 1rem; /* layout.paddingHero in blyss.config.js, set by templates/document.html */
   border: 0;
   border-top: 1px solid var(--card-border);
   color: inherit;
@@ -148,24 +148,8 @@ body:not([data-kind="home"]) > .overlay:is(:hover, :focus-within) { opacity: 1; 
 /* The hero's headings look like labels, as h3 does everywhere, except for the headings of the texts of hero.md. */
 #overlay h3 { margin-top: 0; }
 #overlay h3:empty { display: none; } /* such as the hero's title when hero.md has none */
-/* The hero component, so far a slider below its heading, with its value above it and its steps below it, each at its
-   value. */
-.hero-component { max-width: 40rem; margin: 0 auto 1rem; }
-.hero-component-slider output { display: block; font-size: 1.25rem; font-variant-numeric: tabular-nums; }
-.hero-component-slider input { display: block; width: 100%; accent-color: var(--color202); }
-.hero-component-slider ol {
-  position: relative;
-  height: 2.6em;
-  margin: 0 8px .6rem; /* half the width of the slider's thumb, whose centre the steps line up with */
-  padding: 0;
-  font-size: .7rem;
-  line-height: 1.2;
-  list-style: none;
-}
-.hero-component-slider li { position: absolute; left: var(--position); translate: -50%; white-space: nowrap; color: var(--color202grey); }
-.hero-component-slider li::before { content: ""; display: block; width: 1px; height: .4em; margin: 0 auto .15em; background: currentColor; }
-.hero-component-slider data { display: block; font-variant-numeric: tabular-nums; }
-.hero-component-slider [aria-current] { font-weight: 700; color: var(--color202); }
+/* The components of the hero follow each other; each brings its own styles from components/. */
+.hero-component { margin: 0 0 1rem; }
 /* The texts of hero.md, side by side in as many columns as fit, each in full length. */
 .hero-texts {
   display: grid;
@@ -178,10 +162,11 @@ body:not([data-kind="home"]) > .overlay:is(:hover, :focus-within) { opacity: 1; 
 .hero-texts h3 { display: block; margin: 0 0 .3em; padding: 0; font-size: 1.1em; line-height: 1.2; color: var(--color202); background: none; }
 
 /* layout.alignHeroHome and layout.alignHeroOther align the hero: "center" centers all of it, "centerExtra" all but the
-   texts of hero.md, which stay left-aligned with their headings, and "left" none of it. */
+   texts of hero.md, which stay left-aligned with their headings, and "left" none of it. A component is centered where
+   the text around it is: in such a hero and in a centered page. */
 :is([data-align-hero="center"], [data-align-hero="centerExtra"]) #overlay { text-align: center; }
 [data-align-hero="centerExtra"] .hero-texts { text-align: start; }
-[data-align-hero="left"] .hero-component { margin-inline: 0; }
+:is([data-align="center"] .page, [data-align-hero="center"] #overlay, [data-align-hero="centerExtra"] #overlay) .hero-component { margin-inline: auto; }
 /* In centered text, lists keep their markers next to their items, and tables are centered too. */
 :is([data-align="center"] .page, [data-align-hero="center"] #overlay, [data-align-hero="centerExtra"] .hero-component) :is(ul, ol) {
   padding-left: 0;
@@ -223,9 +208,10 @@ body[data-kind="home"] .overlay-toggle { display: none; }
     }
     /* Keyboard focus in the page turns the effect off, so that the hero never covers the focused element. */
     [data-kind="home"] > .page:has(:focus-visible) { animation: none; }
-    [data-kind="home"] > .overlay { position: relative; z-index: 1; background: #fff; }
     /* At least as tall as the window below the top bar, so that it can cover the page completely. */
-    [data-kind="home"] #overlay { min-height: calc(100svh - var(--bar-height) - 1rem); align-content: center; }
+    [data-kind="home"] > .overlay { position: relative; z-index: 1; min-height: calc(100svh - var(--bar-height) - 1rem); background: #fff; }
+    /* A hero that is shorter stops below the top bar, while the footer follows it into the window. */
+    [data-kind="home"] #overlay { position: sticky; top: calc(var(--bar-height) + 1rem); }
   }
 }
 
