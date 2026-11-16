@@ -201,9 +201,10 @@ describe("a generated starter", () => {
   test("builds with the local Blyss package", async () => {
     const result = run(["build"], site);
     assert.equal(result.status, 0, result.stderr);
-    const pages = [["en", "hello-world", "templates", "translations"], ["de", "hallo-welt", "uebersetzungen", "vorlagen"]]
-      .flatMap(([language, ...posts]) => ["", "about/", "posts/", ...posts.map(post => `posts/${post}/`), "tags/", "tags/blyss/",
-        "tags/markdown/"].map(path => `${language}/${path}index.html`));
+    const pages = [["en", ["hello-world", "templates", "translations"], ["getting-started", "writing", "writing/navigation"]],
+      ["de", ["hallo-welt", "uebersetzungen", "vorlagen"], ["erste-schritte", "schreiben", "schreiben/navigation"]]]
+      .flatMap(([language, posts, docs]) => ["", "about/", "posts/", ...posts.map(post => `posts/${post}/`), "tags/", "tags/blyss/",
+        "tags/markdown/", "techdoc/", ...docs.map(doc => `techdoc/${doc}/`)].map(path => `${language}/${path}index.html`));
     const notFoundPages = ["404.html", "en/404.html", "de/404.html"];
     // Static files are copied as they are; components publish their files but their templates and data files.
     const componentFiles = (await listFiles(join(starter, "components"))).filter(file => !/\.(?:html|data\.js)$/.test(file));
@@ -254,7 +255,8 @@ describe("a generated starter", () => {
 
   test("marks every page with its kind and the layout of blyss.config.js", async () => {
     const kinds = { "en/index.html": "home", "de/about/index.html": "page", "en/posts/hello-world/index.html": "post",
-      "de/posts/index.html": "list", "en/tags/blyss/index.html": "list", "de/404.html": "not-found" };
+      "de/posts/index.html": "list", "en/tags/blyss/index.html": "list", "en/techdoc/index.html": "techdoc",
+      "de/techdoc/schreiben/navigation/index.html": "techdoc", "de/404.html": "not-found" };
     for (const [path, kind] of Object.entries(kinds)) {
       const html = await readFile(join(site, "public", path), "utf8");
       const align = kind === "home" ? "center" : "left";
@@ -276,7 +278,7 @@ describe("a generated starter", () => {
       assert.equal(home.status, 302);
       assert.equal(home.headers.get("location"), "/en/");
       for (const [path, status] of [["/en/", 200], ["/de/posts/hallo-welt/", 200], ["/en/posts/", 200], ["/de/tags/blyss/", 200],
-        ["/de/404.html", 200], ["/sitemap.xml", 200], ["/assets/css/main.css", 200], ["/assets/img/logo.svg", 200],
+        ["/en/techdoc/", 200], ["/de/techdoc/schreiben/navigation/", 200], ["/de/404.html", 200], ["/sitemap.xml", 200], ["/assets/css/main.css", 200], ["/assets/img/logo.svg", 200],
         ["/components/heroComponentSlider/heroComponentSlider.js", 200], ["/components/heroComponentSlider/heroComponentSlider.html", 404],
         ["/components/heroComponentSlider/heroComponentSlider.data.js", 404], ["/missing/", 404]]) {
         const response = await fetch(base + path);
@@ -524,6 +526,105 @@ describe("a site without templates/home.html", () => {
   });
 });
 
+describe("a site with technical documentation", () => {
+  let site;
+  const page = path => readFile(join(site, "public", path, "index.html"), "utf8");
+  const part = (html, start, end) => html.slice(html.indexOf(start), html.indexOf(end, html.indexOf(start)) + end.length);
+
+  before(async () => {
+    site = join(sandbox, "techdoc");
+    assert.equal(run(["init", site], sandbox).status, 0);
+    const docs = join(site, "content", "en", "techdoc");
+    await rm(docs, { recursive: true });
+    await mkdir(join(docs, "guides"), { recursive: true });
+    const headings = "## Overview\n\n### Details\n\n#### Deep\n\n## Overview\n\n## Overlay\n\n## Install & *run*\n\n## ???\n\n## Demo\n\n" +
+      '<div id="demo">Demo</div>';
+    for (const [file, frontMatter, body = "Text."] of [
+      ["index.md", "title: Docs"],
+      ["zebra.md", "title: Zebra\norder: 1"],
+      ["apple.md", "title: Apple\norder: 1\ndatePublished: 2026-11-01\ntags: Blyss"],
+      ["later.md", "title: Later"],
+      ["guides/index.md", "title: Guides\norder: 2"],
+      ["guides/setup.md", "title: Setup\norder: -1", headings],
+      ["guides/deploy.md", "title: Deploy\norder: 2.5\nslug: shipping"]
+    ]) {
+      await writeFile(join(docs, file), `---\n${frontMatter}\n---\n\n${body}\n`);
+    }
+    const result = run(["build"], site);
+    assert.equal(result.status, 0, result.stderr);
+  });
+
+  test("lists the docs by directory, then by order and title, and marks the current one", async () => {
+    assert.equal(part(await page("en/techdoc/guides/setup"), '<nav aria-label="Documentation">', "</nav>"),
+      '<nav aria-label="Documentation">\n<ul>\n  <li><a href="/en/techdoc/">Docs</a></li>\n' +
+      '  <li><a href="/en/techdoc/apple/">Apple</a></li>\n  <li><a href="/en/techdoc/zebra/">Zebra</a></li>\n' +
+      '  <li><a href="/en/techdoc/guides/">Guides</a>\n    <ul>\n' +
+      '      <li><a href="/en/techdoc/guides/setup/" aria-current="page">Setup</a></li>\n' +
+      '      <li><a href="/en/techdoc/guides/shipping/">Deploy</a></li>\n    </ul>\n  </li>\n' +
+      '  <li><a href="/en/techdoc/later/">Later</a></li>\n</ul>\n</nav>');
+  });
+
+  test("links each doc to the previous and the next doc of the navigation", async () => {
+    const pager = (previous, next) => '<nav aria-label="Pagination">\n<ul>\n' +
+      (previous ? `  <li><a href="/en/techdoc/${previous[0]}" rel="prev">Previous: ${previous[1]}</a></li>\n` : "") +
+      (next ? `  <li><a href="/en/techdoc/${next[0]}" rel="next">Next: ${next[1]}</a></li>\n` : "") + "</ul>\n</nav>";
+    assert.ok((await page("en/techdoc")).includes(pager(null, ["apple/", "Apple"])));
+    assert.ok((await page("en/techdoc/guides")).includes(pager(["zebra/", "Zebra"], ["guides/setup/", "Setup"])));
+    assert.ok((await page("en/techdoc/later")).includes(pager(["guides/shipping/", "Deploy"], null)));
+    assert.ok((await page("de/techdoc/erste-schritte")).includes('<nav aria-label="Seitennavigation">\n<ul>\n' +
+      '  <li><a href="/de/techdoc/" rel="prev">Zurück: Dokumentation</a></li>\n' +
+      '  <li><a href="/de/techdoc/schreiben/" rel="next">Weiter: Schreiben</a></li>\n</ul>\n</nav>'));
+  });
+
+  test("gives the headings of a doc unique ids and lists its ## and ### headings above its text", async () => {
+    const html = await page("en/techdoc/guides/setup");
+    for (const heading of ['<h2 id="overview">Overview</h2>', '<h3 id="details">Details</h3>', '<h4 id="deep">Deep</h4>',
+      '<h2 id="overview-1">Overview</h2>', '<h2 id="overlay-1">Overlay</h2>', '<h2 id="install--run">Install &amp; <em>run</em></h2>',
+      '<h2 id="section">???</h2>', '<h2 id="demo-1">Demo</h2>']) {
+      assert.ok(html.includes(heading), heading);
+    }
+    assert.ok(html.includes('</header>\n<nav aria-label="On this page">\n<p>On this page</p>\n<ul>\n' +
+      '  <li><a href="#overview">Overview</a>\n    <ul>\n      <li><a href="#details">Details</a></li>\n    </ul>\n  </li>\n' +
+      '  <li><a href="#overview-1">Overview</a></li>\n  <li><a href="#overlay-1">Overlay</a></li>\n' +
+      '  <li><a href="#install--run">Install &amp; run</a></li>\n  <li><a href="#section">???</a></li>\n' +
+      '  <li><a href="#demo-1">Demo</a></li>\n</ul>\n</nav>'));
+    const ids = html.match(/ id="[^"]+"/g);
+    assert.equal(ids.length, new Set(ids).size);
+    assert.ok((await page("de/techdoc/schreiben/navigation")).includes('<h2 id="überschriften">Überschriften</h2>'));
+    assert.doesNotMatch(await page("en/techdoc/later"), /On this page/);
+  });
+
+  test("describes docs as TechArticle and keeps them out of the posts and the tags", async () => {
+    const html = await page("en/techdoc/apple");
+    assert.ok(html.includes('<body data-kind="techdoc" '));
+    const graph = JSON.parse(html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)[1])["@graph"];
+    const doc = graph.find(node => node["@type"] === "TechArticle");
+    assert.equal(doc.url, "https://example.com/en/techdoc/apple/");
+    assert.equal(doc.datePublished, "2026-11-01");
+    assert.deepEqual(doc.mainEntityOfPage, { "@id": `${doc.url}#webpage` });
+    assert.equal(doc.keywords, undefined);
+    for (const path of ["en/posts", "en/tags", "en/tags/blyss"]) {
+      assert.doesNotMatch(part(await page(path), "<main>", "</main>"), /\/techdoc\//, path);
+    }
+    assert.ok((await readFile(join(site, "public", "sitemap.xml"), "utf8")).includes("<loc>https://example.com/en/techdoc/guides/shipping/</loc>"));
+  });
+
+  test("renders docs with page.html without templates/techdoc.html", async () => {
+    const template = join(site, "templates", "techdoc.html");
+    const source = await readFile(template, "utf8");
+    await rm(template);
+    try {
+      const result = run(["build"], site);
+      assert.equal(result.status, 0, result.stderr);
+      const html = await page("en/techdoc/guides/setup");
+      assert.match(html, /<main>\s*<article>\s*<header>\s*<h1>Setup<\/h1>\s*<\/header>\s*<h2 id="overview">Overview<\/h2>/);
+      assert.doesNotMatch(html, /<nav aria-label="(?:Documentation|On this page|Pagination)">/);
+    } finally {
+      await writeFile(template, source);
+    }
+  });
+});
+
 describe("a site with its own hero texts and fragments", () => {
   let site;
   const page = path => readFile(join(site, "public", path), "utf8");
@@ -712,6 +813,10 @@ describe("invalid content", () => {
   const text = join("content", "en", "components", "heroComponentSlyder.md");
   const french = join("content", "fr", "pages", "index.md");
   const loose = join("content", "index.md");
+  const section = join("content", "en", "docs", "intro.md");
+  const doc = join("content", "en", "techdoc", "guides", "setup.md");
+  const sectionIndex = join("content", "en", "techdoc", "guides", "index.md");
+  const order = join("content", "en", "techdoc", "order.md");
   const english = join("content", "en", sep);
   const cases = [
     ["a page with the URL of a generated page", page, "---\ntitle: Posts\n---\n",
@@ -729,7 +834,15 @@ describe("invalid content", () => {
       `Cannot build ${french}: there is no language "fr" in site.languages.\nAdd the language to site.languages, or move the file ` +
       `to the directory of one of its languages, such as ${english}.\n`],
     ["content outside the directories of the languages", loose, "---\ntitle: Home\n---\n",
-      `Cannot build ${loose}: content lies in the directory of its language, such as ${english}.\n`]
+      `Cannot build ${loose}: content lies in the directory of its language, such as ${english}.\n`],
+    ["content outside the sections of a language", section, "---\ntitle: Intro\n---\n",
+      `Cannot build ${section}: there is no content section "docs".\nMove the file into ${join(english, "pages", sep)}, ` +
+      `${join(english, "posts", sep)} or ${join(english, "techdoc", sep)}.\n`],
+    ["a doc in a directory without index.md", doc, "---\ntitle: Setup\n---\n",
+      `Cannot build ${doc}: there is no ${sectionIndex}, the start page of its section.\n` +
+      `Add ${sectionIndex}: its title names the section in the navigation.\n`],
+    ["a doc whose order is not a number", order, "---\ntitle: Order\norder: first\n---\n",
+      `Cannot build ${order}: its order "first" is not a number.\nSet order to a number, such as 1 or 2.5, or remove it.\n`]
   ];
   for (const [name, file, source, message] of cases) {
     test(`rejects ${name} and keeps the previous output`, async () => {

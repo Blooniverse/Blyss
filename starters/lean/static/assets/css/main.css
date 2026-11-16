@@ -94,6 +94,33 @@ nav ul { display: flex; flex-wrap: wrap; gap: .25rem 1rem; padding: 0; list-styl
 
 footer { margin-top: 4vh; font-size: .9rem; color: var(--color202grey); letter-spacing: -.03em; line-height: 1.1; }
 
+/* Docs (templates/techdoc.html): the navigation of the documentation, beside the doc on wide screens and above it on
+   others, the table of contents at the start of the doc and the links to the previous and the next doc below it. */
+:is(.techdoc > nav, .techdoc article > nav) { font-size: .85rem; text-align: start; }
+:is(.techdoc > nav, .techdoc article > nav) ul { display: block; margin: 0; }
+:is(.techdoc > nav, .techdoc article > nav) ul ul { margin-left: 1em; }
+:is(.techdoc > nav, .techdoc article > nav) li { margin: .2em 0; }
+:is(.techdoc > nav, .techdoc article > nav) a:not(:hover) { text-decoration: none; }
+.techdoc > nav { margin-bottom: 1rem; padding-bottom: .5rem; border-bottom: 1px solid var(--card-border); }
+.techdoc article > nav { margin-bottom: 1rem; padding: .5rem .75rem; border: 1px solid var(--card-border); border-radius: var(--radius); background: var(--card); }
+.techdoc article > nav p { margin-bottom: .2em; font-weight: 700; color: var(--color202); }
+.techdoc main > nav ul { justify-content: space-between; margin-top: 2rem; }
+.techdoc main > nav li:has([rel="next"]) { margin-left: auto; }
+@media (min-width: 48rem) and (orientation: landscape) {
+  .techdoc { display: grid; grid-template-columns: minmax(8rem, 14rem) minmax(0, 1fr); gap: 2rem; align-items: start; }
+  /* The navigation stays beside the doc, between the top bar and the overlay's bar, and scrolls if it is longer. */
+  .techdoc > nav {
+    position: sticky;
+    top: calc(var(--bar-height) + 1rem);
+    max-height: calc(100svh - var(--bar-height) - 4rem);
+    overflow: auto;
+    margin: 0;
+    padding: 0 1rem 0 0;
+    border: 0;
+    border-right: 1px solid var(--card-border);
+  }
+}
+
 /* layout.alignHome and layout.alignOther in blyss.config.js align the page and the footer: "center" centers the text
    column and its text, and "centerLeft" only the column, with which the footer lines up. */
 [data-align="center"] > :is(.page, footer) { text-align: center; }

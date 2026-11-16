@@ -63,15 +63,53 @@ export function renderRecentPosts(record, records) {
   return `\n<section aria-label="${escapeHtml(record.languageConfig.labels.recentPosts)}">\n  <h2>${escapeHtml(record.languageConfig.labels.recentPosts)}</h2>\n  <ul>\n${listItems}\n  </ul>\n</section>\n`;
 }
 
+const idsOf = html => [...html.matchAll(/\sid="([^"{}]+)"/g)].map(match => match[1]);
+
+// Like GitHub, gives each heading an id from its text, such as "getting-started", "getting-started-1" for the next of
+// that text and "section" for one without letters or digits. The ids of the templates, such as "overlay", are taken,
+// and so are those of the HTML blocks and components in the text.
+function identifyHeadings(tokens, takenIds) {
+  for (const token of tokens) if (token.type === "html") idsOf(token.text).forEach(id => takenIds.add(id));
+  const headings = [];
+  for (const [index, token] of tokens.entries()) {
+    if (token.type !== "heading") continue;
+    const html = marked.Parser.parseInline(token.tokens);
+    const text = html.replace(/<[^>]*>/g, "").trim();
+    const slug = text.replace(/&#?\w+;/g, "").toLowerCase().replace(/[^\p{L}\p{M}\p{N}\p{Pc} -]/gu, "").replaceAll(" ", "-") || "section";
+    let id = slug;
+    for (let number = 1; takenIds.has(id); number++) id = `${slug}-${number}`;
+    takenIds.add(id);
+    tokens[index] = { type: "html", block: true, raw: token.raw, text: `<h${token.depth} id="${id}">${html}</h${token.depth}>\n` };
+    headings.push({ depth: token.depth, id, text });
+  }
+  return headings;
+}
+
+// The table of contents of a doc links to its ## headings, each with the ### headings that follow it.
+function renderToc(headings, label) {
+  const items = [];
+  for (const { depth, id, text } of headings.filter(heading => heading.depth === 2 || heading.depth === 3)) {
+    const link = `<a href="#${id}">${text}</a>`;
+    if (depth === 3 && items.length) items.at(-1).children.push(link);
+    else items.push({ link, children: [] });
+  }
+  if (!items.length) return "";
+  const list = items.map(({ link, children }) => (children.length
+    ? `  <li>${link}\n    <ul>\n${children.map(child => `      <li>${child}</li>`).join("\n")}\n    </ul>\n  </li>` : `  <li>${link}</li>`));
+  return `<nav aria-label="${escapeHtml(label)}">\n<p>${escapeHtml(label)}</p>\n<ul>\n${list.join("\n")}\n</ul>\n</nav>\n`;
+}
+
 // A paragraph that consists of {{<name>}} alone shows the component of that name; code keeps the placeholder as text.
-function renderBody(record, records, components) {
-  if (record.type === "list") return record.html;
+// With takenIds, the headings get ids (see identifyHeadings), which are returned with the headings.
+function renderBody(record, records, components, takenIds) {
+  if (record.type === "list") return { html: record.html, headings: [] };
   const tokens = marked.lexer(record.markdown.replace(/{{recentPosts}}/g, renderRecentPosts(record, records)));
   for (const [index, token] of tokens.entries()) {
     const name = token.type === "paragraph" && /^{{([a-zA-Z][a-zA-Z0-9]*)}}$/.exec(token.text.trim())?.[1];
     if (name && Object.hasOwn(components, name)) tokens[index] = { type: "html", block: true, raw: token.raw, text: components[name]() };
   }
-  return marked.parser(tokens);
+  const headings = takenIds ? identifyHeadings(tokens, takenIds) : [];
+  return { html: marked.parser(tokens), headings };
 }
 
 // "home" is the index page of a language; templates can style each kind, e.g. with <body data-kind="{{kind}}">.
@@ -86,21 +124,27 @@ function renderTags(record) {
   return `    <p>${escapeHtml(record.languageConfig.labels.tags)}: ${links.join(", ")}</p>`;
 }
 
-// components holds a function for each component of the website, which renders it in the language of the record.
-export function renderRecord({ record, templates, translationIndex, site, records = [], layout, fragments = {}, components = {} }) {
+// components holds a function for each component of the website, which renders it in the language of the record;
+// techdoc holds the navigation and the pager of a doc (see techdoc.js).
+export function renderRecord({ record, templates, translationIndex, site, records = [], layout, fragments = {}, components = {}, techdoc = {} }) {
   const metadata = record.metadata;
   const title = metadata.title || site.name;
   const description = metadata.description || record.languageConfig.description;
   const kind = kindOf(record);
   const home = kind === "home";
+  const isTechdoc = record.type === "techdoc";
   const dateBlock = metadata.datePublished
     ? `    <p><time datetime="${escapeHtml(metadata.datePublished)}">${escapeHtml(metadata.datePublished)}</time></p>` : "";
-  // Without a home.html template, home pages use page.html.
-  const innerTemplate = record.type === "post" ? templates.post : (home && templates.home) || templates.page;
+  // Without a home.html or a techdoc.html template, home pages and docs use page.html.
+  const innerTemplate = (record.type === "post" && templates.post) || (isTechdoc && templates.techdoc) || (home && templates.home) || templates.page;
+  const takenIds = isTechdoc ? new Set(idsOf(templates.document + innerTemplate)) : undefined;
+  const body = renderBody(record, records, components, takenIds);
   const content = applyTemplate(innerTemplate, {
     ...components,
+    ...techdoc,
+    techdocToc: isTechdoc ? renderToc(body.headings, record.languageConfig.labels.onThisPage) : "",
     title: escapeHtml(title), description: escapeHtml(description), dateBlock, tags: renderTags(record),
-    content: renderBody(record, records, components)
+    content: body.html
   });
   const pageTitle = title === site.name ? title : `${title} | ${site.name}`;
 
