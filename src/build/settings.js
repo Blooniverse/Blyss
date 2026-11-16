@@ -6,24 +6,25 @@ export const refuse = (setting, value, requirement) =>
 // Unlike em or %, these units mean the same on every element, so a top bar can span the margin it is placed in.
 const cssLength = /^(?:0|\d*\.?\d+(?:px|rem|vw|vh|vmin|vmax))$/i;
 
-// The alignments of the content and of the hero, on the home pages and on all other pages; the first value is the default.
+// The alignments of the content, on the home pages and on all other pages, of the hero and of the overlay; the first
+// value is the default.
 const alignments = {
   alignHome: ["center", "left"],
   alignOther: ["left", "center", "centerLeft"],
-  alignHeroHome: ["centerExtra", "left", "center"],
-  alignHeroOther: ["centerExtra", "left", "center"]
+  alignHero: ["centerExtra", "left", "center"],
+  alignOverlay: ["centerExtra", "left", "center"]
 };
 
 // Lists values as in '"left", "center" or "centerLeft"' or, with "and", as in '"close" and "search"'.
 export const listOf = (values, conjunction = "or") =>
   values.map(value => JSON.stringify(value)).join(", ").replace(/, (?=[^,]*$)/, ` ${conjunction} `);
 
-// layout.margin is the space around the content and layout.paddingHero the space above and below the content of the
-// hero; each alignment is one of its values above.
+// layout.margin is the space around the content, and layout.paddingHero and layout.paddingOverlay are the space above
+// and below the content of the hero and of the overlay; each alignment is one of its values above.
 export function layoutOf(config) {
-  const { margin = "2vmin", paddingHero = "1rem", ...settings } = config.layout ?? {};
+  const { margin = "2vmin", paddingHero = "1rem", paddingOverlay = "1rem", ...settings } = config.layout ?? {};
   const layout = {};
-  for (const [name, value] of Object.entries({ margin, paddingHero })) {
+  for (const [name, value] of Object.entries({ margin, paddingHero, paddingOverlay })) {
     if (!cssLength.test(String(value))) {
       throw refuse(`layout.${name}`, value, 'a CSS length in px, rem, vw, vh, vmin or vmax, such as "2vmin"');
     }

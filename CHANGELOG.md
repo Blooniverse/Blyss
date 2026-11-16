@@ -90,38 +90,67 @@
   `book`, `list` or `not-found`, for example for
   `<body data-kind="{{kind}}">`.
 - **Fragments**: each Markdown file directly in `content/<language>/`, such
-  as `hero.md`, is not published as a page; instead, `document.html` shows it
-  on every page of its language as `{{<name>Title}}`, the `title` of its
-  front matter, and `{{<name>Content}}`. Its name must consist of Latin
+  as `heroTexts.md`, is not published as a page; instead, `document.html`
+  shows it on every page of its language as `{{<name>Title}}`, the `title` of
+  its front matter, and `{{<name>Content}}`. Its name must consist of Latin
   letters and digits and start with a letter.
-- **Hero texts**: `{{heroTexts}}` splits `hero.md` at its `###` headings into
-  its texts, as many as it has, each a `<div>` in full length. Content before
-  the first `###` heading stops the build before the previous output is
-  deleted.
+- **Hero and overlay**: two independent regions accompany the pages, the
+  hero on the home pages and the overlay on the kinds of pages of your
+  choice. Each has an optional template, `hero.html` or `overlay.html`,
+  which `{{hero}}` or `{{overlay}}` shows in `document.html`, and settings of
+  its own in `blyss.config.js`: `hero.components` and `overlay.components`
+  list its components in their order, each switched on with `true` or off
+  with `false`, and `hero.texts` and `overlay.texts` switch its texts on or
+  off as a whole. The texts are those of `content/<language>/heroTexts.md`
+  and `overlayTexts.md`: each `###` heading starts a text, a `<div>` in full
+  length, and content before the first `###` heading stops the build. The
+  templates receive them as `{{components}}`, `{{textsTitle}}` and
+  `{{texts}}`. A region without a part that is switched on is not shown at
+  all.
+- **Overlay per kind of page**: `overlay.showOn` switches the overlay on or
+  off for the content types `page`, `post` and `book` and for the further
+  kinds of pages `home`, `list` and `not-found`, but not for a single page.
+- **Synchronised hero and overlay**: `synchroniseHeroOverlay: true` gives the
+  overlay the components and the texts of the hero, whatever
+  `overlay.components` and `overlay.texts` say; `overlay.showOn` still
+  applies. It defaults to `false`.
 - **Labels**: every label of a language is available in templates as
   `{{<key>Label}}`, such as `{{overlayLabel}}`; previously only six labels
   were.
 - **Layout**: `layout.margin` sets the space around the content, `"2vmin"`
-  by default, and `layout.paddingHero` the space above and below the content
-  of the hero, `"1rem"` by default. `layout.alignHome` (`"center"` or
-  `"left"`) and `layout.alignOther` (`"left"`, `"center"` or `"centerLeft"`)
-  align the content of the home pages and of all other pages,
-  `layout.alignHeroHome` and `layout.alignHeroOther` (`"centerExtra"`,
-  `"left"` or `"center"`) their hero; the first value is the default.
-  Templates receive the margin as `{{layoutMargin}}`, the padding as
-  `{{layoutPaddingHero}}` and the current page's alignments as
-  `{{layoutAlign}}` and `{{layoutAlignHero}}`.
+  by default, and `layout.paddingHero` and `layout.paddingOverlay` the space
+  above and below the content of the hero and of the overlay, `"1rem"` by
+  default. `layout.alignHome` (`"center"` or `"left"`) and
+  `layout.alignOther` (`"left"`, `"center"` or `"centerLeft"`) align the
+  content of the home pages and of all other pages, `layout.alignHero` and
+  `layout.alignOverlay` (`"centerExtra"`, `"left"` or `"center"`) the hero
+  and the overlay; the first value is the default. Templates receive the
+  margin as `{{layoutMargin}}`, the paddings as `{{layoutPaddingHero}}` and
+  `{{layoutPaddingOverlay}}` and the alignments as `{{layoutAlign}}`, that of
+  the current page, `{{layoutAlignHero}}` and `{{layoutAlignOverlay}}`.
 - **Components**: a directory `_components/<name>/` holds a component: its
   template `<name>.html`, an optional data file `<name>.data.js`, which checks
   its settings and prepares values for the template, and further files such
   as its stylesheet and its script, which are published at
   `/_components/<name>/`. Its texts are `content/<language>/components/<name>.md`
-  and its settings `components.<name>` in `blyss.config.js`. `{{<name>}}`
-  shows the component in every template and, in a paragraph of its own, in
-  the Markdown of pages and posts, any number of times per page; `{{id}}` in
-  its template is unique on the page. `directories.components` names the
-  directory, `"_components"` by default. Invalid layout and component settings
-  stop the build before the previous output is deleted.
+  and its settings `components.<name>` in `blyss.config.js`; the data file
+  also receives the front matter of that text and the texts that its `###`
+  headings start. `{{<name>}}` shows the component in every template and, in
+  a paragraph of its own, in the Markdown of pages and posts, any number of
+  times per page; `{{id}}` in its template is unique on the page.
+  `directories.components` names the directory, `"_components"` by default.
+  Invalid layout, hero, overlay and component settings stop the build before
+  the previous output is deleted.
+- **Component blocks**: in the Markdown of a page, post or doc, a fenced code
+  block with `{{<name>}}` as its language shows a component with a text and
+  settings of its own, in that one place. The block holds what the
+  component's text holds: its front matter adds to the fields of that text
+  and sets the settings of the same names in place of `components.<name>`,
+  where a value that is JSON, such as `5`, `true` or `[1, 2]`, is taken as
+  such, and its Markdown, if it has any, replaces that of the text. The
+  component needs no change for it. A setting of a block that the component
+  refuses stops the build with the name of the page before the previous
+  output is deleted.
 - **Books**: the content type `book` publishes each
   Markdown file in `content/<language>/book/` below
   `/<language>/book/`. Each directory is a section whose `index.md` is its
@@ -153,48 +182,69 @@
   `pagination: { pageSize: 10 }`.
 - **Starter design**: a new stylesheet modelled on philippschaffner.ch, with
   the font Titillium Web from Google Fonts and a `70ch` text column. The home
-  pages start with the site's title and slogan. Below the page
-  follows the hero, an overlay with a slider, a gallery and the texts of
-  `hero.md`, which slides up over the page on large screens and fades it out;
-  elsewhere the overlay collapses into a bar that opens it as a panel. The
-  hero is as tall as its content with `layout.paddingHero` above and below
-  it; if it is shorter than the window, it stops below the top bar while the
-  footer follows it. Each language has two more sample posts. `<main>` moved
-  from `document.html` into the content templates, and the footer follows the
-  overlay.
+  pages start with the site's title and slogan. Below the page follows the
+  hero with a slider, a gallery, a flower and the texts of `heroTexts.md`,
+  which slides up over the page on large screens and fades it out. The hero
+  is as tall as its content with `layout.paddingHero` above and below it; if
+  it is shorter than the window, it stops below the top bar while the footer
+  follows it. On all other pages, the overlay is a bar at the bottom of the
+  window that opens a panel with a slider, a gallery and the texts of
+  `overlayTexts.md`. `blyss.config.js` lists its settings in the order of
+  their sections, which its first lines name. Each language has two more
+  sample posts. `<main>` moved from `document.html` into the content
+  templates, and the footer follows the hero and the overlay.
 - **Top bar**: the starter's navigation bar stays at the top of the window on
   every page. It shows a placeholder logo, `static/assets/img/logo.svg`, next
   to the navigation and a search field without a function yet, whose text is
   the new label `search`.
-- **Starter slider**: the component `heroComponentSlider` follows its
-  heading, the `title` of `components/heroComponentSlider.md`, with its value
+- **Starter slider**: the component `componentSlider` follows its
+  heading, the `title` of `components/componentSlider.md`, with its value
   above it and its steps and the text of that file below it. It runs from 1
-  to 1000 with four described steps, set as `components.heroComponentSlider`
+  to 1000 with four described steps, set as `components.componentSlider`
   in `blyss.config.js`, and its script highlights the last step reached. The
-  post “Templates and styles” shows a second slider in its text. All headings
-  in the overlay are `<h3>`, so that they rank below each page's own `<h1>`
-  and `<h2>`.
-- **Starter gallery**: the component `heroComponentGallery` shows the images
-  listed in `components/heroComponentGallery.md` in a strip that its arrows,
+  post “Templates and styles” shows a second slider in its text and a third
+  in a block, with a title, a range and a text of its own. All headings
+  in the hero and in the overlay are `<h3>`, so that they rank below each
+  page's own `<h1>` and `<h2>`.
+- **Starter gallery**: the component `componentGallery` shows the images
+  listed in `components/componentGallery.md` in a strip that its arrows,
   the arrow keys, swiping and scrolling move sideways, and enlarges the image
-  in its centre. `components.heroComponentGallery` sets `heightOverall`,
-  `heightCenter` (`"130%"` of it by default), `animationSpeedScrolling` and
-  `animationSpeedImgEnlargement`. Images load lazily, and seven placeholder
-  images come with the starter.
+  in its centre. It starts with its middle image in the centre, so that
+  images fill the strip on both sides. A click or a touch on the image in the
+  centre, or the Enter or the space key, expands it above the page to 70% of
+  the height of the screen, or less if the screen is too narrow for that, so
+  that it never outgrows the screen. `components.componentGallery` sets
+  `heightOverall`, `heightCenter` (`"130%"` of it by default),
+  `heightExpanded` (`"70%"` of the screen by default),
+  `animationSpeedScrolling` and `animationSpeedImgEnlargement`. Images load
+  lazily, and seven placeholder images come with the starter.
+- **Starter flower**: the component `componentFlower` draws a flower with a
+  short stem on a transparent background. A click, a touch or the Enter or
+  the space key plucks a petal: it twirls around its own axis, a little
+  askew, falls to the ground, the bottom of the component, and fades there to
+  `opacityFallen`, while its text comes down like a falling leaf. The texts
+  are those that the `###` headings of `components/componentFlower.md` start:
+  the first belongs to the first petal, and so on.
+  `components.componentFlower` sets `petals` (`8`), `colourSystem`
+  (`"triadic"` or `"complementary"`), `colourBaseHue` (`202`),
+  `animationSpeedFalling` (`"3s"`), `animationSpeedText` (`"3s"`),
+  `animationSpeedFading` (`"4s"`), `opacityFallen` (`"30%"`) and
+  `fontSizeText` (`"60%"`).
 - **Starter layout**: `blyss.config.js` sets `layout.margin` to `"2vmin"`,
   which now applies on every side, replacing the fixed `3vmin` at the top and
   `1.5vmin` and `2vmin` at the sides. The home pages are centered and all
   other pages left-aligned, each with its footer; `"centerLeft"` centers the
-  text column but keeps its text left-aligned. The hero is centered except
-  for the texts of `hero.md`, which stay left-aligned with their headings
-  (`"centerExtra"`).
+  text column but keeps its text left-aligned. The hero and the overlay are
+  centered except for their texts, which stay left-aligned with their
+  headings (`"centerExtra"`).
 - **Starter documentation**: the starter documents the docs in its own
   English and German docs in `content/<language>/book/`, rendered by
   `_templates/book.html` with the navigation beside the doc on wide screens
   and above it otherwise. The top bar links to the documentation, and
   `blyss.config.js` translates its labels.
-- **Build**: content is read and validated before the previous output is
-  deleted, and files are processed in sorted order for reproducible output.
+- **Build**: content is read, validated and rendered before the previous
+  output is deleted, and files are processed in sorted order for reproducible
+  output.
   Two content files with the same URL stop the build with an error instead of
   one silently overwriting the other. Generated list pages use the JSON-LD
   type `CollectionPage`.
@@ -213,12 +263,13 @@
   ordered by `datePublished`; the archive, tags, sitemap, JSON-LD escaping and
   build errors are covered too, as are pagination, not-found pages, the Azure
   configuration, refused output directories, the home template and its
-  fallback, page kinds, the hero texts, fragments, components, the layout
-  and component settings and the language settings: a third language, a
-  default language other than the first, a hidden language switcher and
-  refused values. Further tests cover the docs: their navigation, order,
-  links to the previous and the next doc, heading ids, table of contents,
-  JSON-LD, the fallback to `page.html` and refused docs.
+  fallback, page kinds, the hero and the overlay with their switches, their
+  texts and their synchronisation, fragments, components and their blocks,
+  the layout and component settings and the language settings: a third
+  language, a default language other than the first, a hidden language
+  switcher and refused values. Further tests cover the docs: their
+  navigation, order, links to the previous and the next doc, heading ids,
+  table of contents, JSON-LD, the fallback to `page.html` and refused docs.
 
 ### Fixes
 
@@ -234,6 +285,9 @@
 - **JSON-LD escaping**: `<`, `>` and `&` are now written as `\u003c`,
   `\u003e` and `\u0026`. The previous replacement was a no-op, so a title
   containing `</script>` could end the JSON-LD script element.
+- **Empty front matter**: a front matter without fields, `---` followed at
+  once by `---`, no longer stops the build as if it lacked its closing
+  delimiter.
 
 ## 0.5.0 — 2026-10-28
 

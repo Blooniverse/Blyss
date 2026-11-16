@@ -208,7 +208,8 @@ describe("a generated starter", () => {
     const notFoundPages = ["404.html", "en/404.html", "de/404.html"];
     // Static files are copied as they are; components publish their files but their templates and data files.
     const componentFiles = (await listFiles(join(starter, "_components"))).filter(file => !/\.(?:html|data\.js)$/.test(file));
-    assert.deepEqual(componentFiles, ["Gallery", "Slider"].flatMap(name => ["css", "js"].map(type => `heroComponent${name}/heroComponent${name}.${type}`)));
+    assert.deepEqual(componentFiles, ["componentFlower", "componentGallery", "componentSlider"]
+      .flatMap(name => ["css", "js"].map(type => `${name}/${name}.${type}`)));
     assert.deepEqual(await listFiles(join(site, "public")), [...await listFiles(join(starter, "static")),
       ...componentFiles.map(file => `_components/${file}`), "sitemap.xml", ...pages, ...notFoundPages].sort());
     for (const page of [...pages, ...notFoundPages]) {
@@ -226,10 +227,10 @@ describe("a generated starter", () => {
   test("renders the home pages with home.html: title and slogan in the header, then the article, the hero and the footer", async () => {
     assert.match(await readFile(join(site, "public", "en", "index.html"), "utf8"), new RegExp("</div>\\s*<div class=\"page\">\\s*" +
       "<header>\\s*<h1>Blyss</h1>\\s*<h2>Blyss slogan</h2>\\s*</header>\\s*<main>\\s*<article>\\s*<h3>Blyss about or description</h3>" +
-      "[\\s\\S]*</main>\\s*</div>\\s*<aside class=\"overlay\"[\\s\\S]*</aside>\\s*<footer>"));
+      "[\\s\\S]*</main>\\s*</div>\\s*<aside class=\"hero\" aria-label=\"Highlights\">[\\s\\S]*</aside>\\s*<footer>"));
     const german = await readFile(join(site, "public", "de", "index.html"), "utf8");
-    for (const label of ['<h3><label for="heroComponentSlider-1-input">Schieberegler</label></h3>',
-      '<h3 id="heroComponentGallery-1-title">Galerie</h3>', "<h3>Warum Blyss</h3>",
+    for (const label of ['<h3><label for="componentSlider-1-input">Schieberegler</label></h3>',
+      '<h3 id="componentGallery-1-title">Galerie</h3>', '<h3 id="componentFlower-1-title">Blume</h3>', "<h3>Warum Blyss</h3>",
       '<input type="search" aria-label="Suchen" placeholder="Suchen">']) {
       assert.ok(german.includes(label), label);
     }
@@ -237,19 +238,39 @@ describe("a generated starter", () => {
 
   test("shows the gallery with its settings, its texts and its images, which load lazily", async () => {
     const html = await readFile(join(site, "public", "de", "pages", "about", "index.html"), "utf8");
-    assert.ok(html.includes('<hero-component-gallery class="hero-component" role="group" aria-labelledby="heroComponentGallery-1-title" ' +
-      'style="--height-overall: 8rem; --scale-center: 1.3; --speed-scrolling: 400ms; --speed-enlargement: 300ms">'));
+    assert.ok(html.includes('<component-gallery class="component" role="group" aria-labelledby="componentGallery-1-title" ' +
+      'style="--height-overall: 8rem; --scale-center: 1.3; --height-expanded: 70; --speed-scrolling: 400ms; --speed-enlargement: 300ms">'));
     for (const label of ["Vorheriges Bild", "Nächstes Bild"]) assert.ok(html.includes(`<button type="button" aria-label="${label}">`), label);
     const images = [...html.matchAll(/<li><img loading="lazy" src="\/(assets\/img\/gallery\/[^"]+)" alt="[^"]+"><\/li>/g)].map(match => match[1]);
     assert.equal(images.length, 7);
     for (const image of images) assert.ok((await stat(join(site, "public", image))).isFile(), image);
   });
 
-  test("shows a component in a post that names it in a paragraph of its own, next to the one in the overlay", async () => {
+  test("shows the flower with its colours, a button for each petal and the texts of the petals", async () => {
+    const headings = { en: ["Pluck a petal", "One text each", "Count them", "Three colours", "At your pace", "Never quite gone", "Small print", "See-through"],
+      de: ["Zupfen Sie ein Blatt", "Je ein Text", "Zählen Sie nach", "Drei Farben", "In Ihrem Tempo", "Nie ganz verschwunden", "Kleingedrucktes", "Durchsichtig"] };
+    for (const [language, label] of [["en", "Petal"], ["de", "Blütenblatt"]]) {
+      const html = await readFile(join(site, "public", language, "index.html"), "utf8");
+      const flower = html.slice(html.indexOf("<component-flower "), html.indexOf("</component-flower>"));
+      assert.ok(flower.startsWith('<component-flower class="component" role="group" aria-labelledby="componentFlower-1-title" ' +
+        'style="--hue-petals: 202; --hue-centre: 322; --hue-stem: 82; --petal-width: 0.551; --speed-falling: 3s; --speed-text: 3s; ' +
+        '--speed-fading: 4s; --opacity-fallen: 0.3; --font-size-text: 0.6">'), language);
+      assert.deepEqual([...flower.matchAll(/<button type="button" class="petal" style="--angle: ([\d.]+)deg" aria-label="([^"]+)" disabled><\/button>/g)]
+        .map(match => match.slice(1)), [0, 45, 90, 135, 180, 225, 270, 315].map((angle, index) => [String(angle), `${label} ${index + 1}`]));
+      assert.deepEqual([...flower.matchAll(/<li>\n<h3>([^<]+)<\/h3>\n<p>/g)].map(match => match[1]), headings[language]);
+      assert.equal(flower.match(/<span style="--lie: -?\d+deg"><\/span>/g).length, 8, language);
+    }
+  });
+
+  test("shows a component in a post that names it in a paragraph or in a block of its own, next to the one in the overlay", async () => {
     const html = await readFile(join(site, "public", "en", "posts", "templates", "index.html"), "utf8");
     const [article, overlay] = html.split('<aside class="overlay"');
-    assert.match(article, /like the slider here:<\/p>\n<link [^>]+>\n<script [^>]+><\/script>\n<hero-component-slider class="hero-component">\n {2}<h3><label for="heroComponentSlider-1-input">Slider<\/label><\/h3>/);
-    assert.ok(overlay.includes('<input id="heroComponentSlider-2-input" type="range" min="1" max="1000" value="500">'));
+    assert.match(article, /like the slider here:<\/p>\n<link [^>]+>\n<script [^>]+><\/script>\n<component-slider class="component">\n {2}<h3><label for="componentSlider-1-input">Slider<\/label><\/h3>/);
+    // The block of the second slider sets its title, its range, its steps and its text.
+    assert.ok(article.includes('<component-slider class="component">\n  <h3><label for="componentSlider-2-input">A slider of its own</label></h3>\n' +
+      '  <output for="componentSlider-2-input" aria-hidden="true">5</output>\n' +
+      '  <input id="componentSlider-2-input" type="range" min="0" max="10" value="5">\n\n<p>It runs from 0 to 10 and has no steps.</p>\n'));
+    assert.ok(overlay.includes('<input id="componentSlider-3-input" type="range" min="1" max="1000" value="500">'));
     assert.equal(html.match(/ id="[^"]+"/g).length, new Set(html.match(/ id="[^"]+"/g)).size);
   });
 
@@ -260,7 +281,8 @@ describe("a generated starter", () => {
     for (const [path, kind] of Object.entries(kinds)) {
       const html = await readFile(join(site, "public", path), "utf8");
       const align = kind === "home" ? "center" : "left";
-      assert.ok(html.includes(`<body data-kind="${kind}" data-align="${align}" data-align-hero="centerExtra" style="--site-margin: 2vmin; --hero-padding: 1rem">`), path);
+      assert.ok(html.includes(`<body data-kind="${kind}" data-align="${align}" data-align-hero="centerExtra" data-align-overlay="centerExtra" ` +
+        'style="--site-margin: 2vmin; --hero-padding: 1rem; --overlay-padding: 1rem">'), path);
     }
   });
 
@@ -279,8 +301,8 @@ describe("a generated starter", () => {
       assert.equal(home.headers.get("location"), "/en/");
       for (const [path, status] of [["/en/", 200], ["/de/posts/hallo-welt/", 200], ["/en/posts/", 200], ["/de/tags/blyss/", 200],
         ["/en/book/", 200], ["/de/book/schreiben/navigation/", 200], ["/de/404.html", 200], ["/sitemap.xml", 200], ["/assets/css/main.css", 200], ["/assets/img/logo.svg", 200],
-        ["/_components/heroComponentSlider/heroComponentSlider.js", 200], ["/_components/heroComponentSlider/heroComponentSlider.html", 404],
-        ["/_components/heroComponentSlider/heroComponentSlider.data.js", 404], ["/missing/", 404]]) {
+        ["/_components/componentSlider/componentSlider.js", 200], ["/_components/componentSlider/componentSlider.html", 404],
+        ["/_components/componentSlider/componentSlider.data.js", 404], ["/missing/", 404]]) {
         const response = await fetch(base + path);
         await response.text();
         assert.equal(response.status, status, path);
@@ -437,19 +459,27 @@ describe("a site with several tagged posts", () => {
     assert.deepEqual(await postSlugs("de"), ["vorlagen", "uebersetzungen", "hallo-welt"]);
   });
 
-  test("shows the texts of hero.md in the overlay of every page of a language", async () => {
-    const overlay = async path => {
+  test("shows the texts of heroTexts.md in the hero of the home pages and those of overlayTexts.md in the overlay of the other pages", async () => {
+    const region = async (path, start) => {
       const html = await readFile(join(site, "public", path), "utf8");
-      return html.slice(html.indexOf('<div id="overlay"'), html.indexOf("</aside>"));
+      return html.includes(start) ? html.slice(html.indexOf(start), html.indexOf("</aside>")) : "";
     };
-    const texts = async path => [...(await overlay(path)).matchAll(/<div>\n<h3>([^<]+)<\/h3>/g)].map(match => match[1]);
-    const home = await overlay("en/index.html");
-    for (const path of ["en/pages/about/index.html", "en/posts/older/index.html", "en/tags/index.html", "en/404.html"]) {
-      assert.equal(await overlay(path), home, path);
-    }
+    const hero = path => region(path, '<aside class="hero"');
+    const overlay = path => region(path, '<div id="overlay"');
+    const texts = html => [...html.matchAll(/<div>\n<h3>([^<]+)<\/h3>/g)].map(match => match[1]);
+    const home = await hero("en/index.html");
     assert.ok(home.includes("<h3>Why Blyss</h3>"));
-    assert.deepEqual(await texts("en/index.html"), ["Markdown in, HTML out", "Two languages", "Your own texts"]);
-    assert.deepEqual(await texts("de/posts/index.html"), ["Markdown rein, HTML raus", "Zwei Sprachen", "Ihre eigenen Texte"]);
+    assert.deepEqual(texts(home), ["Markdown in, HTML out", "Two languages", "Your own texts"]);
+    assert.deepEqual(texts(await hero("de/index.html")), ["Markdown rein, HTML raus", "Zwei Sprachen", "Ihre eigenen Texte"]);
+    assert.equal(await overlay("en/index.html"), "");
+    const about = await overlay("en/pages/about/index.html");
+    for (const path of ["en/posts/older/index.html", "en/tags/index.html", "en/book/index.html", "en/404.html"]) {
+      assert.equal(await overlay(path), about, path);
+      assert.equal(await hero(path), "", path);
+    }
+    assert.ok(about.includes("<h3>Good to know</h3>"));
+    assert.deepEqual(texts(about), ["On the pages you choose", "Its own content", "Or a copy of the hero"]);
+    assert.deepEqual(texts(await overlay("de/posts/index.html")), ["Auf den Seiten Ihrer Wahl", "Eigene Inhalte", "Oder eine Kopie des Heros"]);
   });
 
   test("archives all posts newest first, pageSize posts per page", async () => {
@@ -649,7 +679,7 @@ describe("a site with its own hero texts and fragments", () => {
     assert.equal(run(["init", site], sandbox).status, 0);
     const texts = [`### One\n\n${long}\n\n#### Part of one\n\nMore.`, "### Two\n\n```md\n### Not a text\n```",
       ...[3, 4, 5, 6, 7, 8, 9].map(number => `### Text ${number}\n\nText.`)];
-    await writeFile(join(site, "content", "en", "hero.md"),
+    await writeFile(join(site, "content", "en", "heroTexts.md"),
       `---\ntitle: Nine <texts>\n---\n\n<!-- Each ### heading starts a text. -->\n\n${texts.join("\n\n")}\n`);
     await writeFile(join(site, "content", "en", "notice.md"), "---\ntitle: Notice\n---\n\nClosed on *Monday*.\n");
     const documentFile = join(site, "_templates", "document.html");
@@ -660,8 +690,8 @@ describe("a site with its own hero texts and fragments", () => {
     assert.equal(result.status, 0, result.stderr);
   });
 
-  test("shows every text of hero.md in full, each from one ### heading to the next", async () => {
-    const html = await page("en/pages/about/index.html");
+  test("shows every text of heroTexts.md in full, each from one ### heading to the next", async () => {
+    const html = await page("en/index.html");
     const hero = html.slice(html.indexOf("<h3>Nine"), html.indexOf("</aside>"));
     assert.ok(hero.startsWith("<h3>Nine &lt;texts&gt;</h3>"));
     assert.equal(hero.match(/<div>\n<h3>/g).length, 9);
@@ -673,7 +703,7 @@ describe("a site with its own hero texts and fragments", () => {
     assert.ok((await page("en/posts/index.html")).includes(
       '<section class="notice"><h2>Notice</h2><p>Closed on <em>Monday</em>.</p>\n</section>'));
     assert.ok((await page("de/posts/index.html")).includes('<section class="notice"><h2></h2></section>'));
-    for (const name of ["hero", "notice"]) {
+    for (const name of ["heroTexts", "overlayTexts", "notice"]) {
       await assert.rejects(stat(join(site, "public", "en", name)), { code: "ENOENT" });
     }
   });
@@ -685,20 +715,30 @@ describe("a site with its own layout and component settings", () => {
   const page = path => readFile(join(site, "public", path), "utf8");
   const slider = async path => {
     const html = await page(path);
-    const start = html.indexOf('<hero-component-slider class="hero-component">');
+    const start = html.indexOf('<component-slider class="component">');
     return html.slice(start, html.indexOf("<p>", start));
   };
-  const gallery = async path => (await page(path)).match(/<hero-component-gallery [^>]+>/)[0];
+  const gallery = async path => (await page(path)).match(/<component-gallery [^>]+>/)[0];
+  const flower = async path => {
+    const html = await page(path);
+    return html.slice(html.indexOf("<component-flower "), html.indexOf("</component-flower>"));
+  };
   const settings = config => config.slice(config.indexOf("  layout: {"), config.indexOf("  directories: {"));
+  const regions = `  hero: { components: { componentSlider: true, componentGallery: true, componentFlower: true } },
+  overlay: { components: { componentSlider: true } },
+`;
 
   before(async () => {
     site = join(sandbox, "custom-layout");
     assert.equal(run(["init", site], sandbox).status, 0);
     configFile = join(site, "blyss.config.js");
     const config = await readFile(configFile, "utf8");
-    await writeFile(configFile, config.replace(settings(config), `  layout: { margin: "3rem", paddingHero: "4vh", alignHome: "left", alignOther: "centerLeft", alignHeroHome: "center", alignHeroOther: "left" },
-  components: {
-    heroComponentSlider: {
+    // The German flower has an introduction, two texts and no name for its petals.
+    await writeFile(join(site, "content", "de", "components", "componentFlower.md"),
+      "---\ntitle: Blume\n---\n\nEinleitung.\n\n### Eins\n\nText *eins*.\n\n#### Mehr\n\n### Zwei\n");
+    await writeFile(configFile, config.replace(settings(config), `  layout: { margin: "3rem", paddingHero: "4vh", paddingOverlay: "5vh", alignHome: "left", alignOther: "centerLeft", alignHero: "center", alignOverlay: "left" },
+${regions}  components: {
+    componentSlider: {
       start: -10,
       end: 30,
       steps: [
@@ -707,51 +747,165 @@ describe("a site with its own layout and component settings", () => {
         { value: 0, description: { en: "Frost", de: "Frost" } }
       ]
     },
-    heroComponentGallery: { heightOverall: "200px", heightCenter: "150%", animationSpeedScrolling: "1s", animationSpeedImgEnlargement: ".2s" }
+    componentGallery: { heightOverall: "200px", heightCenter: "150%", heightExpanded: "90%", animationSpeedScrolling: "1s", animationSpeedImgEnlargement: ".2s" },
+    componentFlower: { petals: 5, colourSystem: "complementary", colourBaseHue: 40, animationSpeedFalling: "1500ms", animationSpeedText: "2s",
+      animationSpeedFading: ".5s", opacityFallen: "20%", fontSizeText: "75%" }
   },
 `));
     const result = run(["build"], site);
     assert.equal(result.status, 0, result.stderr);
   });
 
-  test("applies layout.margin, layout.paddingHero and the alignments of the home pages and of all other pages", async () => {
-    const body = (kind, align, hero) =>
-      `<body data-kind="${kind}" data-align="${align}" data-align-hero="${hero}" style="--site-margin: 3rem; --hero-padding: 4vh">`;
-    assert.ok((await page("de/index.html")).includes(body("home", "left", "center")));
+  test("applies layout.margin, the paddings and the alignments of the pages, of the hero and of the overlay", async () => {
+    const body = (kind, align) => `<body data-kind="${kind}" data-align="${align}" data-align-hero="center" data-align-overlay="left" ` +
+      'style="--site-margin: 3rem; --hero-padding: 4vh; --overlay-padding: 5vh">';
+    assert.ok((await page("de/index.html")).includes(body("home", "left")));
     for (const [path, kind] of [["de/posts/index.html", "list"], ["en/posts/hello-world/index.html", "post"], ["404.html", "not-found"]]) {
-      assert.ok((await page(path)).includes(body(kind, "centerLeft", "left")), path);
+      assert.ok((await page(path)).includes(body(kind, "centerLeft")), path);
     }
   });
 
   test("runs the slider from start to end, starting halfway, with its steps sorted and described in each language", async () => {
-    const steps = (cold, frost, hot) => '  <output for="heroComponentSlider-1-input" aria-hidden="true">10</output>\n' +
-      '  <input id="heroComponentSlider-1-input" type="range" min="-10" max="30" value="10">\n<ol class="steps">\n' +
+    const steps = (cold, frost, hot) => '  <output for="componentSlider-1-input" aria-hidden="true">10</output>\n' +
+      '  <input id="componentSlider-1-input" type="range" min="-10" max="30" value="10">\n<ol class="steps">\n' +
       `  <li style="--position: 0%"><data value="-10">-10</data> <span>${cold}</span></li>\n` +
       `  <li style="--position: 25%" aria-current="step"><data value="0">0</data> <span>${frost}</span></li>\n` +
       `  <li style="--position: 100%"><data value="30">30</data> <span>${hot}</span></li>\n</ol>`;
     assert.ok((await slider("en/index.html")).includes(steps("Cold &amp; &lt;icy&gt;", "Frost", "Hot")));
     assert.ok((await slider("de/pages/about/index.html")).includes(steps("Kalt", "Frost", "Heiß")));
-    assert.ok((await slider("de/index.html")).includes('<h3><label for="heroComponentSlider-1-input">Schieberegler</label></h3>'));
+    assert.ok((await slider("de/index.html")).includes('<h3><label for="componentSlider-1-input">Schieberegler</label></h3>'));
   });
 
   test("gives the gallery its heights and speeds, the height of the image in the centre as a factor", async () => {
     assert.ok((await gallery("de/index.html")).endsWith(
-      'style="--height-overall: 200px; --scale-center: 1.5; --speed-scrolling: 1s; --speed-enlargement: .2s">'));
+      'style="--height-overall: 200px; --scale-center: 1.5; --height-expanded: 90; --speed-scrolling: 1s; --speed-enlargement: .2s">'));
+  });
+
+  test("gives the flower its petals, colours and times, and each petal the text of its number", async () => {
+    const english = await flower("en/index.html");
+    assert.ok(english.startsWith('<component-flower class="component" role="group" aria-labelledby="componentFlower-1-title" ' +
+      'style="--hue-petals: 40; --hue-centre: 220; --hue-stem: 40; --petal-width: 0.846; --speed-falling: 1500ms; --speed-text: 2s; ' +
+      '--speed-fading: .5s; --opacity-fallen: 0.2; --font-size-text: 0.75">'));
+    assert.deepEqual([...english.matchAll(/style="--angle: ([\d.]+)deg" aria-label="([^"]+)" disabled>/g)].map(match => match.slice(1)),
+      [["0", "Petal 1"], ["72", "Petal 2"], ["144", "Petal 3"], ["216", "Petal 4"], ["288", "Petal 5"]]);
+    assert.deepEqual([...english.matchAll(/<li>\n<h3>([^<]+)<\/h3>/g)].map(match => match[1]),
+      ["Pluck a petal", "One text each", "Count them", "Three colours", "At your pace"]);
+    assert.deepEqual([...english.matchAll(/<span style="--lie: (-?\d+)deg"><\/span>/g)].map(match => match[1]), ["78", "90", "102", "-91", "-79"]);
+    const german = await flower("de/index.html");
+    assert.ok(german.includes('<ol class="texts" aria-live="polite">\n    <li>\n<h3>Eins</h3>\n<p>Text <em>eins</em>.</p>\n<h4>Mehr</h4>\n</li>\n' +
+      "    <li>\n<h3>Zwei</h3>\n</li>\n  </ol>"));
+    assert.equal(german.match(/aria-label="Petal \d" disabled>/g).length, 5);
+    assert.doesNotMatch(german, /Einleitung/);
   });
 
   test("falls back to the default layout and component settings, and accepts a margin of 0", async () => {
     const config = await readFile(configFile, "utf8");
-    await writeFile(configFile, config.replace(settings(config), "  layout: { margin: 0 },\n"));
+    await writeFile(configFile, config.replace(settings(config), `  layout: { margin: 0 },\n${regions}`));
     const result = run(["build"], site);
     assert.equal(result.status, 0, result.stderr);
-    const style = 'style="--site-margin: 0px; --hero-padding: 1rem"';
-    assert.ok((await page("en/index.html")).includes(`<body data-kind="home" data-align="center" data-align-hero="centerExtra" ${style}>`));
-    assert.ok((await page("en/pages/about/index.html")).includes(`<body data-kind="page" data-align="left" data-align-hero="centerExtra" ${style}>`));
+    const attributes = 'data-align-hero="centerExtra" data-align-overlay="centerExtra" style="--site-margin: 0px; --hero-padding: 1rem; --overlay-padding: 1rem"';
+    assert.ok((await page("en/index.html")).includes(`<body data-kind="home" data-align="center" ${attributes}>`));
+    assert.ok((await page("en/pages/about/index.html")).includes(`<body data-kind="page" data-align="left" ${attributes}>`));
     const fallback = await slider("en/index.html");
-    assert.ok(fallback.includes('<input id="heroComponentSlider-1-input" type="range" min="0" max="100" value="50">'));
+    assert.ok(fallback.includes('<input id="componentSlider-1-input" type="range" min="0" max="100" value="50">'));
     assert.doesNotMatch(fallback, /<ol/);
     assert.ok((await gallery("en/index.html")).endsWith(
-      'style="--height-overall: 8rem; --scale-center: 1.3; --speed-scrolling: 400ms; --speed-enlargement: 300ms">'));
+      'style="--height-overall: 8rem; --scale-center: 1.3; --height-expanded: 70; --speed-scrolling: 400ms; --speed-enlargement: 300ms">'));
+  });
+});
+
+describe("a site with its own hero and overlay", () => {
+  let site;
+  let configFile;
+  let config;
+  const page = path => readFile(join(site, "public", path), "utf8");
+  // The hero or the overlay of a page, or nothing, and the components of such a region in their order.
+  const region = async (path, name) => (await page(path)).match(new RegExp(`<aside class="${name}"[\\s\\S]*?</aside>`))?.[0] ?? "";
+  const components = html => [...html.matchAll(/<(component-[a-z]+) /g)].map(match => match[1]);
+
+  before(async () => {
+    site = join(sandbox, "regions");
+    assert.equal(run(["init", site], sandbox).status, 0);
+    configFile = join(site, "blyss.config.js");
+    config = await readFile(configFile, "utf8");
+  });
+
+  // Builds the site with other settings for the hero, the overlay and their synchronisation.
+  async function buildWith(settings) {
+    const [start, end] = [config.indexOf("  hero: {"), config.indexOf("\n  components: {")];
+    assert.ok(start > 0 && end > start);
+    await writeFile(configFile, config.slice(0, start) + settings + config.slice(end));
+    const result = run(["build"], site);
+    assert.equal(result.status, 0, result.stderr);
+  }
+
+  test("shows the parts of the hero and of the overlay that are switched on, the components in the order of the settings", async () => {
+    await buildWith(`  hero: { components: { componentFlower: true, componentSlider: false, componentGallery: true }, texts: false },
+  overlay: { showOn: { home: true, book: false }, components: { componentGallery: true, componentFlower: false }, texts: true },`);
+    const hero = await region("en/index.html", "hero");
+    assert.deepEqual(components(hero), ["component-flower", "component-gallery"]);
+    assert.ok(hero.includes("<h3></h3>"));
+    assert.doesNotMatch(hero, /Why Blyss|Markdown in, HTML out/);
+    const overlay = await region("en/index.html", "overlay");
+    assert.deepEqual(components(overlay), ["component-gallery"]);
+    assert.ok(overlay.includes("<h3>Good to know</h3>") && overlay.includes("<h3>Its own content</h3>"));
+    const home = await page("en/index.html");
+    assert.equal(home.match(/ id="[^"]+"/g).length, new Set(home.match(/ id="[^"]+"/g)).size);
+    for (const [path, shown] of [["en/book/index.html", false], ["de/book/schreiben/navigation/index.html", false],
+      ["en/posts/hello-world/index.html", true], ["de/tags/index.html", true], ["404.html", true]]) {
+      assert.equal(Boolean(await region(path, "overlay")), shown, path);
+      assert.equal(await region(path, "hero"), "", path);
+    }
+  });
+
+  test("leaves out a hero and an overlay without a part that is switched on", async () => {
+    await buildWith("  hero: { components: { componentSlider: false, componentFlower: false }, texts: false },\n  overlay: { texts: false },");
+    for (const path of ["en/index.html", "de/index.html", "en/pages/about/index.html", "de/posts/index.html"]) {
+      const html = await page(path);
+      assert.doesNotMatch(html, /<aside|<component-|Why Blyss|Good to know/, path);
+      assert.doesNotMatch(html, /{{\w+}}/, path);
+      assert.match(html, /<\/div>\s*<footer>/, path);
+    }
+  });
+
+  test("shows the texts alone without settings, the overlay on every kind of page", async () => {
+    await buildWith("");
+    const hero = await region("de/index.html", "hero");
+    assert.deepEqual(components(hero), []);
+    assert.ok(hero.includes("<h3>Warum Blyss</h3>") && hero.includes("<h3>Zwei Sprachen</h3>"));
+    for (const path of ["de/index.html", "en/pages/about/index.html", "en/book/index.html", "en/404.html"]) {
+      const overlay = await region(path, "overlay");
+      assert.deepEqual(components(overlay), [], path);
+      assert.ok(overlay.includes(path.startsWith("de") ? "<h3>Gut zu wissen</h3>" : "<h3>Good to know</h3>"), path);
+    }
+  });
+
+  test("gives the overlay the components and the texts of the hero if synchroniseHeroOverlay is true", async () => {
+    await buildWith(`  hero: { components: { componentFlower: true, componentSlider: false }, texts: true },
+  overlay: { showOn: { post: false }, components: { componentSlider: true, componentGallery: true }, texts: false },
+  synchroniseHeroOverlay: true,`);
+    const hero = await region("en/index.html", "hero");
+    // From the first component to the end of the texts, the overlay is the hero.
+    const parts = html => html.slice(html.indexOf("<link "), html.lastIndexOf("</div>"));
+    for (const path of ["en/index.html", "en/pages/about/index.html", "en/tags/index.html"]) {
+      const overlay = await region(path, "overlay");
+      assert.deepEqual(components(overlay), ["component-flower"], path);
+      assert.ok(overlay.includes("<h3>Why Blyss</h3>") && overlay.includes("<h3>Your own texts</h3>"), path);
+      assert.doesNotMatch(overlay, /Good to know/, path);
+    }
+    assert.equal(parts(await region("en/pages/about/index.html", "overlay")), parts(hero));
+    assert.equal(await region("en/posts/hello-world/index.html", "overlay"), "");
+  });
+
+  test("has neither a hero nor an overlay without their templates", async () => {
+    for (const template of ["hero.html", "overlay.html"]) await rm(join(site, "_templates", template));
+    await writeFile(configFile, config);
+    const result = run(["build"], site);
+    assert.equal(result.status, 0, result.stderr);
+    for (const path of ["en/index.html", "de/pages/about/index.html", "en/book/index.html"]) {
+      const html = await page(path);
+      assert.doesNotMatch(html, /<aside|{{\w+}}/, path);
+    }
   });
 });
 
@@ -759,6 +913,7 @@ describe("a site with a component of its own", () => {
   let site;
   let configFile;
   const page = path => readFile(join(site, "public", path), "utf8");
+  const blocks = join("content", "en", "pages", "blocks.md");
 
   before(async () => {
     site = join(sandbox, "component");
@@ -775,13 +930,20 @@ describe("a site with a component of its own", () => {
 `);
     configFile = join(site, "blyss.config.js");
     const config = await readFile(configFile, "utf8");
-    assert.ok(config.includes("  components: {"));
-    await writeFile(configFile, config.replace("  components: {", '  components: {\n    notice: { level: "high & <dry>", hours: ["9", "17"] },'));
+    assert.ok(config.includes("\n  components: {"));
+    await writeFile(configFile, config.replace("\n  components: {", '\n  components: {\n    notice: { level: "high & <dry>", hours: ["9", "17"] },'));
     await writeFile(join(site, "content", "en", "components", "notice.md"), "---\ntitle: Notice\nhint: Read <this>\n---\n\nClosed on *Monday*.\n");
     const about = join(site, "content", "en", "pages", "about.md");
     await writeFile(about, `${await readFile(about, "utf8")}\n{{notice}}\n\nWrite \`{{notice}}\` in a paragraph of its own:\n\n  {{notice}}\n`);
     const documentFile = join(site, "_templates", "document.html");
     await writeFile(documentFile, (await readFile(documentFile, "utf8")).replace("  <footer>", "{{notice}}  <footer>"));
+    // Blocks: with front matter and Markdown of its own, empty, with a front matter without fields, with a setting
+    // alone, and of a component that is missing.
+    await writeFile(join(site, blocks), "---\ntitle: Blocks\n---\n\n" +
+      '```{{notice}}\n---\ntitle: Block & <own>\nlevel: low\nhours: ["8", "12"]\n---\n\nOpen on *Sunday*.\n```\n\n' +
+      "```{{notice}}\n```\n\n```{{notice}}\n---\n---\n```\n\n~~~{{notice}}\n---\nhours:\n  - 1\n  - 2\n---\n~~~\n\n```{{missing}}\ntext\n```\n");
+    await writeFile(join(site, "content", "de", "pages", "blocks.md"), "---\ntitle: Blöcke\n---\n\n" +
+      "```{{componentFlower}}\n---\npetals: 3\ncolourSystem: complementary\nfontSizeText: 80%\n---\n\n### Eins\n\nText.\n\n### Zwei\n```\n");
     const result = run(["build"], site);
     assert.equal(result.status, 0, result.stderr);
   });
@@ -802,13 +964,53 @@ describe("a site with a component of its own", () => {
     assert.deepEqual(await listFiles(join(site, "public", "_components", "notice")), ["notice.css"]);
   });
 
-  test("refuses a setting that its data file refuses and keeps the previous output", async () => {
+  test("gives a fenced code block that names it a text and settings of its own", async () => {
+    const notice = (id, level, texts, hours) => `<aside id="notice-${id}" data-level="${level}">${texts}<p>${hours} (en)</p></aside>`;
+    const text = "<h2>Notice</h2><small>Read &lt;this&gt; Close</small><p>Closed on <em>Monday</em>.</p>\n";
+    const html = await page("en/pages/blocks/index.html");
+    // The first block replaces the title, a setting, a list and the text, and keeps the hint of the component's text.
+    assert.ok(html.includes(notice(1, "low", "<h2>Block &amp; &lt;own&gt;</h2><small>Read &lt;this&gt; Close</small><p>Open on <em>Sunday</em>.</p>\n", "8 &amp; 12")));
+    // An empty block and one whose front matter has no fields are the component as it is, and a block without
+    // Markdown keeps the component's text.
+    for (const id of [2, 3]) assert.ok(html.includes(notice(id, "high &amp; &lt;dry&gt;", text, "9 &amp; 17")), id);
+    assert.ok(html.includes(notice(4, "high &amp; &lt;dry&gt;", text, "1 &amp; 2")));
+    assert.ok(html.includes('<pre><code class="language-{{missing}}">text\n</code></pre>'));
+    // The component of the template follows the blocks, as it is.
+    assert.ok(html.includes(notice(5, "high &amp; &lt;dry&gt;", text, "9 &amp; 17")));
+    assert.ok(html.indexOf('id="notice-4"') < html.indexOf("</main>") && html.indexOf("</main>") < html.indexOf('id="notice-5"'));
+  });
+
+  test("gives a block of the flower its petals, its colours and its texts, and the names of the component's text", async () => {
+    const html = await page("de/pages/blocks/index.html");
+    const flower = html.slice(html.indexOf("<component-flower "), html.indexOf("</component-flower>"));
+    assert.ok(flower.startsWith('<component-flower class="component" role="group" aria-labelledby="componentFlower-1-title" ' +
+      'style="--hue-petals: 202; --hue-centre: 22; --hue-stem: 202; --petal-width: 0.9; --speed-falling: 3s; --speed-text: 3s; ' +
+      '--speed-fading: 4s; --opacity-fallen: 0.3; --font-size-text: 0.8">\n  <h3 id="componentFlower-1-title">Blume</h3>'));
+    assert.deepEqual([...flower.matchAll(/style="--angle: ([\d.]+)deg" aria-label="([^"]+)" disabled>/g)].map(match => match.slice(1)),
+      [["0", "Blütenblatt 1"], ["120", "Blütenblatt 2"], ["240", "Blütenblatt 3"]]);
+    assert.deepEqual([...flower.matchAll(/<li>\n<h3>([^<]+)<\/h3>/g)].map(match => match[1]), ["Eins", "Zwei"]);
+  });
+
+  test("refuses a setting that its data file refuses, in blyss.config.js and in a block, and keeps the previous output", async () => {
     const config = await readFile(configFile, "utf8");
-    await writeFile(configFile, config.replace('hours: ["9", "17"]', "hours: 9"));
-    const result = run(["build"], site);
-    assert.equal(result.status, 1);
-    assert.equal(result.stderr, "Cannot use components.notice.hours 9: it must be a list of hours.\n");
-    assert.ok((await stat(join(site, "public", "en", "index.html"))).isFile());
+    const source = await readFile(join(site, blocks), "utf8");
+    for (const [file, original, search, replacement, message] of [
+      [configFile, config, 'hours: ["9", "17"]', "hours: 9", "Cannot use components.notice.hours 9: it must be a list of hours.\n"],
+      [join(site, blocks), source, 'hours: ["8", "12"]', "hours: 8",
+        `Cannot build ${blocks}: its {{notice}} block cannot use hours 8, which must be a list of hours.\n`],
+      [join(site, blocks), source, "---\n\nOpen on", "\nOpen on", `Cannot build ${blocks}: the front matter of its {{notice}} block lacks its closing ---.\n`]
+    ]) {
+      assert.ok(original.includes(search), search);
+      await writeFile(file, original.replace(search, replacement));
+      try {
+        const result = run(["build"], site);
+        assert.equal(result.status, 1, replacement);
+        assert.equal(result.stderr, message);
+        assert.ok((await stat(join(site, "public", "en", "index.html"))).isFile());
+      } finally {
+        await writeFile(file, original);
+      }
+    }
   });
 });
 
@@ -823,9 +1025,10 @@ describe("invalid content", () => {
   const page = join("content", "en", "pages", "about", "index.md");
   const about = join("content", "en", "pages", "about.md");
   const post = join("content", "en", "posts", "symbols.md");
-  const hero = join("content", "en", "hero.md");
+  const hero = join("content", "en", "heroTexts.md");
+  const overlay = join("content", "en", "overlayTexts.md");
   const fragment = join("content", "en", "my-hero.md");
-  const text = join("content", "en", "components", "heroComponentSlyder.md");
+  const text = join("content", "en", "components", "componentSlyder.md");
   const french = join("content", "fr", "pages", "index.md");
   const loose = join("content", "index.md");
   const section = join("content", "en", "docs", "intro.md");
@@ -838,13 +1041,15 @@ describe("invalid content", () => {
       `Cannot build /en/pages/about/: ${about} and ${page} have the same URL.\nRename ${about} or give it a different slug.\n`],
     ["a tag without a Latin letter or digit", post, '---\ntitle: Symbols\ntags: [Blyss, "#"]\n---\n',
       `Cannot build ${post}: the tag "#" needs a Latin letter or digit for its URL.\n`],
-    ["a hero with content before its first ### heading", hero, "Introduction.\n\n### Text\n\nText.\n",
-      `Cannot build ${hero}: each text of the hero starts with a ### heading, but there is content before the first one.\n`],
+    ["hero texts with content before their first ### heading", hero, "Introduction.\n\n### Text\n\nText.\n",
+      `Cannot build ${hero}: each of its texts starts with a ### heading, but there is content before the first one.\n`],
+    ["overlay texts with content before their first ### heading", overlay, "---\ntitle: Texts\n---\n\n## Text\n\n### Text\n",
+      `Cannot build ${overlay}: each of its texts starts with a ### heading, but there is content before the first one.\n`],
     ["a fragment whose name templates cannot use", fragment, "---\ntitle: Mine\n---\n",
       `Cannot build ${fragment}: templates use its name in placeholders, so it must start with a Latin letter and contain ` +
-      "only Latin letters and digits, such as hero.md.\n"],
+      "only Latin letters and digits, such as heroTexts.md.\n"],
     ["a text for a component that does not exist", text, "---\ntitle: Slider\n---\n",
-      `Cannot build ${text}: there is no component "heroComponentSlyder" in _components/.\n`],
+      `Cannot build ${text}: there is no component "componentSlyder" in _components/.\n`],
     ["content in the directory of a language that site.languages lacks", french, "---\ntitle: Accueil\n---\n",
       `Cannot build ${french}: there is no language "fr" in site.languages.\nAdd the language to site.languages, or move the file ` +
       `to the directory of one of its languages, such as ${english}.\n`],
@@ -957,21 +1162,40 @@ describe("invalid configuration", () => {
       ['margin: "2vmin"', 'margin: "2vmin; color: red"', `layout.margin "2vmin; color: red": ${length} "2vmin"`],
       ['paddingHero: "1rem"', 'paddingHero: "5%"', `layout.paddingHero "5%": ${length} "2vmin"`],
       ['alignHome: "center"', 'alignHome: "centerLeft"', 'layout.alignHome "centerLeft": it must be "center" or "left"'],
-      ['alignHeroOther: "centerExtra"', 'alignHeroOther: "centerLeft"',
-        'layout.alignHeroOther "centerLeft": it must be "centerExtra", "left" or "center"'],
-      ["heroComponentGallery: {", "heroComponentGalery: {", 'components.heroComponentGalery: there is no component "heroComponentGalery" in _components/'],
-      ["start: 1,", "start: 1.5,", "components.heroComponentSlider.start 1.5: it must be a whole number"],
-      ["end: 1000", "end: 1", "components.heroComponentSlider.end 1: it must be a whole number greater than start (1)"],
-      ["value: 250,", "value: 1001,", "components.heroComponentSlider.steps[1].value 1001: it must be a whole number from 1 to 1000"],
-      ['de: "Viertel"', 'fr: "Quart"', 'components.heroComponentSlider.steps[1].description {"en":"Quarter","fr":"Quart"}: ' +
+      ['paddingOverlay: "1rem"', 'paddingOverlay: "1em"', `layout.paddingOverlay "1em": ${length} "2vmin"`],
+      ['alignOverlay: "centerExtra"', 'alignOverlay: "centerLeft"',
+        'layout.alignOverlay "centerLeft": it must be "centerExtra", "left" or "center"'],
+      ["componentSlider: true", "componentSlyder: true",
+        'hero.components.componentSlyder: there is no component "componentSlyder" in _components/'],
+      ["componentFlower: true", 'componentFlower: "on"', 'hero.components.componentFlower "on": it must be true (on) or false (off)'],
+      ["texts: true // all texts of content/<language>/heroTexts.md", "texts: 1 // all texts of content/<language>/heroTexts.md",
+        "hero.texts 1: it must be true (on) or false (off)"],
+      ["post: true,", "posts: true,",
+        'overlay.showOn.posts: there is no kind of page "posts", only "home", "page", "post", "book", "list" and "not-found"'],
+      ["home: false,", "home: 0,", "overlay.showOn.home 0: it must be true (on) or false (off)"],
+      ["synchroniseHeroOverlay: false", 'synchroniseHeroOverlay: "yes"', 'synchroniseHeroOverlay "yes": it must be true (on) or false (off)'],
+      ["componentGallery: {", "componentGalery: {", 'components.componentGalery: there is no component "componentGalery" in _components/'],
+      ["start: 1,", "start: 1.5,", "components.componentSlider.start 1.5: it must be a whole number"],
+      ["end: 1000", "end: 1", "components.componentSlider.end 1: it must be a whole number greater than start (1)"],
+      ["value: 250,", "value: 1001,", "components.componentSlider.steps[1].value 1001: it must be a whole number from 1 to 1000"],
+      ['de: "Viertel"', 'fr: "Quart"', 'components.componentSlider.steps[1].description {"en":"Quarter","fr":"Quart"}: ' +
         'it must be an object with a text for the language "de"'],
-      ['heightOverall: "8rem"', 'heightOverall: "8em"', `components.heroComponentGallery.heightOverall "8em": ${length} "8rem"`],
-      ['heightCenter: "130%"', 'heightCenter: "13rem"', 'components.heroComponentGallery.heightCenter "13rem": ' +
+      ['heightOverall: "8rem"', 'heightOverall: "8em"', `components.componentGallery.heightOverall "8em": ${length} "8rem"`],
+      ['heightCenter: "130%"', 'heightCenter: "13rem"', 'components.componentGallery.heightCenter "13rem": ' +
         'it must be a percentage of heightOverall from 100% up, such as "130%"'],
-      ['animationSpeedScrolling: "400ms"', 'animationSpeedScrolling: "400MS"', 'components.heroComponentGallery.animationSpeedScrolling "400MS": ' +
+      ['heightExpanded: "70%"', 'heightExpanded: "170%"', 'components.componentGallery.heightExpanded "170%": ' +
+        'it must be a percentage of the height of the screen above 0% and up to 100%, such as "70%"'],
+      ['animationSpeedScrolling: "400ms"', 'animationSpeedScrolling: "400MS"', 'components.componentGallery.animationSpeedScrolling "400MS": ' +
         'it must be a duration in ms or s, such as "400ms"'],
-      ['animationSpeedImgEnlargement: "300ms"', "animationSpeedImgEnlargement: 300", 'components.heroComponentGallery.animationSpeedImgEnlargement 300: ' +
-        'it must be a duration in ms or s, such as "400ms"']
+      ['animationSpeedImgEnlargement: "300ms"', "animationSpeedImgEnlargement: 300", 'components.componentGallery.animationSpeedImgEnlargement 300: ' +
+        'it must be a duration in ms or s, such as "400ms"'],
+      ["petals: 8", "petals: 2", "components.componentFlower.petals 2: it must be a whole number from 3 to 24"],
+      ['colourSystem: "triadic"', 'colourSystem: "tetradic"', 'components.componentFlower.colourSystem "tetradic": it must be "complementary" or "triadic"'],
+      ["colourBaseHue: 202", "colourBaseHue: 361", "components.componentFlower.colourBaseHue 361: it must be a hue from 0 to 360, such as 202"],
+      ['animationSpeedFalling: "3s"', "animationSpeedFalling: 3", 'components.componentFlower.animationSpeedFalling 3: it must be a duration in ms or s, such as "3s"'],
+      ['opacityFallen: "30%"', 'opacityFallen: "0%"', 'components.componentFlower.opacityFallen "0%": it must be a percentage from 1% to 100%, such as "30%"'],
+      ['fontSizeText: "60%"', 'fontSizeText: ".6rem"', 'components.componentFlower.fontSizeText ".6rem": ' +
+        'it must be a percentage of the default text size above 0%, such as "60%"']
     ]) {
       await withConfig(search, replacement, async () => {
         const result = run(["build"], site);

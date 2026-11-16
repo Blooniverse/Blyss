@@ -1,4 +1,4 @@
-// Checks the slider's settings, components.heroComponentSlider in blyss.config.js, and prepares the values of its
+// Checks the slider's settings, components.componentSlider in blyss.config.js, and prepares the values of its
 // template. The slider runs through the whole numbers from start to end and starts halfway. Its steps mark values on
 // the way, each with a description in every language, and are sorted by value.
 export default function ({ settings, languageKey, escapeHtml, refuse }) {

@@ -1,6 +1,6 @@
 // Shows the slider's value above it and marks the last step it has reached, for every slider on the page;
 // without JavaScript, the slider works all the same.
-customElements.define("hero-component-slider", class extends HTMLElement {
+customElements.define("component-slider", class extends HTMLElement {
   connectedCallback() {
     const slider = this.querySelector("input");
     const output = this.querySelector("output");

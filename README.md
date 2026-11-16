@@ -38,10 +38,11 @@ Automation Platform
 - clean localized URLs under `/<language>/`, such as `/en/` and `/de/`
 - a configurable default language, which `/` redirects to: `/${site.defaultLanguage}/`
 - recent-post placeholders via `{{recentPosts}}` that render the newest three posts for the current language
-- fragments for templates: each Markdown file directly in `content/<language>/`, such as `hero.md` with the hero's texts
-- components: a directory per component with its template, stylesheet and script, its texts in every language and its settings, shown by `{{<name>}}` in templates and in Markdown
+- fragments for templates: each Markdown file directly in `content/<language>/`, such as `heroTexts.md` with the hero's texts
+- a hero for the home pages and an overlay for the kinds of pages of your choice, each with its own template, components and texts, which `blyss.config.js` switches on or off one by one
+- components: a directory per component with its template, stylesheet and script, its texts in every language and its settings, shown by `{{<name>}}` in templates and in Markdown, where a block gives a component a text and settings of its own
 - optional templates for the home pages and the docs, and a `{{kind}}` placeholder for page-specific styles
-- `layout` settings for templates: the site's margin, the hero's padding and the alignments of the home pages and of all other pages and of their hero
+- `layout` settings for templates: the site's margin, the paddings of the hero and of the overlay and the alignments of the home pages, of all other pages, of the hero and of the overlay
 - every configured label available in templates as `{{<key>Label}}`
 - a paginated post archive and post tags with generated tag pages for each language
 - books, such as a technical documentation, in `content/<language>/book/`: sections by directory, a navigation ordered by `order`, a table of contents, heading anchors and links to the previous and the next doc
@@ -53,7 +54,7 @@ Automation Platform
 - Schema.org JSON-LD using a future-proof `@graph`
 - static asset copying
 - dependency-free Node.js static server
-- `blyss init` scaffolding of a bilingual starter website with a slider and an image gallery, ready for Azure Static Web Apps
+- `blyss init` scaffolding of a bilingual starter website with a slider, an image gallery and a flower, ready for Azure Static Web Apps
 
 ## Quick start
 
@@ -121,17 +122,20 @@ my-site/
 ├── blyss.config.js          # site configuration
 ├── package.json
 ├── _components/             # one directory per component (see Components below)
-│   ├── heroComponentGallery/
-│   │   ├── heroComponentGallery.html     # its template
-│   │   ├── heroComponentGallery.css      # published at /_components/heroComponentGallery/
-│   │   ├── heroComponentGallery.js       # published too: its script for the browser
-│   │   └── heroComponentGallery.data.js  # optional: checks its settings for the build
-│   └── heroComponentSlider/              # the same four files
+│   ├── componentFlower/              # the same four files as below
+│   ├── componentGallery/
+│   │   ├── componentGallery.html     # its template
+│   │   ├── componentGallery.css      # published at /_components/componentGallery/
+│   │   ├── componentGallery.js       # published too: its script for the browser
+│   │   └── componentGallery.data.js  # optional: checks its settings for the build
+│   └── componentSlider/              # the same four files
 ├── content/                 # one directory per language of site.languages
 │   ├── en/
-│   │   ├── hero.md          # the hero's title and texts, a fragment (see Templates)
-│   │   ├── components/heroComponentGallery.md # the gallery's title and images
-│   │   ├── components/heroComponentSlider.md  # the slider's title and text
+│   │   ├── heroTexts.md     # the title and the texts of the hero, a fragment (see Templates)
+│   │   ├── overlayTexts.md  # the title and the texts of the overlay, a fragment too
+│   │   ├── components/componentFlower.md  # the flower's title and the texts of its petals
+│   │   ├── components/componentGallery.md # the gallery's title and images
+│   │   ├── components/componentSlider.md  # the slider's title and text
 │   │   ├── pages/index.md
 │   │   ├── pages/about.md
 │   │   ├── pages/404.md     # "not found" page
@@ -143,9 +147,11 @@ my-site/
 │   │   ├── book/writing/index.md # the start page of a section
 │   │   └── book/writing/navigation.md
 │   └── de/
-│       ├── hero.md
-│       ├── components/heroComponentGallery.md
-│       ├── components/heroComponentSlider.md
+│       ├── heroTexts.md
+│       ├── overlayTexts.md
+│       ├── components/componentFlower.md
+│       ├── components/componentGallery.md
+│       ├── components/componentSlider.md
 │       ├── pages/index.md
 │       ├── pages/about.md
 │       ├── pages/404.md
@@ -167,7 +173,9 @@ my-site/
 │   ├── home.html            # optional: the home pages /en/ and /de/
 │   ├── page.html
 │   ├── post.html
-│   └── book.html            # optional: the docs below /en/book/ and /de/book/
+│   ├── book.html            # optional: the docs below /en/book/ and /de/book/
+│   ├── hero.html            # optional: the hero of the home pages
+│   └── overlay.html         # optional: the overlay
 └── public/                  # generated by blyss build
 ```
 
@@ -196,6 +204,7 @@ export default {
           about: "About",
           generatedBy: "Generated by Blyss",
           overlay: "Overlay",
+          hero: "Highlights",
           language: "Language", // optional: this label and those below name what Blyss generates, in English by default
           recentPosts: "Recent posts",
           posts: "Posts",
@@ -214,27 +223,49 @@ export default {
     }
   },
   pagination: { pageSize: 10 }, // optional: posts per archive and tag page
-  layout: { // optional: the space around the content and the alignments of the home pages and of all other pages
+  layout: { // optional: the space around the content and the alignments
     margin: "2vmin",
+    alignHome: "center", // or "left": the content of the home pages
+    alignOther: "left", // or "center" or "centerLeft": the content of all other pages
     paddingHero: "1rem", // the space above and below the content of the hero
-    alignHome: "center", // or "left"
-    alignOther: "left", // or "center" or "centerLeft"
-    alignHeroHome: "centerExtra", // or "left" or "center"
-    alignHeroOther: "centerExtra" // or "left" or "center"
+    alignHero: "centerExtra", // or "left" or "center"
+    paddingOverlay: "1rem", // the space above and below the content of the overlay
+    alignOverlay: "centerExtra" // or "left" or "center"
   },
+  hero: { // optional: the parts of the hero of the home pages, each on (true) or off (false)
+    components: { componentSlider: true, componentGallery: true, componentFlower: true }, // in this order
+    texts: true // the texts of content/<language>/heroTexts.md
+  },
+  overlay: { // optional: the pages and the parts of the overlay
+    showOn: { page: true, post: true, book: true, home: false, list: true, "not-found": true }, // by kind of page
+    components: { componentSlider: true, componentGallery: true, componentFlower: false },
+    texts: true // the texts of content/<language>/overlayTexts.md
+  },
+  synchroniseHeroOverlay: false, // optional: true gives the overlay the components and the texts of the hero
   components: { // optional: the settings of each component in directories.components, by its name
-    heroComponentSlider: { // the starter's slider: its range and the steps marked on it
+    componentSlider: { // the starter's slider: its range and the steps marked on it
       start: 1,
       end: 1000,
       steps: [
         { value: 250, description: { en: "Quarter" } } // a description in every language
       ]
     },
-    heroComponentGallery: { // the starter's gallery: the heights of its images and the durations of its animations
+    componentGallery: { // the starter's gallery: the heights of its images and the durations of its animations
       heightOverall: "8rem",
       heightCenter: "130%",
+      heightExpanded: "70%",
       animationSpeedScrolling: "400ms",
       animationSpeedImgEnlargement: "300ms"
+    },
+    componentFlower: { // the starter's flower: its petals, its colours, the durations of its animations and its texts
+      petals: 8,
+      colourSystem: "triadic",
+      colourBaseHue: 202,
+      animationSpeedFalling: "3s",
+      animationSpeedText: "3s",
+      animationSpeedFading: "4s",
+      opacityFallen: "30%",
+      fontSizeText: "60%"
     }
   },
   directories: {
@@ -253,7 +284,18 @@ export default {
 
 All directories are resolved relative to the website's root. `directories.public` names the generated output directory, which every build deletes and recreates. It must therefore be a subdirectory of the website's root that neither contains nor lies inside `components`, `content`, `static` or `templates`; `blyss build` and `blyss serve` refuse other values, such as `"."`, without deleting anything. `directories.components` defaults to `"_components"`; like `_templates`, its leading underscore marks a directory of building blocks rather than of content, and components are published below `/_components/`; without that directory, a website has no components. `pagination.pageSize` defaults to 10 and must be a whole number greater than 0.
 
-`layout.margin` defaults to `"2vmin"` and `layout.paddingHero` to `"1rem"`; both must be CSS lengths in `px`, `rem`, `vw`, `vh`, `vmin` or `vmax`. The alignments apply to the content and to the hero of the home pages or of all other pages: `layout.alignHome` is `"center"` (the default) or `"left"`, `layout.alignOther` is `"left"` (the default), `"center"` or `"centerLeft"`, and `layout.alignHeroHome` and `layout.alignHeroOther` are `"centerExtra"` (the default), `"left"` or `"center"`; the templates' stylesheet defines what each value looks like. `components` holds the settings of each [component](#components) under its name; the component defines which settings it has, and the starter's README describes those of its slider and gallery. Blyss refuses other values, and settings for a component that does not exist, before it deletes the previous output.
+`layout.margin` defaults to `"2vmin"`, and `layout.paddingHero` and `layout.paddingOverlay` to `"1rem"`; all three must be CSS lengths in `px`, `rem`, `vw`, `vh`, `vmin` or `vmax`. The alignments apply to the content of the home pages, to that of all other pages, to the hero and to the overlay: `layout.alignHome` is `"center"` (the default) or `"left"`, `layout.alignOther` is `"left"` (the default), `"center"` or `"centerLeft"`, and `layout.alignHero` and `layout.alignOverlay` are `"centerExtra"` (the default), `"left"` or `"center"`; the templates' stylesheet defines what each value looks like. Blyss refuses other values before it deletes the previous output.
+
+`hero` and `overlay` set the parts of the two [regions](#hero-and-overlay) that accompany the pages, the hero of the home pages and the overlay:
+
+- `hero.components` and `overlay.components` list the [components](#components) of each region by their names, in the order in which they appear. Each is switched on with `true` or off with `false`; a component that is not listed does not appear.
+- `hero.texts` and `overlay.texts` show (`true`, the default) or hide (`false`) the texts of the region as a whole, those of `content/<language>/heroTexts.md` or `overlayTexts.md`.
+- `overlay.showOn` switches the overlay on or off for each kind of page: `page`, `post` and `book`, the three content types, and `home`, `list` and `"not-found"`. A kind that it does not name has the overlay; a single page or post cannot be switched. The hero belongs to the home pages only.
+- `synchroniseHeroOverlay: true` makes the overlay a copy of the hero: it shows the components of `hero.components` and, if `hero.texts` is `true`, the texts of `heroTexts.md`, whatever `overlay.components` and `overlay.texts` say; `overlayTexts.md` is not used. `overlay.showOn` still applies. It defaults to `false`.
+
+A region without a part that is switched on is not shown at all. Blyss refuses switches that are neither `true` nor `false`, components that do not exist and kinds of pages that it does not know before it deletes the previous output.
+
+`components` holds the settings of each [component](#components) under its name; the component defines which settings it has, and the starter's README describes those of its slider, its gallery and its flower. Blyss refuses settings for a component that does not exist, too.
 
 ### Templates
 
@@ -263,21 +305,41 @@ Templates belong to each website: Blyss ships no default templates, so customise
 | --- | --- |
 | `home.html` (optional, for `/<language>/`), `page.html`, `post.html` | `{{title}}`, `{{description}}`, `{{dateBlock}}`, `{{tags}}` (a post's tag links), `{{content}}` (the Markdown body), `{{<name>}}` (a component) |
 | `book.html` (optional, for docs) | The same, and `{{bookNavigation}}`, `{{bookToc}}`, `{{bookPager}}` (see [Content](#content)) |
-| `document.html` | `{{content}}`, `{{pageTitle}}`, `{{description}}`, `{{locale}}`, `{{languageKey}}`, `{{canonicalUrl}}`, `{{alternateLinks}}`, `{{jsonLd}}`, `{{languageSwitcher}}`, `{{kind}}`, `{{layoutMargin}}`, `{{layoutPaddingHero}}`, `{{layoutAlign}}`, `{{layoutAlignHero}}`, `{{<key>Label}}`, `{{<name>Title}}`, `{{<name>Content}}`, `{{heroTexts}}`, `{{<name>}}` (a component) |
+| `document.html` | `{{content}}`, `{{hero}}`, `{{overlay}}`, `{{pageTitle}}`, `{{description}}`, `{{locale}}`, `{{languageKey}}`, `{{canonicalUrl}}`, `{{alternateLinks}}`, `{{jsonLd}}`, `{{languageSwitcher}}`, `{{kind}}`, `{{layoutMargin}}`, `{{layoutPaddingHero}}`, `{{layoutPaddingOverlay}}`, `{{layoutAlign}}`, `{{layoutAlignHero}}`, `{{layoutAlignOverlay}}`, `{{<key>Label}}`, `{{<name>Title}}`, `{{<name>Content}}`, `{{<name>}}` (a component) |
+| `hero.html`, `overlay.html` (both optional) | `{{components}}`, `{{textsTitle}}`, `{{texts}}` (see [Hero and overlay](#hero-and-overlay)), and those of `document.html` but `{{hero}}` and `{{overlay}}` |
 
 - Without `home.html` or `book.html`, the home pages or the docs use `page.html`.
 - `{{kind}}` is `home`, `page`, `post`, `book`, `list` (archive and tag pages) or `not-found`, for kind-specific styles such as `<body data-kind="{{kind}}">`.
 - `{{bookNavigation}}` lists all docs of the language as nested lists in a `<nav>`, the current doc marked with `aria-current="page"`. `{{bookToc}}` links to the `##` headings of the doc, each with its `###` headings, and is empty without them. `{{bookPager}}` links to the previous and the next doc of the navigation with `rel="prev"` and `rel="next"`. All three are empty on other pages and take precedence over components of the same name.
-- Each Markdown file directly in `content/<language>/`, such as `hero.md`, is a fragment: Blyss publishes no page for it, but `document.html` shows it on every page of that language as `{{<name>Title}}`, its front matter's `title`, and `{{<name>Content}}`, its Markdown as HTML, such as `{{heroTitle}}` and `{{heroContent}}`. Its name must start with a Latin letter and contain only Latin letters and digits. Without the file, both placeholders are empty, and the other placeholders of `document.html`, such as `{{pageTitle}}`, take precedence.
-- `{{heroTexts}}` holds the texts of `hero.md`, as many as it has: each `###` heading starts a text, which runs up to the next one and is never shortened. Each text is a `<div>` that starts with its heading as `<h3>`. Only whitespace and HTML comments may precede the first `###` heading; Blyss refuses other content there.
-- `{{layoutMargin}}` is `layout.margin` and `{{layoutPaddingHero}}` is `layout.paddingHero`. `{{layoutAlign}}` and `{{layoutAlignHero}}` are the alignments of the page's content and of its hero: `layout.alignHome` and `layout.alignHeroHome` on the home pages, `layout.alignOther` and `layout.alignHeroOther` on all other pages. For example: `<body data-align="{{layoutAlign}}" data-align-hero="{{layoutAlignHero}}" style="--site-margin: {{layoutMargin}}; --hero-padding: {{layoutPaddingHero}}">`.
-- `{{<name>}}` shows the [component](#components) of that name, such as `{{heroComponentSlider}}`. The other placeholders of a template take precedence.
+- Each Markdown file directly in `content/<language>/`, such as `heroTexts.md`, is a fragment: Blyss publishes no page for it, but `document.html` shows it on every page of that language as `{{<name>Title}}`, its front matter's `title`, and `{{<name>Content}}`, its Markdown as HTML, such as `{{heroTextsTitle}}` and `{{heroTextsContent}}`. Its name must start with a Latin letter and contain only Latin letters and digits. Without the file, both placeholders are empty, and the other placeholders of `document.html`, such as `{{pageTitle}}`, take precedence.
+- `{{hero}}` and `{{overlay}}` show the hero and the overlay of the page, rendered by `hero.html` and `overlay.html`, and are empty on a page without them (see [Hero and overlay](#hero-and-overlay)).
+- `{{layoutMargin}}`, `{{layoutPaddingHero}}` and `{{layoutPaddingOverlay}}` are `layout.margin`, `layout.paddingHero` and `layout.paddingOverlay`. `{{layoutAlign}}` is the alignment of the page's content, `layout.alignHome` on the home pages and `layout.alignOther` on all other pages, and `{{layoutAlignHero}}` and `{{layoutAlignOverlay}}` are `layout.alignHero` and `layout.alignOverlay`. For example: `<body data-align="{{layoutAlign}}" data-align-hero="{{layoutAlignHero}}" data-align-overlay="{{layoutAlignOverlay}}" style="--site-margin: {{layoutMargin}}; --hero-padding: {{layoutPaddingHero}}; --overlay-padding: {{layoutPaddingOverlay}}">`.
+- `{{<name>}}` shows the [component](#components) of that name, such as `{{componentSlider}}`. The other placeholders of a template take precedence.
 - `{{languageSwitcher}}` links the page to its translations, in the order of `site.languages`; it is empty if `site.languageSwitcher` is `false`.
 - Every label of the language is available as `{{<key>Label}}`, such as `{{postsLabel}}` for `labels.posts`. The labels of what Blyss generates default to English, such as “Posts” and “Tags”.
 
+### Hero and overlay
+
+The hero and the overlay are two regions that accompany the pages. Each is independent of the other, with a template, components and texts of its own:
+
+| | Hero | Overlay |
+| --- | --- | --- |
+| Appears on | the home pages | the kinds of pages that `overlay.showOn` does not switch off |
+| Template, shown in `document.html` | `hero.html` as `{{hero}}` | `overlay.html` as `{{overlay}}` |
+| Components | `hero.components` | `overlay.components` |
+| Texts | `content/<language>/heroTexts.md`, if `hero.texts` is `true` | `content/<language>/overlayTexts.md`, if `overlay.texts` is `true` |
+
+The template of a region has three placeholders of its own, next to those of `document.html`:
+
+- `{{components}}`: the components of the region that are switched on, one after the other in the order of its settings.
+- `{{textsTitle}}`: the `title` of the front matter of its texts.
+- `{{texts}}`: its texts, as many as the file has. Each `###` heading starts a text, which runs up to the next one and is never shortened, and each text is a `<div>` that starts with its heading as `<h3>`. Only whitespace and HTML comments may precede the first `###` heading; Blyss refuses other content there.
+
+A region is left out, and its placeholder in `document.html` is empty, on a page that it does not belong to, without its template, and if it has no content: no component that is switched on and no texts, because they are switched off or because the page's language lacks the file. With `synchroniseHeroOverlay: true`, the overlay takes its components and its texts from the hero.
+
 ### Components
 
-A component is a self-contained part of a page, such as the starter's slider and its gallery. Like the templates, it belongs to the website: a directory in `_components/` that has the component's name and holds its template, next to which its stylesheet and its script can live.
+A component is a self-contained part of a page, such as the starter's slider, its gallery and its flower. Like the templates, it belongs to the website: a directory in `_components/` that has the component's name and holds its template, next to which its stylesheet and its script can live.
 
 | File or setting | Purpose |
 | --- | --- |
@@ -287,7 +349,7 @@ A component is a self-contained part of a page, such as the starter's slider and
 | `content/<language>/components/<name>.md` | Optional: the texts in that language. |
 | `components.<name>` in `blyss.config.js` | Optional: the settings. |
 
-`{{<name>}}` shows the component in every template and, in a paragraph of its own, in the Markdown of a page or post; in code, the placeholder stays as it is. A component can appear several times on a page. Its name must start with a Latin letter and contain only Latin letters and digits.
+`{{<name>}}` shows the component in every template and, in a paragraph of its own, in the Markdown of a page or post; in code, the placeholder stays as it is. A [block](#blocks) in Markdown shows it with a text and settings of its own. `hero.components` and `overlay.components` show it in the [hero and in the overlay](#hero-and-overlay). A component can appear several times on a page. Its name must start with a Latin letter and contain only Latin letters and digits.
 
 The template has the following placeholders. Each replaces an earlier one of the same name:
 
@@ -297,17 +359,42 @@ The template has the following placeholders. Each replaces an earlier one of the
 - The values that the data file returns.
 - `{{id}}`: `<name>-1` where the component first appears on a page, then `<name>-2` and so on, for ids that must be unique.
 
-Blyss escapes labels, settings and front matter for HTML and inserts the values of the data file as they are. The data file exports one function, which Blyss calls for every language before it deletes the previous output:
+Blyss escapes labels, settings and front matter for HTML and inserts the values of the data file as they are. The data file exports one function, which Blyss calls for every language, and for every block, before it deletes the previous output:
 
 ```js
-export default function ({ settings, languageKey, content, escapeHtml, refuse }) {
+export default function ({ settings, languageKey, content, texts, frontMatter, escapeHtml, refuse }) {
   const { columns = 2 } = settings; // components.<name> in blyss.config.js, or {}
   if (!Number.isInteger(columns)) throw refuse("columns", columns, "a whole number");
   return { columns, language: `<p>${escapeHtml(languageKey)}</p>` }; // {{columns}} and {{language}}
 }
 ```
 
-`content` is the component's text in that language as HTML. `refuse(setting, value, requirement)` creates the error that stops the build with “Cannot use components.\<name>.columns 2.5: it must be a whole number.”
+`content` is the component's text in that language as HTML. `texts` holds the texts that its `###` headings start, each as HTML from its heading up to the next one, for components such as the starter's flower that show them one by one; it is empty without such headings. `frontMatter` holds the fields of the text's front matter as they are written. `refuse(setting, value, requirement)` creates the error that stops the build with “Cannot use components.\<name>.columns 2.5: it must be a whole number.”
+
+#### Blocks
+
+In the Markdown of a page, post or doc, a fenced code block with `{{<name>}}` as its language is a block of that component: it shows the component with a text and settings of its own, in that one place.
+
+````markdown
+```{{componentFlower}}
+---
+title: Five petals
+petals: 5
+---
+
+### The first petal
+
+Its text.
+```
+````
+
+A block holds what the component's text holds, front matter and Markdown, and both are optional:
+
+- Its front matter adds to the front matter of `content/<language>/components/<name>.md` and replaces the fields of the same name.
+- Each of its fields also sets the setting of its name, in place of `components.<name>` in `blyss.config.js`. A value that is JSON, such as `5`, `true`, `"5"` or `[1, 2]`, is taken as such, and any other value as a text.
+- Its Markdown replaces that of the component's text. A block without Markdown keeps it, so that a block of front matter alone changes fields and settings only, and an empty block is the component as it is.
+
+The template and the data file of the component serve its blocks unchanged: they receive the fields, the settings and the text of the block as they receive those of the component. If the data file refuses a setting of a block, the build stops with “Cannot build content/en/pages/about.md: its {{\<name>}} block cannot use columns 2.5, which must be a whole number.” A block whose text contains a fenced code block needs a longer fence, such as four backticks. A block that names no component stays a code block, and so does one within a list or a quotation: like the paragraph of a component, a block stands on its own.
 
 ## Commands
 
@@ -334,7 +421,7 @@ Keep translations linked with the same `translationKey`.
 
 Titles come from front matter, so Markdown body text should begin below the title rather than with another H1.
 
-A paragraph that consists of `{{<name>}}` alone shows the [component](#components) of that name in a page, post or doc.
+A paragraph that consists of `{{<name>}}` alone shows the [component](#components) of that name in a page, post or doc, and a fenced code block with `{{<name>}}` as its language, a [block](#blocks), shows it with a text and settings of its own.
 
 Posts can have tags, written as `tags: [Blyss, Markdown]`, `tags: Blyss, Markdown` or a YAML block list. Every build also generates:
 

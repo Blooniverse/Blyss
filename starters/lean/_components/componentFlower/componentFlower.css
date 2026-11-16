@@ -1,0 +1,108 @@
+/* A flower with a short stem above its texts and the ground, the bottom of the component. Each petal is a button: the
+   script lets it twirl and fall to its place on the ground, where it lies and fades while its text appears. The
+   settings arrive as custom properties from the template. The flower has no background, and it uses the colours of
+   main.css for its texts. */
+component-flower {
+  --size: 9rem; /* the diameter of the bloom */
+  --length: calc(var(--size) / 2); /* the length of a petal */
+  --width: calc(var(--length) * var(--petal-width));
+  display: block;
+  max-width: 40rem;
+  background: none;
+}
+component-flower h3:empty { display: none; }
+
+/* The bloom is the square at the top, around which the petals stand; the stem leaves its centre downwards. */
+component-flower .flower { position: relative; width: var(--size); height: calc(var(--size) * 1.4); margin: 0 auto .5rem; }
+component-flower .stem {
+  position: absolute;
+  top: calc(var(--size) / 2);
+  left: calc(50% - var(--size) * .15);
+  width: calc(var(--size) * .3);
+  height: calc(var(--size) * .9);
+  fill: none;
+  stroke: hsl(var(--hue-stem) 45% 32%);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+component-flower .stem path:last-child { fill: hsl(var(--hue-stem) 50% 44%); stroke: none; }
+component-flower .centre {
+  position: absolute;
+  top: calc(var(--size) / 2);
+  left: 50%;
+  width: calc(var(--size) * .26);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, hsl(var(--hue-centre) 90% 74%), hsl(var(--hue-centre) 85% 48%));
+  box-shadow: 0 0 0 1px hsl(var(--hue-centre) 80% 35% / .35);
+  translate: -50% -50%;
+}
+
+/* A petal on the bloom and a fallen one on the ground look the same: darker at its base, with a vein along it. */
+component-flower .petal, component-flower .ground span {
+  width: var(--width);
+  height: var(--length);
+  border-radius: 50% 50% 50% 50% / 40% 40% 60% 60%;
+  background:
+    linear-gradient(90deg, transparent 46%, hsl(var(--hue-petals) 80% 30% / .28) 50%, transparent 54%),
+    linear-gradient(to top, hsl(var(--hue-petals) 85% 40%), hsl(var(--hue-petals) 90% 70%));
+  box-shadow: inset 0 0 0 1px hsl(var(--hue-petals) 80% 30% / .3);
+}
+/* On the bloom, a petal turns around the centre, where its base lies. */
+component-flower .petal {
+  position: absolute;
+  top: calc(var(--size) / 2 - var(--length) / 2);
+  left: calc(50% - var(--width) / 2);
+  padding: 0;
+  border: 0;
+  transform: rotate(var(--angle)) translateY(-50%);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+component-flower .petal:enabled { cursor: pointer; }
+component-flower .petal:enabled:hover { filter: brightness(1.12); }
+component-flower .petal.falling { z-index: 1; }
+
+/* The texts of the petals, as many side by side as fit. Until the script runs, all of them show. With it, a text
+   waits for its petal to fall, then comes down like a leaf: slowly at first, swaying from side to side. */
+component-flower .texts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 8rem), 1fr));
+  gap: .75rem 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: calc(1rem * var(--font-size-text));
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+component-flower .texts > li > :last-child { margin-bottom: 0; }
+component-flower .texts h3 { display: block; margin: 0 0 .2em; padding: 0; font-size: 1.15em; line-height: 1.2; color: var(--color202); background: none; }
+component-flower .texts :is(ul, ol) { padding-left: 0; list-style-position: inside; } /* centered like the text around them */
+component-flower:defined .texts > li:not(.fallen) { visibility: hidden; }
+component-flower .texts > li.fallen { animation: component-flower-text var(--speed-text) ease-in-out both; }
+@keyframes component-flower-text {
+  from { opacity: 0; transform: translateY(-3.5em); translate: 0; rotate: -8deg; animation-timing-function: ease-in; }
+  30% { translate: .9em; rotate: 6deg; }
+  60% { translate: -.7em; rotate: -4deg; }
+  85% { translate: .3em; rotate: 2deg; }
+  to { opacity: 1; transform: none; translate: 0; rotate: 0deg; }
+}
+
+/* The ground is the bottom of the component, as high as a petal that lies on its side. Each petal has its place
+   there, from left to right and clear of both ends, where it fades once it has fallen, but never completely. */
+component-flower .ground {
+  display: grid;
+  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-flow: column;
+  justify-items: center;
+  margin-top: .5rem;
+  padding-inline: calc(var(--length) * .55);
+}
+component-flower .ground span { margin-block: calc((var(--width) - var(--length)) / 2); rotate: var(--lie); opacity: 0; }
+component-flower .ground span.fallen { opacity: var(--opacity-fallen); animation: component-flower-fading var(--speed-fading) ease-out; }
+@keyframes component-flower-fading { from { opacity: 1; } }
+
+@media (prefers-reduced-motion: reduce) {
+  component-flower { --speed-falling: 0s !important; --speed-text: 0s !important; --speed-fading: 0s !important; }
+}

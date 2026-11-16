@@ -9,7 +9,8 @@ export function escapeHtml(value = "") {
 export function parseFrontMatter(source) {
   const normalized = source.replaceAll("\r\n", "\n");
   if (!normalized.startsWith("---\n")) return { metadata: {}, markdown: normalized };
-  const end = normalized.indexOf("\n---\n", 4);
+  // The closing --- may follow the opening one at once, so the search starts at the end of the opening line.
+  const end = normalized.indexOf("\n---\n", 3);
   if (end === -1) throw new Error("Front matter is missing its closing --- delimiter.");
   const metadata = {};
   let listKey; // a key without a value, which may start a YAML block list such as "tags:" and "  - Blyss"
@@ -99,20 +100,27 @@ function renderToc(headings, label) {
   return `<nav aria-label="${escapeHtml(label)}">\n<p>${escapeHtml(label)}</p>\n<ul>\n${list.join("\n")}\n</ul>\n</nav>\n`;
 }
 
-// A paragraph that consists of {{<name>}} alone shows the component of that name; code keeps the placeholder as text.
-// With takenIds, the headings get ids (see identifyHeadings), which are returned with the headings.
-function renderBody(record, records, components, takenIds) {
+// A paragraph that consists of {{<name>}} alone shows the component of that name, and a fenced code block with
+// {{<name>}} as its language shows it with the text and the settings that the block holds (see components.js); other
+// code keeps the placeholder as text. With takenIds, the headings get ids (see identifyHeadings), which are returned
+// with the headings.
+async function renderBody(record, records, components, takenIds) {
   if (record.type === "list") return { html: record.html, headings: [] };
   const tokens = marked.lexer(record.markdown.replace(/{{recentPosts}}/g, renderRecentPosts(record, records)));
   for (const [index, token] of tokens.entries()) {
-    const name = token.type === "paragraph" && /^{{([a-zA-Z][a-zA-Z0-9]*)}}$/.exec(token.text.trim())?.[1];
-    if (name && Object.hasOwn(components, name)) tokens[index] = { type: "html", block: true, raw: token.raw, text: components[name]() };
+    const block = token.type === "code" ? token.text : undefined;
+    const placeholder = token.type === "paragraph" ? token.text : block === undefined ? "" : token.lang ?? "";
+    const name = /^{{([a-zA-Z][a-zA-Z0-9]*)}}$/.exec(placeholder.trim())?.[1];
+    if (name && Object.hasOwn(components, name)) tokens[index] = { type: "html", block: true, raw: token.raw, text: await components[name](block) };
   }
   const headings = takenIds ? identifyHeadings(tokens, takenIds) : [];
   return { html: marked.parser(tokens), headings };
 }
 
-// "home" is the index page of a language; templates can style each kind, e.g. with <body data-kind="{{kind}}">.
+// The kinds of pages: "home" is the index page of a language, "list" an archive or tag page. Templates can style each
+// kind, e.g. with <body data-kind="{{kind}}">.
+export const kinds = ["home", "page", "post", "book", "list", "not-found"];
+
 function kindOf(record) {
   if (record.notFound) return "not-found";
   return record.type === "page" && record.url === `/${record.languageKey}/` ? "home" : record.type;
@@ -124,9 +132,11 @@ function renderTags(record) {
   return `    <p>${escapeHtml(record.languageConfig.labels.tags)}: ${links.join(", ")}</p>`;
 }
 
-// components holds a function for each component of the website, which renders it in the language of the record;
-// book holds the navigation and the pager of a doc (see book.js).
-export function renderRecord({ record, templates, translationIndex, site, records = [], layout, fragments = {}, components = {}, book = {} }) {
+// components holds a function for each component of the website, which renders it in the language of the record, and
+// resolves to it for a block of the record's Markdown; regions tells which of the hero and the overlay the page shows
+// (see regions.js); book holds the navigation and the pager of a doc (see book.js).
+export async function renderRecord({ record, templates, translationIndex, site, records = [], layout, fragments = {}, components = {},
+  regions = { of: () => ({}) }, book = {} }) {
   const metadata = record.metadata;
   const title = metadata.title || site.name;
   const description = metadata.description || record.languageConfig.description;
@@ -137,8 +147,10 @@ export function renderRecord({ record, templates, translationIndex, site, record
     ? `    <p><time datetime="${escapeHtml(metadata.datePublished)}">${escapeHtml(metadata.datePublished)}</time></p>` : "";
   // Without a home.html or a book.html template, home pages and docs use page.html.
   const innerTemplate = (record.type === "post" && templates.post) || (isBook && templates.book) || (home && templates.home) || templates.page;
-  const takenIds = isBook ? new Set(idsOf(templates.document + innerTemplate)) : undefined;
-  const body = renderBody(record, records, components, takenIds);
+  const shown = regions.of(kind, record.languageKey);
+  const regionTemplates = Object.values(shown).map(region => region?.template ?? "").join("");
+  const takenIds = isBook ? new Set(idsOf(templates.document + innerTemplate + regionTemplates)) : undefined;
+  const body = await renderBody(record, records, components, takenIds);
   const content = applyTemplate(innerTemplate, {
     ...components,
     ...book,
@@ -148,9 +160,9 @@ export function renderRecord({ record, templates, translationIndex, site, record
   });
   const pageTitle = title === site.name ? title : `${title} | ${site.name}`;
 
-  // The components and the fragments of the language, such as {{heroTitle}}, cannot replace the labels or the
+  // The components and the fragments of the language, such as {{heroTextsTitle}}, cannot replace the labels or the
   // placeholders below.
-  return applyTemplate(templates.document, {
+  const values = {
     ...components,
     ...fragments,
     ...labelValues(record.languageConfig.labels),
@@ -165,8 +177,19 @@ export function renderRecord({ record, templates, translationIndex, site, record
     languageSwitcher: site.languageSwitcher ? renderLanguageSwitcher(record, translationIndex, site) : "",
     layoutMargin: escapeHtml(layout.margin),
     layoutPaddingHero: escapeHtml(layout.paddingHero),
+    layoutPaddingOverlay: escapeHtml(layout.paddingOverlay),
     layoutAlign: home ? layout.alignHome : layout.alignOther,
-    layoutAlignHero: home ? layout.alignHeroHome : layout.alignHeroOther,
+    layoutAlignHero: layout.alignHero,
+    layoutAlignOverlay: layout.alignOverlay,
     content
-  });
+  };
+  // {{hero}} and {{overlay}} show the regions of the page, each rendered by its template, which has the placeholders
+  // above and {{components}}, {{textsTitle}} and {{texts}}; a region that the page lacks is empty.
+  const regionValues = Object.entries(shown).map(([name, region]) => [name, region ? () => applyTemplate(region.template, {
+    ...values,
+    components: () => region.components.map(component => components[component]()).join(""),
+    textsTitle: region.textsTitle,
+    texts: region.texts
+  }) : ""]);
+  return applyTemplate(templates.document, { ...values, ...Object.fromEntries(regionValues) });
 }
