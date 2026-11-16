@@ -4,7 +4,7 @@ import { once } from "node:events";
 import { chmod, cp, mkdir, mkdtemp, readdir, readFile, realpath, rm, stat, writeFile } from "node:fs/promises";
 import { createServer } from "node:net";
 import { tmpdir } from "node:os";
-import { join, relative, sep } from "node:path";
+import { dirname, join, relative, sep } from "node:path";
 import { after, before, describe, test } from "node:test";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
@@ -46,6 +46,30 @@ async function freePort() {
   probe.close();
   await once(probe, "close");
   return port;
+}
+
+// Runs check with the base URL of blyss serve for site, then stops the server; returns what it wrote to stderr.
+async function whileServing(site, check) {
+  const port = await freePort();
+  const server = spawn(process.execPath, [cli, "serve"], { cwd: site, env: { ...process.env, PORT: String(port) } });
+  const exited = once(server, "exit");
+  let stderr = "";
+  server.stderr.on("data", chunk => { stderr += chunk; });
+  try {
+    await new Promise((resolve, reject) => {
+      let stdout = "";
+      server.stdout.on("data", chunk => {
+        stdout += chunk;
+        if (stdout.includes(`Blyss is serving public/ on port ${port}`)) resolve();
+      });
+      exited.then(() => reject(new Error(`blyss serve exited early: ${stderr}`)), reject);
+    });
+    await check(`http://127.0.0.1:${port}`);
+  } finally {
+    server.kill();
+  }
+  await exited;
+  return stderr;
 }
 
 describe("blyss init <new-directory>", () => {
@@ -246,21 +270,7 @@ describe("a generated starter", () => {
   });
 
   test("is served for a smoke test and terminates cleanly", { timeout: 15_000 }, async () => {
-    const port = await freePort();
-    const server = spawn(process.execPath, [cli, "serve"], { cwd: site, env: { ...process.env, PORT: String(port) } });
-    const exited = once(server, "exit");
-    let stderr = "";
-    server.stderr.on("data", chunk => { stderr += chunk; });
-    try {
-      await new Promise((resolve, reject) => {
-        let stdout = "";
-        server.stdout.on("data", chunk => {
-          stdout += chunk;
-          if (stdout.includes(`Blyss is serving public/ on port ${port}`)) resolve();
-        });
-        exited.then(() => reject(new Error(`blyss serve exited early: ${stderr}`)), reject);
-      });
-      const base = `http://127.0.0.1:${port}`;
+    const stderr = await whileServing(site, async base => {
       const home = await fetch(`${base}/`, { redirect: "manual" });
       await home.text();
       assert.equal(home.status, 302);
@@ -282,11 +292,108 @@ describe("a generated starter", () => {
       const plain = await fetch(`${base}/missing/`);
       assert.equal(plain.status, 404);
       assert.equal(await plain.text(), "404 Not Found");
-    } finally {
-      server.kill();
-    }
-    await exited;
+    });
     assert.equal(stderr, "");
+  });
+});
+
+describe("a site with a third language and German as its default", () => {
+  let site;
+  let configFile;
+  const page = path => readFile(join(site, "public", path), "utf8");
+  before(async () => {
+    site = join(sandbox, "trilingual");
+    assert.equal(run(["init", site], sandbox).status, 0);
+    configFile = join(site, "blyss.config.js");
+    const config = await readFile(configFile, "utf8");
+    // French follows English, whose labels it takes but for the language switcher's, and gets a text for each slider step.
+    const english = config.slice(config.indexOf("      en: {"), config.indexOf("      de: {"));
+    const french = english.replace("en: {", "fr: {").replace('"English"', '"Français"').replace('locale: "en"', 'locale: "fr"')
+      .replace('language: "Language"', 'language: "Langue"');
+    await writeFile(configFile, config.replace('defaultLanguage: "en"', 'defaultLanguage: "de"')
+      .replace("      de: {", `${french}      de: {`).replaceAll(', de: "', ', fr: "Étape", de: "'));
+    // The French content copies the English one but for the title and the slug of the first post.
+    await cp(join(site, "content", "en"), join(site, "content", "fr"), { recursive: true });
+    const post = join(site, "content", "fr", "posts", "hello-world.md");
+    await writeFile(post, (await readFile(post, "utf8")).replace("title: Hello World", "title: Bonjour le monde")
+      .replace("slug: hello-world", "slug: bonjour-le-monde"));
+    const result = run(["build"], site);
+    assert.equal(result.status, 0, result.stderr);
+  });
+
+  // Builds the site with a changed blyss.config.js, runs check and restores the configuration.
+  async function buildWith(change, check) {
+    const config = await readFile(configFile, "utf8");
+    await writeFile(configFile, change(config));
+    try {
+      const result = run(["build"], site);
+      assert.equal(result.status, 0, result.stderr);
+      await check();
+    } finally {
+      await writeFile(configFile, config);
+    }
+  }
+
+  test("builds every page of the third language with its labels and its component texts", async () => {
+    const english = await listFiles(join(site, "public", "en"));
+    assert.deepEqual(await listFiles(join(site, "public", "fr")), english.map(file => file.replace("hello-world", "bonjour-le-monde")).sort());
+    const home = await page("fr/index.html");
+    assert.ok(home.includes('<nav aria-label="Langue">'));
+    assert.ok(home.includes("<span>Étape</span>"));
+    assert.doesNotMatch(home, /{{\w+}}/);
+  });
+
+  test("lists the languages in the order of site.languages", async () => {
+    const post = await page("en/posts/hello-world/index.html");
+    const urls = { en: "/en/posts/hello-world/", fr: "/fr/posts/bonjour-le-monde/", de: "/de/posts/hallo-welt/" };
+    const switcher = post.slice(post.indexOf('<nav aria-label="Language">'));
+    assert.deepEqual([...switcher.slice(0, switcher.indexOf("</nav>")).matchAll(/hreflang="(\w+)" href="([^"]+)"[^>]*>([^<]+)</g)]
+      .map(match => match.slice(1)), [["en", urls.en, "English"], ["fr", urls.fr, "Français"], ["de", urls.de, "Deutsch"]]);
+    const alternates = [...Object.entries(urls), ["x-default", "/de/"]].map(([hreflang, url]) => [hreflang, `https://example.com${url}`]);
+    assert.deepEqual([...post.matchAll(/<link rel="alternate" hreflang="([\w-]+)" href="([^"]+)">/g)].map(match => match.slice(1)), alternates);
+    const sitemap = await page("sitemap.xml");
+    const entry = sitemap.slice(sitemap.indexOf(`<loc>https://example.com${urls.fr}</loc>`)).split("</url>")[0];
+    assert.deepEqual([...entry.matchAll(/hreflang="([\w-]+)" href="([^"]+)"/g)].map(match => match.slice(1)), alternates);
+    const graph = JSON.parse(post.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)[1])["@graph"];
+    assert.deepEqual(graph.find(node => node["@type"] === "WebSite").inLanguage, ["en", "fr", "de"]);
+  });
+
+  test("redirects / to the default language and shows its not-found page", { timeout: 15_000 }, async () => {
+    assert.equal(await page("404.html"), await page("de/404.html"));
+    const stderr = await whileServing(site, async base => {
+      const home = await fetch(`${base}/`, { redirect: "manual" });
+      await home.text();
+      assert.equal(home.status, 302);
+      assert.equal(home.headers.get("location"), "/de/");
+      const missing = await fetch(`${base}/fr/missing/`);
+      assert.equal(missing.status, 404);
+      assert.match(await missing.text(), /<h1>Seite nicht gefunden<\/h1>/);
+    });
+    assert.equal(stderr, "");
+  });
+
+  test("makes the first language the default if site.defaultLanguage is omitted", { timeout: 15_000 }, async () => {
+    await buildWith(config => config.replace(/^ *defaultLanguage: .*\n/m, ""), async () => {
+      assert.equal(await page("404.html"), await page("en/404.html"));
+      assert.ok((await page("de/index.html")).includes('<link rel="alternate" hreflang="x-default" href="https://example.com/en/">'));
+      const stderr = await whileServing(site, async base => {
+        const home = await fetch(`${base}/`, { redirect: "manual" });
+        await home.text();
+        assert.equal(home.headers.get("location"), "/en/");
+      });
+      assert.equal(stderr, "");
+    });
+  });
+
+  test("hides the language switcher but keeps the alternates if site.languageSwitcher is false", async () => {
+    await buildWith(config => config.replace("languageSwitcher: true", "languageSwitcher: false"), async () => {
+      for (const path of ["en/posts/hello-world/index.html", "fr/index.html", "de/404.html"]) {
+        const html = await page(path);
+        assert.doesNotMatch(html, /<nav aria-label="(?:Language|Langue|Sprache)">/, path);
+        assert.ok(html.includes('<link rel="alternate" hreflang="fr" href="https://example.com/fr/'), path);
+        assert.doesNotMatch(html, /{{\w+}}/, path);
+      }
+    });
   });
 });
 
@@ -603,6 +710,9 @@ describe("invalid content", () => {
   const hero = join("content", "en", "hero.md");
   const fragment = join("content", "en", "my-hero.md");
   const text = join("content", "en", "components", "heroComponentSlyder.md");
+  const french = join("content", "fr", "pages", "index.md");
+  const loose = join("content", "index.md");
+  const english = join("content", "en", sep);
   const cases = [
     ["a page with the URL of a generated page", page, "---\ntitle: Posts\n---\n",
       `Cannot build /en/posts/: ${page} and the generated page "Posts" have the same URL.\nRename ${page} or give it a different slug.\n`],
@@ -614,11 +724,17 @@ describe("invalid content", () => {
       `Cannot build ${fragment}: templates use its name in placeholders, so it must start with a Latin letter and contain ` +
       "only Latin letters and digits, such as hero.md.\n"],
     ["a text for a component that does not exist", text, "---\ntitle: Slider\n---\n",
-      `Cannot build ${text}: there is no component "heroComponentSlyder" in components/.\n`]
+      `Cannot build ${text}: there is no component "heroComponentSlyder" in components/.\n`],
+    ["content in the directory of a language that site.languages lacks", french, "---\ntitle: Accueil\n---\n",
+      `Cannot build ${french}: there is no language "fr" in site.languages.\nAdd the language to site.languages, or move the file ` +
+      `to the directory of one of its languages, such as ${english}.\n`],
+    ["content outside the directories of the languages", loose, "---\ntitle: Home\n---\n",
+      `Cannot build ${loose}: content lies in the directory of its language, such as ${english}.\n`]
   ];
   for (const [name, file, source, message] of cases) {
     test(`rejects ${name} and keeps the previous output`, async () => {
       const original = await readFile(join(site, file), "utf8").catch(() => null);
+      const created = await mkdir(dirname(join(site, file)), { recursive: true });
       await writeFile(join(site, file), source);
       try {
         const result = run(["build"], site);
@@ -628,6 +744,7 @@ describe("invalid content", () => {
       } finally {
         if (original === null) await rm(join(site, file));
         else await writeFile(join(site, file), original);
+        if (created) await rm(created, { recursive: true });
       }
     });
   }
@@ -678,6 +795,28 @@ describe("invalid configuration", () => {
         const result = run(["build"], site);
         assert.equal(result.status, 1, value);
         assert.equal(result.stderr, `Cannot use pagination.pageSize ${value}: it must be a whole number greater than 0.\n`);
+        assert.ok((await stat(join(site, "public", "en", "index.html"))).isFile());
+      });
+    }
+  });
+
+  test("refuses language settings that the pages cannot use, in build and serve", { timeout: 30_000 }, async () => {
+    for (const [search, replacement, message] of [
+      ['defaultLanguage: "en"', 'defaultLanguage: "fr"', 'site.defaultLanguage "fr": it must be "en" or "de"'],
+      ["languageSwitcher: true", 'languageSwitcher: "no"', 'site.languageSwitcher "no": it must be true or false'],
+      ["      de: {", "      DE: {", "site.languages.DE: URLs use its key as a directory, so it must contain only lower-case Latin " +
+        'letters, digits and hyphens, such as "en" or "pt-br"'],
+      ['label: "Deutsch"', 'label: " "', 'site.languages.de.label " ": it must be the name of the language, such as "Deutsch"'],
+      ['locale: "en"', 'locale: "en_GB"', 'site.languages.en.locale "en_GB": it must be a language tag, such as "en" or "en-GB"'],
+      ['search: "Suchen"', "", 'site.languages.de.labels: every language needs the same labels, but it lacks "search"']
+    ]) {
+      await withConfig(search, replacement, async () => {
+        for (const command of ["build", "serve"]) {
+          const env = { ...process.env, PORT: String(await freePort()) };
+          const result = spawnSync(process.execPath, [cli, command], { cwd: site, encoding: "utf8", env, timeout: 10_000 });
+          assert.equal(result.status, 1, `${command} with ${replacement}`);
+          assert.equal(result.stderr, `Cannot use ${message}.\n`);
+        }
         assert.ok((await stat(join(site, "public", "en", "index.html"))).isFile());
       });
     }

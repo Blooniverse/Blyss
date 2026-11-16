@@ -11,6 +11,7 @@ Blyss is a lean bilingual Markdown transformer and static-site server.
 - Keep authored content, static assets, source code, templates, and generated output separate; only a component in components/<name>/ keeps its template, stylesheet and script together, while its texts stay in content/.
 - Treat public/ as disposable generated output.
 - Preserve English and German language support.
+- Keep the engine open to any number of languages: take them, their order and the default language from blyss.config.js, never from hard-coded language keys.
 - Preserve clean localized URLs.
 - Preserve translation relationships through translationKey.
 - Preserve Schema.org JSON-LD using @graph.

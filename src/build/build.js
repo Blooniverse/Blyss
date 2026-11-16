@@ -5,6 +5,7 @@ import { BlyssError } from "../errors.js";
 import { loadComponents } from "./components.js";
 import { createListRecords, parseTags } from "./lists.js";
 import { renderFragments } from "./fragments.js";
+import { languagesOf } from "./languages.js";
 import { resolvePaths } from "./paths.js";
 import { parseFrontMatter, renderRecord } from "./render.js";
 import { layoutOf } from "./settings.js";
@@ -34,13 +35,20 @@ function createLocator(config, publicDirectory) {
 }
 
 async function discoverContent(projectDir, config, contentDirectory, locate) {
-  // Sorted paths make the output, including the order of translations, independent of the filesystem.
+  // Sorted paths make the output independent of the filesystem.
   const files = (await findMarkdownFiles(contentDirectory)).sort();
   return Promise.all(files.map(async sourceFile => {
     const parts = relative(contentDirectory, sourceFile).split(sep);
     const [languageKey, section] = parts;
+    // The content of each language lies in content/<language>/, named by its key in site.languages.
+    if (parts.length < 2 || !Object.hasOwn(config.site.languages, languageKey)) {
+      const file = relative(projectDir, sourceFile);
+      const example = join(relative(projectDir, contentDirectory), config.site.defaultLanguage, sep);
+      if (parts.length < 2) throw new BlyssError(`Cannot build ${file}: content lies in the directory of its language, such as ${example}.`);
+      throw new BlyssError(`Cannot build ${file}: there is no language "${languageKey}" in site.languages.\n` +
+        `Add the language to site.languages, or move the file to the directory of one of its languages, such as ${example}.`);
+    }
     const languageConfig = config.site.languages[languageKey];
-    if (!languageConfig) throw new Error(`Unknown language directory: ${languageKey}`);
     const { metadata, markdown } = parseFrontMatter(await readFile(sourceFile, "utf8"));
     const filename = basename(sourceFile, '.md');
     // Files directly in content/<language>/, such as hero.md, are fragments for templates (see fragments.js).
@@ -82,7 +90,9 @@ function assertUniqueUrls(projectDir, records) {
 }
 
 export async function build(projectDir, configPath = './blyss.config.js') {
-  const config = await loadConfig(projectDir, configPath);
+  const loaded = await loadConfig(projectDir, configPath);
+  // The whole build uses the checked languages, which have every label and a default language.
+  const config = { ...loaded, site: { ...loaded.site, ...languagesOf(loaded) } };
   const { componentsDirectory, contentDirectory, publicDirectory, staticDirectory, templatesDirectory } = resolvePaths(projectDir, config);
   const locate = createLocator(config, publicDirectory);
   const layout = layoutOf(config);
@@ -106,7 +116,7 @@ export async function build(projectDir, configPath = './blyss.config.js') {
   const records = [...content, ...createListRecords(config, content, locate)];
   assertUniqueUrls(projectDir, records);
   const templates = { document, page, post, home };
-  const translationIndex = indexTranslations(records);
+  const translationIndex = indexTranslations(records, config.site.languages);
 
   await rm(publicDirectory, { recursive: true, force: true });
   await mkdir(publicDirectory, { recursive: true });

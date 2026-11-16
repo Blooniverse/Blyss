@@ -31,10 +31,10 @@ function renderPostItem(post) {
 
 function renderPager(labels, newerUrl, olderUrl) {
   const links = [
-    newerUrl && `<a href="${escapeHtml(newerUrl)}" rel="prev">${escapeHtml(labels.newerPosts || "Newer posts")}</a>`,
-    olderUrl && `<a href="${escapeHtml(olderUrl)}" rel="next">${escapeHtml(labels.olderPosts || "Older posts")}</a>`
+    newerUrl && `<a href="${escapeHtml(newerUrl)}" rel="prev">${escapeHtml(labels.newerPosts)}</a>`,
+    olderUrl && `<a href="${escapeHtml(olderUrl)}" rel="next">${escapeHtml(labels.olderPosts)}</a>`
   ].filter(Boolean);
-  return links.length ? `<nav aria-label="${escapeHtml(labels.pagination || "Pagination")}">\n${renderList(links)}</nav>\n` : "";
+  return links.length ? `<nav aria-label="${escapeHtml(labels.pagination)}">\n${renderList(links)}</nav>\n` : "";
 }
 
 function pageSizeOf(config) {
@@ -62,7 +62,7 @@ export function createListRecords(config, records, locate) {
       for (let start = 0; start < posts.length || !pages.length; start += pageSize) {
         const number = pages.length + 1;
         const list = number === 1 ? addList(urlParts, title, translationKey)
-          : addList([...urlParts, "page", String(number)], `${title} – ${labels.page || "Page"} ${number}`, `${translationKey}/page/${number}`);
+          : addList([...urlParts, "page", String(number)], `${title} – ${labels.page} ${number}`, `${translationKey}/page/${number}`);
         pages.push({ list, posts: posts.slice(start, start + pageSize) });
       }
       pages.forEach(({ list, posts: listed }, index) => {
@@ -83,11 +83,11 @@ export function createListRecords(config, records, locate) {
     }
     const sortedTags = [...tags.values()].sort((left, right) => left.name.localeCompare(right.name, languageConfig.locale));
 
-    addPostLists([languageKey, "posts"], labels.posts || "Posts", "blyss:posts", posts);
-    addList([languageKey, "tags"], labels.tags || "Tags", "blyss:tags", renderList(sortedTags.map(tag =>
+    addPostLists([languageKey, "posts"], labels.posts, "blyss:posts", posts);
+    addList([languageKey, "tags"], labels.tags, "blyss:tags", renderList(sortedTags.map(tag =>
       `<a href="${escapeHtml(tag.url)}">${escapeHtml(tag.name)}</a> (${tag.posts.length})`)));
     for (const tag of sortedTags) {
-      addPostLists([languageKey, "tags", tag.slug], `${labels.tag || "Tag"}: ${tag.name}`, `blyss:tags/${tag.slug}`, tag.posts);
+      addPostLists([languageKey, "tags", tag.slug], `${labels.tag}: ${tag.name}`, `blyss:tags/${tag.slug}`, tag.posts);
     }
   }
   return lists;

@@ -49,8 +49,27 @@ tags: [Blyss, Markdown]
 - Posts can have `tags`. Blyss generates the archive `/<language>/posts/`, the tag index `/<language>/tags/` and one page per tag, such as `/en/tags/markdown/`. Do not create content at these URLs.
 - The archive and tag pages show `pagination.pageSize` posts (10 by default, set in `blyss.config.js`). Older posts continue on `/<language>/posts/page/2/`, `/<language>/tags/<tag>/page/2/` and so on, linked by “Newer posts” and “Older posts”.
 - Markdown files directly in `content/<language>/`, such as `hero.md`, are fragments: Blyss publishes no page for them, but `templates/document.html` shows them on every page of their language as `{{<name>Title}}`, the `title` of their front matter, and `{{<name>Content}}`, their text, such as `{{heroTitle}}` and `{{heroContent}}`. Their file names must start with a Latin letter and contain only Latin letters and digits.
-- `pages/404.md` is the “not found” page. It is published at `/<language>/404.html`; the default language's page, English, is also published as `/404.html`, which `npm start` and most static hosts show for every missing URL. Because it appears at any URL, link from it with absolute paths such as `/en/`.
-- Keep `index.md` and `about.md` in both languages without a different slug: the navigation in `templates/document.html` links to `/<language>/` and `/<language>/about/`.
+- `pages/404.md` is the “not found” page. It is published at `/<language>/404.html`; the [default language](#languages)'s page, English, is also published as `/404.html`, which `npm start` and most static hosts show for every missing URL. Because it appears at any URL, link from it with absolute paths such as `/en/`.
+- Keep `index.md` and `about.md` in every language without a different slug: the navigation in `templates/document.html` links to `/<language>/` and `/<language>/about/`.
+
+## Languages
+
+`site` in `blyss.config.js` configures the languages, English and German in the starter:
+
+- `languages` lists them in the order of the language switcher and of the `hreflang` alternates. The key of a language, such as `en`, names its directory in `content/` and starts its URLs; it may contain only lower-case Latin letters, digits and hyphens. Each language has a `label`, its name in the language switcher, a `locale`, a language tag such as `"en"` or `"en-GB"`, a `description` for pages without one of their own, and `labels`, the texts of the templates. Every language needs the same labels: the build stops and names any label that a language lacks.
+- `defaultLanguage` is the language that `/` redirects to and whose “not found” page is `/404.html`: `"en"`, or the first language if you remove the setting. If you change it, also change the `/en/` redirect in `static/staticwebapp.config.json` and in your deployment workflow (see [Deployment](#deployment)).
+- `languageSwitcher: false` hides the language switcher in the top bar. The `hreflang` alternates in each page's head and in `sitemap.xml` remain, so search engines still find the translations.
+
+### Adding a language
+
+To add French, for example:
+
+1. Add `fr` to `site.languages` in `blyss.config.js`: its `label`, `"Français"`, its `locale`, `"fr"`, its `description` and every label of the other languages, translated.
+2. Add a French `description` to each step of `components.heroComponentSlider.steps`.
+3. Create `content/fr/` like `content/en/`: `pages/index.md`, `pages/about.md`, `pages/404.md`, `hero.md`, the components' texts in `components/` and any posts. Give each translation the `translationKey` of its original.
+4. Run `npm run build`. The language switcher and the `hreflang` alternates now link the French pages to their translations.
+
+To remove a language, delete its directory in `content/`, its entry in `site.languages` and its descriptions of the slider's steps; if it was the default language, change `defaultLanguage` too. With a single language left, `languageSwitcher: false` hides the language switcher, which would link only to the current page.
 
 ## Layout
 
@@ -70,6 +89,7 @@ Centered lists keep their markers next to their items, and code blocks stay left
 
 - `static/assets/img/logo.svg` is a placeholder logo in the stylesheet's dark blue, `#005180`. Replace it with your own, and adjust the `alt`, `width` and `height` of its `<img>` in `templates/document.html`.
 - The search field has no function yet: it belongs to no form, so nothing is sent. The label `search` in `blyss.config.js` holds its text.
+- The language switcher links each page to its translations; `site.languageSwitcher: false` hides it (see [Languages](#languages)).
 - On narrow screens, the bar wraps into two or three rows.
 
 ## Overlay
@@ -149,7 +169,7 @@ If you change `site.defaultLanguage`, also change the `/en/` redirect in `static
 
 ## Deployment
 
-Blyss does not generate `public/index.html`. When deploying `public/` to a static host, redirect `/` to `/en/` and show `404.html` for missing URLs, as `npm start` does.
+Blyss does not generate `public/index.html`. When deploying `public/` to a static host, redirect `/` to the default language, `/en/`, and show `404.html` for missing URLs, as `npm start` does.
 
 ### Azure Static Web Apps
 

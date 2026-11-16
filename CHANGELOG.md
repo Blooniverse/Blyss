@@ -22,9 +22,26 @@
   whole website.
 - **Not-found page URL**: a top-level `pages/404.md` is published at
   `/<language>/404.html` instead of `/<language>/404/`.
+- **Checked languages**: `blyss build` and `blyss serve` refuse a
+  `site.languages` without a language, a language key other than lower-case
+  Latin letters, digits and hyphens, a language without a `label` or a
+  well-formed `locale` (such as `"en-GB"`, not `"en_GB"`), languages whose
+  `labels` differ, a `site.defaultLanguage` that is not one of the languages
+  and a `site.languageSwitcher` other than `true` or `false`.
 
 ### New features
 
+- **Further languages**: a third or any further language needs its entry in
+  `site.languages`, its directory in `content/` and the texts of its
+  components; the starter's README shows how to add one. The language
+  switcher and the `hreflang` alternates of the pages and of the sitemap
+  follow the order of `site.languages`.
+- **Default language**: `site.defaultLanguage` is optional and defaults to the
+  first language. `/` redirects to it, its not-found page becomes `/404.html`,
+  and the `x-default` alternates point to its home page.
+- **Language switcher**: `site.languageSwitcher: false` hides the language
+  switcher by leaving `{{languageSwitcher}}` empty, while the `hreflang`
+  alternates remain. It defaults to `true`, which the starter sets.
 - **`blyss init [directory]`**: copies the bundled bilingual starter website
   into a new or empty directory (default: the current directory). Non-empty
   directories are refused without changes; a failed copy removes only what it
@@ -155,15 +172,31 @@
   one silently overwriting the other. Generated list pages use the JSON-LD
   type `CollectionPage`.
 - **Server**: `blyss serve` sends AVIF images as `image/avif`.
+- **Language order**: the language switcher and the `hreflang` alternates
+  list the languages in the order of `site.languages` instead of the
+  alphabetical order of their directories, so the starter's switcher now
+  shows English before Deutsch.
+- **Default labels**: the labels of what Blyss generates (`language`,
+  `recentPosts`, `posts`, `tags`, `tag`, `page`, `pagination`, `newerPosts`
+  and `olderPosts`) default to English for every use, including their
+  `{{<key>Label}}` placeholders; previously only `{{postsLabel}}` and
+  `{{tagsLabel}}` had defaults, and the language switcher had none.
 - **Tests**: recent posts are checked to be the three newest of each language,
   ordered by `datePublished`; the archive, tags, sitemap, JSON-LD escaping and
   build errors are covered too, as are pagination, not-found pages, the Azure
   configuration, refused output directories, the home template and its
-  fallback, page kinds, the hero texts, fragments, components and the layout
-  and component settings.
+  fallback, page kinds, the hero texts, fragments, components, the layout
+  and component settings and the language settings: a third language, a
+  default language other than the first, a hidden language switcher and
+  refused values.
 
 ### Fixes
 
+- **Languages**: a language without `labels` no longer crashes the build, a
+  missing `site.defaultLanguage` no longer yields `x-default` URLs ending in
+  `/undefined/`, and content in a directory that is not a language, such as
+  `content/fr/` without `site.languages.fr`, stops the build with an
+  actionable message instead of a stack trace.
 - **JSON-LD escaping**: `<`, `>` and `&` are now written as `\u003c`,
   `\u003e` and `\u0026`. The previous replacement was a no-op, so a title
   containing `</script>` could end the JSON-LD script element.

@@ -2,13 +2,18 @@ function escapeHtml(value = "") {
   return String(value).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#39;");
 }
 
-export function indexTranslations(records) {
+// Translations follow the order of site.languages, as do the language switcher and the alternates.
+export function indexTranslations(records, languages) {
+  const order = Object.keys(languages);
   const index = new Map();
   for (const record of records) {
     const key = record.metadata.translationKey;
     if (!key) continue;
     if (!index.has(key)) index.set(key, []);
     index.get(key).push(record);
+  }
+  for (const translations of index.values()) {
+    translations.sort((left, right) => order.indexOf(left.languageKey) - order.indexOf(right.languageKey));
   }
   return index;
 }
