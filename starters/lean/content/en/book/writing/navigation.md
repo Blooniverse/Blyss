@@ -2,7 +2,7 @@
 title: Navigation and headings
 description: How Blyss links the docs and their headings.
 order: 1
-translationKey: techdoc-navigation
+translationKey: book-navigation
 ---
 
 ## Navigation
@@ -20,4 +20,4 @@ Each heading of a doc gets an id from its text, as on GitHub: this one is `#head
 
 ## Templates
 
-`templates/techdoc.html` arranges the docs: the navigation, the title, the table of contents, the text and the links to the previous and the next doc. Its placeholders are named techdocNavigation, techdocToc and techdocPager, each in double curly braces. Without this template, docs use `templates/page.html`.
+`_templates/book.html` arranges the docs: the navigation, the title, the table of contents, the text and the links to the previous and the next doc. Its placeholders are named bookNavigation, bookToc and bookPager, each in double curly braces. Without this template, docs use `_templates/page.html`.

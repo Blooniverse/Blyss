@@ -178,7 +178,7 @@ describe("blyss init", () => {
     for (const path of ["package.json", "src", "starters"]) {
       await cp(join(root, path), join(copy, path), { recursive: true });
     }
-    await chmod(join(copy, "starters", "lean", "templates", "post.html"), 0o000);
+    await chmod(join(copy, "starters", "lean", "_templates", "post.html"), 0o000);
     const { init } = await import(pathToFileURL(join(copy, "src", "init", "init.js")).href);
     const failure = { name: "BlyssError", message: /^Cannot initialize .+:\n {2}EACCES: permission denied/ };
 
@@ -203,14 +203,14 @@ describe("a generated starter", () => {
     assert.equal(result.status, 0, result.stderr);
     const pages = [["en", ["hello-world", "templates", "translations"], ["getting-started", "writing", "writing/navigation"]],
       ["de", ["hallo-welt", "uebersetzungen", "vorlagen"], ["erste-schritte", "schreiben", "schreiben/navigation"]]]
-      .flatMap(([language, posts, docs]) => ["", "about/", "posts/", ...posts.map(post => `posts/${post}/`), "tags/", "tags/blyss/",
-        "tags/markdown/", "techdoc/", ...docs.map(doc => `techdoc/${doc}/`)].map(path => `${language}/${path}index.html`));
+      .flatMap(([language, posts, docs]) => ["", "pages/about/", "posts/", ...posts.map(post => `posts/${post}/`), "tags/", "tags/blyss/",
+        "tags/markdown/", "book/", ...docs.map(doc => `book/${doc}/`)].map(path => `${language}/${path}index.html`));
     const notFoundPages = ["404.html", "en/404.html", "de/404.html"];
     // Static files are copied as they are; components publish their files but their templates and data files.
-    const componentFiles = (await listFiles(join(starter, "components"))).filter(file => !/\.(?:html|data\.js)$/.test(file));
+    const componentFiles = (await listFiles(join(starter, "_components"))).filter(file => !/\.(?:html|data\.js)$/.test(file));
     assert.deepEqual(componentFiles, ["Gallery", "Slider"].flatMap(name => ["css", "js"].map(type => `heroComponent${name}/heroComponent${name}.${type}`)));
     assert.deepEqual(await listFiles(join(site, "public")), [...await listFiles(join(starter, "static")),
-      ...componentFiles.map(file => `components/${file}`), "sitemap.xml", ...pages, ...notFoundPages].sort());
+      ...componentFiles.map(file => `_components/${file}`), "sitemap.xml", ...pages, ...notFoundPages].sort());
     for (const page of [...pages, ...notFoundPages]) {
       const html = await readFile(join(site, "public", page), "utf8");
       assert.doesNotMatch(html, /{{\w+}}/, page);
@@ -236,7 +236,7 @@ describe("a generated starter", () => {
   });
 
   test("shows the gallery with its settings, its texts and its images, which load lazily", async () => {
-    const html = await readFile(join(site, "public", "de", "about", "index.html"), "utf8");
+    const html = await readFile(join(site, "public", "de", "pages", "about", "index.html"), "utf8");
     assert.ok(html.includes('<hero-component-gallery class="hero-component" role="group" aria-labelledby="heroComponentGallery-1-title" ' +
       'style="--height-overall: 8rem; --scale-center: 1.3; --speed-scrolling: 400ms; --speed-enlargement: 300ms">'));
     for (const label of ["Vorheriges Bild", "Nächstes Bild"]) assert.ok(html.includes(`<button type="button" aria-label="${label}">`), label);
@@ -254,9 +254,9 @@ describe("a generated starter", () => {
   });
 
   test("marks every page with its kind and the layout of blyss.config.js", async () => {
-    const kinds = { "en/index.html": "home", "de/about/index.html": "page", "en/posts/hello-world/index.html": "post",
-      "de/posts/index.html": "list", "en/tags/blyss/index.html": "list", "en/techdoc/index.html": "techdoc",
-      "de/techdoc/schreiben/navigation/index.html": "techdoc", "de/404.html": "not-found" };
+    const kinds = { "en/index.html": "home", "de/pages/about/index.html": "page", "en/posts/hello-world/index.html": "post",
+      "de/posts/index.html": "list", "en/tags/blyss/index.html": "list", "en/book/index.html": "book",
+      "de/book/schreiben/navigation/index.html": "book", "de/404.html": "not-found" };
     for (const [path, kind] of Object.entries(kinds)) {
       const html = await readFile(join(site, "public", path), "utf8");
       const align = kind === "home" ? "center" : "left";
@@ -278,9 +278,9 @@ describe("a generated starter", () => {
       assert.equal(home.status, 302);
       assert.equal(home.headers.get("location"), "/en/");
       for (const [path, status] of [["/en/", 200], ["/de/posts/hallo-welt/", 200], ["/en/posts/", 200], ["/de/tags/blyss/", 200],
-        ["/en/techdoc/", 200], ["/de/techdoc/schreiben/navigation/", 200], ["/de/404.html", 200], ["/sitemap.xml", 200], ["/assets/css/main.css", 200], ["/assets/img/logo.svg", 200],
-        ["/components/heroComponentSlider/heroComponentSlider.js", 200], ["/components/heroComponentSlider/heroComponentSlider.html", 404],
-        ["/components/heroComponentSlider/heroComponentSlider.data.js", 404], ["/missing/", 404]]) {
+        ["/en/book/", 200], ["/de/book/schreiben/navigation/", 200], ["/de/404.html", 200], ["/sitemap.xml", 200], ["/assets/css/main.css", 200], ["/assets/img/logo.svg", 200],
+        ["/_components/heroComponentSlider/heroComponentSlider.js", 200], ["/_components/heroComponentSlider/heroComponentSlider.html", 404],
+        ["/_components/heroComponentSlider/heroComponentSlider.data.js", 404], ["/missing/", 404]]) {
         const response = await fetch(base + path);
         await response.text();
         assert.equal(response.status, status, path);
@@ -444,7 +444,7 @@ describe("a site with several tagged posts", () => {
     };
     const texts = async path => [...(await overlay(path)).matchAll(/<div>\n<h3>([^<]+)<\/h3>/g)].map(match => match[1]);
     const home = await overlay("en/index.html");
-    for (const path of ["en/about/index.html", "en/posts/older/index.html", "en/tags/index.html", "en/404.html"]) {
+    for (const path of ["en/pages/about/index.html", "en/posts/older/index.html", "en/tags/index.html", "en/404.html"]) {
       assert.equal(await overlay(path), home, path);
     }
     assert.ok(home.includes("<h3>Why Blyss</h3>"));
@@ -458,6 +458,20 @@ describe("a site with several tagged posts", () => {
     assert.deepEqual(await postSlugs("en/posts/page/3"), ["older", "oldest"]);
     await assert.rejects(stat(join(site, "public", "en", "posts", "page", "4")), { code: "ENOENT" });
     assert.match(await page("en"), /<a href="\/en\/posts\/">Posts<\/a>/);
+  });
+
+  test("rejects a post at the URL of a generated page", async () => {
+    const post = join("content", "en", "posts", "page", "2.md");
+    await mkdir(join(site, "content", "en", "posts", "page"));
+    await writeFile(join(site, post), "---\ntitle: Two\n---\n");
+    try {
+      const result = run(["build"], site);
+      assert.equal(result.status, 1);
+      assert.equal(result.stderr, `Cannot build /en/posts/page/2/: ${post} and the generated page "Posts – Page 2" have the same URL.\n` +
+        `Rename ${post} or give it a different slug.\n`);
+    } finally {
+      await rm(join(site, "content", "en", "posts", "page"), { recursive: true });
+    }
   });
 
   test("links paginated lists to newer and older pages", async () => {
@@ -517,7 +531,7 @@ describe("a site without templates/home.html", () => {
   test("renders its home pages with page.html", async () => {
     const site = join(sandbox, "without-home-template");
     assert.equal(run(["init", site], sandbox).status, 0);
-    await rm(join(site, "templates", "home.html"));
+    await rm(join(site, "_templates", "home.html"));
     const result = run(["build"], site);
     assert.equal(result.status, 0, result.stderr);
     const html = await readFile(join(site, "public", "en", "index.html"), "utf8");
@@ -532,9 +546,9 @@ describe("a site with technical documentation", () => {
   const part = (html, start, end) => html.slice(html.indexOf(start), html.indexOf(end, html.indexOf(start)) + end.length);
 
   before(async () => {
-    site = join(sandbox, "techdoc");
+    site = join(sandbox, "book");
     assert.equal(run(["init", site], sandbox).status, 0);
-    const docs = join(site, "content", "en", "techdoc");
+    const docs = join(site, "content", "en", "book");
     await rm(docs, { recursive: true });
     await mkdir(join(docs, "guides"), { recursive: true });
     const headings = "## Overview\n\n### Details\n\n#### Deep\n\n## Overview\n\n## Overlay\n\n## Install & *run*\n\n## ???\n\n## Demo\n\n" +
@@ -555,29 +569,29 @@ describe("a site with technical documentation", () => {
   });
 
   test("lists the docs by directory, then by order and title, and marks the current one", async () => {
-    assert.equal(part(await page("en/techdoc/guides/setup"), '<nav aria-label="Documentation">', "</nav>"),
-      '<nav aria-label="Documentation">\n<ul>\n  <li><a href="/en/techdoc/">Docs</a></li>\n' +
-      '  <li><a href="/en/techdoc/apple/">Apple</a></li>\n  <li><a href="/en/techdoc/zebra/">Zebra</a></li>\n' +
-      '  <li><a href="/en/techdoc/guides/">Guides</a>\n    <ul>\n' +
-      '      <li><a href="/en/techdoc/guides/setup/" aria-current="page">Setup</a></li>\n' +
-      '      <li><a href="/en/techdoc/guides/shipping/">Deploy</a></li>\n    </ul>\n  </li>\n' +
-      '  <li><a href="/en/techdoc/later/">Later</a></li>\n</ul>\n</nav>');
+    assert.equal(part(await page("en/book/guides/setup"), '<nav aria-label="Documentation">', "</nav>"),
+      '<nav aria-label="Documentation">\n<ul>\n  <li><a href="/en/book/">Docs</a></li>\n' +
+      '  <li><a href="/en/book/apple/">Apple</a></li>\n  <li><a href="/en/book/zebra/">Zebra</a></li>\n' +
+      '  <li><a href="/en/book/guides/">Guides</a>\n    <ul>\n' +
+      '      <li><a href="/en/book/guides/setup/" aria-current="page">Setup</a></li>\n' +
+      '      <li><a href="/en/book/guides/shipping/">Deploy</a></li>\n    </ul>\n  </li>\n' +
+      '  <li><a href="/en/book/later/">Later</a></li>\n</ul>\n</nav>');
   });
 
   test("links each doc to the previous and the next doc of the navigation", async () => {
     const pager = (previous, next) => '<nav aria-label="Pagination">\n<ul>\n' +
-      (previous ? `  <li><a href="/en/techdoc/${previous[0]}" rel="prev">Previous: ${previous[1]}</a></li>\n` : "") +
-      (next ? `  <li><a href="/en/techdoc/${next[0]}" rel="next">Next: ${next[1]}</a></li>\n` : "") + "</ul>\n</nav>";
-    assert.ok((await page("en/techdoc")).includes(pager(null, ["apple/", "Apple"])));
-    assert.ok((await page("en/techdoc/guides")).includes(pager(["zebra/", "Zebra"], ["guides/setup/", "Setup"])));
-    assert.ok((await page("en/techdoc/later")).includes(pager(["guides/shipping/", "Deploy"], null)));
-    assert.ok((await page("de/techdoc/erste-schritte")).includes('<nav aria-label="Seitennavigation">\n<ul>\n' +
-      '  <li><a href="/de/techdoc/" rel="prev">Zurück: Dokumentation</a></li>\n' +
-      '  <li><a href="/de/techdoc/schreiben/" rel="next">Weiter: Schreiben</a></li>\n</ul>\n</nav>'));
+      (previous ? `  <li><a href="/en/book/${previous[0]}" rel="prev">Previous: ${previous[1]}</a></li>\n` : "") +
+      (next ? `  <li><a href="/en/book/${next[0]}" rel="next">Next: ${next[1]}</a></li>\n` : "") + "</ul>\n</nav>";
+    assert.ok((await page("en/book")).includes(pager(null, ["apple/", "Apple"])));
+    assert.ok((await page("en/book/guides")).includes(pager(["zebra/", "Zebra"], ["guides/setup/", "Setup"])));
+    assert.ok((await page("en/book/later")).includes(pager(["guides/shipping/", "Deploy"], null)));
+    assert.ok((await page("de/book/erste-schritte")).includes('<nav aria-label="Seitennavigation">\n<ul>\n' +
+      '  <li><a href="/de/book/" rel="prev">Zurück: Dokumentation</a></li>\n' +
+      '  <li><a href="/de/book/schreiben/" rel="next">Weiter: Schreiben</a></li>\n</ul>\n</nav>'));
   });
 
   test("gives the headings of a doc unique ids and lists its ## and ### headings above its text", async () => {
-    const html = await page("en/techdoc/guides/setup");
+    const html = await page("en/book/guides/setup");
     for (const heading of ['<h2 id="overview">Overview</h2>', '<h3 id="details">Details</h3>', '<h4 id="deep">Deep</h4>',
       '<h2 id="overview-1">Overview</h2>', '<h2 id="overlay-1">Overlay</h2>', '<h2 id="install--run">Install &amp; <em>run</em></h2>',
       '<h2 id="section">???</h2>', '<h2 id="demo-1">Demo</h2>']) {
@@ -590,33 +604,33 @@ describe("a site with technical documentation", () => {
       '  <li><a href="#demo-1">Demo</a></li>\n</ul>\n</nav>'));
     const ids = html.match(/ id="[^"]+"/g);
     assert.equal(ids.length, new Set(ids).size);
-    assert.ok((await page("de/techdoc/schreiben/navigation")).includes('<h2 id="überschriften">Überschriften</h2>'));
-    assert.doesNotMatch(await page("en/techdoc/later"), /On this page/);
+    assert.ok((await page("de/book/schreiben/navigation")).includes('<h2 id="überschriften">Überschriften</h2>'));
+    assert.doesNotMatch(await page("en/book/later"), /On this page/);
   });
 
   test("describes docs as TechArticle and keeps them out of the posts and the tags", async () => {
-    const html = await page("en/techdoc/apple");
-    assert.ok(html.includes('<body data-kind="techdoc" '));
+    const html = await page("en/book/apple");
+    assert.ok(html.includes('<body data-kind="book" '));
     const graph = JSON.parse(html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)[1])["@graph"];
     const doc = graph.find(node => node["@type"] === "TechArticle");
-    assert.equal(doc.url, "https://example.com/en/techdoc/apple/");
+    assert.equal(doc.url, "https://example.com/en/book/apple/");
     assert.equal(doc.datePublished, "2026-11-01");
     assert.deepEqual(doc.mainEntityOfPage, { "@id": `${doc.url}#webpage` });
     assert.equal(doc.keywords, undefined);
     for (const path of ["en/posts", "en/tags", "en/tags/blyss"]) {
-      assert.doesNotMatch(part(await page(path), "<main>", "</main>"), /\/techdoc\//, path);
+      assert.doesNotMatch(part(await page(path), "<main>", "</main>"), /\/book\//, path);
     }
-    assert.ok((await readFile(join(site, "public", "sitemap.xml"), "utf8")).includes("<loc>https://example.com/en/techdoc/guides/shipping/</loc>"));
+    assert.ok((await readFile(join(site, "public", "sitemap.xml"), "utf8")).includes("<loc>https://example.com/en/book/guides/shipping/</loc>"));
   });
 
-  test("renders docs with page.html without templates/techdoc.html", async () => {
-    const template = join(site, "templates", "techdoc.html");
+  test("renders docs with page.html without templates/book.html", async () => {
+    const template = join(site, "_templates", "book.html");
     const source = await readFile(template, "utf8");
     await rm(template);
     try {
       const result = run(["build"], site);
       assert.equal(result.status, 0, result.stderr);
-      const html = await page("en/techdoc/guides/setup");
+      const html = await page("en/book/guides/setup");
       assert.match(html, /<main>\s*<article>\s*<header>\s*<h1>Setup<\/h1>\s*<\/header>\s*<h2 id="overview">Overview<\/h2>/);
       assert.doesNotMatch(html, /<nav aria-label="(?:Documentation|On this page|Pagination)">/);
     } finally {
@@ -638,7 +652,7 @@ describe("a site with its own hero texts and fragments", () => {
     await writeFile(join(site, "content", "en", "hero.md"),
       `---\ntitle: Nine <texts>\n---\n\n<!-- Each ### heading starts a text. -->\n\n${texts.join("\n\n")}\n`);
     await writeFile(join(site, "content", "en", "notice.md"), "---\ntitle: Notice\n---\n\nClosed on *Monday*.\n");
-    const documentFile = join(site, "templates", "document.html");
+    const documentFile = join(site, "_templates", "document.html");
     const template = await readFile(documentFile, "utf8");
     await writeFile(documentFile, template.replace('  <div class="page">',
       '  <section class="notice"><h2>{{noticeTitle}}</h2>{{noticeContent}}</section>\n  <div class="page">'));
@@ -647,7 +661,7 @@ describe("a site with its own hero texts and fragments", () => {
   });
 
   test("shows every text of hero.md in full, each from one ### heading to the next", async () => {
-    const html = await page("en/about/index.html");
+    const html = await page("en/pages/about/index.html");
     const hero = html.slice(html.indexOf("<h3>Nine"), html.indexOf("</aside>"));
     assert.ok(hero.startsWith("<h3>Nine &lt;texts&gt;</h3>"));
     assert.equal(hero.match(/<div>\n<h3>/g).length, 9);
@@ -716,7 +730,7 @@ describe("a site with its own layout and component settings", () => {
       `  <li style="--position: 25%" aria-current="step"><data value="0">0</data> <span>${frost}</span></li>\n` +
       `  <li style="--position: 100%"><data value="30">30</data> <span>${hot}</span></li>\n</ol>`;
     assert.ok((await slider("en/index.html")).includes(steps("Cold &amp; &lt;icy&gt;", "Frost", "Hot")));
-    assert.ok((await slider("de/about/index.html")).includes(steps("Kalt", "Frost", "Heiß")));
+    assert.ok((await slider("de/pages/about/index.html")).includes(steps("Kalt", "Frost", "Heiß")));
     assert.ok((await slider("de/index.html")).includes('<h3><label for="heroComponentSlider-1-input">Schieberegler</label></h3>'));
   });
 
@@ -732,7 +746,7 @@ describe("a site with its own layout and component settings", () => {
     assert.equal(result.status, 0, result.stderr);
     const style = 'style="--site-margin: 0px; --hero-padding: 1rem"';
     assert.ok((await page("en/index.html")).includes(`<body data-kind="home" data-align="center" data-align-hero="centerExtra" ${style}>`));
-    assert.ok((await page("en/about/index.html")).includes(`<body data-kind="page" data-align="left" data-align-hero="centerExtra" ${style}>`));
+    assert.ok((await page("en/pages/about/index.html")).includes(`<body data-kind="page" data-align="left" data-align-hero="centerExtra" ${style}>`));
     const fallback = await slider("en/index.html");
     assert.ok(fallback.includes('<input id="heroComponentSlider-1-input" type="range" min="0" max="100" value="50">'));
     assert.doesNotMatch(fallback, /<ol/);
@@ -749,7 +763,7 @@ describe("a site with a component of its own", () => {
   before(async () => {
     site = join(sandbox, "component");
     assert.equal(run(["init", site], sandbox).status, 0);
-    const component = join(site, "components", "notice");
+    const component = join(site, "_components", "notice");
     await mkdir(component);
     await writeFile(join(component, "notice.html"),
       '<aside id="{{id}}" data-level="{{level}}"><h2>{{title}}</h2><small>{{hint}} {{closeLabel}}</small>{{content}}{{hours}}</aside>\n');
@@ -766,7 +780,7 @@ describe("a site with a component of its own", () => {
     await writeFile(join(site, "content", "en", "components", "notice.md"), "---\ntitle: Notice\nhint: Read <this>\n---\n\nClosed on *Monday*.\n");
     const about = join(site, "content", "en", "pages", "about.md");
     await writeFile(about, `${await readFile(about, "utf8")}\n{{notice}}\n\nWrite \`{{notice}}\` in a paragraph of its own:\n\n  {{notice}}\n`);
-    const documentFile = join(site, "templates", "document.html");
+    const documentFile = join(site, "_templates", "document.html");
     await writeFile(documentFile, (await readFile(documentFile, "utf8")).replace("  <footer>", "{{notice}}  <footer>"));
     const result = run(["build"], site);
     assert.equal(result.status, 0, result.stderr);
@@ -775,17 +789,17 @@ describe("a site with a component of its own", () => {
   test("shows it in Markdown and in a template, filled with its settings, its texts, the labels and its data", async () => {
     const notice = (id, texts, language) =>
       `<aside id="notice-${id}" data-level="high &amp; &lt;dry&gt;">${texts}<p>9 &amp; 17 (${language})</p></aside>`;
-    const about = await page("en/about/index.html");
+    const about = await page("en/pages/about/index.html");
     for (const id of [1, 2, 3]) {
       assert.ok(about.includes(notice(id, "<h2>Notice</h2><small>Read &lt;this&gt; Close</small><p>Closed on <em>Monday</em>.</p>\n", "en")), id);
     }
     assert.ok(about.indexOf('id="notice-2"') < about.indexOf("</main>") && about.indexOf("</main>") < about.indexOf('id="notice-3"'));
     assert.ok(about.includes("<p>Write <code>{{notice}}</code> in a paragraph of its own:</p>"));
-    assert.ok((await page("de/about/index.html")).includes(notice(1, "<h2></h2><small> Schließen</small>", "de")));
+    assert.ok((await page("de/pages/about/index.html")).includes(notice(1, "<h2></h2><small> Schließen</small>", "de")));
   });
 
   test("publishes its files but its template and its data file", async () => {
-    assert.deepEqual(await listFiles(join(site, "public", "components", "notice")), ["notice.css"]);
+    assert.deepEqual(await listFiles(join(site, "public", "_components", "notice")), ["notice.css"]);
   });
 
   test("refuses a setting that its data file refuses and keeps the previous output", async () => {
@@ -806,7 +820,8 @@ describe("invalid content", () => {
     assert.equal(run(["build"], site).status, 0);
   });
 
-  const page = join("content", "en", "pages", "posts.md");
+  const page = join("content", "en", "pages", "about", "index.md");
+  const about = join("content", "en", "pages", "about.md");
   const post = join("content", "en", "posts", "symbols.md");
   const hero = join("content", "en", "hero.md");
   const fragment = join("content", "en", "my-hero.md");
@@ -814,13 +829,13 @@ describe("invalid content", () => {
   const french = join("content", "fr", "pages", "index.md");
   const loose = join("content", "index.md");
   const section = join("content", "en", "docs", "intro.md");
-  const doc = join("content", "en", "techdoc", "guides", "setup.md");
-  const sectionIndex = join("content", "en", "techdoc", "guides", "index.md");
-  const order = join("content", "en", "techdoc", "order.md");
+  const doc = join("content", "en", "book", "guides", "setup.md");
+  const sectionIndex = join("content", "en", "book", "guides", "index.md");
+  const order = join("content", "en", "book", "order.md");
   const english = join("content", "en", sep);
   const cases = [
-    ["a page with the URL of a generated page", page, "---\ntitle: Posts\n---\n",
-      `Cannot build /en/posts/: ${page} and the generated page "Posts" have the same URL.\nRename ${page} or give it a different slug.\n`],
+    ["a page with the URL of another page", page, "---\ntitle: About\n---\n",
+      `Cannot build /en/pages/about/: ${about} and ${page} have the same URL.\nRename ${about} or give it a different slug.\n`],
     ["a tag without a Latin letter or digit", post, '---\ntitle: Symbols\ntags: [Blyss, "#"]\n---\n',
       `Cannot build ${post}: the tag "#" needs a Latin letter or digit for its URL.\n`],
     ["a hero with content before its first ### heading", hero, "Introduction.\n\n### Text\n\nText.\n",
@@ -829,7 +844,7 @@ describe("invalid content", () => {
       `Cannot build ${fragment}: templates use its name in placeholders, so it must start with a Latin letter and contain ` +
       "only Latin letters and digits, such as hero.md.\n"],
     ["a text for a component that does not exist", text, "---\ntitle: Slider\n---\n",
-      `Cannot build ${text}: there is no component "heroComponentSlyder" in components/.\n`],
+      `Cannot build ${text}: there is no component "heroComponentSlyder" in _components/.\n`],
     ["content in the directory of a language that site.languages lacks", french, "---\ntitle: Accueil\n---\n",
       `Cannot build ${french}: there is no language "fr" in site.languages.\nAdd the language to site.languages, or move the file ` +
       `to the directory of one of its languages, such as ${english}.\n`],
@@ -837,7 +852,7 @@ describe("invalid content", () => {
       `Cannot build ${loose}: content lies in the directory of its language, such as ${english}.\n`],
     ["content outside the sections of a language", section, "---\ntitle: Intro\n---\n",
       `Cannot build ${section}: there is no content section "docs".\nMove the file into ${join(english, "pages", sep)}, ` +
-      `${join(english, "posts", sep)} or ${join(english, "techdoc", sep)}.\n`],
+      `${join(english, "posts", sep)} or ${join(english, "book", sep)}.\n`],
     ["a doc in a directory without index.md", doc, "---\ntitle: Setup\n---\n",
       `Cannot build ${doc}: there is no ${sectionIndex}, the start page of its section.\n` +
       `Add ${sectionIndex}: its title names the section in the navigation.\n`],
@@ -944,7 +959,7 @@ describe("invalid configuration", () => {
       ['alignHome: "center"', 'alignHome: "centerLeft"', 'layout.alignHome "centerLeft": it must be "center" or "left"'],
       ['alignHeroOther: "centerExtra"', 'alignHeroOther: "centerLeft"',
         'layout.alignHeroOther "centerLeft": it must be "centerExtra", "left" or "center"'],
-      ["heroComponentGallery: {", "heroComponentGalery: {", 'components.heroComponentGalery: there is no component "heroComponentGalery" in components/'],
+      ["heroComponentGallery: {", "heroComponentGalery: {", 'components.heroComponentGalery: there is no component "heroComponentGalery" in _components/'],
       ["start: 1,", "start: 1.5,", "components.heroComponentSlider.start 1.5: it must be a whole number"],
       ["end: 1000", "end: 1", "components.heroComponentSlider.end 1: it must be a whole number greater than start (1)"],
       ["value: 250,", "value: 1001,", "components.heroComponentSlider.steps[1].value 1001: it must be a whole number from 1 to 1000"],

@@ -4,6 +4,10 @@
 
 ### Breaking changes
 
+- **Page URLs follow their files**: pages in `content/<language>/pages/` are
+  published below `/<language>/pages/`, such as `pages/about.md` at
+  `/en/pages/about/` instead of `/en/about/`. Only `pages/index.md`, the home
+  page, stays at `/<language>/`, and `pages/404.md` at `/<language>/404.html`.
 - **No bundled default templates**: `src/templates/` was removed because it
   duplicated the starter's templates. Each website keeps its own templates;
   `blyss init` copies them into `templates/`. Point a `directories.templates`
@@ -83,7 +87,7 @@
   `/<language>/`; without it, they use `page.html`. Content templates also
   receive `{{description}}`.
 - **Page kinds**: `{{kind}}` in `document.html` is `home`, `page`, `post`,
-  `techdoc`, `list` or `not-found`, for example for
+  `book`, `list` or `not-found`, for example for
   `<body data-kind="{{kind}}">`.
 - **Fragments**: each Markdown file directly in `content/<language>/`, such
   as `hero.md`, is not published as a page; instead, `document.html` shows it
@@ -107,34 +111,37 @@
   Templates receive the margin as `{{layoutMargin}}`, the padding as
   `{{layoutPaddingHero}}` and the current page's alignments as
   `{{layoutAlign}}` and `{{layoutAlignHero}}`.
-- **Components**: a directory `components/<name>/` holds a component: its
+- **Components**: a directory `_components/<name>/` holds a component: its
   template `<name>.html`, an optional data file `<name>.data.js`, which checks
   its settings and prepares values for the template, and further files such
   as its stylesheet and its script, which are published at
-  `/components/<name>/`. Its texts are `content/<language>/components/<name>.md`
+  `/_components/<name>/`. Its texts are `content/<language>/components/<name>.md`
   and its settings `components.<name>` in `blyss.config.js`. `{{<name>}}`
   shows the component in every template and, in a paragraph of its own, in
   the Markdown of pages and posts, any number of times per page; `{{id}}` in
   its template is unique on the page. `directories.components` names the
-  directory, `"components"` by default. Invalid layout and component settings
+  directory, `"_components"` by default. Invalid layout and component settings
   stop the build before the previous output is deleted.
-- **Technical documentation**: the content type `techdoc` publishes each
-  Markdown file in `content/<language>/techdoc/` below
-  `/<language>/techdoc/`. Each directory is a section whose `index.md` is its
+- **Books**: the content type `book` publishes each
+  Markdown file in `content/<language>/book/` below
+  `/<language>/book/`. Each directory is a section whose `index.md` is its
   start page and names it in the navigation; a directory with docs but
-  without `index.md` stops the build. The optional template `techdoc.html`
-  receives `{{techdocNavigation}}`, all docs of the language ordered by the
-  new front matter field `order` and by title, `{{techdocToc}}`, a table of
-  contents of the doc's `##` and `###` headings, and `{{techdocPager}}`, the
+  without `index.md` stops the build. The optional template `book.html`
+  receives `{{bookNavigation}}`, all docs of the language ordered by the
+  new front matter field `order` and by title, `{{bookToc}}`, a table of
+  contents of the doc's `##` and `###` headings, and `{{bookPager}}`, the
   links to the previous and the next doc; without it, docs use `page.html`.
   The headings of docs get ids from their text, as on GitHub, numbered where
-  the page already uses one. Docs have the kind `techdoc` and the JSON-LD
+  the page already uses one. Docs have the kind `book` and the JSON-LD
   type `TechArticle`; the archive, the tags and `{{recentPosts}}` leave them
-  out. The new labels `techdoc`, `onThisPage`, `previous` and `next` default
+  out. The new labels `book`, `onThisPage`, `previous` and `next` default
   to English.
 
 ### Changes
 
+- **Underscored building blocks**: the starter keeps its components and
+  templates in `_components/` and `_templates/`: the leading underscore sets
+  these building blocks apart from content and static files.
 - **Engine-only repository**: the repository's own website (root `content/`,
   `static/` and the production deploy workflow) was removed. The root
   `blyss.config.js` now previews `starters/lean/` in place: `npm run build`
@@ -182,8 +189,8 @@
   for the texts of `hero.md`, which stay left-aligned with their headings
   (`"centerExtra"`).
 - **Starter documentation**: the starter documents the docs in its own
-  English and German docs in `content/<language>/techdoc/`, rendered by
-  `templates/techdoc.html` with the navigation beside the doc on wide screens
+  English and German docs in `content/<language>/book/`, rendered by
+  `_templates/book.html` with the navigation beside the doc on wide screens
   and above it otherwise. The top bar links to the documentation, and
   `blyss.config.js` translates its labels.
 - **Build**: content is read and validated before the previous output is
@@ -198,7 +205,7 @@
   shows English before Deutsch.
 - **Default labels**: the labels of what Blyss generates (`language`,
   `recentPosts`, `posts`, `tags`, `tag`, `page`, `pagination`, `newerPosts`,
-  `olderPosts`, `techdoc`, `onThisPage`, `previous` and `next`) default to
+  `olderPosts`, `book`, `onThisPage`, `previous` and `next`) default to
   English for every use, including their `{{<key>Label}}` placeholders;
   previously only `{{postsLabel}}` and `{{tagsLabel}}` had defaults, and the
   language switcher had none.
@@ -221,7 +228,7 @@
   `content/fr/` without `site.languages.fr`, stops the build with an
   actionable message instead of a stack trace.
 - **Content sections**: a file in a directory of a language other than
-  `pages/`, `posts/`, `techdoc/` and `components/`, such as
+  `pages/`, `posts/`, `book/` and `components/`, such as
   `content/en/docs/`, stops the build with a message that names the file and
   the sections instead of a stack trace after `Unknown content section`.
 - **JSON-LD escaping**: `<`, `>` and `&` are now written as `\u003c`,

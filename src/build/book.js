@@ -24,7 +24,7 @@ function renderItem(doc, current, indent, children = doc.children) {
 // The start page of the documentation comes first, followed by its docs and sections, each section with its docs.
 function renderNavigation(root, current, labels) {
   const items = [renderItem(root, current, "  ", []), ...root.children.map(doc => renderItem(doc, current, "  "))];
-  return `<nav aria-label="${escapeHtml(labels.techdoc)}">\n<ul>\n${items.join("\n")}\n</ul>\n</nav>\n`;
+  return `<nav aria-label="${escapeHtml(labels.book)}">\n<ul>\n${items.join("\n")}\n</ul>\n</nav>\n`;
 }
 
 function renderPager(previous, next, labels) {
@@ -36,14 +36,14 @@ function renderPager(previous, next, labels) {
   return `<nav aria-label="${escapeHtml(labels.pagination)}">\n<ul>\n${links.map(link => `  <li>${link}</li>`).join("\n")}\n</ul>\n</nav>\n`;
 }
 
-// The docs of a language lie in content/<language>/techdoc/, and each of its directories is a section: its index.md is
+// The docs of a language lie in content/<language>/book/, and each of its directories is a section: its index.md is
 // the start page of the section and names it in the navigation. Like the sidebars of Docusaurus or MkDocs, the
 // navigation follows the directories, and the docs beside each other are sorted by their order, then by their titles.
 // The previous and the next doc are those before and after a doc in the navigation.
-export function arrangeTechdocs(projectDir, contentDirectory, records) {
+export function arrangeBooks(projectDir, contentDirectory, records) {
   const docs = new Map();
   const sections = new Map();
-  for (const record of records.filter(item => item.type === "techdoc")) {
+  for (const record of records.filter(item => item.type === "book")) {
     const file = relative(projectDir, record.sourceFile);
     const [, , ...path] = relative(contentDirectory, record.sourceFile).split(sep);
     const directories = path.slice(0, -1);
@@ -64,7 +64,7 @@ export function arrangeTechdocs(projectDir, contentDirectory, records) {
     }
     const section = sections.get(`${record.languageKey}/${parent.join("/")}`);
     if (!section) {
-      const index = join(relative(projectDir, contentDirectory), record.languageKey, "techdoc", ...parent, "index.md");
+      const index = join(relative(projectDir, contentDirectory), record.languageKey, "book", ...parent, "index.md");
       throw new BlyssError(`Cannot build ${file}: there is no ${index}, the start page of its section.\n` +
         `Add ${index}: its title names the section in the navigation.`);
     }
@@ -85,16 +85,16 @@ export function arrangeTechdocs(projectDir, contentDirectory, records) {
   }
 
   return {
-    // {{techdocNavigation}} and {{techdocPager}} of a doc, empty on other pages.
+    // {{bookNavigation}} and {{bookPager}} of a doc, empty on other pages.
     placeholders(record) {
       const doc = docs.get(record);
-      if (!doc) return { techdocNavigation: "", techdocPager: "" };
+      if (!doc) return { bookNavigation: "", bookPager: "" };
       const { labels } = record.languageConfig;
       const sequence = sequences.get(record.languageKey);
       const position = sequence.indexOf(doc);
       return {
-        techdocNavigation: renderNavigation(roots.get(record.languageKey), doc, labels),
-        techdocPager: renderPager(sequence[position - 1], sequence[position + 1], labels)
+        bookNavigation: renderNavigation(roots.get(record.languageKey), doc, labels),
+        bookPager: renderPager(sequence[position - 1], sequence[position + 1], labels)
       };
     }
   };

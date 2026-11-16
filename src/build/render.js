@@ -125,24 +125,24 @@ function renderTags(record) {
 }
 
 // components holds a function for each component of the website, which renders it in the language of the record;
-// techdoc holds the navigation and the pager of a doc (see techdoc.js).
-export function renderRecord({ record, templates, translationIndex, site, records = [], layout, fragments = {}, components = {}, techdoc = {} }) {
+// book holds the navigation and the pager of a doc (see book.js).
+export function renderRecord({ record, templates, translationIndex, site, records = [], layout, fragments = {}, components = {}, book = {} }) {
   const metadata = record.metadata;
   const title = metadata.title || site.name;
   const description = metadata.description || record.languageConfig.description;
   const kind = kindOf(record);
   const home = kind === "home";
-  const isTechdoc = record.type === "techdoc";
+  const isBook = record.type === "book";
   const dateBlock = metadata.datePublished
     ? `    <p><time datetime="${escapeHtml(metadata.datePublished)}">${escapeHtml(metadata.datePublished)}</time></p>` : "";
-  // Without a home.html or a techdoc.html template, home pages and docs use page.html.
-  const innerTemplate = (record.type === "post" && templates.post) || (isTechdoc && templates.techdoc) || (home && templates.home) || templates.page;
-  const takenIds = isTechdoc ? new Set(idsOf(templates.document + innerTemplate)) : undefined;
+  // Without a home.html or a book.html template, home pages and docs use page.html.
+  const innerTemplate = (record.type === "post" && templates.post) || (isBook && templates.book) || (home && templates.home) || templates.page;
+  const takenIds = isBook ? new Set(idsOf(templates.document + innerTemplate)) : undefined;
   const body = renderBody(record, records, components, takenIds);
   const content = applyTemplate(innerTemplate, {
     ...components,
-    ...techdoc,
-    techdocToc: isTechdoc ? renderToc(body.headings, record.languageConfig.labels.onThisPage) : "",
+    ...book,
+    bookToc: isBook ? renderToc(body.headings, record.languageConfig.labels.onThisPage) : "",
     title: escapeHtml(title), description: escapeHtml(description), dateBlock, tags: renderTags(record),
     content: body.html
   });
