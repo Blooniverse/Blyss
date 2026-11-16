@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="/assets/css/main.css">
 {{jsonLd}}
 </head>
-<body data-kind="{{kind}}" data-align="{{layoutAlign}}" data-align-hero="{{layoutAlignHero}}" style="--site-margin: {{layoutMargin}}; --hero-padding: {{layoutPaddingHero}}">
+<body data-kind="{{kind}}" data-align="{{layoutAlign}}" data-align-hero="{{layoutAlignHero}}" data-align-overlay="{{layoutAlignOverlay}}" style="--site-margin: {{layoutMargin}}; --hero-padding: {{layoutPaddingHero}}; --overlay-padding: {{layoutPaddingOverlay}}">
   <div class="site-bar">
     <a class="logo" href="/{{languageKey}}/"><img src="/assets/img/logo.svg" alt="Blyss" width="93" height="32"></a>
     <nav aria-label="{{mainNavigationLabel}}">
@@ -31,18 +31,8 @@
   <div class="page">
 {{content}}
   </div>
-  <aside class="overlay" aria-label="{{overlayLabel}}">
-    <button class="overlay-toggle" type="button" popovertarget="overlay">{{overlayLabel}} <span aria-hidden="true">⤒</span></button>
-    <div id="overlay" popover>
-      <button class="overlay-toggle" type="button" popovertarget="overlay" popovertargetaction="hide">{{closeLabel}} <span aria-hidden="true">⤓</span></button>
-{{heroComponentSlider}}
-{{heroComponentGallery}}
-      <h3>{{heroTitle}}</h3>
-      <div class="hero-texts">
-{{heroTexts}}
-      </div>
-    </div>
-  </aside>
+{{hero}}
+{{overlay}}
   <footer><small>{{generatedByLabel}}</small></footer>
 </body>
 </html>

@@ -1,0 +1,89 @@
+/* A strip of images that scrolls sideways and stops with an image in its centre, which the script enlarges without a
+   frame. The strip is as high as the enlarged image, and its gaps keep an enlarged image of three by two clear of its
+   neighbours. A click or a touch expands the image in the centre above the page. The settings arrive as custom
+   properties from the template. It uses the colours of main.css. */
+component-gallery { display: block; }
+component-gallery h3:empty { display: none; }
+component-gallery .stage { position: relative; }
+component-gallery ul {
+  position: relative; /* the script measures the images from here */
+  display: flex;
+  align-items: center;
+  gap: calc(var(--height-overall) * (var(--scale-center) - 1) * .75 + .5rem);
+  height: calc(var(--height-overall) * var(--scale-center));
+  margin: 0;
+  padding: 0;
+  overflow: auto hidden;
+  list-style: none;
+  container-type: inline-size;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain; /* a swipe at either end does not leave the page */
+}
+/* Half the strip is free before the first and after the last image, so that they reach the centre too. Without a
+   height, some browsers would not scroll as far as the space after the last image. */
+component-gallery ul::before, component-gallery ul::after { content: ""; flex: none; width: 50%; height: 1px; }
+component-gallery li { flex: none; scroll-snap-align: center; transition: scale var(--speed-enlargement); }
+component-gallery li[aria-current] { z-index: 1; scale: var(--scale-center); }
+component-gallery li p { margin: 0; }
+/* Every image is as high as the others and as wide as its format, three by two until it has loaded; an image wider
+   than the strip is fitted into it. */
+component-gallery img {
+  display: block;
+  width: auto;
+  max-width: calc(100cqi / var(--scale-center));
+  height: var(--height-overall);
+  aspect-ratio: auto 3 / 2;
+  object-fit: contain;
+}
+
+component-gallery button {
+  position: absolute;
+  top: 50%;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 1px solid var(--card-border);
+  border-radius: 50%;
+  color: var(--color202);
+  background: #fff;
+  translate: 0 -50%;
+  cursor: pointer;
+}
+component-gallery button:first-child { left: 0; }
+component-gallery button:last-child { right: 0; }
+component-gallery button[aria-disabled="true"] { opacity: .35; cursor: default; }
+component-gallery svg { width: 60%; fill: none; stroke: currentColor; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+
+/* Until the script runs, the strip keeps its scrollbar and has no arrows; a single image needs none either. */
+component-gallery:not(:defined) button, component-gallery:not(:has(li + li)) button { display: none; }
+component-gallery:defined ul { scrollbar-width: none; }
+component-gallery:defined ul::-webkit-scrollbar { display: none; }
+
+/* The script expands the image in the centre in a dialog above a veil over the page: as high as --height-expanded
+   percent of the screen, or as high as its width allows on a screen that is too narrow for that. */
+component-gallery:defined li[aria-current] img { cursor: zoom-in; }
+component-gallery dialog {
+  max-width: none;
+  max-height: none;
+  margin: auto;
+  padding: 0;
+  overflow: visible;
+  border: 0;
+  background: none;
+  cursor: zoom-out;
+}
+component-gallery dialog::backdrop { background: rgb(0 0 0 / .55); animation: component-gallery-veil var(--speed-enlargement, .3s); }
+component-gallery dialog img {
+  width: min(100vw - 2rem, var(--height-expanded) * 1dvh * var(--ratio));
+  max-width: none;
+  height: auto;
+  aspect-ratio: var(--ratio);
+}
+@keyframes component-gallery-veil { from { opacity: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  component-gallery { --speed-scrolling: 0s !important; --speed-enlargement: 0s !important; }
+}

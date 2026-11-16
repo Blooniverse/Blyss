@@ -128,8 +128,17 @@ footer { margin-top: 4vh; font-size: .9rem; color: var(--color202grey); letter-s
 :is([data-align="center"], [data-align="centerLeft"]) main { margin-inline: auto; }
 [data-align="centerLeft"] > footer { max-width: var(--column); margin-inline: auto; }
 
-/* The overlay: open as the hero below the home page; elsewhere a bar at the bottom of the window
-   whose button opens it as a popover, closed by its own button, by Escape or by a click outside. */
+/* The hero (_templates/hero.html) follows the page on the home pages: a panel as tall as its content, with
+   layout.paddingHero in blyss.config.js above and below it, set by _templates/document.html. */
+.hero { margin-top: 1rem; }
+.hero-panel {
+  padding: var(--hero-padding) 1rem;
+  border-radius: var(--radius);
+  background: linear-gradient(var(--tint), var(--tint)), #fff;
+}
+
+/* The overlay (_templates/overlay.html): a bar at the bottom of the window whose button opens it as a popover,
+   closed by its own button, by Escape or by a click outside. */
 .overlay-toggle {
   padding: .15em .6em;
   border: 0;
@@ -141,8 +150,8 @@ footer { margin-top: 4vh; font-size: .9rem; color: var(--color202grey); letter-s
   cursor: pointer;
 }
 
-body:not([data-kind="home"]) { padding-bottom: calc(var(--site-margin) + 2rem); } /* leaves room for the overlay bar */
-body:not([data-kind="home"]) > .overlay {
+body:has(> .overlay) { padding-bottom: calc(var(--site-margin) + 2rem); } /* leaves room for the overlay bar */
+.overlay {
   position: fixed;
   inset: auto 0 0;
   z-index: 2;
@@ -157,14 +166,14 @@ body:not([data-kind="home"]) > .overlay {
   opacity: .5;
   transition: opacity .28s;
 }
-body:not([data-kind="home"]) > .overlay:is(:hover, :focus-within) { opacity: 1; }
+.overlay:is(:hover, :focus-within) { opacity: 1; }
 
 #overlay {
   inset: auto 0 0;
   width: auto;
   height: 80vh;
   margin: 0;
-  padding: var(--hero-padding) 1rem; /* layout.paddingHero in blyss.config.js, set by _templates/document.html */
+  padding: var(--overlay-padding) 1rem; /* layout.paddingOverlay in blyss.config.js, set by _templates/document.html */
   border: 0;
   border-top: 1px solid var(--card-border);
   color: inherit;
@@ -172,34 +181,42 @@ body:not([data-kind="home"]) > .overlay:is(:hover, :focus-within) { opacity: 1; 
   box-shadow: 0 -12px 32px rgb(0 0 0 / .18);
 }
 .overlay-toggle[popovertargetaction="hide"] { position: sticky; top: 0; z-index: 1; display: block; margin: 0 0 .5rem auto; }
-/* The hero's headings look like labels, as h3 does everywhere, except for the headings of the texts of hero.md. */
-#overlay h3 { margin-top: 0; }
-#overlay h3:empty { display: none; } /* such as the hero's title when hero.md has none */
-/* The components of the hero follow each other; each brings its own styles from _components/. */
-.hero-component { margin: 0 0 1rem; }
-/* The texts of hero.md, side by side in as many columns as fit, each in full length. */
-.hero-texts {
+/* The headings of the hero and of the overlay look like labels, as h3 does everywhere, except for the headings of
+   their texts. */
+:is(.hero-panel, #overlay) h3 { margin-top: 0; }
+:is(.hero-panel, #overlay) h3:empty { display: none; } /* such as the title of the texts when there is none */
+/* The components of the hero and of the overlay follow each other; each brings its own styles from _components/. */
+.component { margin: 0 0 1rem; }
+/* The texts of heroTexts.md and of overlayTexts.md, side by side in as many columns as fit, each in full length. */
+.region-texts {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
   gap: 1rem;
   font-size: .8rem;
 }
-.hero-texts > div { padding: .5rem .75rem; border: 1px solid var(--card-border); border-radius: var(--radius); background: var(--card); }
-.hero-texts > div > :last-child { margin-bottom: 0; }
-.hero-texts h3 { display: block; margin: 0 0 .3em; padding: 0; font-size: 1.1em; line-height: 1.2; color: var(--color202); background: none; }
+.region-texts:not(:has(> div)) { display: none; } /* without texts */
+.region-texts > div { padding: .5rem .75rem; border: 1px solid var(--card-border); border-radius: var(--radius); background: var(--card); }
+.region-texts > div > :last-child { margin-bottom: 0; }
+.region-texts h3 { display: block; margin: 0 0 .3em; padding: 0; font-size: 1.1em; line-height: 1.2; color: var(--color202); background: none; }
 
-/* layout.alignHeroHome and layout.alignHeroOther align the hero: "center" centers all of it, "centerExtra" all but the
-   texts of hero.md, which stay left-aligned with their headings, and "left" none of it. A component is centered where
-   the text around it is: in such a hero and in a centered page. */
-:is([data-align-hero="center"], [data-align-hero="centerExtra"]) #overlay { text-align: center; }
-[data-align-hero="centerExtra"] .hero-texts { text-align: start; }
-:is([data-align="center"] .page, [data-align-hero="center"] #overlay, [data-align-hero="centerExtra"] #overlay) .hero-component { margin-inline: auto; }
+/* layout.alignHero and layout.alignOverlay align the hero and the overlay: "center" centers all of it, "centerExtra"
+   all but its texts, which stay left-aligned with their headings, and "left" none of it. A component is centered
+   where the text around it is: in such a hero or overlay and in a centered page. */
+:is([data-align-hero="center"], [data-align-hero="centerExtra"]) .hero-panel,
+:is([data-align-overlay="center"], [data-align-overlay="centerExtra"]) #overlay { text-align: center; }
+[data-align-hero="centerExtra"] .hero-panel .region-texts,
+[data-align-overlay="centerExtra"] #overlay .region-texts { text-align: start; }
+[data-align="center"] .page .component,
+:is([data-align-hero="center"], [data-align-hero="centerExtra"]) .hero-panel .component,
+:is([data-align-overlay="center"], [data-align-overlay="centerExtra"]) #overlay .component { margin-inline: auto; }
 /* In centered text, lists keep their markers next to their items, and tables are centered too. */
-:is([data-align="center"] .page, [data-align-hero="center"] #overlay, [data-align-hero="centerExtra"] .hero-component) :is(ul, ol) {
+:is([data-align="center"] .page, [data-align-hero="center"] .hero-panel, [data-align-overlay="center"] #overlay,
+  [data-align-hero="centerExtra"] .hero-panel .component, [data-align-overlay="centerExtra"] #overlay .component) :is(ul, ol) {
   padding-left: 0;
   list-style-position: inside;
 }
-:is([data-align="center"] .page, [data-align-hero="center"] #overlay, [data-align-hero="centerExtra"] .hero-component) table {
+:is([data-align="center"] .page, [data-align-hero="center"] .hero-panel, [data-align-overlay="center"] #overlay,
+  [data-align-hero="centerExtra"] .hero-panel .component, [data-align-overlay="centerExtra"] #overlay .component) table {
   margin-inline: auto;
 }
 
@@ -209,36 +226,21 @@ body:not([data-kind="home"]) > .overlay:is(:hover, :focus-within) { opacity: 1; 
   @starting-style { #overlay:popover-open { translate: 0 100%; } }
 }
 
-/* Home: the overlay follows the page as the hero. Author styles override the browser's rule that hides a closed popover. */
-body[data-kind="home"] .overlay-toggle { display: none; }
-[data-kind="home"] > .overlay { margin-top: 1rem; }
-[data-kind="home"] #overlay {
-  display: block;
-  position: static;
-  height: auto;
-  overflow: visible;
-  border: 0;
-  border-radius: var(--radius);
-  box-shadow: none;
-  translate: none;
-  transition: none;
-}
-
 /* On large screens, the hero slides up over the page and fades it out. The page stops below the top bar, or once its
    end is in view if it is taller than the window, and stays there while the hero covers it. */
 @media (prefers-reduced-motion: no-preference) and (min-width: 64rem) and (min-height: 40rem) {
   @supports (animation-timeline: view()) {
-    [data-kind="home"] > .page {
+    .page:has(+ .hero) {
       animation: page-covered linear both;
       animation-timeline: view(block calc(var(--bar-height) + 1rem) 0px);
       animation-range: exit;
     }
     /* Keyboard focus in the page turns the effect off, so that the hero never covers the focused element. */
-    [data-kind="home"] > .page:has(:focus-visible) { animation: none; }
+    .page:has(:focus-visible) { animation: none; }
     /* At least as tall as the window below the top bar, so that it can cover the page completely. */
-    [data-kind="home"] > .overlay { position: relative; z-index: 1; min-height: calc(100svh - var(--bar-height) - 1rem); background: #fff; }
+    .hero { position: relative; z-index: 1; min-height: calc(100svh - var(--bar-height) - 1rem); background: #fff; }
     /* A hero that is shorter stops below the top bar, while the footer follows it into the window. */
-    [data-kind="home"] #overlay { position: sticky; top: calc(var(--bar-height) + 1rem); }
+    .hero-panel { position: sticky; top: calc(var(--bar-height) + 1rem); }
   }
 }
 

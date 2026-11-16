@@ -1,6 +1,18 @@
 // Blyss website configuration.
 // Values marked "CHANGE BEFORE PRODUCTION" are neutral placeholders.
+//
+// The settings, in the order of this file:
+//   1. site                    the name, the URL, the publisher and the languages
+//   2. pagination              the length of the lists of posts
+//   3. layout                  the margin, the paddings and the alignments
+//   4. hero                    the parts of the hero of the home pages
+//   5. overlay                 the pages and the parts of the overlay
+//   6. synchroniseHeroOverlay  the overlay as a copy of the hero
+//   7. components              the settings of each component
+//   8. directories             the directories of the website
+//   9. server                  the port of the local server
 export default {
+  // 1. Site
   site: {
     name: "My Website", // CHANGE BEFORE PRODUCTION
     baseUrl: "https://example.com", // CHANGE BEFORE PRODUCTION: canonical, hreflang and JSON-LD URLs use it
@@ -37,6 +49,7 @@ export default {
           previous: "Previous",
           next: "Next",
           overlay: "Overlay",
+          hero: "Highlights",
           close: "Close",
           search: "Search"
         }
@@ -64,27 +77,70 @@ export default {
           previous: "Zurück",
           next: "Weiter",
           overlay: "Overlay",
+          hero: "Highlights",
           close: "Schließen",
           search: "Suchen"
         }
       }
     }
   },
+
+  // 2. Pagination
   pagination: { pageSize: 10 }, // posts per archive and tag page; later pages are at <list>/page/<n>/
+
+  // 3. Layout: each length is a CSS length in px, rem, vw, vh, vmin or vmax.
   layout: {
-    margin: "2vmin", // the space between the frame and the content: a CSS length in px, rem, vw, vh, vmin or vmax
-    paddingHero: "1rem", // the space above and below the content of the hero: a CSS length as above
+    margin: "2vmin", // the space between the frame and the content
     alignHome: "center", // or "left", which aligns all content of the home pages (only the home pages)
-    alignOther: "left", // or "center" or "centerLeft" (which centers the content, but aligns its text left nonetheless), which aligns all content of the other pages (pages, posts, lists and not-found pages)
-    alignHeroHome: "centerExtra", // or "left" or "center" ("centerExtra" centers everything apart from the left-aligned text boxes of hero.md, including their headings), which aligns the content of the home pages' hero
-    alignHeroOther: "centerExtra" // or "left" or "center" (as above), which aligns the content of the other pages' hero
+    alignOther: "left", // or "center" or "centerLeft" (which centers the content, but aligns its text left nonetheless), which aligns all content of the other pages (pages, posts, docs, lists and not-found pages)
+    paddingHero: "1rem", // the space above and below the content of the hero
+    alignHero: "centerExtra", // or "left" or "center" ("centerExtra" centers everything apart from the left-aligned text boxes of heroTexts.md, including their headings), which aligns the content of the hero
+    paddingOverlay: "1rem", // the space above and below the content of the opened overlay
+    alignOverlay: "centerExtra" // or "left" or "center" (as above, with the text boxes of overlayTexts.md), which aligns the content of the overlay
   },
-  // The settings of the components in _components/<name>/. {{<name>}} shows a component in a template or, in a paragraph
-  // of its own, in the Markdown of a page or post; its texts are in content/<language>/components/<name>.md.
+
+  // 4. Hero: the region below the content of the home pages (_templates/hero.html). Each of its parts is switched on
+  // (true) or off (false); a hero without a part that is switched on is not shown at all.
+  hero: {
+    components: { // its components from _components/, in this order
+      componentSlider: true,
+      componentGallery: true,
+      componentFlower: true
+    },
+    texts: true // all texts of content/<language>/heroTexts.md, with their title
+  },
+
+  // 5. Overlay: the bar at the bottom of the window whose button opens a panel (_templates/overlay.html). It has its
+  // own parts, switched on (true) or off (false) like those of the hero, and is not shown without one either.
+  overlay: {
+    showOn: { // the kinds of pages that have the overlay: the three content types, then the other kinds
+      page: true, // the pages in content/<language>/pages/
+      post: true, // the posts in content/<language>/posts/
+      book: true, // the docs in content/<language>/book/
+      home: false, // the home pages, which have the hero
+      list: true, // the archive and the tag pages
+      "not-found": true // the "not found" pages
+    },
+    components: { // its components from _components/, in this order
+      componentSlider: true,
+      componentGallery: true,
+      componentFlower: false
+    },
+    texts: true // all texts of content/<language>/overlayTexts.md, with their title
+  },
+
+  // 6. Synchronisation: true makes the overlay a copy of the hero. The overlay then shows hero.components and, if
+  // hero.texts is true, the texts of heroTexts.md, whatever overlay.components and overlay.texts say; overlayTexts.md
+  // is not used, and overlay.showOn still applies.
+  synchroniseHeroOverlay: false,
+
+  // 7. Components: the settings of the components in _components/<name>/. {{<name>}} shows a component in a template
+  // or, in a paragraph of its own, in the Markdown of a page or post; its texts are in
+  // content/<language>/components/<name>.md. Each duration is a time in ms or s.
   components: {
     // The slider runs through the whole numbers from start to end. Each step marks a value on the way and has a
     // description in every language; change, add or remove steps as you like.
-    heroComponentSlider: {
+    componentSlider: {
       start: 1,
       end: 1000,
       steps: [
@@ -94,14 +150,30 @@ export default {
         { value: 1000, description: { en: "Full", de: "Voll" } }
       ]
     },
-    // The gallery shows the images that its text lists, side by side, and enlarges the image in its centre.
-    heroComponentGallery: {
+    // The gallery shows the images that its text lists, side by side, and enlarges the image in its centre, which a
+    // click or a touch expands further.
+    componentGallery: {
       heightOverall: "8rem", // the height of the images: a CSS length in px, rem, vw, vh, vmin or vmax
       heightCenter: "130%", // the height of the image in the centre: a percentage of heightOverall, from 100% up
-      animationSpeedScrolling: "400ms", // the time an arrow takes to bring the next image to the centre, in ms or s
-      animationSpeedImgEnlargement: "300ms" // the time the image in the centre takes to grow, in ms or s
+      heightExpanded: "70%", // the height of the image in the centre after a click or a touch: a percentage of the height of the screen, up to 100%
+      animationSpeedScrolling: "400ms", // the time an arrow takes to bring the next image to the centre
+      animationSpeedImgEnlargement: "300ms" // the time the image in the centre takes to grow and to expand
+    },
+    // The flower loses a petal at each click or touch: the petal twirls, falls to the ground and fades there, while
+    // its text appears. The texts of the petals are those of its text file: the first for the first petal, and so on.
+    componentFlower: {
+      petals: 8, // the number of petals, from 3 to 24
+      colourSystem: "triadic", // or "complementary": the colours of the petals, the centre and the stem, derived from colourBaseHue
+      colourBaseHue: 202, // the hue of the base colour, that of the petals: an angle on the HSL colour wheel, from 0 to 360
+      animationSpeedFalling: "3s", // the time a petal takes from the click or the touch to the ground
+      animationSpeedText: "3s", // the time the text of a fallen petal takes to appear
+      animationSpeedFading: "4s", // the time a fallen petal takes to fade
+      opacityFallen: "30%", // what remains visible of a fallen petal: a percentage from 1% to 100%
+      fontSizeText: "60%" // the size of the texts of the petals: a percentage of the default text size
     }
   },
+
+  // 8. Directories
   directories: {
     components: "_components",
     content: "content",
@@ -109,5 +181,7 @@ export default {
     static: "static",
     templates: "_templates"
   },
+
+  // 9. Server
   server: { fallbackPort: 3000 }
 };

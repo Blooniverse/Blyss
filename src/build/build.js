@@ -9,6 +9,7 @@ import { languagesOf } from "./languages.js";
 import { resolvePaths } from "./paths.js";
 import { parseFrontMatter, renderRecord } from "./render.js";
 import { layoutOf } from "./settings.js";
+import { arrangeRegions } from "./regions.js";
 import { renderSitemap } from "./sitemap.js";
 import { arrangeBooks } from "./book.js";
 import { indexTranslations } from "./translations.js";
@@ -55,7 +56,7 @@ async function discoverContent(projectDir, config, contentDirectory, locate) {
     const languageConfig = config.site.languages[languageKey];
     const { metadata, markdown } = parseFrontMatter(await readFile(sourceFile, "utf8"));
     const filename = basename(sourceFile, '.md');
-    // Files directly in content/<language>/, such as hero.md, are fragments for templates (see fragments.js).
+    // Files directly in content/<language>/, such as heroTexts.md, are fragments for templates (see fragments.js).
     if (parts.length === 2) return { sourceFile, languageKey, type: 'fragment', name: filename, metadata, markdown };
     // Those directly in content/<language>/components/ hold the texts of the components (see components.js).
     if (section === 'components') {
@@ -111,39 +112,52 @@ export async function build(projectDir, configPath = './blyss.config.js') {
 
   // Content is read and validated before the previous output is deleted.
   const readTemplate = name => readFile(join(templatesDirectory, name), 'utf8');
-  // home.html and book.html are optional: without them, home pages and docs use page.html.
+  // home.html and book.html are optional: without them, home pages and docs use page.html. So are hero.html and
+  // overlay.html: without them, the website has no hero or no overlay.
   const readOptionalTemplate = name => readTemplate(name).catch(error => {
     if (error.code === 'ENOENT') return undefined;
     throw error;
   });
-  const [discovered, document, page, post, home, book] = await Promise.all([
+  const [discovered, document, page, post, home, book, hero, overlay] = await Promise.all([
     discoverContent(projectDir, config, contentDirectory, locate),
     readTemplate('document.html'),
     readTemplate('page.html'),
     readTemplate('post.html'),
     readOptionalTemplate('home.html'),
-    readOptionalTemplate('book.html')
+    readOptionalTemplate('book.html'),
+    readOptionalTemplate('hero.html'),
+    readOptionalTemplate('overlay.html')
   ]);
   const content = discovered.filter(record => ['page', 'post', 'book'].includes(record.type));
-  const fragments = renderFragments(projectDir, discovered.filter(record => record.type === 'fragment'));
+  const fragmentRecords = discovered.filter(record => record.type === 'fragment');
+  const fragments = renderFragments(projectDir, fragmentRecords);
   const components = await loadComponents(projectDir, config, componentsDirectory, discovered.filter(record => record.type === 'component'));
+  const regions = arrangeRegions(projectDir, config, { hero, overlay }, fragmentRecords, components.names, relative(projectDir, componentsDirectory));
   const books = arrangeBooks(projectDir, contentDirectory, content);
   const records = [...content, ...createListRecords(config, content, locate)];
   assertUniqueUrls(projectDir, records);
   const templates = { document, page, post, home, book };
   const translationIndex = indexTranslations(records, config.site.languages);
 
+  // Every page is rendered before the previous output is deleted, so that a block with settings that its component
+  // refuses stops the build in time.
+  const pages = [];
+  for (const record of records) {
+    const html = await renderRecord({
+      record, templates, translationIndex, site: config.site, records: content, layout, regions,
+      fragments: fragments.get(record.languageKey),
+      components: components.placeholders(record.languageKey, record.sourceFile && relative(projectDir, record.sourceFile)),
+      book: books.placeholders(record)
+    });
+    pages.push({ record, html });
+  }
+
   await rm(publicDirectory, { recursive: true, force: true });
   await mkdir(publicDirectory, { recursive: true });
   await cp(staticDirectory, publicDirectory, { recursive: true, force: true });
   await components.publish(publicDirectory);
 
-  for (const record of records) {
-    const html = renderRecord({
-      record, templates, translationIndex, site: config.site, records: content, layout,
-      fragments: fragments.get(record.languageKey), components: components.placeholders(record.languageKey),
-      book: books.placeholders(record)
-    });
+  for (const { record, html } of pages) {
     await mkdir(join(record.outputFile, '..'), { recursive: true });
     await writeFile(record.outputFile, html, 'utf8');
     console.log(`Built ${record.url}`);
