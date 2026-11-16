@@ -288,6 +288,9 @@
 - **Empty front matter**: a front matter without fields, `---` followed at
   once by `---`, no longer stops the build as if it lacked its closing
   delimiter.
+- **Recent posts**: a `$` in the title of a post, as in `$&`, `$$` or `"$"`,
+  no longer corrupts the list of `{{recentPosts}}`; the title is shown as it
+  is instead of `{{recentPosts}}`, a single `$` or the text before the list.
 
 ## 0.5.0 — 2026-10-28
 

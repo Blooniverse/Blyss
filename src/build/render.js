@@ -106,7 +106,8 @@ function renderToc(headings, label) {
 // with the headings.
 async function renderBody(record, records, components, takenIds) {
   if (record.type === "list") return { html: record.html, headings: [] };
-  const tokens = marked.lexer(record.markdown.replace(/{{recentPosts}}/g, renderRecentPosts(record, records)));
+  // A replacement function, unlike a string, inserts the titles as they are, even with $& or $$ in them.
+  const tokens = marked.lexer(record.markdown.replace(/{{recentPosts}}/g, () => renderRecentPosts(record, records)));
   for (const [index, token] of tokens.entries()) {
     const block = token.type === "code" ? token.text : undefined;
     const placeholder = token.type === "paragraph" ? token.text : block === undefined ? "" : token.lang ?? "";

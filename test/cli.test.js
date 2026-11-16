@@ -450,13 +450,21 @@ describe("a site with several tagged posts", () => {
     for (const [slug, [frontMatter, body]] of Object.entries(posts)) {
       await writeFile(join(site, "content", "en", "posts", `${slug}.md`), `---\n${frontMatter}\n---\n\n${body}\n`);
     }
+    await writeFile(join(site, "content", "de", "posts", "dollar.md"),
+      '---\ntitle: Dollar $& $$ $` $\' "$"\ndatePublished: 2026-12-01\n---\n\nText.\n');
     const result = run(["build"], site);
     assert.equal(result.status, 0, result.stderr);
   });
 
   test("lists the three newest posts of each language by datePublished", async () => {
     assert.deepEqual(await postSlugs("en"), ["newest", "templates", "translations"]);
-    assert.deepEqual(await postSlugs("de"), ["vorlagen", "uebersetzungen", "hallo-welt"]);
+    assert.deepEqual(await postSlugs("de"), ["dollar", "vorlagen", "uebersetzungen"]);
+  });
+
+  test("lists a post with $ in its title as it is", async () => {
+    const home = await main("de");
+    assert.ok(home.includes('<li><a href="/de/posts/dollar/">Dollar $&amp; $$ $` $&#39; &quot;$&quot;</a></li>'), home);
+    assert.doesNotMatch(home, /{{recentPosts}}/);
   });
 
   test("shows the texts of heroTexts.md in the hero of the home pages and those of overlayTexts.md in the overlay of the other pages", async () => {
