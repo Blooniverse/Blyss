@@ -32,6 +32,10 @@ export default {
           pagination: "Pagination",
           newerPosts: "Newer posts",
           olderPosts: "Older posts",
+          techdoc: "Documentation",
+          onThisPage: "On this page",
+          previous: "Previous",
+          next: "Next",
           overlay: "Overlay",
           close: "Close",
           search: "Search"
@@ -55,6 +59,10 @@ export default {
           pagination: "Seitennavigation",
           newerPosts: "Neuere Beiträge",
           olderPosts: "Ältere Beiträge",
+          techdoc: "Dokumentation",
+          onThisPage: "Auf dieser Seite",
+          previous: "Zurück",
+          next: "Weiter",
           overlay: "Overlay",
           close: "Schließen",
           search: "Suchen"

@@ -14,12 +14,12 @@ npm start       # serve public/ on http://localhost:3000
 
 | Path | Purpose |
 | --- | --- |
-| `content/en/pages/`, `content/en/posts/` | English Markdown pages and posts |
-| `content/de/pages/`, `content/de/posts/` | German Markdown pages and posts |
+| `content/en/pages/`, `content/en/posts/`, `content/en/techdoc/` | English Markdown pages, posts and docs |
+| `content/de/pages/`, `content/de/posts/`, `content/de/techdoc/` | German Markdown pages, posts and docs |
 | `content/en/hero.md` and `content/de/hero.md` | The texts of the hero (see [Overlay](#overlay)) |
 | `content/en/components/`, `content/de/components/` | The texts of the components |
 | `components/` | The [components](#components) `heroComponentSlider/` and `heroComponentGallery/`, each with its template, stylesheet and script |
-| `templates/` | HTML templates: `document.html`, `home.html`, `page.html`, `post.html` |
+| `templates/` | HTML templates: `document.html`, `home.html`, `page.html`, `post.html`, `techdoc.html` |
 | `static/` | Static files such as `static/assets/css/main.css`, `static/assets/img/logo.svg`, the gallery's images in `static/assets/img/gallery/`, `static/robots.txt` and `static/staticwebapp.config.json`, copied unchanged into `public/` |
 | `blyss.config.js` | Site, language, pagination, layout, component and directory configuration |
 | `public/` | Generated website — do not edit |
@@ -42,15 +42,28 @@ tags: [Blyss, Markdown]
 - Pages in `content/<language>/pages/` are published at `/<language>/<slug>/`; `index.md` becomes `/<language>/`.
 - The home pages `/<language>/` use `templates/home.html`: the `title` and `description` of `index.md` become the heading and the slogan in their header.
 - Posts in `content/<language>/posts/` are published at `/<language>/posts/<slug>/`.
+- Docs in `content/<language>/techdoc/` are published below `/<language>/techdoc/` (see [Documentation](#documentation)).
 - `slug` defaults to the file name. Give each language its own slug for localized URLs.
 - Translations are associated by giving them the same `translationKey`. Blyss links them in the language switcher and with `hreflang` alternate links.
 - A page containing `{{recentPosts}}` lists the three newest posts of its language, ordered by `datePublished`.
-- A paragraph that consists of the name of a component in double curly braces alone, such as `{{heroComponentSlider}}`, shows that [component](#components) in a page or post.
+- A paragraph that consists of the name of a component in double curly braces alone, such as `{{heroComponentSlider}}`, shows that [component](#components) in a page, post or doc.
 - Posts can have `tags`. Blyss generates the archive `/<language>/posts/`, the tag index `/<language>/tags/` and one page per tag, such as `/en/tags/markdown/`. Do not create content at these URLs.
 - The archive and tag pages show `pagination.pageSize` posts (10 by default, set in `blyss.config.js`). Older posts continue on `/<language>/posts/page/2/`, `/<language>/tags/<tag>/page/2/` and so on, linked by “Newer posts” and “Older posts”.
 - Markdown files directly in `content/<language>/`, such as `hero.md`, are fragments: Blyss publishes no page for them, but `templates/document.html` shows them on every page of their language as `{{<name>Title}}`, the `title` of their front matter, and `{{<name>Content}}`, their text, such as `{{heroTitle}}` and `{{heroContent}}`. Their file names must start with a Latin letter and contain only Latin letters and digits.
 - `pages/404.md` is the “not found” page. It is published at `/<language>/404.html`; the [default language](#languages)'s page, English, is also published as `/404.html`, which `npm start` and most static hosts show for every missing URL. Because it appears at any URL, link from it with absolute paths such as `/en/`.
-- Keep `index.md` and `about.md` in every language without a different slug: the navigation in `templates/document.html` links to `/<language>/` and `/<language>/about/`.
+- Keep `index.md` and `about.md` in every language without a different slug, and `techdoc/index.md`: the navigation in `templates/document.html` links to `/<language>/`, `/<language>/about/` and `/<language>/techdoc/`.
+
+## Documentation
+
+`content/<language>/techdoc/` holds the technical documentation, which the navigation's link “Documentation” opens. The starter's docs explain how it works, in English and in German; replace them with your own.
+
+- Each Markdown file is a doc, such as `content/en/techdoc/getting-started.md` at `/en/techdoc/getting-started/`. Docs have the front matter of pages, and `order`.
+- Each directory is a section, such as `content/en/techdoc/writing/` at `/en/techdoc/writing/`. Its `index.md` is the start page of the section, and its `title` names the section in the navigation. `content/<language>/techdoc/index.md` is the start page of the whole documentation. The build stops if a directory with docs lacks its `index.md`.
+- `order` places a doc or a section among those beside it: lower numbers first, such as `1`, `2` or `2.5`, those without an order last, and those with the same order by title.
+- `templates/techdoc.html` shows the navigation of all docs, the doc's title, a table of contents of its second- and third-level headings, its text, and links to the previous and the next doc in the navigation. The navigation stands beside the doc on wide screens and above it otherwise; `static/assets/css/main.css` styles all of this in its block for docs. Without `templates/techdoc.html`, docs use `templates/page.html`, without navigation, table of contents and links.
+- Each heading of a doc gets an id from its text, as on GitHub, so that a link to `#front-matter` leads to the heading “Front matter”.
+- The labels `techdoc`, `onThisPage`, `previous` and `next` in `blyss.config.js` name the navigation, the table of contents and the links to the previous and the next doc.
+- Docs are described as `TechArticle` in their JSON-LD and listed in `sitemap.xml`, but neither in the archive nor on the tag pages.
 
 ## Languages
 
@@ -66,14 +79,14 @@ To add French, for example:
 
 1. Add `fr` to `site.languages` in `blyss.config.js`: its `label`, `"Français"`, its `locale`, `"fr"`, its `description` and every label of the other languages, translated.
 2. Add a French `description` to each step of `components.heroComponentSlider.steps`.
-3. Create `content/fr/` like `content/en/`: `pages/index.md`, `pages/about.md`, `pages/404.md`, `hero.md`, the components' texts in `components/` and any posts. Give each translation the `translationKey` of its original.
+3. Create `content/fr/` like `content/en/`: `pages/index.md`, `pages/about.md`, `pages/404.md`, `hero.md`, the components' texts in `components/`, `techdoc/index.md` with any docs, and any posts. Give each translation the `translationKey` of its original.
 4. Run `npm run build`. The language switcher and the `hreflang` alternates now link the French pages to their translations.
 
 To remove a language, delete its directory in `content/`, its entry in `site.languages` and its descriptions of the slider's steps; if it was the default language, change `defaultLanguage` too. With a single language left, `languageSwitcher: false` hides the language switcher, which would link only to the current page.
 
 ## Layout
 
-`layout` in `blyss.config.js` sets the space around the content and its alignment, separately for the home pages and for all other pages: pages, posts, lists and not-found pages.
+`layout` in `blyss.config.js` sets the space around the content and its alignment, separately for the home pages and for all other pages: pages, posts, docs, lists and not-found pages.
 
 - `margin` is the space between the coloured frame and the content on every side: a CSS length in `px`, `rem`, `vw`, `vh`, `vmin` or `vmax`, such as `"2vmin"` (the default) or `"2rem"`. The top bar spans the side margins.
 - `paddingHero` is the space above and below the content of the hero and of the opened overlay: a CSS length like `margin`, `"1rem"` by default.
@@ -103,7 +116,7 @@ Centered lists keep their markers next to their items, and code blocks stay left
 - `content/<language>/hero.md` holds the hero's texts: its `title` is their heading, and each `###` heading starts a text that runs up to the next one. The hero shows as many texts as the file has, each in full length, side by side in as many columns as fit. Blyss refuses any content before the first `###` heading, except comments. The starter has three texts in each language.
 - All headings in the overlay are `<h3>`: the hero's title, the headings of the slider and of the gallery and the headings of the texts. As the overlay is on every page, its headings rank below each page's own `<h1>` and `<h2>`.
 - The labels `overlay` and `close` in `blyss.config.js` hold the texts of the overlay's buttons. Templates can use every label as `{{<key>Label}}`, such as `{{overlayLabel}}`.
-- `templates/document.html` sets `<body data-kind="…">` to `home`, `page`, `post`, `list` or `not-found`; `static/assets/css/main.css` uses it to style the overlay per kind of page.
+- `templates/document.html` sets `<body data-kind="…">` to `home`, `page`, `post`, `techdoc`, `list` or `not-found`; `static/assets/css/main.css` uses it to style the overlay per kind of page.
 
 ## Components
 

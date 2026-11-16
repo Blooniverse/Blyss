@@ -11,7 +11,11 @@ const defaultLabels = {
   page: "Page",
   pagination: "Pagination",
   newerPosts: "Newer posts",
-  olderPosts: "Older posts"
+  olderPosts: "Older posts",
+  techdoc: "Documentation",
+  onThisPage: "On this page",
+  previous: "Previous",
+  next: "Next"
 };
 
 const isObject = value => typeof value === "object" && value !== null && !Array.isArray(value);

@@ -8,7 +8,7 @@ export function createJsonLd({ site, record }) {
   const publisherId = `${siteUrl}#publisher`;
   const websiteId = `${siteUrl}#website`;
   const pageId = `${canonicalUrl}#webpage`;
-  const pageType = record.metadata.type || { post: "BlogPosting", list: "CollectionPage" }[record.type] || "WebPage";
+  const pageType = record.metadata.type || { post: "BlogPosting", techdoc: "TechArticle", list: "CollectionPage" }[record.type] || "WebPage";
 
   const graph = [
     {
@@ -38,7 +38,8 @@ export function createJsonLd({ site, record }) {
   ];
 
   const page = graph[2];
-  if (record.type === "post") {
+  // Posts and docs are articles: they have dates and are the main entity of their page.
+  if (record.type === "post" || record.type === "techdoc") {
     if (record.metadata.datePublished) page.datePublished = record.metadata.datePublished;
     if (record.metadata.dateModified) page.dateModified = record.metadata.dateModified;
     if (record.tags?.length) page.keywords = record.tags.map(tag => tag.name);

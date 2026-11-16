@@ -10,7 +10,11 @@ import { resolvePaths } from "./paths.js";
 import { parseFrontMatter, renderRecord } from "./render.js";
 import { layoutOf } from "./settings.js";
 import { renderSitemap } from "./sitemap.js";
+import { arrangeTechdocs } from "./techdoc.js";
 import { indexTranslations } from "./translations.js";
+
+// The sections of content/<language>/ that hold published content, and the type of their content.
+const sections = { pages: 'page', posts: 'post', techdoc: 'techdoc' };
 
 async function findMarkdownFiles(directory) {
   const entries = await readdir(directory, { withFileTypes: true });
@@ -59,8 +63,12 @@ async function discoverContent(projectDir, config, contentDirectory, locate) {
       throw new BlyssError(`Cannot build ${relative(projectDir, sourceFile)}: the text of a component lies directly in ` +
         `${join(relative(projectDir, contentDirectory), languageKey, 'components')}.`);
     }
-    if (!['pages', 'posts'].includes(section)) throw new Error(`Unknown content section: ${section}`);
-    const type = section === 'posts' ? 'post' : 'page';
+    if (!Object.hasOwn(sections, section)) {
+      const [pages, posts, techdoc] = Object.keys(sections).map(name => join(relative(projectDir, contentDirectory), languageKey, name, sep));
+      throw new BlyssError(`Cannot build ${relative(projectDir, sourceFile)}: there is no content section "${section}".\n` +
+        `Move the file into ${pages}, ${posts} or ${techdoc}.`);
+    }
+    const type = sections[section];
     const nested = parts.slice(2, -1);
     const tags = type === 'post' ? parseTags(metadata.tags, languageKey, relative(projectDir, sourceFile)) : [];
     // pages/404.md becomes /<language>/404.html, the file name static hosts expect for "not found" pages.
@@ -68,8 +76,10 @@ async function discoverContent(projectDir, config, contentDirectory, locate) {
       return { sourceFile, languageKey, languageConfig, type, metadata, markdown, tags, notFound: true, ...locate([languageKey], '404.html') };
     }
     const slug = metadata.slug || filename;
-    const urlParts = type === 'post' ? [languageKey, 'posts', ...nested, slug] : [languageKey, ...nested, slug];
-    if (type === 'page' && filename === 'index') urlParts.pop();
+    // Posts and docs are published under /<language>/posts/ and /<language>/techdoc/; the index.md of a directory of
+    // pages or docs at the URL of the directory.
+    const urlParts = type === 'page' ? [languageKey, ...nested, slug] : [languageKey, section, ...nested, slug];
+    if (type !== 'post' && filename === 'index') urlParts.pop();
     return { sourceFile, languageKey, languageConfig, type, metadata, markdown, tags, ...locate(urlParts) };
   }));
 }
@@ -99,23 +109,26 @@ export async function build(projectDir, configPath = './blyss.config.js') {
 
   // Content is read and validated before the previous output is deleted.
   const readTemplate = name => readFile(join(templatesDirectory, name), 'utf8');
-  const [discovered, document, page, post, home] = await Promise.all([
+  // home.html and techdoc.html are optional: without them, home pages and docs use page.html.
+  const readOptionalTemplate = name => readTemplate(name).catch(error => {
+    if (error.code === 'ENOENT') return undefined;
+    throw error;
+  });
+  const [discovered, document, page, post, home, techdoc] = await Promise.all([
     discoverContent(projectDir, config, contentDirectory, locate),
     readTemplate('document.html'),
     readTemplate('page.html'),
     readTemplate('post.html'),
-    // home.html is optional: without it, home pages use page.html.
-    readTemplate('home.html').catch(error => {
-      if (error.code === 'ENOENT') return undefined;
-      throw error;
-    })
+    readOptionalTemplate('home.html'),
+    readOptionalTemplate('techdoc.html')
   ]);
-  const content = discovered.filter(record => record.type === 'page' || record.type === 'post');
+  const content = discovered.filter(record => ['page', 'post', 'techdoc'].includes(record.type));
   const fragments = renderFragments(projectDir, discovered.filter(record => record.type === 'fragment'));
   const components = await loadComponents(projectDir, config, componentsDirectory, discovered.filter(record => record.type === 'component'));
+  const techdocs = arrangeTechdocs(projectDir, contentDirectory, content);
   const records = [...content, ...createListRecords(config, content, locate)];
   assertUniqueUrls(projectDir, records);
-  const templates = { document, page, post, home };
+  const templates = { document, page, post, home, techdoc };
   const translationIndex = indexTranslations(records, config.site.languages);
 
   await rm(publicDirectory, { recursive: true, force: true });
@@ -126,7 +139,8 @@ export async function build(projectDir, configPath = './blyss.config.js') {
   for (const record of records) {
     const html = renderRecord({
       record, templates, translationIndex, site: config.site, records: content, layout,
-      fragments: fragments.get(record.languageKey), components: components.placeholders(record.languageKey)
+      fragments: fragments.get(record.languageKey), components: components.placeholders(record.languageKey),
+      techdoc: techdocs.placeholders(record)
     });
     await mkdir(join(record.outputFile, '..'), { recursive: true });
     await writeFile(record.outputFile, html, 'utf8');
