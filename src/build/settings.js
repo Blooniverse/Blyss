@@ -14,8 +14,9 @@ const alignments = {
   alignHeroOther: ["centerExtra", "left", "center"]
 };
 
-// Lists values as in '"left", "center" or "centerLeft"'.
-const either = values => values.map(value => JSON.stringify(value)).join(", ").replace(/, (?=[^,]*$)/, " or ");
+// Lists values as in '"left", "center" or "centerLeft"' or, with "and", as in '"close" and "search"'.
+export const listOf = (values, conjunction = "or") =>
+  values.map(value => JSON.stringify(value)).join(", ").replace(/, (?=[^,]*$)/, ` ${conjunction} `);
 
 // layout.margin is the space around the content and layout.paddingHero the space above and below the content of the
 // hero; each alignment is one of its values above.
@@ -31,7 +32,7 @@ export function layoutOf(config) {
   }
   for (const [name, values] of Object.entries(alignments)) {
     layout[name] = settings[name] ?? values[0];
-    if (!values.includes(layout[name])) throw refuse(`layout.${name}`, layout[name], either(values));
+    if (!values.includes(layout[name])) throw refuse(`layout.${name}`, layout[name], listOf(values));
   }
   return layout;
 }

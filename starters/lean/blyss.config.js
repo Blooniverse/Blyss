@@ -4,12 +4,15 @@ export default {
   site: {
     name: "My Website", // CHANGE BEFORE PRODUCTION
     baseUrl: "https://example.com", // CHANGE BEFORE PRODUCTION: canonical, hreflang and JSON-LD URLs use it
-    defaultLanguage: "en",
+    defaultLanguage: "en", // the language of / and /404.html, one of the languages below (the first, if omitted); see README.md
+    languageSwitcher: true, // or false, which hides the language switcher of the top bar; the hreflang alternates remain
     publisher: {
       type: "Organization", // or "Person"
       name: "Example Publisher", // CHANGE BEFORE PRODUCTION
       url: "https://example.com" // CHANGE BEFORE PRODUCTION
     },
+    // The languages, in the order of the language switcher. A key such as "en" names the language's directory in content/
+    // and starts its URLs; every language needs a label, a locale and the same labels. README.md tells how to add one.
     languages: {
       en: {
         label: "English",

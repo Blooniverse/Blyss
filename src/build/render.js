@@ -38,9 +38,8 @@ export function applyTemplate(template, values) {
 }
 
 // Every label of a language is available as {{<key>Label}}, such as {{postsLabel}}.
-export function labelValues(labels = {}) {
-  return Object.fromEntries(Object.entries({ ...labels, posts: labels.posts || "Posts", tags: labels.tags || "Tags" })
-    .map(([key, value]) => [`${key}Label`, escapeHtml(value)]));
+export function labelValues(labels) {
+  return Object.fromEntries(Object.entries(labels).map(([key, value]) => [`${key}Label`, escapeHtml(value)]));
 }
 
 const compare = (left, right) => (left < right ? -1 : left > right ? 1 : 0);
@@ -61,7 +60,7 @@ export function renderRecentPosts(record, records) {
     return `    <li><a href="${escapeHtml(item.url)}">${escapeHtml(title)}</a></li>`;
   }).join("\n");
 
-  return `\n<section aria-label="${escapeHtml(record.languageConfig.labels.recentPosts || "Recent posts")}">\n  <h2>${escapeHtml(record.languageConfig.labels.recentPosts || "Recent posts")}</h2>\n  <ul>\n${listItems}\n  </ul>\n</section>\n`;
+  return `\n<section aria-label="${escapeHtml(record.languageConfig.labels.recentPosts)}">\n  <h2>${escapeHtml(record.languageConfig.labels.recentPosts)}</h2>\n  <ul>\n${listItems}\n  </ul>\n</section>\n`;
 }
 
 // A paragraph that consists of {{<name>}} alone shows the component of that name; code keeps the placeholder as text.
@@ -84,7 +83,7 @@ function kindOf(record) {
 function renderTags(record) {
   if (!record.tags?.length) return "";
   const links = record.tags.map(tag => `<a href="${escapeHtml(tag.url)}" rel="tag">${escapeHtml(tag.name)}</a>`);
-  return `    <p>${escapeHtml(record.languageConfig.labels.tags || "Tags")}: ${links.join(", ")}</p>`;
+  return `    <p>${escapeHtml(record.languageConfig.labels.tags)}: ${links.join(", ")}</p>`;
 }
 
 // components holds a function for each component of the website, which renders it in the language of the record.
@@ -119,7 +118,7 @@ export function renderRecord({ record, templates, translationIndex, site, record
     jsonLd: renderJsonLd(createJsonLd({ site, record })),
     languageKey: escapeHtml(record.languageKey),
     kind,
-    languageSwitcher: renderLanguageSwitcher(record, translationIndex, site),
+    languageSwitcher: site.languageSwitcher ? renderLanguageSwitcher(record, translationIndex, site) : "",
     layoutMargin: escapeHtml(layout.margin),
     layoutPaddingHero: escapeHtml(layout.paddingHero),
     layoutAlign: home ? layout.alignHome : layout.alignOther,

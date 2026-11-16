@@ -2,6 +2,7 @@ import { createReadStream } from "node:fs";
 import { stat } from "node:fs/promises";
 import { createServer } from "node:http";
 import { extname, join, relative, resolve } from "node:path";
+import { languagesOf } from "../build/languages.js";
 import { resolvePaths } from "../build/paths.js";
 import { contentTypeFor } from "./mime-types.js";
 
@@ -19,13 +20,14 @@ async function sendFile(response, status, filePath) {
 export function serve(projectDir, config) {
   const port = Number(process.env.PORT) || config.server.fallbackPort;
   const { publicDirectory } = resolvePaths(projectDir, config);
+  const { defaultLanguage } = languagesOf(config);
   const server = createServer(async (request, response) => {
     try {
       const requestUrl = new URL(request.url ?? "/", "http://localhost");
       let pathname = decodeURIComponent(requestUrl.pathname);
       if (pathname === "/") {
         response.writeHead(302, {
-          Location: `/${config.site.defaultLanguage}/`
+          Location: `/${defaultLanguage}/`
         });
         response.end();
         return;
