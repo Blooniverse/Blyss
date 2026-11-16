@@ -33,7 +33,7 @@ html {
 
 body {
   min-height: 100svh;
-  padding: var(--site-margin); /* layout.margin in blyss.config.js, set by templates/document.html */
+  padding: var(--site-margin); /* layout.margin in blyss.config.js, set by _templates/document.html */
   border: 1.6vmin solid;
   border-image: linear-gradient(15deg, var(--color040border), var(--color202border)) 1% 1 1 stretch;
 }
@@ -94,22 +94,22 @@ nav ul { display: flex; flex-wrap: wrap; gap: .25rem 1rem; padding: 0; list-styl
 
 footer { margin-top: 4vh; font-size: .9rem; color: var(--color202grey); letter-spacing: -.03em; line-height: 1.1; }
 
-/* Docs (templates/techdoc.html): the navigation of the documentation, beside the doc on wide screens and above it on
+/* Docs (_templates/book.html): the navigation of the documentation, beside the doc on wide screens and above it on
    others, the table of contents at the start of the doc and the links to the previous and the next doc below it. */
-:is(.techdoc > nav, .techdoc article > nav) { font-size: .85rem; text-align: start; }
-:is(.techdoc > nav, .techdoc article > nav) ul { display: block; margin: 0; }
-:is(.techdoc > nav, .techdoc article > nav) ul ul { margin-left: 1em; }
-:is(.techdoc > nav, .techdoc article > nav) li { margin: .2em 0; }
-:is(.techdoc > nav, .techdoc article > nav) a:not(:hover) { text-decoration: none; }
-.techdoc > nav { margin-bottom: 1rem; padding-bottom: .5rem; border-bottom: 1px solid var(--card-border); }
-.techdoc article > nav { margin-bottom: 1rem; padding: .5rem .75rem; border: 1px solid var(--card-border); border-radius: var(--radius); background: var(--card); }
-.techdoc article > nav p { margin-bottom: .2em; font-weight: 700; color: var(--color202); }
-.techdoc main > nav ul { justify-content: space-between; margin-top: 2rem; }
-.techdoc main > nav li:has([rel="next"]) { margin-left: auto; }
+:is(.book > nav, .book article > nav) { font-size: .85rem; text-align: start; }
+:is(.book > nav, .book article > nav) ul { display: block; margin: 0; }
+:is(.book > nav, .book article > nav) ul ul { margin-left: 1em; }
+:is(.book > nav, .book article > nav) li { margin: .2em 0; }
+:is(.book > nav, .book article > nav) a:not(:hover) { text-decoration: none; }
+.book > nav { margin-bottom: 1rem; padding-bottom: .5rem; border-bottom: 1px solid var(--card-border); }
+.book article > nav { margin-bottom: 1rem; padding: .5rem .75rem; border: 1px solid var(--card-border); border-radius: var(--radius); background: var(--card); }
+.book article > nav p { margin-bottom: .2em; font-weight: 700; color: var(--color202); }
+.book main > nav ul { justify-content: space-between; margin-top: 2rem; }
+.book main > nav li:has([rel="next"]) { margin-left: auto; }
 @media (min-width: 48rem) and (orientation: landscape) {
-  .techdoc { display: grid; grid-template-columns: minmax(8rem, 14rem) minmax(0, 1fr); gap: 2rem; align-items: start; }
+  .book { display: grid; grid-template-columns: minmax(8rem, 14rem) minmax(0, 1fr); gap: 2rem; align-items: start; }
   /* The navigation stays beside the doc, between the top bar and the overlay's bar, and scrolls if it is longer. */
-  .techdoc > nav {
+  .book > nav {
     position: sticky;
     top: calc(var(--bar-height) + 1rem);
     max-height: calc(100svh - var(--bar-height) - 4rem);
@@ -164,7 +164,7 @@ body:not([data-kind="home"]) > .overlay:is(:hover, :focus-within) { opacity: 1; 
   width: auto;
   height: 80vh;
   margin: 0;
-  padding: var(--hero-padding) 1rem; /* layout.paddingHero in blyss.config.js, set by templates/document.html */
+  padding: var(--hero-padding) 1rem; /* layout.paddingHero in blyss.config.js, set by _templates/document.html */
   border: 0;
   border-top: 1px solid var(--card-border);
   color: inherit;
@@ -175,7 +175,7 @@ body:not([data-kind="home"]) > .overlay:is(:hover, :focus-within) { opacity: 1; 
 /* The hero's headings look like labels, as h3 does everywhere, except for the headings of the texts of hero.md. */
 #overlay h3 { margin-top: 0; }
 #overlay h3:empty { display: none; } /* such as the hero's title when hero.md has none */
-/* The components of the hero follow each other; each brings its own styles from components/. */
+/* The components of the hero follow each other; each brings its own styles from _components/. */
 .hero-component { margin: 0 0 1rem; }
 /* The texts of hero.md, side by side in as many columns as fit, each in full length. */
 .hero-texts {

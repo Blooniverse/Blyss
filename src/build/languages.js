@@ -12,7 +12,7 @@ const defaultLabels = {
   pagination: "Pagination",
   newerPosts: "Newer posts",
   olderPosts: "Older posts",
-  techdoc: "Documentation",
+  book: "Book",
   onThisPage: "On this page",
   previous: "Previous",
   next: "Next"

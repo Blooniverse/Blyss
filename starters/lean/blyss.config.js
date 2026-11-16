@@ -32,7 +32,7 @@ export default {
           pagination: "Pagination",
           newerPosts: "Newer posts",
           olderPosts: "Older posts",
-          techdoc: "Documentation",
+          book: "Documentation",
           onThisPage: "On this page",
           previous: "Previous",
           next: "Next",
@@ -59,7 +59,7 @@ export default {
           pagination: "Seitennavigation",
           newerPosts: "Neuere Beiträge",
           olderPosts: "Ältere Beiträge",
-          techdoc: "Dokumentation",
+          book: "Dokumentation",
           onThisPage: "Auf dieser Seite",
           previous: "Zurück",
           next: "Weiter",
@@ -79,7 +79,7 @@ export default {
     alignHeroHome: "centerExtra", // or "left" or "center" ("centerExtra" centers everything apart from the left-aligned text boxes of hero.md, including their headings), which aligns the content of the home pages' hero
     alignHeroOther: "centerExtra" // or "left" or "center" (as above), which aligns the content of the other pages' hero
   },
-  // The settings of the components in components/<name>/. {{<name>}} shows a component in a template or, in a paragraph
+  // The settings of the components in _components/<name>/. {{<name>}} shows a component in a template or, in a paragraph
   // of its own, in the Markdown of a page or post; its texts are in content/<language>/components/<name>.md.
   components: {
     // The slider runs through the whole numbers from start to end. Each step marks a value on the way and has a
@@ -103,11 +103,11 @@ export default {
     }
   },
   directories: {
-    components: "components",
+    components: "_components",
     content: "content",
     public: "public", // generated output: deleted and recreated by every build, so keep it a separate subdirectory
     static: "static",
-    templates: "templates"
+    templates: "_templates"
   },
   server: { fallbackPort: 3000 }
 };
