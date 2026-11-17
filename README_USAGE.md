@@ -52,9 +52,12 @@ my-site/
 
 ```js
 export default {
-  site: {
+  site: { 
     defaultLanguage: "en",
     ...
+    languages: {
+    ...
+    }
   },
   hero: {
     components: { componentSlider: true, componentGallery: true, componentFlower: true },
