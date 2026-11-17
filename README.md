@@ -150,18 +150,13 @@ export default {
   },
   ...
   components: {
-    componentSlider: {
-    ...
-    },
+  ...
   },
   directories: {
-    components: "_components",
-    content: "content",
     public: "public",
-    static: "static",
-    templates: "_templates"
+    ...
   },
-  build: { cleanUrls: true },
+  ...
   server: { fallbackPort: 3000 }
 };
 ```
