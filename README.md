@@ -81,5 +81,5 @@ npm install @blooniverse/blyss
 
 ## Documentation
 
-- [USAGE.md](USAGE.md): the CLI, the site structure, `blyss.config.js`, templates, regions, components, hosting and developing Blyss.
-- [AUTHORING.md](AUTHORING.md): how to write content: URLs, translations, tags, archives, docs and “not found” pages.
+- [USAGE](README_USAGE.md): the CLI, the site structure, `blyss.config.js`, templates, regions, components, hosting and developing Blyss.
+- [AUTHORING](README_AUTHORING.md): how to write content: URLs, translations, tags, archives, docs and “not found” pages.
