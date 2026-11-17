@@ -5,9 +5,9 @@ Blyss is a lean SSG (static site generator). Essence:
 - **Local-first & Git-based**: For devs & authors.
 - **Multilingual**: EN/DE default can be extended.
 - **3 content types**: book, page, post.
-- **Configurable**: blyss.config.js.
-- **Composable**: Markdown components.
 - **Themeable**.
+- **Composable**: Markdown components.
+  **Configurable**: blyss.config.js.
 - **Zero dependencies** – apart from Node.js' `marked`.
 - Lightweight Javascript.
 - Semantic (RDF graph via JSON-LD).
