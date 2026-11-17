@@ -1,4 +1,4 @@
-# Blyss 1.0.1
+# Blyss SSG 1.0.1
 
 Blyss is a lean SSG (static site generator). Essence:
 - Markdown based – ideal for Obsidian and other knowledge management systems.
