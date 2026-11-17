@@ -2,7 +2,7 @@
 
 Blyss is a lean SSG (static site generator). Essence:
 - **Markdown based**: Ideal for Obsidian & other knowledge management systems.
-- **Formulas, footnotes, highlighted code and diagrams** (Mermaid, flowchart.js, Vega-Lite), written as in Obsidian or Marktext.
+- **Formulae, diagrams, highlighted code, footnotes** (Mermaid, Flowchart.js, Vega-Lite), written as in Obsidian or Marktext.
 - **Local-first & Git-based**: For devs & authors.
 - **Multilingual**: EN/DE default can be extended.
 - **3 content types**: book, page, post.
