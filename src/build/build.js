@@ -132,7 +132,7 @@ export async function build(projectDir, configPath = './blyss.config.js') {
   const fragmentRecords = discovered.filter(record => record.type === 'fragment');
   const fragments = renderFragments(projectDir, fragmentRecords);
   const components = await loadComponents(projectDir, config, componentsDirectory, discovered.filter(record => record.type === 'component'));
-  const regions = arrangeRegions(projectDir, config, { hero, overlay }, fragmentRecords, components.names, relative(projectDir, componentsDirectory));
+  const regions = arrangeRegions(projectDir, config, { hero, overlay }, fragmentRecords, components.unknown);
   const books = arrangeBooks(projectDir, contentDirectory, content);
   const records = [...content, ...createListRecords(config, content, locate)];
   assertUniqueUrls(projectDir, records);

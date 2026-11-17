@@ -193,9 +193,19 @@ describe("blyss init", () => {
 
 describe("a generated starter", () => {
   let site;
-  before(() => {
+  // The starter with every variant of every component switched on, in the hero and in the overlay.
+  let full;
+  before(async () => {
     site = join(sandbox, "built");
     assert.equal(run(["init", site], sandbox).status, 0);
+    full = join(sandbox, "built-full");
+    assert.equal(run(["init", full], sandbox).status, 0);
+    const configFile = join(full, "blyss.config.js");
+    const config = await readFile(configFile, "utf8");
+    assert.equal(config.match(/component\w+(?:Hero|Overlay): false/g).length, 4);
+    await writeFile(configFile, config.replace(/(component\w+(?:Hero|Overlay)): false/g, "$1: true"));
+    const result = run(["build"], full);
+    assert.equal(result.status, 0, result.stderr);
   });
 
   test("builds with the local Blyss package", async () => {
@@ -229,48 +239,65 @@ describe("a generated starter", () => {
       "<header>\\s*<h1>Blyss</h1>\\s*<h2>Blyss slogan</h2>\\s*</header>\\s*<main>\\s*<article>\\s*<h3>Blyss about or description</h3>" +
       "[\\s\\S]*</main>\\s*</div>\\s*<aside class=\"hero\" aria-label=\"Highlights\">[\\s\\S]*</aside>\\s*<footer>"));
     const german = await readFile(join(site, "public", "de", "index.html"), "utf8");
-    for (const label of ['<h3><label for="componentSlider-1-input">Schieberegler</label></h3>',
-      '<h3 id="componentGallery-1-title">Galerie</h3>', '<h3 id="componentFlower-1-title">Blume</h3>', "<h3>Warum Blyss</h3>",
+    for (const label of ['<h3><label for="componentSliderHero-1-input">Schieberegler</label></h3>', "<h3>Warum Blyss</h3>",
       '<input type="search" aria-label="Suchen" placeholder="Suchen">']) {
       assert.ok(german.includes(label), label);
     }
-  });
-
-  test("shows the gallery with its settings, its texts and its images, which load lazily", async () => {
-    const html = await readFile(join(site, "public", "de", "pages", "about", "index.html"), "utf8");
-    assert.ok(html.includes('<component-gallery class="component" role="group" aria-labelledby="componentGallery-1-title" ' +
-      'style="--height-overall: 8rem; --scale-center: 1.3; --height-expanded: 70; --speed-scrolling: 400ms; --speed-enlargement: 300ms">'));
-    for (const label of ["Vorheriges Bild", "Nächstes Bild"]) assert.ok(html.includes(`<button type="button" aria-label="${label}">`), label);
-    const images = [...html.matchAll(/<li><img loading="lazy" src="\/(assets\/img\/gallery\/[^"]+)" alt="[^"]+"><\/li>/g)].map(match => match[1]);
-    assert.equal(images.length, 7);
-    for (const image of images) assert.ok((await stat(join(site, "public", image))).isFile(), image);
-  });
-
-  test("shows the flower with its colours, a button for each petal and the texts of the petals", async () => {
-    const headings = { en: ["Pluck a petal", "One text each", "Count them", "Three colours", "At your pace", "Never quite gone", "Small print", "See-through"],
-      de: ["Zupfen Sie ein Blatt", "Je ein Text", "Zählen Sie nach", "Drei Farben", "In Ihrem Tempo", "Nie ganz verschwunden", "Kleingedrucktes", "Durchsichtig"] };
-    for (const [language, label] of [["en", "Petal"], ["de", "Blütenblatt"]]) {
-      const html = await readFile(join(site, "public", language, "index.html"), "utf8");
-      const flower = html.slice(html.indexOf("<component-flower "), html.indexOf("</component-flower>"));
-      assert.ok(flower.startsWith('<component-flower class="component" role="group" aria-labelledby="componentFlower-1-title" ' +
-        'style="--hue-petals: 202; --hue-centre: 322; --hue-stem: 82; --petal-width: 0.551; --speed-falling: 3s; --speed-text: 3s; ' +
-        '--speed-fading: 4s; --opacity-fallen: 0.3; --font-size-text: 0.6">'), language);
-      assert.deepEqual([...flower.matchAll(/<button type="button" class="petal" style="--angle: ([\d.]+)deg" aria-label="([^"]+)" disabled><\/button>/g)]
-        .map(match => match.slice(1)), [0, 45, 90, 135, 180, 225, 270, 315].map((angle, index) => [String(angle), `${label} ${index + 1}`]));
-      assert.deepEqual([...flower.matchAll(/<li>\n<h3>([^<]+)<\/h3>\n<p>/g)].map(match => match[1]), headings[language]);
-      assert.equal(flower.match(/<span style="--lie: -?\d+deg"><\/span>/g).length, 8, language);
+    assert.doesNotMatch(german, /<component-(?:gallery|flower)/);
+    const switchedOn = await readFile(join(full, "public", "de", "index.html"), "utf8");
+    for (const label of ['<h3 id="componentGalleryHero-1-title">Galerie</h3>', '<h3 id="componentFlowerHero-1-title">Blume</h3>']) {
+      assert.ok(switchedOn.includes(label), label);
     }
   });
 
-  test("shows a component in a post that names it in a paragraph or in a block of its own, next to the one in the overlay", async () => {
+  test("shows the gallery, switched on, with its settings, its texts and its images, which load lazily", async () => {
+    const html = await readFile(join(full, "public", "de", "pages", "about", "index.html"), "utf8");
+    assert.ok(html.includes('<component-gallery class="component" role="group" aria-labelledby="componentGalleryOverlay-1-title" ' +
+      'style="--height-overall: 8rem; --scale-center: 1.4; --height-expanded: 70; --speed-scrolling: 400ms; --speed-enlargement: 300ms">'));
+    for (const label of ["Vorheriges Bild", "Nächstes Bild"]) assert.ok(html.includes(`<button type="button" aria-label="${label}">`), label);
+    const images = [...html.matchAll(/<li><img loading="lazy" src="\/(assets\/img\/gallery\/[^"]+)" alt="[^"]+"><\/li>/g)].map(match => match[1]);
+    assert.equal(images.length, 7);
+    for (const image of images) assert.ok((await stat(join(full, "public", image))).isFile(), image);
+  });
+
+  test("shows the flower, switched on, with its colours, a button for each petal and the texts of the petals", async () => {
+    const headings = { en: ["Pluck a petal", "One text each", "Count them", "Three colours"],
+      de: ["Zupfen Sie ein Blatt", "Je ein Text", "Zählen Sie nach", "Drei Farben"] };
+    for (const [language, label] of [["en", "Petal"], ["de", "Blütenblatt"]]) {
+      const html = await readFile(join(full, "public", language, "index.html"), "utf8");
+      const flower = html.slice(html.indexOf("<component-flower "), html.indexOf("</component-flower>"));
+      assert.ok(flower.startsWith('<component-flower class="component" role="group" aria-labelledby="componentFlowerHero-1-title" ' +
+        'style="--hue-petals: 202; --hue-centre: 322; --hue-stem: 82; --petal-width: 0.9; --speed-falling: 3s; --speed-text: 3s; ' +
+        '--speed-fading: 4s; --opacity-fallen: 0.2; --font-size-text: 0.6">'), language);
+      assert.deepEqual([...flower.matchAll(/<button type="button" class="petal" style="--angle: ([\d.]+)deg" aria-label="([^"]+)" disabled><\/button>/g)]
+        .map(match => match.slice(1)), [0, 90, 180, 270].map((angle, index) => [String(angle), `${label} ${index + 1}`]));
+      assert.deepEqual([...flower.matchAll(/<li>\n<h3>([^<]+)<\/h3>\n<p>/g)].map(match => match[1]), headings[language]);
+      assert.equal(flower.match(/<span style="--lie: -?\d+deg"><\/span>/g).length, 4, language);
+    }
+  });
+
+  test("gives the hero and the overlay each their own variant of a component, with its own texts", async () => {
+    const flower = async (path, region) => {
+      const html = (await readFile(join(full, "public", path), "utf8")).match(new RegExp(`<aside class="${region}"[\\s\\S]*?</aside>`))[0];
+      return html.slice(html.indexOf("<component-flower "), html.indexOf("</component-flower>"));
+    };
+    const hero = await flower("en/index.html", "hero");
+    const overlay = await flower("en/pages/about/index.html", "overlay");
+    assert.ok(hero.includes('aria-labelledby="componentFlowerHero-1-title"') && hero.includes("<code>componentFlowerHero.md</code>"));
+    assert.ok(overlay.includes('aria-labelledby="componentFlowerOverlay-1-title"') && overlay.includes("<code>componentFlowerOverlay.md</code>"));
+    assert.doesNotMatch(hero, /componentFlowerOverlay/);
+    assert.doesNotMatch(overlay, /componentFlowerHero/);
+  });
+
+  test("shows a variant and a component in a post that names them in a paragraph or in a block of its own, next to the overlay's variant", async () => {
     const html = await readFile(join(site, "public", "en", "posts", "templates", "index.html"), "utf8");
     const [article, overlay] = html.split('<aside class="overlay"');
-    assert.match(article, /like the slider here:<\/p>\n<link [^>]+>\n<script [^>]+><\/script>\n<component-slider class="component">\n {2}<h3><label for="componentSlider-1-input">Slider<\/label><\/h3>/);
-    // The block of the second slider sets its title, its range, its steps and its text.
-    assert.ok(article.includes('<component-slider class="component">\n  <h3><label for="componentSlider-2-input">A slider of its own</label></h3>\n' +
-      '  <output for="componentSlider-2-input" aria-hidden="true">5</output>\n' +
-      '  <input id="componentSlider-2-input" type="range" min="0" max="10" value="5">\n\n<p>It runs from 0 to 10 and has no steps.</p>\n'));
-    assert.ok(overlay.includes('<input id="componentSlider-3-input" type="range" min="1" max="1000" value="500">'));
+    assert.match(article, /like the hero&#39;s slider here:<\/p>\n<link [^>]+>\n<script [^>]+><\/script>\n<component-slider class="component">\n {2}<h3><label for="componentSliderHero-1-input">Slider<\/label><\/h3>/);
+    // The block of the component itself sets its title, its range, its steps and its text.
+    assert.ok(article.includes('<component-slider class="component">\n  <h3><label for="componentSlider-1-input">A slider of its own</label></h3>\n' +
+      '  <output for="componentSlider-1-input" aria-hidden="true">5</output>\n' +
+      '  <input id="componentSlider-1-input" type="range" min="0" max="10" value="5">\n\n<p>It runs from 0 to 10 and has no steps.</p>\n'));
+    assert.ok(overlay.includes('<input id="componentSliderOverlay-1-input" type="range" min="1" max="10000" value="5000">'));
     assert.equal(html.match(/ id="[^"]+"/g).length, new Set(html.match(/ id="[^"]+"/g)).size);
   });
 
@@ -557,7 +584,7 @@ describe("a site with several tagged posts", () => {
 
   test("escapes JSON-LD so that content cannot close its script element", async () => {
     const html = await page("en/posts/newest");
-    assert.equal(html.match(/<\/script/gi).length, 3, "the scripts of the two components and JSON-LD");
+    assert.equal(html.match(/<\/script/gi).length, 2, "the script of the overlay's slider and JSON-LD");
     const jsonLd = JSON.parse(html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)[1]);
     const post = jsonLd["@graph"].find(node => node["@type"] === "BlogPosting");
     assert.equal(post.name, "</script><script>alert(1)</script>");
@@ -732,8 +759,8 @@ describe("a site with its own layout and component settings", () => {
     return html.slice(html.indexOf("<component-flower "), html.indexOf("</component-flower>"));
   };
   const settings = config => config.slice(config.indexOf("  layout: {"), config.indexOf("  directories: {"));
-  const regions = `  hero: { components: { componentSlider: true, componentGallery: true, componentFlower: true } },
-  overlay: { components: { componentSlider: true } },
+  const regions = `  hero: { components: { componentSliderHero: true, componentGalleryHero: true, componentFlowerHero: true } },
+  overlay: { components: { componentSliderOverlay: true } },
 `;
 
   before(async () => {
@@ -742,11 +769,11 @@ describe("a site with its own layout and component settings", () => {
     configFile = join(site, "blyss.config.js");
     const config = await readFile(configFile, "utf8");
     // The German flower has an introduction, two texts and no name for its petals.
-    await writeFile(join(site, "_content", "de", "components", "componentFlower.md"),
+    await writeFile(join(site, "_content", "de", "components", "componentFlowerHero.md"),
       "---\ntitle: Blume\n---\n\nEinleitung.\n\n### Eins\n\nText *eins*.\n\n#### Mehr\n\n### Zwei\n");
     await writeFile(configFile, config.replace(settings(config), `  layout: { margin: "3rem", paddingHero: "4vh", paddingOverlay: "5vh", alignHome: "left", alignOther: "centerLeft", alignHero: "center", alignOverlay: "left" },
 ${regions}  components: {
-    componentSlider: {
+    componentSliderHero: {
       start: -10,
       end: 30,
       steps: [
@@ -755,8 +782,9 @@ ${regions}  components: {
         { value: 0, description: { en: "Frost", de: "Frost" } }
       ]
     },
-    componentGallery: { heightOverall: "200px", heightCenter: "150%", heightExpanded: "90%", animationSpeedScrolling: "1s", animationSpeedImgEnlargement: ".2s" },
-    componentFlower: { petals: 5, colourSystem: "complementary", colourBaseHue: 40, animationSpeedFalling: "1500ms", animationSpeedText: "2s",
+    componentSliderOverlay: { start: 0, end: 4, steps: [{ value: 4, description: { en: "Full", de: "Voll" } }, { value: 0, description: { en: "Empty", de: "Leer" } }] },
+    componentGalleryHero: { heightOverall: "200px", heightCenter: "150%", heightExpanded: "90%", animationSpeedScrolling: "1s", animationSpeedImgEnlargement: ".2s" },
+    componentFlowerHero: { petals: 5, colourSystem: "complementary", colourBaseHue: 40, animationSpeedFalling: "1500ms", animationSpeedText: "2s",
       animationSpeedFading: ".5s", opacityFallen: "20%", fontSizeText: "75%" }
   },
 `));
@@ -774,14 +802,19 @@ ${regions}  components: {
   });
 
   test("runs the slider from start to end, starting halfway, with its steps sorted and described in each language", async () => {
-    const steps = (cold, frost, hot) => '  <output for="componentSlider-1-input" aria-hidden="true">10</output>\n' +
-      '  <input id="componentSlider-1-input" type="range" min="-10" max="30" value="10">\n<ol class="steps">\n' +
+    const steps = (cold, frost, hot) => '  <output for="componentSliderHero-1-input" aria-hidden="true">10</output>\n' +
+      '  <input id="componentSliderHero-1-input" type="range" min="-10" max="30" value="10">\n<ol class="steps">\n' +
       `  <li style="--position: 0%"><data value="-10">-10</data> <span>${cold}</span></li>\n` +
       `  <li style="--position: 25%" aria-current="step"><data value="0">0</data> <span>${frost}</span></li>\n` +
       `  <li style="--position: 100%"><data value="30">30</data> <span>${hot}</span></li>\n</ol>`;
     assert.ok((await slider("en/index.html")).includes(steps("Cold &amp; &lt;icy&gt;", "Frost", "Hot")));
-    assert.ok((await slider("de/pages/about/index.html")).includes(steps("Kalt", "Frost", "Heiß")));
-    assert.ok((await slider("de/index.html")).includes('<h3><label for="componentSlider-1-input">Schieberegler</label></h3>'));
+    assert.ok((await slider("de/index.html")).includes(steps("Kalt", "Frost", "Heiß")));
+    assert.ok((await slider("de/index.html")).includes('<h3><label for="componentSliderHero-1-input">Schieberegler</label></h3>'));
+    // The overlay's slider has settings of its own.
+    assert.ok((await slider("de/pages/about/index.html")).includes('  <output for="componentSliderOverlay-1-input" aria-hidden="true">2</output>\n' +
+      '  <input id="componentSliderOverlay-1-input" type="range" min="0" max="4" value="2">\n<ol class="steps">\n' +
+      '  <li style="--position: 0%" aria-current="step"><data value="0">0</data> <span>Leer</span></li>\n' +
+      '  <li style="--position: 100%"><data value="4">4</data> <span>Voll</span></li>\n</ol>'));
   });
 
   test("gives the gallery its heights and speeds, the height of the image in the centre as a factor", async () => {
@@ -791,7 +824,7 @@ ${regions}  components: {
 
   test("gives the flower its petals, colours and times, and each petal the text of its number", async () => {
     const english = await flower("en/index.html");
-    assert.ok(english.startsWith('<component-flower class="component" role="group" aria-labelledby="componentFlower-1-title" ' +
+    assert.ok(english.startsWith('<component-flower class="component" role="group" aria-labelledby="componentFlowerHero-1-title" ' +
       'style="--hue-petals: 40; --hue-centre: 220; --hue-stem: 40; --petal-width: 0.846; --speed-falling: 1500ms; --speed-text: 2s; ' +
       '--speed-fading: .5s; --opacity-fallen: 0.2; --font-size-text: 0.75">'));
     assert.deepEqual([...english.matchAll(/style="--angle: ([\d.]+)deg" aria-label="([^"]+)" disabled>/g)].map(match => match.slice(1)),
@@ -815,7 +848,7 @@ ${regions}  components: {
     assert.ok((await page("en/index.html")).includes(`<body data-kind="home" data-align="center" ${attributes}>`));
     assert.ok((await page("en/pages/about/index.html")).includes(`<body data-kind="page" data-align="left" ${attributes}>`));
     const fallback = await slider("en/index.html");
-    assert.ok(fallback.includes('<input id="componentSlider-1-input" type="range" min="0" max="100" value="50">'));
+    assert.ok(fallback.includes('<input id="componentSliderHero-1-input" type="range" min="0" max="100" value="50">'));
     assert.doesNotMatch(fallback, /<ol/);
     assert.ok((await gallery("en/index.html")).endsWith(
       'style="--height-overall: 8rem; --scale-center: 1.3; --height-expanded: 70; --speed-scrolling: 400ms; --speed-enlargement: 300ms">'));
@@ -848,8 +881,8 @@ describe("a site with its own hero and overlay", () => {
   }
 
   test("shows the parts of the hero and of the overlay that are switched on, the components in the order of the settings", async () => {
-    await buildWith(`  hero: { components: { componentFlower: true, componentSlider: false, componentGallery: true }, texts: false },
-  overlay: { showOn: { home: true, book: false }, components: { componentGallery: true, componentFlower: false }, texts: true },`);
+    await buildWith(`  hero: { components: { componentFlowerHero: true, componentSliderHero: false, componentGalleryHero: true }, texts: false },
+  overlay: { showOn: { home: true, book: false }, components: { componentGalleryOverlay: true, componentFlowerOverlay: false }, texts: true },`);
     const hero = await region("en/index.html", "hero");
     assert.deepEqual(components(hero), ["component-flower", "component-gallery"]);
     assert.ok(hero.includes("<h3></h3>"));
@@ -867,7 +900,7 @@ describe("a site with its own hero and overlay", () => {
   });
 
   test("leaves out a hero and an overlay without a part that is switched on", async () => {
-    await buildWith("  hero: { components: { componentSlider: false, componentFlower: false }, texts: false },\n  overlay: { texts: false },");
+    await buildWith("  hero: { components: { componentSliderHero: false, componentFlowerHero: false }, texts: false },\n  overlay: { texts: false },");
     for (const path of ["en/index.html", "de/index.html", "en/pages/about/index.html", "de/posts/index.html"]) {
       const html = await page(path);
       assert.doesNotMatch(html, /<aside|<component-|Why Blyss|Good to know/, path);
@@ -889,8 +922,8 @@ describe("a site with its own hero and overlay", () => {
   });
 
   test("gives the overlay the components and the texts of the hero if synchroniseHeroOverlay is true", async () => {
-    await buildWith(`  hero: { components: { componentFlower: true, componentSlider: false }, texts: true },
-  overlay: { showOn: { post: false }, components: { componentSlider: true, componentGallery: true }, texts: false },
+    await buildWith(`  hero: { components: { componentFlowerHero: true, componentSliderHero: false }, texts: true },
+  overlay: { showOn: { post: false }, components: { componentSliderOverlay: true, componentGalleryOverlay: true }, texts: false },
   synchroniseHeroOverlay: true,`);
     const hero = await region("en/index.html", "hero");
     // From the first component to the end of the texts, the overlay is the hero.
@@ -898,6 +931,7 @@ describe("a site with its own hero and overlay", () => {
     for (const path of ["en/index.html", "en/pages/about/index.html", "en/tags/index.html"]) {
       const overlay = await region(path, "overlay");
       assert.deepEqual(components(overlay), ["component-flower"], path);
+      assert.ok(overlay.includes('aria-labelledby="componentFlowerHero-'), path);
       assert.ok(overlay.includes("<h3>Why Blyss</h3>") && overlay.includes("<h3>Your own texts</h3>"), path);
       assert.doesNotMatch(overlay, /Good to know/, path);
     }
@@ -951,7 +985,7 @@ describe("a site with a component of its own", () => {
       '```{{notice}}\n---\ntitle: Block & <own>\nlevel: low\nhours: ["8", "12"]\n---\n\nOpen on *Sunday*.\n```\n\n' +
       "```{{notice}}\n```\n\n```{{notice}}\n---\n---\n```\n\n~~~{{notice}}\n---\nhours:\n  - 1\n  - 2\n---\n~~~\n\n```{{missing}}\ntext\n```\n");
     await writeFile(join(site, "_content", "de", "pages", "blocks.md"), "---\ntitle: Blöcke\n---\n\n" +
-      "```{{componentFlower}}\n---\npetals: 3\ncolourSystem: complementary\nfontSizeText: 80%\n---\n\n### Eins\n\nText.\n\n### Zwei\n```\n");
+      "```{{componentFlowerHero}}\n---\npetals: 3\ncolourSystem: complementary\nfontSizeText: 80%\n---\n\n### Eins\n\nText.\n\n### Zwei\n```\n");
     const result = run(["build"], site);
     assert.equal(result.status, 0, result.stderr);
   });
@@ -991,22 +1025,23 @@ describe("a site with a component of its own", () => {
   test("gives a block of the flower its petals, its colours and its texts, and the names of the component's text", async () => {
     const html = await page("de/pages/blocks/index.html");
     const flower = html.slice(html.indexOf("<component-flower "), html.indexOf("</component-flower>"));
-    assert.ok(flower.startsWith('<component-flower class="component" role="group" aria-labelledby="componentFlower-1-title" ' +
+    assert.ok(flower.startsWith('<component-flower class="component" role="group" aria-labelledby="componentFlowerHero-1-title" ' +
       'style="--hue-petals: 202; --hue-centre: 22; --hue-stem: 202; --petal-width: 0.9; --speed-falling: 3s; --speed-text: 3s; ' +
-      '--speed-fading: 4s; --opacity-fallen: 0.3; --font-size-text: 0.8">\n  <h3 id="componentFlower-1-title">Blume</h3>'));
+      '--speed-fading: 4s; --opacity-fallen: 0.2; --font-size-text: 0.8">\n  <h3 id="componentFlowerHero-1-title">Blume</h3>'));
     assert.deepEqual([...flower.matchAll(/style="--angle: ([\d.]+)deg" aria-label="([^"]+)" disabled>/g)].map(match => match.slice(1)),
       [["0", "Blütenblatt 1"], ["120", "Blütenblatt 2"], ["240", "Blütenblatt 3"]]);
     assert.deepEqual([...flower.matchAll(/<li>\n<h3>([^<]+)<\/h3>/g)].map(match => match[1]), ["Eins", "Zwei"]);
   });
 
-  test("refuses a setting that its data file refuses, in blyss.config.js and in a block, and keeps the previous output", async () => {
+  test("refuses a setting that its data file refuses, in blyss.config.js, in a block and for a variant without settings, and keeps the previous output", async () => {
     const config = await readFile(configFile, "utf8");
     const source = await readFile(join(site, blocks), "utf8");
     for (const [file, original, search, replacement, message] of [
       [configFile, config, 'hours: ["9", "17"]', "hours: 9", "Cannot use components.notice.hours 9: it must be a list of hours.\n"],
       [join(site, blocks), source, 'hours: ["8", "12"]', "hours: 8",
         `Cannot build ${blocks}: its {{notice}} block cannot use hours 8, which must be a list of hours.\n`],
-      [join(site, blocks), source, "---\n\nOpen on", "\nOpen on", `Cannot build ${blocks}: the front matter of its {{notice}} block lacks its closing ---.\n`]
+      [join(site, blocks), source, "---\n\nOpen on", "\nOpen on", `Cannot build ${blocks}: the front matter of its {{notice}} block lacks its closing ---.\n`],
+      [join(site, blocks), source, "```{{missing}}", "{{noticeOverlay}}\n\n```{{missing}}", "Cannot use components.noticeOverlay.hours undefined: it must be a list of hours.\n"]
     ]) {
       assert.ok(original.includes(search), search);
       await writeFile(file, original.replace(search, replacement));
@@ -1036,7 +1071,8 @@ describe("invalid content", () => {
   const hero = join("_content", "en", "heroTexts.md");
   const overlay = join("_content", "en", "overlayTexts.md");
   const fragment = join("_content", "en", "my-hero.md");
-  const text = join("_content", "en", "components", "componentSlyder.md");
+  const text = join("_content", "en", "components", "componentSlyderHero.md");
+  const variant = join("components", "componentSliderHero", "componentSliderHero.html");
   const french = join("_content", "fr", "pages", "index.md");
   const loose = join("_content", "index.md");
   const section = join("_content", "en", "docs", "intro.md");
@@ -1057,7 +1093,9 @@ describe("invalid content", () => {
       `Cannot build ${fragment}: templates use its name in placeholders, so it must start with a Latin letter and contain ` +
       "only Latin letters and digits, such as heroTexts.md.\n"],
     ["a text for a component that does not exist", text, "---\ntitle: Slider\n---\n",
-      `Cannot build ${text}: there is no component "componentSlyder" in components/.\n`],
+      `Cannot build ${text}: there is no component "componentSlyderHero" or "componentSlyder" in components/.\n`],
+    ["a component with the name of a variant", variant, "<p></p>\n", `Cannot build ${dirname(variant)}: componentSliderHero is the name ` +
+      "of the hero's variant of componentSlider, so the component needs another name.\n"],
     ["content in the directory of a language that site.languages lacks", french, "---\ntitle: Accueil\n---\n",
       `Cannot build ${french}: there is no language "fr" in site.languages.\nAdd the language to site.languages, or move the file ` +
       `to the directory of one of its languages, such as ${english}.\n`],
@@ -1173,36 +1211,39 @@ describe("invalid configuration", () => {
       ['paddingOverlay: "1rem"', 'paddingOverlay: "1em"', `layout.paddingOverlay "1em": ${length} "2vmin"`],
       ['alignOverlay: "centerExtra"', 'alignOverlay: "centerLeft"',
         'layout.alignOverlay "centerLeft": it must be "centerExtra", "left" or "center"'],
-      ["componentSlider: true", "componentSlyder: true",
-        'hero.components.componentSlyder: there is no component "componentSlyder" in components/'],
-      ["componentFlower: true", 'componentFlower: "on"', 'hero.components.componentFlower "on": it must be true (on) or false (off)'],
+      ["componentSliderHero: true", "componentSlyderHero: true",
+        'hero.components.componentSlyderHero: there is no component "componentSlyderHero" or "componentSlyder" in components/'],
+      ["componentFlowerHero: false", 'componentFlowerHero: "on"', 'hero.components.componentFlowerHero "on": it must be true (on) or false (off)'],
+      ["componentGalleryOverlay: false", "componentGalleryOverlay: 0", "overlay.components.componentGalleryOverlay 0: it must be true (on) or false (off)"],
       ["texts: true // all texts of _content/<language>/heroTexts.md", "texts: 1 // all texts of _content/<language>/heroTexts.md",
         "hero.texts 1: it must be true (on) or false (off)"],
       ["post: true,", "posts: true,",
         'overlay.showOn.posts: there is no kind of page "posts", only "home", "page", "post", "book", "list" and "not-found"'],
       ["home: false,", "home: 0,", "overlay.showOn.home 0: it must be true (on) or false (off)"],
       ["synchroniseHeroOverlay: false", 'synchroniseHeroOverlay: "yes"', 'synchroniseHeroOverlay "yes": it must be true (on) or false (off)'],
-      ["componentGallery: {", "componentGalery: {", 'components.componentGalery: there is no component "componentGalery" in components/'],
-      ["start: 1,", "start: 1.5,", "components.componentSlider.start 1.5: it must be a whole number"],
-      ["end: 1000", "end: 1", "components.componentSlider.end 1: it must be a whole number greater than start (1)"],
-      ["value: 250,", "value: 1001,", "components.componentSlider.steps[1].value 1001: it must be a whole number from 1 to 1000"],
-      ['de: "Viertel"', 'fr: "Quart"', 'components.componentSlider.steps[1].description {"en":"Quarter","fr":"Quart"}: ' +
+      ["componentGalleryHero: {", "componentGaleryHero: {",
+        'components.componentGaleryHero: there is no component "componentGaleryHero" or "componentGalery" in components/'],
+      ["start: 1,", "start: 1.5,", "components.componentSliderHero.start 1.5: it must be a whole number"],
+      ["end: 10000", "end: 1", "components.componentSliderHero.end 1: it must be a whole number greater than start (1)"],
+      ["value:  2500,", "value: 10001,", "components.componentSliderHero.steps[1].value 10001: it must be a whole number from 1 to 10000"],
+      ['de: "Ein Viertel"', 'fr: "Quart"', 'components.componentSliderHero.steps[1].description {"en":"A Quarter","fr":"Quart"}: ' +
         'it must be an object with a text for the language "de"'],
-      ['heightOverall: "8rem"', 'heightOverall: "8em"', `components.componentGallery.heightOverall "8em": ${length} "8rem"`],
-      ['heightCenter: "130%"', 'heightCenter: "13rem"', 'components.componentGallery.heightCenter "13rem": ' +
+      ['heightOverall: "8rem"', 'heightOverall: "8em"', `components.componentGalleryHero.heightOverall "8em": ${length} "8rem"`],
+      ['settings\n      heightOverall: "8rem"', 'settings\n      heightOverall: "8em"', `components.componentGalleryOverlay.heightOverall "8em": ${length} "8rem"`],
+      ['heightCenter: "140%"', 'heightCenter: "13rem"', 'components.componentGalleryHero.heightCenter "13rem": ' +
         'it must be a percentage of heightOverall from 100% up, such as "130%"'],
-      ['heightExpanded: "70%"', 'heightExpanded: "170%"', 'components.componentGallery.heightExpanded "170%": ' +
+      ['heightExpanded: "70%"', 'heightExpanded: "170%"', 'components.componentGalleryHero.heightExpanded "170%": ' +
         'it must be a percentage of the height of the screen above 0% and up to 100%, such as "70%"'],
-      ['animationSpeedScrolling: "400ms"', 'animationSpeedScrolling: "400MS"', 'components.componentGallery.animationSpeedScrolling "400MS": ' +
+      ['animationSpeedScrolling: "400ms"', 'animationSpeedScrolling: "400MS"', 'components.componentGalleryHero.animationSpeedScrolling "400MS": ' +
         'it must be a duration in ms or s, such as "400ms"'],
-      ['animationSpeedImgEnlargement: "300ms"', "animationSpeedImgEnlargement: 300", 'components.componentGallery.animationSpeedImgEnlargement 300: ' +
+      ['animationSpeedImgEnlargement: "300ms"', "animationSpeedImgEnlargement: 300", 'components.componentGalleryHero.animationSpeedImgEnlargement 300: ' +
         'it must be a duration in ms or s, such as "400ms"'],
-      ["petals: 8", "petals: 2", "components.componentFlower.petals 2: it must be a whole number from 3 to 24"],
-      ['colourSystem: "triadic"', 'colourSystem: "tetradic"', 'components.componentFlower.colourSystem "tetradic": it must be "complementary" or "triadic"'],
-      ["colourBaseHue: 202", "colourBaseHue: 361", "components.componentFlower.colourBaseHue 361: it must be a hue from 0 to 360, such as 202"],
-      ['animationSpeedFalling: "3s"', "animationSpeedFalling: 3", 'components.componentFlower.animationSpeedFalling 3: it must be a duration in ms or s, such as "3s"'],
-      ['opacityFallen: "30%"', 'opacityFallen: "0%"', 'components.componentFlower.opacityFallen "0%": it must be a percentage from 1% to 100%, such as "30%"'],
-      ['fontSizeText: "60%"', 'fontSizeText: ".6rem"', 'components.componentFlower.fontSizeText ".6rem": ' +
+      ["petals: 4", "petals: 2", "components.componentFlowerHero.petals 2: it must be a whole number from 3 to 24"],
+      ['colourSystem: "triadic"', 'colourSystem: "tetradic"', 'components.componentFlowerHero.colourSystem "tetradic": it must be "complementary" or "triadic"'],
+      ["colourBaseHue: 202", "colourBaseHue: 361", "components.componentFlowerHero.colourBaseHue 361: it must be a hue from 0 to 360, such as 202"],
+      ['animationSpeedFalling: "3s"', "animationSpeedFalling: 3", 'components.componentFlowerHero.animationSpeedFalling 3: it must be a duration in ms or s, such as "3s"'],
+      ['opacityFallen: "20%"', 'opacityFallen: "0%"', 'components.componentFlowerHero.opacityFallen "0%": it must be a percentage from 1% to 100%, such as "30%"'],
+      ['fontSizeText: "60%"', 'fontSizeText: ".6rem"', 'components.componentFlowerHero.fontSizeText ".6rem": ' +
         'it must be a percentage of the default text size above 0%, such as "60%"']
     ]) {
       await withConfig(search, replacement, async () => {

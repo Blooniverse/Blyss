@@ -18,7 +18,7 @@ npm start       # serve public/ on http://localhost:3000
 | `_content/de/pages/`, `_content/de/posts/`, `_content/de/book/` | German Markdown pages, posts and docs |
 | `_content/en/heroTexts.md` and `_content/de/heroTexts.md` | The texts of the [hero](#hero) |
 | `_content/en/overlayTexts.md` and `_content/de/overlayTexts.md` | The texts of the [overlay](#overlay) |
-| `_content/en/components/`, `_content/de/components/` | The texts of the components |
+| `_content/en/components/`, `_content/de/components/` | The texts of the components' [variants](#variants) for the hero and the overlay |
 | `components/` | The [components](#components) `componentSlider/`, `componentGallery/` and `componentFlower/`, each with its template, stylesheet and script |
 | `templates/` | HTML templates: `document.html`, `home.html`, `page.html`, `post.html`, `book.html`, `hero.html`, `overlay.html` |
 | `static/` | Static files such as `static/assets/css/main.css`, `static/assets/img/logo.svg`, the gallery's images in `static/assets/img/gallery/`, `static/robots.txt` and `static/staticwebapp.config.json`, copied unchanged into `public/` |
@@ -47,7 +47,7 @@ tags: [Blyss, Markdown]
 - `slug` defaults to the file name. Give each language its own slug for localized URLs.
 - Translations are associated by giving them the same `translationKey`. Blyss links them in the language switcher and with `hreflang` alternate links.
 - A page containing `{{recentPosts}}` lists the three newest posts of its language, ordered by `datePublished`.
-- A paragraph that consists of the name of a component in double curly braces alone, such as `{{componentSlider}}`, shows that [component](#components) in a page, post or doc. A fenced code block with that placeholder as its language, a [block](#blocks), shows it with a text and settings of its own.
+- A paragraph that consists of the name of a component or a [variant](#variants) in double curly braces alone, such as `{{componentSliderHero}}`, shows that [component](#components) in a page, post or doc. A fenced code block with that placeholder as its language, a [block](#blocks), shows it with a text and settings of its own.
 - Posts can have `tags`. Blyss generates the archive `/<language>/posts/`, the tag index `/<language>/tags/` and one page per tag, such as `/en/tags/markdown/`. Do not create content at these URLs.
 - The archive and tag pages show `pagination.pageSize` posts (10 by default, set in `blyss.config.js`). Older posts continue on `/<language>/posts/page/2/`, `/<language>/tags/<tag>/page/2/` and so on, linked by “Newer posts” and “Older posts”.
 - Markdown files directly in `_content/<language>/`, such as `heroTexts.md`, are fragments: Blyss publishes no page for them, but `templates/document.html` can show them on every page of their language as `{{<name>Title}}`, the `title` of their front matter, and `{{<name>Content}}`, their text, such as `{{heroTextsTitle}}` and `{{heroTextsContent}}`. Their file names must start with a Latin letter and contain only Latin letters and digits. `heroTexts.md` and `overlayTexts.md` also hold the texts of the [hero](#hero) and of the [overlay](#overlay).
@@ -79,7 +79,7 @@ tags: [Blyss, Markdown]
 To add French, for example:
 
 1. Add `fr` to `site.languages` in `blyss.config.js`: its `label`, `"Français"`, its `locale`, `"fr"`, its `description` and every label of the other languages, translated.
-2. Add a French `description` to each step of `components.componentSlider.steps`.
+2. Add a French `description` to each step of `components.componentSliderHero.steps` and of `components.componentSliderOverlay.steps`.
 3. Create `_content/fr/` like `_content/en/`: `pages/index.md`, `pages/about.md`, `pages/404.md`, `heroTexts.md`, `overlayTexts.md`, the components' texts in `components/`, `book/index.md` with any docs, and any posts. Give each translation the `translationKey` of its original.
 4. Run `npm run build`. The language switcher and the `hreflang` alternates now link the French pages to their translations.
 
@@ -110,7 +110,7 @@ Centered lists keep their markers next to their items, and code blocks stay left
 
 The home pages end with the hero: `{{hero}}` in `templates/document.html` shows `templates/hero.html` below the page, which starts with the site's title and slogan. `hero` in `blyss.config.js` switches each part of the hero on (`true`) or off (`false`):
 
-- `components` lists the [components](#components) of the hero in their order: the slider, the gallery and the flower. Set a component to `false` to drop it, move its line to change the order, or add a component of your own by its name.
+- `components` lists the hero's [variants](#variants) of the [components](#components) in their order: `componentSliderHero`, `componentGalleryHero` and `componentFlowerHero`, of which the starter switches on only the slider. Set a variant to `true` to show it or to `false` to drop it, move its line to change the order, or add a component of your own by the name of its variant, `<name>Hero`.
 - `texts` shows or hides all texts of `_content/<language>/heroTexts.md` at once. The `title` of that file is their heading, and each `###` heading starts a text that runs up to the next one. The hero shows as many texts as the file has, each in full length, side by side in as many columns as fit. Blyss refuses any content before the first `###` heading, except comments. The starter has three texts in each language.
 - A hero without a part that is switched on is not shown at all, and neither is a hero whose only part, its texts, has no file in the page's language. Without `templates/hero.html`, the website has no hero.
 - On screens of at least 1024×640 pixels, the page stops below the top bar, or once its end is in view if it is taller than the window, while the hero slides up over it and fades it out. A hero that is shorter than the window then stops below the top bar, and the footer follows it into the window. Keyboard focus in the page turns this effect off, so that the hero never covers the focused element. With reduced motion, on smaller screens and in browsers without scroll-driven animations, the hero is a static block below the page.
@@ -122,7 +122,7 @@ The home pages end with the hero: `{{hero}}` in `templates/document.html` shows 
 The overlay is a bar at the bottom of the window: `{{overlay}}` in `templates/document.html` shows `templates/overlay.html`. Its button opens the overlay as a panel; the Close button, the Escape key or a click outside closes it again. The browser's [Popover API](https://developer.mozilla.org/docs/Web/API/Popover_API) does this without JavaScript. `overlay` in `blyss.config.js` configures it, independently of the hero:
 
 - `showOn` switches the overlay on or off for each kind of page, but not for a single page or post. The kinds are the three content types, `page` for the pages in `_content/<language>/pages/`, `post` for the posts and `book` for the docs, and `home` for the home pages, `list` for the archive and the tag pages and `"not-found"` for the “not found” pages. A kind that `showOn` does not name has the overlay. The starter switches it off on the home pages, which have the hero.
-- `components` and `texts` work like those of the hero: `components` lists the overlay's own components in their order, and `texts` shows or hides all texts of `_content/<language>/overlayTexts.md`, a file like `heroTexts.md`. In the starter, the overlay shows the slider and the gallery, but not the flower.
+- `components` and `texts` work like those of the hero: `components` lists the overlay's own variants, `componentSliderOverlay`, `componentGalleryOverlay` and `componentFlowerOverlay`, in their order, and `texts` shows or hides all texts of `_content/<language>/overlayTexts.md`, a file like `heroTexts.md`. In the starter, the overlay shows only the slider.
 - An overlay without a part that is switched on is not shown, and neither is its bar. Without `templates/overlay.html`, the website has no overlay.
 - `layout.paddingOverlay` sets the space above and below the content of the opened overlay and `layout.alignOverlay` its alignment (see [Layout](#layout)).
 - The labels `overlay` and `close` in `blyss.config.js` hold the texts of the overlay's buttons. Templates can use every label as `{{<key>Label}}`, such as `{{overlayLabel}}`.
@@ -131,7 +131,7 @@ The overlay is a bar at the bottom of the window: `{{overlay}}` in `templates/do
 
 ### Synchronising the hero and the overlay
 
-`synchroniseHeroOverlay: true` in `blyss.config.js` makes the overlay a copy of the hero, which is the origin: the overlay then shows the components of `hero.components` and, if `hero.texts` is `true`, the texts of `heroTexts.md`. This overrides `overlay.components` and `overlay.texts`, whatever they say, and `overlayTexts.md` is not used. `overlay.showOn` still decides which kinds of pages have the overlay, and `layout.paddingOverlay` and `layout.alignOverlay` how it looks. The setting is `false` in the starter and by default.
+`synchroniseHeroOverlay: true` in `blyss.config.js` makes the overlay a copy of the hero, which is the origin: the overlay then shows the hero's variants of `hero.components`, with their settings and texts, and, if `hero.texts` is `true`, the texts of `heroTexts.md`. This overrides `overlay.components` and `overlay.texts`, whatever they say, and `overlayTexts.md` is not used. `overlay.showOn` still decides which kinds of pages have the overlay, and `layout.paddingOverlay` and `layout.alignOverlay` how it looks. The setting is `false` in the starter and by default.
 
 ## Components
 
@@ -142,23 +142,31 @@ A component is a part of a page that brings what it needs. Each has a directory 
 | `components/<name>/<name>.html` | Its template, which links to its stylesheet and its script |
 | `components/<name>/<name>.css` and `<name>.js` | Its stylesheet and its script for the browser, published at `/components/<name>/` |
 | `components/<name>/<name>.data.js` | Checks its settings during the build and prepares values for its template |
-| `_content/<language>/components/<name>.md` | Its texts in each language |
-| `components.<name>` in `blyss.config.js` | Its settings |
+| `_content/<language>/components/<name>Hero.md` and `<name>Overlay.md` | The texts of its [variants](#variants) in each language |
+| `components.<name>Hero` and `components.<name>Overlay` in `blyss.config.js` | The settings of its variants |
 
-- `hero.components` and `overlay.components` in `blyss.config.js` show a component in the [hero](#hero) and in the [overlay](#overlay); `{{components}}` in `templates/hero.html` and `templates/overlay.html` stands for those that are switched on.
-- `{{<name>}}` shows a component in any template.
-- A paragraph that consists of `{{<name>}}` alone shows it in a page or post. The post “Templates and styles” shows the slider this way.
+- `hero.components` and `overlay.components` in `blyss.config.js` show a component's variants in the [hero](#hero) and in the [overlay](#overlay); `{{components}}` in `templates/hero.html` and `templates/overlay.html` stands for those that are switched on.
+- `{{<name>}}` shows a component, and `{{<name>Hero}}` or `{{<name>Overlay}}` one of its variants, in any template.
+- A paragraph that consists of such a placeholder alone shows it in a page or post. The post “Templates and styles” shows the hero's slider this way.
 - A [block](#blocks) shows it in a page or post with a text and settings of its own, as that post shows a second slider.
 - A component can appear several times on a page. Each is a custom element, `<component-slider>`, `<component-gallery>` or `<component-flower>`, which its script sets up wherever it appears, so that every slider, every gallery and every flower works on its own.
 - Their class `component` lets `static/assets/css/main.css` place them: centered where the text around them is centered.
-- For a component of your own, create `components/<name>/<name>.html`; every other file is optional. The [Blyss usage guide](https://github.com/Blooniverse/Blyss/blob/main/USAGE.md#components) lists the placeholders of a component's template.
+- For a component of your own, create `components/<name>/<name>.html`; every other file is optional, and its variants come with it. The [Blyss usage guide](https://github.com/Blooniverse/Blyss/blob/main/USAGE.md#components) lists the placeholders of a component's template.
+
+### Variants
+
+Each component has a variant for the hero, `<name>Hero`, and one for the overlay, `<name>Overlay`, such as `componentSliderHero` and `componentSliderOverlay`. A variant is the component under another name, with texts and settings of its own: `_content/<language>/components/componentSliderHero.md` and `components.componentSliderHero` in `blyss.config.js` serve the hero's slider, `componentSliderOverlay.md` and `components.componentSliderOverlay` the overlay's. So the hero and the overlay can show the same component with different titles, texts, ranges or colours, while the template, the stylesheet and the script stay the same.
+
+- A variant takes nothing from the component itself: `components.componentSlider` and `componentSlider.md` would serve only `{{componentSlider}}`. The starter has neither, so the post “Templates and styles” gives its block of `{{componentSlider}}` all its settings and its text.
+- The ids of a variant's elements carry its name, such as `componentSliderHero-1-input`.
+- Blyss refuses a component whose directory is named like the variant of another, such as `components/componentSliderHero/`.
 
 ### Blocks
 
 A fenced code block whose language is the name of a component in double curly braces is a block: it shows that component with a text and settings of its own, in this one place of a page, post or doc.
 
 ````markdown
-```{{componentGallery}}
+```{{componentGalleryHero}}
 ---
 title: Our trip
 heightOverall: 12rem
@@ -170,7 +178,7 @@ heightOverall: 12rem
 ````
 
 - A block holds what `_content/<language>/components/<name>.md` holds: front matter and Markdown, both optional.
-- Its front matter adds to the front matter of that file and replaces the fields of the same name: this gallery has a `title` of its own and keeps the names of its arrows, `previous` and `next`.
+- Its front matter adds to the front matter of that file and replaces the fields of the same name: this block of the hero's gallery has a `title` of its own and keeps the names of its arrows, `previous` and `next`, from `componentGalleryHero.md`.
 - A field with the name of a setting sets that setting, in place of `components.<name>` in `blyss.config.js`, as `heightOverall` does here. A value that is JSON, such as `5`, `true` or `[1, 2]`, is taken as such, and any other value as a text. The steps of a slider are such a list: `steps: [{"value": 0, "description": {"en": "Calm"}}]`, or `steps: []` for none.
 - Its Markdown replaces the Markdown of that file, here the list of the images. A block without Markdown keeps it, so that a block of front matter alone changes fields and settings only.
 - The build stops and names the page if a setting of a block is not what its component needs, as it does for the settings of `blyss.config.js`.
@@ -180,20 +188,20 @@ heightOverall: 12rem
 
 The slider follows its heading, with its value above it and its steps and its text below it.
 
-- The `title` and the text of `_content/<language>/components/componentSlider.md` are its heading and its text.
-- `components.componentSlider` in `blyss.config.js` sets its whole-number `start` and `end`, 0 and 100 without them, and its `steps`: each step has a `value` from `start` to `end` and a `description` in every language, and both appear below the slider at that value. The starter defines four steps; change, add or remove them as you like. The slider starts halfway between `start` and `end`.
+- The `title` and the text of `_content/<language>/components/componentSliderHero.md` are the heading and the text of the hero's slider, those of `componentSliderOverlay.md` the overlay's.
+- `components.componentSliderHero` and `components.componentSliderOverlay` in `blyss.config.js` each set the whole-number `start` and `end` of their slider, 0 and 100 without them, and its `steps`: each step has a `value` from `start` to `end` and a `description` in every language, and both appear below the slider at that value. The starter defines five steps for each; change, add or remove them as you like. The slider starts halfway between `start` and `end`.
 - Its script shows the slider's value above it and highlights the last step it has reached. Without JavaScript, the slider moves all the same.
 
 ### Gallery
 
 The gallery shows any number of images side by side in a strip that visitors move sideways. The strip stops with an image in its centre, which grows without a frame.
 
-- `_content/<language>/components/componentGallery.md` lists the images: each item of its Markdown list is an image with its description in that language, such as `- ![A sun rising over blue hills](/assets/img/gallery/sunrise.svg)`. Its `title` is the gallery's heading, and `previous` and `next` name the two arrows for screen readers.
+- `_content/<language>/components/componentGalleryHero.md` lists the images of the hero's gallery and `componentGalleryOverlay.md` those of the overlay's: each item of its Markdown list is an image with its description in that language, such as `- ![A sun rising over blue hills](/assets/img/gallery/sunrise.svg)`. Its `title` is the gallery's heading, and `previous` and `next` name the two arrows for screen readers.
 - The images live in `static/assets/img/gallery/`, in any format that browsers show, such as SVG, PNG, JPEG, WebP, AVIF or GIF, and in any proportions. Blyss copies them unchanged. The starter's seven images are placeholders.
 - The gallery starts with its middle image in the centre, so that the images before and after it fill the strip.
 - Visitors move through the images with the arrows at both ends of the strip, with the arrow keys once the gallery has the focus, and by swiping or scrolling sideways. The first and the last image reach the centre too.
 - A click or a touch on the image in the centre, or the Enter or the space key, expands that image above the page: to 70% of the height of the screen, or less on a screen that is too narrow for an image of that height, so that it never outgrows the screen. Another click, touch or key, or the Escape key, shrinks it again.
-- `components.componentGallery` in `blyss.config.js` sets:
+- `components.componentGalleryHero` and `components.componentGalleryOverlay` in `blyss.config.js` each set:
   - `heightOverall`: the height of the images, a CSS length in `px`, `rem`, `vw`, `vh`, `vmin` or `vmax`, `"8rem"` by default. Each image is as wide as its proportions make it.
   - `heightCenter`: the height of the image in the centre, a percentage of `heightOverall` from `100%` up; the default `"130%"` enlarges it by 30%.
   - `heightExpanded`: the height of the image in the centre after a click or a touch, a percentage of the height of the screen up to `100%`, `"70%"` by default.
@@ -206,8 +214,8 @@ The gallery shows any number of images side by side in a strip that visitors mov
 
 The flower stands on a short stem above the ground, the bottom of the component. A click or a touch plucks a petal, as do the Enter and the space key: the petal twirls around its own axis, a little askew, and falls to the ground. There it fades, but never completely, while its text comes down like a falling leaf.
 
-- `_content/<language>/components/componentFlower.md` holds the texts of the petals. As in `heroTexts.md`, each `###` heading starts a text that runs up to the next one. The first text belongs to the first petal, the one at the top, the second text to the second petal, the next one clockwise, and so on. A petal without a text falls all the same, and texts beyond the last petal are not shown. The `title` of the file is the flower's heading, and `petal` names the petals for screen readers, as in “Petal 3”; without it, they are called “Petal”.
-- `components.componentFlower` in `blyss.config.js` sets:
+- `_content/<language>/components/componentFlowerHero.md` holds the texts of the petals of the hero's flower and `componentFlowerOverlay.md` those of the overlay's. As in `heroTexts.md`, each `###` heading starts a text that runs up to the next one. The first text belongs to the first petal, the one at the top, the second text to the second petal, the next one clockwise, and so on. A petal without a text falls all the same, and texts beyond the last petal are not shown. The `title` of the file is the flower's heading, and `petal` names the petals for screen readers, as in “Petal 3”; without it, they are called “Petal”.
+- `components.componentFlowerHero` and `components.componentFlowerOverlay` in `blyss.config.js` each set:
   - `petals`: the number of petals, a whole number from `3` to `24`, `8` by default.
   - `colourBaseHue`: the hue of the petals, an angle on the HSL colour wheel from `0` to `360`; the default `202` is the blue of `static/assets/css/main.css`.
   - `colourSystem`: how the other colours follow from that hue. `"triadic"` (the default) gives the centre and the stem the hues a third and two thirds of the wheel further on, pink and green for 202; `"complementary"` gives the centre the opposite hue, orange for 202, and the stem a dark shade of the petals' hue.
@@ -236,7 +244,7 @@ Replace the values marked `CHANGE BEFORE PRODUCTION` in `blyss.config.js`:
 - `site.publisher` — `type`, `name` and `url`
 - `site.languages.en.description` and `site.languages.de.description`
 
-Also replace the `Sitemap:` URL in `static/robots.txt`, which is marked the same way, the placeholder logo `static/assets/img/logo.svg` (see [Top bar](#top-bar)) and the gallery's placeholder images in `static/assets/img/gallery/` with their descriptions in `_content/<language>/components/componentGallery.md` (see [Gallery](#gallery)).
+Also replace the `Sitemap:` URL in `static/robots.txt`, which is marked the same way, the placeholder logo `static/assets/img/logo.svg` (see [Top bar](#top-bar)) and the gallery's placeholder images in `static/assets/img/gallery/` with their descriptions in `_content/<language>/components/componentGalleryHero.md` and `componentGalleryOverlay.md` (see [Gallery](#gallery)).
 
 If you change `site.defaultLanguage`, also change the `/en/` redirect in `static/staticwebapp.config.json` and in your deployment workflow.
 

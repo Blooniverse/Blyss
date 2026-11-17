@@ -1,6 +1,7 @@
-// Checks the slider's settings, components.componentSlider in blyss.config.js, and prepares the values of its
-// template. The slider runs through the whole numbers from start to end and starts halfway. Its steps mark values on
-// the way, each with a description in every language, and are sorted by value.
+// Checks the slider's settings, those of a block or of components.componentSliderHero, componentSliderOverlay and so
+// on in blyss.config.js, and prepares the values of its template. The slider runs through the whole numbers from start
+// to end and starts halfway. Its steps mark values on the way, each with a description in every language, and are
+// sorted by value.
 export default function ({ settings, languageKey, escapeHtml, refuse }) {
   const { start = 0, end = 100, steps = [] } = settings;
   if (!Number.isInteger(start)) throw refuse("start", start, "a whole number");

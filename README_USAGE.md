@@ -59,7 +59,7 @@ export default {
     }
   },
   hero: {
-    components: { componentSlider: true, componentGallery: true, componentFlower: true },
+    components: { componentSliderHero: true, componentGalleryHero: true, componentFlowerHero: true },
     ...
   },
   overlay: {
@@ -85,14 +85,14 @@ All directories are resolved relative to the website's root. `directories.public
 
 `hero` and `overlay` set the parts of the two [regions](#hero-and-overlay) that accompany the pages, the hero of the home pages and the overlay:
 
-- `hero.components` and `overlay.components` list the [components](#components) of each region by name, in order of appearance. Each is switched on with `true` or off with `false`; an unlisted component does not appear.
+- `hero.components` and `overlay.components` list the [components](#components) of each region by name, in order of appearance, usually the region's [variants](#variants), such as `componentSliderHero` in the hero and `componentSliderOverlay` in the overlay. Each is switched on with `true` or off with `false`; an unlisted component does not appear.
 - `hero.texts` and `overlay.texts` show (`true`, the default) or hide (`false`) the region's texts, those of `_content/<language>/heroTexts.md` or `overlayTexts.md`.
 - `overlay.showOn` switches the overlay on or off for each kind of page: `page`, `post` and `book`, the three content types, and `home`, `list` and `"not-found"`. An unnamed kind has the overlay; a single page or post cannot be switched. The hero belongs to the home pages only.
-- `synchroniseHeroOverlay: true` (default `false`) makes the overlay a copy of the hero: it shows `hero.components` and, if `hero.texts` is `true`, the texts of `heroTexts.md`, whatever `overlay.components`, `overlay.texts` and `overlayTexts.md` say. `overlay.showOn` still applies.
+- `synchroniseHeroOverlay: true` (default `false`) makes the overlay a copy of the hero: it shows `hero.components`, with their settings and texts, and, if `hero.texts` is `true`, the texts of `heroTexts.md`, whatever `overlay.components`, `overlay.texts` and `overlayTexts.md` say. `overlay.showOn` still applies.
 
 A region without a part that is switched on is not shown. Blyss refuses switches that are not `true` or `false`, unknown components and unknown kinds of pages before it deletes the previous output.
 
-`components` holds the settings of each [component](#components) under its name; the component defines them, and the starter's README describes those of its slider, gallery and flower. Settings for a nonexistent component are refused, too.
+`components` holds the settings of each [component](#components) and [variant](#variants) under its name; the component defines them, and the starter's README describes those of its slider, gallery and flower. Settings for a nonexistent component or variant are refused, too.
 
 ## Templates
 
@@ -111,7 +111,7 @@ Blyss ships no default templates; customise the ones `blyss init` copies into `t
 - Each Markdown file directly in `_content/<language>/`, such as `heroTexts.md`, is a fragment: Blyss publishes no page for it, but `document.html` shows it on every page of that language as `{{<name>Title}}`, its front matter's `title`, and `{{<name>Content}}`, its Markdown as HTML, such as `{{heroTextsTitle}}` and `{{heroTextsContent}}`. Its name must start with a Latin letter and contain only Latin letters and digits. Without the file, both are empty; the other placeholders of `document.html`, such as `{{pageTitle}}`, take precedence.
 - `{{hero}}` and `{{overlay}}` show the page's hero and overlay, rendered by `hero.html` and `overlay.html`; they are empty on a page without them (see [Hero and overlay](#hero-and-overlay)).
 - `{{layoutMargin}}`, `{{layoutPaddingHero}}` and `{{layoutPaddingOverlay}}` are `layout.margin`, `layout.paddingHero` and `layout.paddingOverlay`. `{{layoutAlign}}` is `layout.alignHome` on the home pages and `layout.alignOther` elsewhere; `{{layoutAlignHero}}` and `{{layoutAlignOverlay}}` are `layout.alignHero` and `layout.alignOverlay`. For example: `<body data-align="{{layoutAlign}}" data-align-hero="{{layoutAlignHero}}" data-align-overlay="{{layoutAlignOverlay}}" style="--site-margin: {{layoutMargin}}; --hero-padding: {{layoutPaddingHero}}; --overlay-padding: {{layoutPaddingOverlay}}">`.
-- `{{<name>}}` shows the [component](#components) of that name, such as `{{componentSlider}}`. The other placeholders of a template take precedence.
+- `{{<name>}}` shows the [component](#components) or [variant](#variants) of that name, such as `{{componentSlider}}` or `{{componentSliderHero}}`. The other placeholders of a template take precedence.
 - `{{languageSwitcher}}` links the page to its translations in the order of `site.languages`; it is empty if `site.languageSwitcher` is `false`.
 - Every label of the language is available as `{{<key>Label}}`, such as `{{postsLabel}}` for `labels.posts`; those of what Blyss generates default to English.
 
@@ -123,7 +123,7 @@ The Hero and the Overlay are two independent regions that accompany the pages, e
 | --- | --- | --- |
 | Appears on | the home pages | the kinds of pages that `overlay.showOn` does not switch off |
 | Template, shown in `document.html` | `hero.html` as `{{hero}}` | `overlay.html` as `{{overlay}}` |
-| Components | `hero.components` | `overlay.components` |
+| Components | `hero.components`, usually `<name>Hero` [variants](#variants) | `overlay.components`, usually `<name>Overlay` variants |
 | Texts | `_content/<language>/heroTexts.md`, if `hero.texts` is `true` | `_content/<language>/overlayTexts.md`, if `overlay.texts` is `true` |
 
 A region's template has three placeholders of its own, besides those of `document.html`:
@@ -167,6 +167,17 @@ export default function ({ settings, languageKey, content, texts, frontMatter, e
 ```
 
 `content` is the component's text as HTML. `texts` holds the texts that its `###` headings start, each as HTML up to the next heading, for components such as the starter's flower; it is empty without such headings. `frontMatter` holds the text's front matter fields as written. `refuse(setting, value, requirement)` creates the error that stops the build with “Cannot use components.\<name>.columns 2.5: it must be a whole number.”
+
+### Variants
+
+Every component has a variant for each region: `<name>Hero` for the hero and `<name>Overlay` for the overlay, such as `componentSliderHero` and `componentSliderOverlay`. A variant is the component under another name, with a text and settings of its own, so that the hero and the overlay can show the same component differently:
+
+| File or setting | Purpose |
+| --- | --- |
+| `_content/<language>/components/<name>Hero.md`, `<name>Overlay.md` | Optional: the variant's texts in that language. |
+| `components.<name>Hero`, `components.<name>Overlay` in `blyss.config.js` | Optional: the variant's settings. |
+
+A variant takes nothing from the component's own text and settings, and shares only its template, data file, stylesheet and script, published once at `/components/<name>/`. Everything else on this page holds for a variant under its own name: `{{componentSliderHero}}` shows the hero's slider in a template or in the Markdown of a page, a block of it gives it a text and settings of its own, its `{{id}}` is `componentSliderHero-1` and so on, and the data file's errors name `components.componentSliderHero`. A variant without settings in `blyss.config.js` may lack settings that its data file requires: that error stops only a build that shows the variant without a block that sets them. `hero.components` and `overlay.components` accept components and variants alike. Blyss refuses a component directory named like the variant of another, such as `components/componentSliderHero/`.
 
 ### Blocks
 
