@@ -58,8 +58,9 @@ const math = {
     // The next $ that the text of marked would run over. That text stops by itself before each of the other
     // characters below; only a run of ` or ~ at its start belongs to it.
     start(src) {
-      const next = /^[`~]*[^$\\<![`*~_]*/.exec(src)[0].length;
-      return src[next] === "$" ? next : -1;
+      const run = /^[`~]*/.exec(src)[0].length;
+      const next = src.slice(run).search(/[$\\<![`*~_]/);
+      return next >= 0 && src[run + next] === "$" ? run + next : -1;
     },
     tokenizer(src) {
       const match = inlineMath.exec(src);
