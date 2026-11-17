@@ -339,5 +339,4 @@ Website content, static assets, templates and components belong in `starters/lea
 
 ## Acknowledgments
 
-Blyss was initially developed with assistance from Microsoft 365 Copilot.
-All generated code was reviewed and validated by the project maintainer (Blooniverse).
+Blyss was initially developed with assistance from Microsoft 365 Copilot in August 2026. After the Github repository creation, Blyss has been being co-developed by Blooniverse and Github Copilot.
