@@ -23,11 +23,10 @@ function switchesOf(setting, switches = {}, unknown) {
 }
 
 // The parts of a region: its components that are switched on, in the order of its settings, and whether it shows its texts.
-function partsOf(name, settings = {}, componentNames, componentsLocation) {
+function partsOf(name, settings = {}, unknownComponent) {
   if (!isObject(settings)) throw refuse(name, settings, "an object, such as { components: {}, texts: true }");
   const { components, texts = true } = settings;
-  const switches = switchesOf(`${name}.components`, components, component =>
-    componentNames.includes(component) ? "" : `there is no component "${component}" in ${componentsLocation}/`);
+  const switches = switchesOf(`${name}.components`, components, unknownComponent);
   if (typeof texts !== "boolean") throw refuse(`${name}.texts`, texts, "true (on) or false (off)");
   return { components: Object.keys(switches).filter(component => switches[component]), texts };
 }
@@ -52,16 +51,18 @@ function readTexts(projectDir, fragments, names) {
 // of pages that overlay.showOn does not switch off. Each region has
 // - a template, <region>.html, which {{<region>}} shows in document.html; without it, the website lacks the region;
 // - components, <region>.components in blyss.config.js: each is switched on (true) or off (false), and they appear in
-//   the order of that setting;
+//   the order of that setting; usually they are the region's variants, such as componentSliderHero in the hero (see
+//   components.js);
 // - texts, _content/<language>/<region>Texts.md, which start at its ### headings and which <region>.texts switches on
 //   or off as a whole.
-// synchroniseHeroOverlay gives the overlay the components and the texts of the hero instead of its own.
-export function arrangeRegions(projectDir, config, templates, fragments, componentNames, componentsLocation) {
+// synchroniseHeroOverlay gives the overlay the components and the texts of the hero instead of its own. unknownComponent
+// tells what is wrong with the name of a component, if anything.
+export function arrangeRegions(projectDir, config, templates, fragments, unknownComponent) {
   const { synchroniseHeroOverlay = false } = config;
   if (typeof synchroniseHeroOverlay !== "boolean") throw refuse("synchroniseHeroOverlay", synchroniseHeroOverlay, "true (on) or false (off)");
   const parts = {
-    hero: partsOf("hero", config.hero, componentNames, componentsLocation),
-    overlay: partsOf("overlay", config.overlay, componentNames, componentsLocation)
+    hero: partsOf("hero", config.hero, unknownComponent),
+    overlay: partsOf("overlay", config.overlay, unknownComponent)
   };
   const showOn = switchesOf("overlay.showOn", config.overlay?.showOn, kind =>
     kinds.includes(kind) ? "" : `there is no kind of page "${kind}", only ${listOf(kinds, "and")}`);

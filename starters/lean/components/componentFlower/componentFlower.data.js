@@ -1,7 +1,8 @@
-// Checks the flower's settings, components.componentFlower in blyss.config.js, and prepares the values of its
-// template: its colours, its petals, each a button at its angle around the centre, their texts and the ground with a
-// place for each fallen petal. The first text of the flower belongs to the first petal, the second to the second and
-// so on; a petal without a text falls all the same, and texts beyond the last petal are left out.
+// Checks the flower's settings, those of a block or of components.componentFlowerHero, componentFlowerOverlay and so
+// on in blyss.config.js, and prepares the values of its template: its colours, its petals, each a button at its angle
+// around the centre, their texts and the ground with a place for each fallen petal. The first text of the flower
+// belongs to the first petal, the second to the second and so on; a petal without a text falls all the same, and
+// texts beyond the last petal are left out.
 const percentage = /^\d*\.?\d+%$/;
 const duration = /^\d*\.?\d+m?s$/; // in lower case, as the flower's script reads it
 // The hues of the centre and of the stem, as angles from the hue of the petals on the colour wheel.

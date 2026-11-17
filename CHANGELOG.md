@@ -36,6 +36,17 @@
   well-formed `locale` (such as `"en-GB"`, not `"en_GB"`), languages whose
   `labels` differ, a `site.defaultLanguage` that is not one of the languages
   and a `site.languageSwitcher` other than `true` or `false`.
+- **Hero and overlay variants in the starter**: the starter's
+  `blyss.config.js` switches `componentSliderHero`, `componentGalleryHero`
+  and `componentFlowerHero` on or off in the hero and the corresponding
+  `…Overlay` variants in the overlay, and holds the settings of each variant
+  in `components` instead of `componentSlider`, `componentGallery` and
+  `componentFlower`. Their texts moved from `<name>.md` in
+  `_content/<language>/components/` to `<name>Hero.md` and `<name>Overlay.md`.
+  Rename these settings and files in websites made from the starter.
+- **Component names ending in Hero or Overlay**: a component directory named
+  like the variant of another, such as `components/componentSliderHero/` next
+  to `components/componentSlider/`, stops the build; rename it.
 
 ### New features
 
@@ -155,6 +166,16 @@
   component needs no change for it. A setting of a block that the component
   refuses stops the build with the name of the page before the previous
   output is deleted.
+- **Component variants for the hero and the overlay**: every component
+  `<name>` has a variant `<name>Hero` and a variant `<name>Overlay`, the same
+  component with a text, `_content/<language>/components/<variant>.md`, and
+  settings, `components.<variant>`, of its own, so that the hero and the
+  overlay show it differently. A variant shares the component's template,
+  data file, stylesheet and script and can appear wherever the component can:
+  in `hero.components` and `overlay.components`, as `{{<variant>}}` in
+  templates and Markdown and in blocks. Its `{{id}}` and the errors of its
+  data file carry the variant's name; a variant without settings that its
+  data file requires stops only a build that shows it.
 - **Books**: the content type `book` publishes each
   Markdown file in `content/<language>/book/` below
   `/<language>/book/`. Each directory is a section whose `index.md` is its
