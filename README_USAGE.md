@@ -37,9 +37,7 @@ A website created by `blyss init` looks like this:
 ```text
 my-site/
 ├── .gitignore
-├── CHANGELOG.md
-├── LICENSE.md
-├── README.md
+├── *.md
 ├── blyss.config.js
 ├── package.json
 ├── components/
