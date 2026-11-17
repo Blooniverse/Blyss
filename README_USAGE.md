@@ -70,7 +70,7 @@ export default {
     public: "public",
     ...
   },
-  server: { fallbackPort: 3000 }
+  server: { fallbackPort: 3000 },
 };
 ```
 
