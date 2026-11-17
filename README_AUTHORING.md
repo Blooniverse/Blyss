@@ -34,7 +34,7 @@ A formula is LaTeX between dollar signs, which Blyss turns into MathML during th
 
 - `$e^{i\pi} + 1 = 0$` is a formula within a text. No space follows its first dollar sign or precedes its second, and no digit follows that one, so that `$5 and $10` stays text. It ends before a code span, whose backtick it cannot contain.
 - `$$…$$` on lines of its own is a formula between the paragraphs, on one line or several. Within a text, `$$…$$` shows the formula in the same way.
-- `\$` is a dollar sign that starts no formula. In code, a dollar sign is always just that.
+- `\$` is a dollar sign that starts no formula. In code, a dollar sign is always just that, and in the description of an image, a formula stays as it is written.
 - Temml lists the [LaTeX that it supports](https://temml.org/docs/en/supported.html). A formula that is not valid LaTeX stops the build with the name of its file.
 
 Formulas appear in every text, also in those of the components, of the hero and of the overlay.
@@ -51,7 +51,8 @@ Blyss numbers the footnotes[^order].
     A further paragraph of a footnote is indented by four spaces.
 ```
 
-- The footnotes follow the text as a numbered list, each with a link back to each of its references. A footnote without a reference is left out, and a reference without a footnote stays as it is written.
+- The footnotes follow the text as a numbered list, each with a link back to each of its references. A footnote without a reference is left out. A reference without a footnote stays as it is written, and so does one in the text of a link or in the description of an image.
+- The text of a footnote starts on the line of its name; each further line or paragraph of it is indented by four spaces.
 - A name is a word or a number, without spaces.
 - Pages, posts and docs have footnotes; the texts of the components, of the hero and of the overlay have none.
 

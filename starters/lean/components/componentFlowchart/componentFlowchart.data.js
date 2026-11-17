@@ -6,7 +6,7 @@ export const languages = ["flowchart", "flow"];
 
 const url = /^(?:https:\/\/|\/(?!\/))\S+$/;
 
-export default function ({ settings, refuse }) {
+export default function ({ settings, escapeHtml, refuse }) {
   const { libraryRaphael = "https://cdn.jsdelivr.net/npm/raphael@2.3.0/raphael.min.js",
     libraryFlowchart = "https://cdn.jsdelivr.net/gh/adrai/flowchart.js@v1.18.1/release/flowchart.min.js", lineWidth = 2 } = settings;
   for (const [name, value] of Object.entries({ libraryRaphael, libraryFlowchart })) {
@@ -15,5 +15,5 @@ export default function ({ settings, refuse }) {
     }
   }
   if (typeof lineWidth !== "number" || !(lineWidth > 0 && lineWidth <= 10)) throw refuse("lineWidth", lineWidth, "a number above 0 and up to 10, such as 2");
-  return { libraryRaphael, libraryFlowchart, lineWidth };
+  return { libraryRaphael: escapeHtml(libraryRaphael), libraryFlowchart: escapeHtml(libraryFlowchart), lineWidth };
 }

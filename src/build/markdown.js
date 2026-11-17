@@ -19,23 +19,26 @@ const blockMath = new RegExp(`^${onOwnLines}`);
 const inlineMath = new RegExp(`^(?:${displayed}|${withinText})`);
 const anyMath = new RegExp(`${displayed}|${withinText}`, "g");
 
-function toMathMl(raw, latex, displayMode) {
+// The MathML of a formula, which is checked only where it is shown.
+function toMathMl({ raw, latex, display, file }) {
   try {
-    return temml.renderToString(latex, { displayMode, throwOnError: true });
+    return temml.renderToString(latex, { displayMode: display, throwOnError: true });
   } catch (error) {
     const [written, reason] = [raw, error.message].map(text => text.trim().replace(/\s+/g, " "));
-    throw new BlyssError(`Cannot build ${origin}: its formula ${written} is not valid LaTeX.\n${reason}\n` +
+    throw new BlyssError(`Cannot build ${file}: its formula ${written} is not valid LaTeX.\n${reason}\n` +
       "Write \\$ for a dollar sign that starts no formula.", { cause: error });
   }
 }
 
-// Where a block that matches pattern interrupts the paragraph at the start of src, which ends at the next empty line.
-// Marked asks for every paragraph, so that the search must not run to the end of the text.
+// The start of the first block that matches pattern within the paragraph at the start of src, which ends at the next
+// blank line: marked asks for every paragraph, so that the search must not run to the end of the text. Marked reads
+// the paragraph from the lines above that start, which must be whole: it knows a line that opens a code block, whose
+// code the lines below it are, by the end of that line.
 function interrupts(pattern) {
-  const next = new RegExp(`\\n(?:\\n|${pattern})`);
+  const next = new RegExp(`\\n(?:[ \\t]*\\n|${pattern})`);
   return src => {
     const match = next.exec(src);
-    return match && match[0] !== "\n\n" ? match.index : -1;
+    return match && /\S/.test(match[0]) ? match.index + 1 : -1;
   };
 }
 
@@ -46,26 +49,34 @@ const math = {
     start: interrupts(onOwnLines),
     tokenizer(src) {
       const match = blockMath.exec(src);
-      if (match) return { type: "blockMath", raw: match[0], html: toMathMl(match[0], match[1], true) };
+      if (match) return { type: "blockMath", raw: match[0], latex: match[1], display: true, file: origin };
     },
-    renderer: token => `<div class="math">${token.html}</div>\n`
+    renderer: token => `<div class="math">${toMathMl(token)}</div>\n`
   }, {
     name: "inlineMath",
     level: "inline",
-    // The next $ that marked's text would run over: it stops before each of the other characters itself.
+    // The next $ that the text of marked would run over. That text stops by itself before each of the other
+    // characters below; only a run of ` or ~ at its start belongs to it.
     start(src) {
-      const next = src.search(/[$\\<![`*_]/);
+      const next = /^[`~]*[^$\\<![`*~_]*/.exec(src)[0].length;
       return src[next] === "$" ? next : -1;
     },
     tokenizer(src) {
       const match = inlineMath.exec(src);
-      if (match) return { type: "inlineMath", raw: match[0], html: toMathMl(match[0], match[1] ?? match[2], match[1] !== undefined) };
+      if (match) return { type: "inlineMath", raw: match[0], latex: match[1] ?? match[2], display: match[1] !== undefined, file: origin };
     },
-    renderer: token => token.html
+    renderer: toMathMl
   }],
   // The * and _ of a formula neither start nor end an emphasis.
   hooks: {
     emStrongMask: src => src.replace(anyMath, formula => "a".repeat(formula.length))
+  },
+  // The description of an image is plain text, in which a formula stays as it is written.
+  renderer: {
+    image(token) {
+      token.tokens = token.tokens?.map(part => (part.type === "inlineMath" ? { type: "text", raw: part.raw, text: part.raw } : part));
+      return false; // marked shows the image
+    }
   }
 };
 
@@ -82,7 +93,7 @@ const code = {
 };
 
 // Footnotes, as on GitHub: [^name] in a text refers to the footnote that "[^name]: Text" defines on a line of its own,
-// whatever the case of the name; further paragraphs of a footnote are indented by four spaces.
+// whatever the case of the name; further lines and paragraphs of a footnote are indented by four spaces.
 const definition = / {0,3}\[\^([^\]\s]+)\]:/.source;
 const footnote = new RegExp(`^${definition}[ \\t]*(.*(?:\\n+(?: {4}|\\t).*)*)(?:\\n+|$)`);
 const footnotes = {
@@ -100,11 +111,12 @@ const footnotes = {
   }, {
     name: "footnoteRef",
     level: "inline", // marked's text stops before every [, so that no start is needed
+    // The text of a link and the description of an image cannot hold a link, so a reference stays as it is written.
     tokenizer(src) {
-      const match = /^\[\^([^\]\s]+)\]/.exec(src);
+      const match = !this.lexer.state.inLink && /^\[\^([^\]\s]+)\]/.exec(src);
       if (match) return { type: "footnoteRef", raw: match[0], label: match[1].toLowerCase() };
     },
-    // A reference without a footnote stays as it is written.
+    // So does a reference without a footnote.
     renderer: ({ raw, number, id }) => (number
       ? `<sup class="footnote-ref"><a href="#fn:${number}" id="${id}" role="doc-noteref">${number}</a></sup>` : escapeHtml(raw))
   }]

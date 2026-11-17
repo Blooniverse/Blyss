@@ -80,7 +80,7 @@ A formula is LaTeX between dollar signs. Blyss turns it into MathML during the b
 
 ## Footnotes
 
-`[^name]` refers to a footnote, and `[^name]: Text` on a line of its own defines it, anywhere in the file. A further paragraph of a footnote is indented by four spaces.
+`[^name]` refers to a footnote, and `[^name]: Text` on a line of its own defines it, anywhere in the file. A further line or paragraph of a footnote is indented by four spaces.
 
 - Blyss numbers the footnotes in the order of their first references and lists them below the text, each with a link back to each reference. A footnote that nothing refers to is left out.
 - Pages, posts and docs have footnotes; the texts of the components, of the hero and of the overlay have none.
