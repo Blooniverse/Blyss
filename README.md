@@ -1,14 +1,14 @@
 # Blyss SSG 1.0.1
 
 Blyss is a lean SSG (static site generator). Essence:
-- Markdown based – ideal for Obsidian and other knowledge management systems.
-- Local-first & Git-based – for devs as well as for authors.
-- Multilingual – EN/DE bilingual per default.
-- 3 content types: book, page, post.
-- Configurable – via blyss.config.js.
-- Composable – via Markdown-based components.
-- Themeable.
-- Zero dependencies – apart from Node.js' `marked`.
+- **Markdown based**: Ideal for Obsidian & other knowledge management systems.
+- **Local-first & Git-based**: For devs & authors.
+- **Multilingual**: EN/DE default can be extended.
+- **3 content types**: book, page, post.
+- **Configurable**: blyss.config.js.
+- **Composable**: Markdown components.
+- **Themeable**.
+- **Zero dependencies** – apart from Node.js' `marked`.
 - Lightweight Javascript.
 - Semantic (RDF graph via JSON-LD).
 
