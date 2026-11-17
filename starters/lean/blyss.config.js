@@ -18,6 +18,7 @@ export default {
     baseUrl: "https://example.com", // CHANGE BEFORE PRODUCTION: canonical, hreflang and JSON-LD URLs use it
     defaultLanguage: "en", // the language of / and /404.html, one of the languages below (the first, if omitted); see README.md
     languageSwitcher: true, // or false, which hides the language switcher of the top bar; the hreflang alternates remain
+    // Dedicated RDF graph nodes (serialised as JSON-LD):
     publisher: {
       type: "Organization", // or "Person"
       name: "Example Publisher", // CHANGE BEFORE PRODUCTION
