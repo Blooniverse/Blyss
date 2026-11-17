@@ -1,0 +1,9 @@
+/* A diagram that Mermaid draws from the code of the component, which is shown instead until the script has drawn it,
+   without JavaScript and if the diagram cannot be drawn. A diagram wider than the text scrolls sideways. */
+component-mermaid { display: block; }
+component-mermaid figure { margin: 0; }
+component-mermaid .diagram { overflow-x: auto; }
+component-mermaid svg { display: block; max-width: 100%; height: auto; margin-inline: auto; }
+component-mermaid figcaption { margin-top: .3em; font-size: .85rem; color: var(--color202grey); }
+component-mermaid figcaption:empty, component-mermaid pre:empty { display: none; }
+component-mermaid [role="alert"] { margin-bottom: .3em; font-size: .85rem; color: #a11; }

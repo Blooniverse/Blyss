@@ -77,7 +77,7 @@ export default {
 };
 ```
 
-`site.languages` lists any number of languages, in the order of the language switcher and of the `hreflang` alternates. The key of a language, such as `en` or `pt-br`, names its directory in `_content/` and starts its URLs, so it may contain only lower-case Latin letters, digits and hyphens. Each language needs a `label` for the language switcher and a `locale` such as `"en"` or `"en-GB"`; its `description` serves pages without one of their own. All languages need the same `labels`; those of what Blyss generates (`language`, `recentPosts`, `posts`, `tags`, `tag`, `page`, `pagination`, `newerPosts`, `olderPosts`, `book`, `onThisPage`, `previous` and `next`) default to English. `site.defaultLanguage` is the language that `/` redirects to and whose “not found” page is also published as `/404.html`; it defaults to the first language. `site.languageSwitcher` defaults to `true`; `false` leaves `{{languageSwitcher}}` empty but keeps the `hreflang` alternates. Blyss refuses other values, and content outside the languages' directories, before it deletes the previous output.
+`site.languages` lists any number of languages, in the order of the language switcher and of the `hreflang` alternates. The key of a language, such as `en` or `pt-br`, names its directory in `_content/` and starts its URLs, so it may contain only lower-case Latin letters, digits and hyphens. Each language needs a `label` for the language switcher and a `locale` such as `"en"` or `"en-GB"`; its `description` serves pages without one of their own. All languages need the same `labels`; those of what Blyss generates (`language`, `recentPosts`, `posts`, `tags`, `tag`, `page`, `pagination`, `newerPosts`, `olderPosts`, `book`, `onThisPage`, `previous`, `next`, `footnotes` and `backToText`) default to English. `site.defaultLanguage` is the language that `/` redirects to and whose “not found” page is also published as `/404.html`; it defaults to the first language. `site.languageSwitcher` defaults to `true`; `false` leaves `{{languageSwitcher}}` empty but keeps the `hreflang` alternates. Blyss refuses other values, and content outside the languages' directories, before it deletes the previous output.
 
 All directories are resolved relative to the website's root. `directories.public` is the output directory, which every build deletes and recreates. It must be a subdirectory of the root that neither contains nor lies inside `components`, `content`, `static` or `templates`; other values, such as `"."`, are refused without deleting anything. The starter names the content directory `_content`, and components are published below `/components/`; without a components directory, a website has no components. `pagination.pageSize` defaults to 10 and must be a whole number greater than 0.
 
@@ -115,6 +115,24 @@ Blyss ships no default templates; customise the ones `blyss init` copies into `t
 - `{{languageSwitcher}}` links the page to its translations in the order of `site.languages`; it is empty if `site.languageSwitcher` is `false`.
 - Every label of the language is available as `{{<key>Label}}`, such as `{{postsLabel}}` for `labels.posts`; those of what Blyss generates default to English.
 
+## Formulas, footnotes and code
+
+Blyss reads every Markdown text with [marked](https://marked.js.org/) and adds formulas, highlighted code and footnotes during the build; [AUTHORING](README_AUTHORING.md#formulas) describes how to write them. The stylesheet of a website gives their HTML its look:
+
+| Markdown | HTML | Stylesheet |
+| --- | --- | --- |
+| `$…$` within a text | `<math>…</math>`, MathML from [Temml](https://temml.org/) | Temml's stylesheet with its font, such as `Temml-Local.css` and `Temml.woff2` from its `dist/` directory, which lays out the MathML |
+| `$$…$$` on lines of its own | `<div class="math"><math display="block" class="tml-display">…</math></div>` | The same; `.math` for the space around the formula and for scrolling a wide one |
+| A fenced code block in a language that [highlight.js](https://highlightjs.org/) knows | `<pre><code class="language-js">` with a `<span class="hljs-keyword">` and so on for each part | The colours of the `hljs-…` classes; without them, the code is plain |
+| `[^name]` | `<sup class="footnote-ref"><a href="#fn:1" id="fnref:1" role="doc-noteref">1</a></sup>`; a second reference to the same footnote has the id `fnref:1:2` | `.footnote-ref` |
+| `[^name]: Text` | `<section class="footnotes" role="doc-endnotes" aria-label="…"><ol><li id="fn:1">…</li></ol></section>` after the text, each footnote ending with a link back to each of its references, `<a href="#fnref:1" role="doc-backlink" aria-label="…">` | `.footnotes` |
+
+- Formulas and highlighted code appear in every Markdown text: in pages, posts and docs, in the texts of components, in fragments and in the texts of the hero and the overlay. Footnotes belong to the text of a page, a post or a doc.
+- Formulas are MathML, which browsers show without a script. The MathML and the stylesheet come from the same version of Temml: Blyss depends on one exact version, and the starter ships that version's stylesheet and font in `static/assets/temml/`.
+- A formula that is not valid LaTeX stops the build with the name of its file, before the previous output is deleted.
+- The labels `footnotes` and `backToText` name the list of footnotes and the links back for screen readers.
+- Code in a language that highlight.js does not know, or without a language, is escaped as it is.
+
 ## Regions: Hero and Overlay
 
 The Hero and the Overlay are two independent regions that accompany the pages, each with a template, components and texts of its own:
@@ -141,7 +159,7 @@ A component is a self-contained part of a page, such as the starter's slider, ga
 | File or setting | Purpose |
 | --- | --- |
 | `components/<name>/<name>.html` | The template: the only file that a component needs. |
-| `components/<name>/<name>.data.js` | Optional: checks the settings and prepares further values for the template. |
+| `components/<name>/<name>.data.js` | Optional: checks the settings and prepares further values for the template; names the languages of the [code blocks](#code-blocks) that the component shows. |
 | Every other file in `components/<name>/`, such as `<name>.css` and `<name>.js` | Published at `/components/<name>/`. The template links to its stylesheet and its script itself. |
 | `_content/<language>/components/<name>.md` | Optional: the texts in that language. |
 | `components.<name>` in `blyss.config.js` | Optional: the settings. |
@@ -159,14 +177,14 @@ The template has the following placeholders. Each replaces an earlier one of the
 Blyss escapes labels, settings and front matter for HTML and inserts the data file's values as they are. The data file exports one function, called for every language and every block before the previous output is deleted:
 
 ```js
-export default function ({ settings, languageKey, content, texts, frontMatter, escapeHtml, refuse }) {
+export default function ({ settings, languageKey, content, texts, source, frontMatter, escapeHtml, refuse }) {
   const { columns = 2 } = settings; // components.<name> in blyss.config.js, or {}
   if (!Number.isInteger(columns)) throw refuse("columns", columns, "a whole number");
   return { columns, language: `<p>${escapeHtml(languageKey)}</p>` }; // {{columns}} and {{language}}
 }
 ```
 
-`content` is the component's text as HTML. `texts` holds the texts that its `###` headings start, each as HTML up to the next heading, for components such as the starter's flower; it is empty without such headings. `frontMatter` holds the text's front matter fields as written. `refuse(setting, value, requirement)` creates the error that stops the build with “Cannot use components.\<name>.columns 2.5: it must be a whole number.”
+`content` is the component's text as HTML. `texts` holds the texts that its `###` headings start, each as HTML up to the next heading, for components such as the starter's flower; it is empty without such headings. `source` is the text as it is written. `frontMatter` holds the text's front matter fields as written. `refuse(setting, value, requirement)` creates the error that stops the build with “Cannot use components.\<name>.columns 2.5: it must be a whole number.”
 
 ### Variants
 
@@ -204,6 +222,27 @@ A block holds what the component's text holds, front matter and Markdown, and bo
 
 The template and data file serve blocks unchanged, receiving the block's fields, settings and text as they receive the component's. If the data file refuses a setting of a block, the build stops with “Cannot build _content/en/pages/about.md: its {{\<name>}} block cannot use columns 2.5, which must be a whole number.” A block whose text contains a fenced code block needs a longer fence, such as four backticks. A block that names no component stays a code block, and so does one within a list or a quotation: a block stands on its own.
 
+### Code blocks
+
+A component can show the fenced code blocks of a language, as the starter's `componentMermaid` shows those in `mermaid` as diagrams. Its data file names its languages:
+
+```js
+export const languages = ["mermaid"];
+```
+
+````markdown
+```mermaid
+flowchart LR
+  Markdown --> Blyss --> HTML
+```
+````
+
+- A code block in one of these languages is a block of the component with the code as its text. The code is taken as it is, without front matter, so that it stays what other Markdown tools expect; the language is the first word after the fence.
+- Such a component takes code instead of Markdown wherever its text comes from, a code block, a `{{<name>}}` block or its text file: `{{content}}` is the code, escaped for HTML, `source` is the code as it is written, and `texts` is empty.
+- A `{{<name>}}` block gives one instance fields and settings of its own, as for every component: its front matter holds them, and the code follows it.
+- The code block shows the component itself, with `components.<name>` and `_content/<language>/components/<name>.md`; its variants appear where their names put them.
+- Each language belongs to one component: the build stops if two components name the same one, or if `languages` is not a list of words. As with every block, such a code block within a list or a quotation stays code.
+
 ## Commands
 
 ```bash
@@ -231,6 +270,8 @@ npm test        # build, then run the test suite
 ```
 
 Website content, static assets, templates and components belong in `starters/lean/`, from where `blyss init` copies them into new websites.
+
+Blyss has three dependencies, none with dependencies of its own: `marked` reads Markdown, `temml` turns formulas into MathML and `highlight.js` highlights code. `src/build/markdown.js` alone uses them. `temml` is set to one exact version, because the starter ships that version's stylesheet and font in `starters/lean/static/assets/temml/`; after changing the version, copy `Temml-Local.css` and `Temml.woff2` from `node_modules/temml/dist/` there again, which a test checks.
 
 ## Acknowledgments
 

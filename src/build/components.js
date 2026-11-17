@@ -1,8 +1,8 @@
 import { cp, readdir, readFile } from "node:fs/promises";
 import { join, relative } from "node:path";
 import { pathToFileURL } from "node:url";
-import { marked } from "marked";
 import { BlyssError } from "../errors.js";
+import { renderMarkdown } from "./markdown.js";
 import { applyTemplate, escapeHtml, labelValues, parseFrontMatter } from "./render.js";
 import { refuse } from "./settings.js";
 import { splitTexts } from "./texts.js";
@@ -27,19 +27,27 @@ function settingsOf(metadata) {
   return Object.fromEntries(Object.entries(metadata).map(([key, value]) => [key, Array.isArray(value) ? value.map(typed) : typed(value)]));
 }
 
-// A component's optional data file checks its settings and returns further values for its template.
+// A component's optional data file checks its settings and returns further values for its template. It can also name
+// the languages of the fenced code blocks that the component shows, such as export const languages = ["mermaid"].
 async function importData(file, location) {
   const url = pathToFileURL(file).href;
   let data;
+  let languages;
   try {
-    ({ default: data } = await import(url));
+    ({ default: data, languages = [] } = await import(url));
   } catch (error) {
     // Only the data file itself may be missing, not a module it imports.
-    if (error?.code === "ERR_MODULE_NOT_FOUND" && error.url === url) return () => ({});
+    if (error?.code === "ERR_MODULE_NOT_FOUND" && error.url === url) return { data: () => ({}), languages: [] };
     throw error;
   }
-  if (typeof data === "function") return data;
-  throw new BlyssError(`Cannot build ${location}: its default export must be a function that returns values for the template.`);
+  if (typeof data !== "function") {
+    throw new BlyssError(`Cannot build ${location}: its default export must be a function that returns values for the template.`);
+  }
+  if (!Array.isArray(languages) || !languages.every(language => typeof language === "string" && /^\S+$/.test(language))) {
+    throw new BlyssError(`Cannot build ${location}: its languages must be a list of the languages of the code blocks that ` +
+      'the component shows, each without a space, such as ["mermaid"].');
+  }
+  return { data, languages };
 }
 
 // The variants of every component, by the suffix of their names: one for each region.
@@ -58,6 +66,8 @@ const variants = { Hero: "hero", Overlay: "overlay" };
 // - {{id}}: unique on the page, for the ids of its elements.
 // In Markdown, a fenced code block with {{<name>}} as its language is an instance of the component with a text and
 // settings of its own, which the block holds in place of that file and of blyss.config.js (see valuesOf below).
+// A component whose data file names languages shows the fenced code blocks in these languages, each as an instance
+// with the code as its text. Its text is code wherever it comes from: {{content}} is that code, escaped for HTML.
 // Every other file of the directory, such as a stylesheet or a script, is published at /components/<name>/ under the
 // name of the component, which its variants share.
 export async function loadComponents(projectDir, config, directory, texts) {
@@ -67,6 +77,7 @@ export async function loadComponents(projectDir, config, directory, texts) {
     throw error;
   });
   const components = new Map();
+  const languages = new Map(); // the component that shows the code blocks of each language
   // In this order, a component comes before any directory whose name starts with the component's name.
   for (const name of entries.filter(entry => entry.isDirectory()).map(entry => entry.name).sort()) {
     const path = join(directory, name);
@@ -83,10 +94,17 @@ export async function loadComponents(projectDir, config, directory, texts) {
       if (error.code !== "ENOENT") throw error;
       throw new BlyssError(`Cannot build ${join(location, name)}: a component needs a template, ${name}.html.`);
     });
-    const data = await importData(join(path, `${name}.data.js`), join(location, name, `${name}.data.js`));
-    components.set(name, { path, template, data, values: {}, errors: {} });
+    const { data, languages: shown } = await importData(join(path, `${name}.data.js`), join(location, name, `${name}.data.js`));
+    for (const language of shown) {
+      if (languages.has(language) && languages.get(language) !== name) {
+        throw new BlyssError(`Cannot build ${join(location, name)}: ${languages.get(language)} already shows the code blocks in "${language}".`);
+      }
+      languages.set(language, name);
+    }
+    const code = shown.length > 0;
+    components.set(name, { path, template, data, code, values: {}, errors: {} });
     for (const [suffix, region] of Object.entries(variants)) {
-      components.set(`${name}${suffix}`, { base: name, region, path, template, data, values: {}, errors: {} });
+      components.set(`${name}${suffix}`, { base: name, region, path, template, data, code, values: {}, errors: {} });
     }
   }
 
@@ -107,11 +125,14 @@ export async function loadComponents(projectDir, config, directory, texts) {
 
   // The values of a component's template in a language: for the component's text or, given a block in the Markdown
   // of file, for that block. The front matter of a block adds to that of the component's text and sets settings in
-  // place of blyss.config.js, and its Markdown, if it has any, replaces that of the component's text.
-  async function valuesOf(name, languageKey, block, file) {
+  // place of blyss.config.js, and its Markdown, if it has any, replaces that of the component's text. A block that
+  // is the code of one of the component's languages is taken as it is, without front matter.
+  async function valuesOf(name, languageKey, block, file, isCode) {
     const text = texts.find(text => text.name === name && text.languageKey === languageKey);
     let own = { metadata: {}, markdown: "" };
-    if (block !== undefined) {
+    if (isCode) {
+      own.markdown = block;
+    } else if (block !== undefined) {
       try {
         own = parseFrontMatter(`${block}\n`);
       } catch (error) {
@@ -119,16 +140,18 @@ export async function loadComponents(projectDir, config, directory, texts) {
       }
     }
     const metadata = { ...text?.metadata, ...own.metadata };
-    const markdown = own.markdown.trim() ? own.markdown : text?.markdown ?? "";
+    const [markdown, origin] = own.markdown.trim() ? [own.markdown, file] : [text?.markdown ?? "", text && relative(projectDir, text.sourceFile)];
     const ownSettings = { ...settings[name], ...settingsOf(own.metadata) };
-    const content = marked.parse(markdown);
+    const { data, code } = components.get(name);
+    const content = code ? escapeHtml(markdown.replace(/^\n+|\s+$/g, "")) : renderMarkdown(markdown, origin);
     return {
       ...labelValues(config.site.languages[languageKey].labels),
       ...scalars(ownSettings),
       ...scalars(metadata),
       content,
-      ...await components.get(name).data({
-        settings: ownSettings, languageKey, content, texts: splitTexts(markdown).texts, frontMatter: metadata, escapeHtml,
+      ...await data({
+        settings: ownSettings, languageKey, content, texts: code ? [] : splitTexts(markdown, origin).texts, source: markdown,
+        frontMatter: metadata, escapeHtml,
         refuse: (setting, value, requirement) => (block === undefined
           ? refuse(`components.${name}.${setting}`, value, requirement)
           : new BlyssError(`Cannot build ${file}: its {{${name}}} block cannot use ${setting} ${JSON.stringify(value)}, ` +
@@ -153,8 +176,10 @@ export async function loadComponents(projectDir, config, directory, texts) {
 
   return {
     unknown,
+    languages,
     // The placeholders of one page in a language: {{<name>}} shows a component, counted for its {{id}}. Called with
-    // a block in the Markdown of file, such a placeholder resolves to the component with the values of that block.
+    // a block in the Markdown of file, such a placeholder resolves to the component with the values of that block,
+    // which is code of one of the component's languages if isCode is true.
     placeholders(languageKey, file) {
       return Object.fromEntries([...components].map(([name, { template, values, errors }]) => {
         let count = 0;
@@ -163,7 +188,7 @@ export async function loadComponents(projectDir, config, directory, texts) {
           if (Object.hasOwn(errors, languageKey)) throw errors[languageKey];
           return render(values[languageKey]);
         };
-        return [name, block => (block === undefined ? shown() : valuesOf(name, languageKey, block, file).then(render))];
+        return [name, (block, isCode) => (block === undefined ? shown() : valuesOf(name, languageKey, block, file, isCode).then(render))];
       }));
     },
     async publish(publicDirectory) {

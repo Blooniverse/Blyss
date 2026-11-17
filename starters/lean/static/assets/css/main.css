@@ -59,6 +59,28 @@ time { color: var(--color202grey); }
 article > header { margin-bottom: 1rem; }
 article > header p { margin: 0; font-size: .9rem; }
 
+/* Formulas are MathML, laid out by Temml's stylesheet, static/assets/temml/Temml-Local.css. A formula on lines of
+   its own scrolls sideways where it is wider than the text. */
+.math { margin-bottom: .6em; padding-block: .2em; overflow-x: auto; }
+
+/* Highlighted code: the classes of highlight.js in the colours of this stylesheet, each clear enough on the
+   background of code for small text (a contrast of at least 4.5 to 1). */
+.hljs-comment, .hljs-quote, .hljs-meta { color: hsl(202 10% 38%); }
+.hljs-comment, .hljs-quote, .hljs-emphasis { font-style: italic; }
+.hljs-keyword, .hljs-selector-tag, .hljs-name, .hljs-section, .hljs-doctag { color: var(--color202); }
+.hljs-keyword, .hljs-section, .hljs-strong { font-weight: 700; }
+.hljs-string, .hljs-regexp, .hljs-addition, .hljs-attribute { color: hsl(150 70% 22%); }
+.hljs-number, .hljs-literal, .hljs-symbol, .hljs-bullet, .hljs-link { color: hsl(22 85% 32%); }
+.hljs-title, .hljs-selector-id, .hljs-selector-class { color: hsl(275 55% 38%); }
+.hljs-built_in, .hljs-type, .hljs-attr, .hljs-variable, .hljs-template-variable { color: hsl(335 65% 35%); }
+.hljs-deletion { color: hsl(0 65% 38%); }
+
+/* Footnotes follow the text of a page, a post or a doc below a line, in smaller type. */
+.footnote-ref { line-height: 0; } /* keeps the lines of the text at their distance */
+.footnote-ref a, .footnotes [role="doc-backlink"] { text-decoration: none; color: var(--color202); }
+.footnotes { margin-top: 2rem; padding-top: .6em; border-top: 1px solid var(--card-border); font-size: .85rem; text-align: start; }
+.footnotes li:target { background: var(--card); }
+
 nav ul { display: flex; flex-wrap: wrap; gap: .25rem 1rem; padding: 0; list-style: none; }
 [aria-current="page"] { font-weight: 700; text-decoration: none; }
 /* The top bar stays at the top of the window on every page and spans the page up to its frame. */

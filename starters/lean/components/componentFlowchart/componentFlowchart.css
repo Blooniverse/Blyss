@@ -1,0 +1,10 @@
+/* A flowchart that flowchart.js draws from the code of the component, which is shown instead until the script has
+   drawn it, without JavaScript and if the flowchart cannot be drawn. The script takes the colour of the lines and of
+   the texts from the text around the flowchart. A flowchart wider than the text shrinks to its width. */
+component-flowchart { display: block; color: var(--color202); }
+component-flowchart figure { margin: 0; }
+component-flowchart svg { display: block; max-width: 100%; height: auto; margin-inline: auto; }
+component-flowchart figcaption { margin-top: .3em; font-size: .85rem; color: var(--color202grey); }
+component-flowchart figcaption:empty, component-flowchart pre:empty { display: none; }
+component-flowchart pre { color: initial; }
+component-flowchart [role="alert"] { margin-bottom: .3em; font-size: .85rem; color: #a11; }

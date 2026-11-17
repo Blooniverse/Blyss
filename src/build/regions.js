@@ -37,7 +37,7 @@ function readTexts(projectDir, fragments, names) {
   for (const { sourceFile, languageKey, name, metadata, markdown } of fragments) {
     const region = names.find(region => name === `${region}Texts`);
     if (!region) continue;
-    const { texts: parts, before } = splitTexts(markdown);
+    const { texts: parts, before } = splitTexts(markdown, relative(projectDir, sourceFile));
     if (!before.every(isBlank)) {
       throw new BlyssError(`Cannot build ${relative(projectDir, sourceFile)}: each of its texts starts with a ### heading, ` +
         "but there is content before the first one.");

@@ -1,10 +1,9 @@
-import { marked } from "marked";
+import { escapeHtml } from "./html.js";
 import { createJsonLd, renderJsonLd } from "./json-ld.js";
+import { lexDocument, renderInlineTokens, renderTokens } from "./markdown.js";
 import { renderAlternateLinks, renderLanguageSwitcher } from "./translations.js";
 
-export function escapeHtml(value = "") {
-  return String(value).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#39;");
-}
+export { escapeHtml };
 
 export function parseFrontMatter(source) {
   const normalized = source.replaceAll("\r\n", "\n");
@@ -74,8 +73,9 @@ function identifyHeadings(tokens, takenIds) {
   const headings = [];
   for (const [index, token] of tokens.entries()) {
     if (token.type !== "heading") continue;
-    const html = marked.Parser.parseInline(token.tokens);
-    const text = html.replace(/<[^>]*>/g, "").trim();
+    const html = renderInlineTokens(token.tokens);
+    // The numbers of footnotes are not part of the text of a heading.
+    const text = html.replace(/<sup class="footnote-ref">.*?<\/sup>|<[^>]*>/g, "").trim();
     const slug = text.replace(/&#?\w+;/g, "").toLowerCase().replace(/[^\p{L}\p{M}\p{N}\p{Pc} -]/gu, "").replaceAll(" ", "-") || "section";
     let id = slug;
     for (let number = 1; takenIds.has(id); number++) id = `${slug}-${number}`;
@@ -102,20 +102,26 @@ function renderToc(headings, label) {
 
 // A paragraph that consists of {{<name>}} alone shows the component of that name, and a fenced code block with
 // {{<name>}} as its language shows it with the text and the settings that the block holds (see components.js); other
-// code keeps the placeholder as text. With takenIds, the headings get ids (see identifyHeadings), which are returned
+// code keeps the placeholder as text. A fenced code block in a language of a component, such as mermaid, shows that
+// component with the code as its text. With takenIds, the headings get ids (see identifyHeadings), which are returned
 // with the headings.
-async function renderBody(record, records, components, takenIds) {
+async function renderBody(record, file, records, components, languages, takenIds) {
   if (record.type === "list") return { html: record.html, headings: [] };
   // A replacement function, unlike a string, inserts the titles as they are, even with $& or $$ in them.
-  const tokens = marked.lexer(record.markdown.replace(/{{recentPosts}}/g, () => renderRecentPosts(record, records)));
+  const markdown = record.markdown.replace(/{{recentPosts}}/g, () => renderRecentPosts(record, records));
+  const tokens = lexDocument(markdown, file, record.languageConfig.labels);
   for (const [index, token] of tokens.entries()) {
     const block = token.type === "code" ? token.text : undefined;
-    const placeholder = token.type === "paragraph" ? token.text : block === undefined ? "" : token.lang ?? "";
-    const name = /^{{([a-zA-Z][a-zA-Z0-9]*)}}$/.exec(placeholder.trim())?.[1];
-    if (name && Object.hasOwn(components, name)) tokens[index] = { type: "html", block: true, raw: token.raw, text: await components[name](block) };
+    const language = block === undefined ? "" : token.lang ?? "";
+    const placeholder = token.type === "paragraph" ? token.text : language;
+    const shown = languages.get(language.split(/\s/)[0]);
+    const name = shown ?? /^{{([a-zA-Z][a-zA-Z0-9]*)}}$/.exec(placeholder.trim())?.[1];
+    if (name && Object.hasOwn(components, name)) {
+      tokens[index] = { type: "html", block: true, raw: token.raw, text: await components[name](block, Boolean(shown)) };
+    }
   }
   const headings = takenIds ? identifyHeadings(tokens, takenIds) : [];
-  return { html: marked.parser(tokens), headings };
+  return { html: renderTokens(tokens), headings };
 }
 
 // The kinds of pages: "home" is the index page of a language, "list" an archive or tag page. Templates can style each
@@ -133,11 +139,12 @@ function renderTags(record) {
   return `    <p>${escapeHtml(record.languageConfig.labels.tags)}: ${links.join(", ")}</p>`;
 }
 
-// components holds a function for each component of the website, which renders it in the language of the record, and
-// resolves to it for a block of the record's Markdown; regions tells which of the hero and the overlay the page shows
-// (see regions.js); book holds the navigation and the pager of a doc (see book.js).
-export async function renderRecord({ record, templates, translationIndex, site, records = [], layout, fragments = {}, components = {},
-  regions = { of: () => ({}) }, book = {} }) {
+// file names the record's Markdown file in errors; components holds a function for each component of the website,
+// which renders it in the language of the record, and resolves to it for a block of the record's Markdown; languages
+// names the component that shows the code blocks of a language; regions tells which of the hero and the overlay the
+// page shows (see regions.js); book holds the navigation and the pager of a doc (see book.js).
+export async function renderRecord({ record, file, templates, translationIndex, site, records = [], layout, fragments = {}, components = {},
+  languages = new Map(), regions = { of: () => ({}) }, book = {} }) {
   const metadata = record.metadata;
   const title = metadata.title || site.name;
   const description = metadata.description || record.languageConfig.description;
@@ -151,7 +158,7 @@ export async function renderRecord({ record, templates, translationIndex, site, 
   const shown = regions.of(kind, record.languageKey);
   const regionTemplates = Object.values(shown).map(region => region?.template ?? "").join("");
   const takenIds = isBook ? new Set(idsOf(templates.document + innerTemplate + regionTemplates)) : undefined;
-  const body = await renderBody(record, records, components, takenIds);
+  const body = await renderBody(record, file, records, components, languages, takenIds);
   const content = applyTemplate(innerTemplate, {
     ...components,
     ...book,

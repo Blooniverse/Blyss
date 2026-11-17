@@ -211,14 +211,14 @@ describe("a generated starter", () => {
   test("builds with the local Blyss package", async () => {
     const result = run(["build"], site);
     assert.equal(result.status, 0, result.stderr);
-    const pages = [["en", ["hello-world", "templates", "translations"], ["getting-started", "writing", "writing/navigation"]],
-      ["de", ["hallo-welt", "uebersetzungen", "vorlagen"], ["erste-schritte", "schreiben", "schreiben/navigation"]]]
+    const pages = [["en", ["hello-world", "templates", "translations"], ["getting-started", "writing", "writing/formulas-and-diagrams", "writing/navigation"]],
+      ["de", ["hallo-welt", "uebersetzungen", "vorlagen"], ["erste-schritte", "schreiben", "schreiben/formeln-und-diagramme", "schreiben/navigation"]]]
       .flatMap(([language, posts, docs]) => ["", "pages/about/", "posts/", ...posts.map(post => `posts/${post}/`), "tags/", "tags/blyss/",
         "tags/markdown/", "book/", ...docs.map(doc => `book/${doc}/`)].map(path => `${language}/${path}index.html`));
     const notFoundPages = ["404.html", "en/404.html", "de/404.html"];
     // Static files are copied as they are; components publish their files but their templates and data files.
     const componentFiles = (await listFiles(join(starter, "components"))).filter(file => !/\.(?:html|data\.js)$/.test(file));
-    assert.deepEqual(componentFiles, ["componentFlower", "componentGallery", "componentSlider"]
+    assert.deepEqual(componentFiles, ["componentFlowchart", "componentFlower", "componentGallery", "componentMermaid", "componentSlider", "componentVegaLite"]
       .flatMap(name => ["css", "js"].map(type => `${name}/${name}.${type}`)));
     assert.deepEqual(await listFiles(join(site, "public")), [...await listFiles(join(starter, "static")),
       ...componentFiles.map(file => `components/${file}`), "sitemap.xml", ...pages, ...notFoundPages].sort());
@@ -320,6 +320,40 @@ describe("a generated starter", () => {
     assert.ok((await stat(join(site, "public", azure.responseOverrides["404"].rewrite))).isFile());
   });
 
+  test("shows formulas as MathML, footnotes, highlighted code and diagrams in the doc that describes them", async () => {
+    const english = await readFile(join(site, "public", "en", "book", "writing", "formulas-and-diagrams", "index.html"), "utf8");
+    const german = await readFile(join(site, "public", "de", "book", "schreiben", "formeln-und-diagramme", "index.html"), "utf8");
+    for (const html of [english, german]) {
+      assert.ok(html.includes('<link rel="stylesheet" href="/assets/temml/Temml-Local.css">'));
+      assert.match(html, / in <math><mrow><msup><mi>e<\/mi>/);
+      assert.match(html, /<div class="math"><math display="block" class="tml-display" style="display:block math;"><mrow><mi>x<\/mi><mo>=<\/mo><mfrac>/);
+      assert.ok(html.includes('<pre><code class="language-js"><span class="hljs-comment">//'));
+      assert.deepEqual([...html.matchAll(/<(component-[a-z-]+) class="component"/g)].map(match => match[1]),
+        ["component-mermaid", "component-flowchart", "component-vega-lite", "component-slider"]);
+      assert.equal(html.match(/ id="[^"]+"/g).length, new Set(html.match(/ id="[^"]+"/g)).size);
+    }
+    assert.ok(english.includes("prices such as $5 and $10 stay text. Write <code>\\$</code>"));
+    assert.ok(english.includes('a caret<sup class="footnote-ref"><a href="#fn:1" id="fnref:1" role="doc-noteref">1</a></sup>, and'));
+    assert.ok(english.includes('<section class="footnotes" role="doc-endnotes" aria-label="Footnotes">\n<ol>\n<li id="fn:1">\n<p>This footnote'));
+    assert.ok(english.includes('<p>A further paragraph of a footnote is indented by four spaces. ' +
+      '<a href="#fnref:2" role="doc-backlink" aria-label="Back to the text">↩︎</a></p>\n</li>\n</ol>\n</section>'));
+    assert.ok(german.includes('<section class="footnotes" role="doc-endnotes" aria-label="Fußnoten">'));
+    assert.ok(german.includes('role="doc-backlink" aria-label="Zurück zum Text">'));
+    // The diagrams keep their code, escaped, for the scripts that draw them, and take their texts from their language.
+    assert.ok(english.includes('<component-mermaid class="component" id="componentMermaid-1" ' +
+      'data-library="https://cdn.jsdelivr.net/npm/mermaid@12.3.0/dist/mermaid.esm.min.mjs" data-theme="neutral" ' +
+      'data-error="This diagram cannot be shown.">\n  <figure>\n    <pre>flowchart LR\n  write[Write Markdown] --&gt; build[blyss build]\n'));
+    assert.ok(german.includes('data-line-width="2" data-yes="ja" data-no="nein" data-error="Dieses Flussdiagramm kann nicht angezeigt werden.">'));
+    assert.ok(german.includes("<pre>{\n  &quot;description&quot;: &quot;Beiträge pro Monat als Balken&quot;,"));
+  });
+
+  test("ships the stylesheet and the font of the Temml version that writes the formulas", async () => {
+    for (const file of ["Temml-Local.css", "Temml.woff2"]) {
+      const shipped = await readFile(join(starter, "static", "assets", "temml", file));
+      assert.ok(shipped.equals(await readFile(fileURLToPath(import.meta.resolve(`temml/dist/${file}`)))), file);
+    }
+  });
+
   test("is served for a smoke test and terminates cleanly", { timeout: 15_000 }, async () => {
     const stderr = await whileServing(site, async base => {
       const home = await fetch(`${base}/`, { redirect: "manual" });
@@ -334,6 +368,9 @@ describe("a generated starter", () => {
         await response.text();
         assert.equal(response.status, status, path);
       }
+      const font = await fetch(`${base}/assets/temml/Temml.woff2`);
+      await font.arrayBuffer();
+      assert.equal(font.headers.get("content-type"), "font/woff2");
       const missing = await fetch(`${base}/de/missing/`);
       assert.equal(missing.status, 404);
       assert.equal(missing.headers.get("content-type"), "text/html; charset=utf-8");
@@ -731,7 +768,7 @@ describe("a site with its own hero texts and fragments", () => {
     assert.ok(hero.startsWith("<h3>Nine &lt;texts&gt;</h3>"));
     assert.equal(hero.match(/<div>\n<h3>/g).length, 9);
     assert.ok(hero.includes(`<div>\n<h3>One</h3>\n<p>${long}</p>\n<h4>Part of one</h4>\n<p>More.</p>\n</div>`));
-    assert.ok(hero.includes('<div>\n<h3>Two</h3>\n<pre><code class="language-md">### Not a text\n</code></pre>\n</div>'));
+    assert.ok(hero.includes('<div>\n<h3>Two</h3>\n<pre><code class="language-md"><span class="hljs-section">### Not a text</span>\n</code></pre>\n</div>'));
   });
 
   test("gives templates each Markdown file directly in _content/<language>/ without publishing it", async () => {
@@ -1057,6 +1094,111 @@ describe("a site with a component of its own", () => {
   });
 });
 
+describe("a site with formulas, footnotes and a component that shows code blocks", () => {
+  let site;
+  const page = path => readFile(join(site, "public", path), "utf8");
+  const notes = join("_content", "en", "pages", "notes.md");
+  const sliderText = join("_content", "en", "components", "componentSliderHero.md");
+  const chart = (id, lines, kind, title, code) =>
+    `<figure id="chart-${id}" data-lines="${lines}" data-kind="${kind}" data-texts="0"><figcaption>${title}</figcaption><pre>${code}</pre></figure>\n`;
+
+  before(async () => {
+    site = join(sandbox, "writing");
+    assert.equal(run(["init", site], sandbox).status, 0);
+    // The component shows the code blocks in two languages and counts the lines of the code as it is written.
+    const component = join(site, "components", "chart");
+    await mkdir(component);
+    await writeFile(join(component, "chart.html"),
+      '<figure id="{{id}}" data-lines="{{lines}}" data-kind="{{kind}}" data-texts="{{texts}}"><figcaption>{{title}}</figcaption><pre>{{content}}</pre></figure>\n');
+    await writeFile(join(component, "chart.data.js"), `export const languages = ["chart", "plot"];
+export default ({ settings, source, texts, refuse }) => {
+  if (settings.kind !== undefined && settings.kind !== "bar") throw refuse("kind", settings.kind, '"bar"');
+  return { lines: source.trim().split("\\n").length, texts: texts.length };
+};
+`);
+    await writeFile(join(site, "_content", "en", "components", "chart.md"), "---\ntitle: Default\n---\n\n### a <b> & $x$\n");
+    await writeFile(join(site, notes), "---\ntitle: Notes\n---\n\n" +
+      "Inline $a$ and $$b$$ here, but $5 and $10, \\$x\\$ and `$c$` stay, as *does $d*e$ in* an emphasis.\n\n$$\n\\frac{1}{2}\n$$\n\n" +
+      "First[^b], second[^a] and first again[^b]; [^missing] stays.\n\n[^a]: Note *a*.\n[^b]: Note b.\n[^unused]: Unused.\n\n" +
+      "```chart\n---\ntitle: Not front matter\n---\nx < y & $z$\n```\n\n```plot with further words\np\n```\n\n" +
+      "```{{chart}}\n---\ntitle: Own & <title>\nkind: bar\n---\n\none\ntwo\n```\n\n{{chart}}\n\n- ```chart\n  nested\n  ```\n");
+    // Formulas are read in every text: in that of a component and in those of the hero.
+    await writeFile(join(site, sliderText), `${await readFile(join(site, sliderText), "utf8")}\nA formula $s$.\n`);
+    const heroTexts = join(site, "_content", "en", "heroTexts.md");
+    await writeFile(heroTexts, `${await readFile(heroTexts, "utf8")}\n### Formula\n\nA formula $h$.\n`);
+    const result = run(["build"], site);
+    assert.equal(result.status, 0, result.stderr);
+  });
+
+  test("turns $…$ and $$…$$ into MathML in every text and leaves other dollar signs as they are", async () => {
+    const html = await page("en/pages/notes/index.html");
+    const formula = letter => `<math><mi>${letter}</mi></math>`;
+    assert.ok(html.includes(`<p>Inline ${formula("a")} and <math display="block" class="tml-display" style="display:block math;"><mi>b</mi></math> ` +
+      "here, but $5 and $10, $x$ and <code>$c$</code> stay, as <em>does <math><mrow><mi>d</mi><mo>∗</mo><mi>e</mi></mrow></math> in</em> an emphasis.</p>"));
+    assert.ok(html.includes('<div class="math"><math display="block" class="tml-display" style="display:block math;"><mfrac><mn>1</mn><mn>2</mn></mfrac></math></div>'));
+    const home = await page("en/index.html");
+    assert.ok(home.includes(`<p>A formula ${formula("s")}.</p>`));
+    assert.ok(home.includes(`<div>\n<h3>Formula</h3>\n<p>A formula ${formula("h")}.</p>\n</div>`));
+  });
+
+  test("numbers the footnotes by their first references and lists those that the text refers to, each with its links back", async () => {
+    const html = await page("en/pages/notes/index.html");
+    const reference = (number, id) => `<sup class="footnote-ref"><a href="#fn:${number}" id="${id}" role="doc-noteref">${number}</a></sup>`;
+    const back = (id, count = "") => `<a href="#${id}" role="doc-backlink" aria-label="Back to the text">↩︎${count}</a>`;
+    assert.ok(html.includes(`<p>First${reference(1, "fnref:1")}, second${reference(2, "fnref:2")} and first again${reference(1, "fnref:1:2")}; [^missing] stays.</p>`));
+    assert.ok(html.includes('<section class="footnotes" role="doc-endnotes" aria-label="Footnotes">\n<ol>\n' +
+      `<li id="fn:1">\n<p>Note b. ${back("fnref:1")} ${back("fnref:1:2", "<sup>2</sup>")}</p>\n</li>\n` +
+      `<li id="fn:2">\n<p>Note <em>a</em>. ${back("fnref:2")}</p>\n</li>\n</ol>\n</section>`));
+    assert.doesNotMatch(html, /Unused/);
+    assert.equal(html.match(/ id="[^"]+"/g).length, new Set(html.match(/ id="[^"]+"/g)).size);
+  });
+
+  test("shows a code block in a language of a component with that component, which takes code as its text", async () => {
+    const html = await page("en/pages/notes/index.html");
+    // A code block in one of its languages is the code as it is, and neither front matter nor Markdown.
+    assert.ok(html.includes(chart(1, 4, "", "Default", "---\ntitle: Not front matter\n---\nx &lt; y &amp; $z$")));
+    assert.ok(html.includes(chart(2, 1, "", "Default", "p")));
+    // A block of the component has front matter, and the component itself shows the code of its text.
+    assert.ok(html.includes(chart(3, 2, "bar", "Own &amp; &lt;title&gt;", "one\ntwo")));
+    assert.ok(html.includes(chart(4, 1, "", "Default", "### a &lt;b&gt; &amp; $x$")));
+    assert.ok(html.includes('<pre><code class="language-chart">nested\n</code></pre>'));
+  });
+
+  test("refuses a formula that is not LaTeX, a language that two components show and code that a component refuses, and keeps the previous output", async () => {
+    const graph = join("components", "graph");
+    const graphData = join(graph, "graph.data.js");
+    const source = await readFile(join(site, notes), "utf8");
+    const text = await readFile(join(site, sliderText), "utf8");
+    await mkdir(join(site, graph));
+    await writeFile(join(site, graph, "graph.html"), "<figure>{{content}}</figure>\n");
+    await writeFile(join(site, graphData), "export default () => ({});\n");
+    for (const [file, original, search, replacement, message] of [
+      [notes, source, "\\frac{1}{2}", "\\frac{1", new RegExp(`^Cannot build ${notes.replaceAll("\\", "\\\\")}: its formula \\$\\$ \\\\frac\\{1 \\$\\$ is not valid LaTeX\\.\\n` +
+        ".+\\nWrite \\\\\\$ for a dollar sign that starts no formula\\.\\n$")],
+      [sliderText, text, "$s$", "$\\nothing$", new RegExp(`^Cannot build ${sliderText.replaceAll("\\", "\\\\")}: its formula \\$\\\\nothing\\$ is not valid LaTeX\\.\\n`)],
+      [graphData, "export default () => ({});\n", "export", 'export const languages = ["plot"];\nexport',
+        new RegExp(`^Cannot build ${graph.replaceAll("\\", "\\\\")}: chart already shows the code blocks in "plot"\\.\\n$`)],
+      [graphData, "export default () => ({});\n", "export", 'export const languages = "graph";\nexport',
+        new RegExp(`^Cannot build ${graphData.replaceAll("\\", "\\\\")}: its languages must be a list of the languages of the code blocks that the ` +
+          'component shows, each without a space, such as \\["mermaid"\\]\\.\\n$')],
+      [notes, source, "{{chart}}\n\n- ", '```vega-lite\n{ "mark": \n```\n\n- ', new RegExp(`^Cannot build ${notes.replaceAll("\\", "\\\\")}: its \\{\\{componentVegaLite\\}\\} block ` +
+        'cannot use the code "\\{ \\\\"mark\\\\":", which must be a Vega-Lite specification in JSON \\(.+\\)\\.\\n$')]
+    ]) {
+      assert.ok(original.includes(search), search);
+      await writeFile(join(site, file), original.replace(search, replacement));
+      try {
+        const result = run(["build"], site);
+        assert.equal(result.status, 1, replacement);
+        assert.match(result.stderr, message);
+        assert.ok((await stat(join(site, "public", "en", "pages", "notes", "index.html"))).isFile());
+      } finally {
+        await writeFile(join(site, file), original);
+      }
+    }
+    await rm(join(site, graph), { recursive: true });
+  });
+});
+
 describe("invalid content", () => {
   let site;
   before(() => {
@@ -1244,7 +1386,11 @@ describe("invalid configuration", () => {
       ['animationSpeedFalling: "3s"', "animationSpeedFalling: 3", 'components.componentFlowerHero.animationSpeedFalling 3: it must be a duration in ms or s, such as "3s"'],
       ['opacityFallen: "20%"', 'opacityFallen: "0%"', 'components.componentFlowerHero.opacityFallen "0%": it must be a percentage from 1% to 100%, such as "30%"'],
       ['fontSizeText: "60%"', 'fontSizeText: ".6rem"', 'components.componentFlowerHero.fontSizeText ".6rem": ' +
-        'it must be a percentage of the default text size above 0%, such as "60%"']
+        'it must be a percentage of the default text size above 0%, such as "60%"'],
+      ['theme: "neutral"', 'theme: "pink"', 'components.componentMermaid.theme "pink": it must be "default", "neutral", "dark", "forest" or "base"'],
+      ["lineWidth: 2", "lineWidth: 0", "components.componentFlowchart.lineWidth 0: it must be a number above 0 and up to 10, such as 2"],
+      ['libraryVega: "https://', 'libraryVega: "http://', 'components.componentVegaLite.libraryVega "http://cdn.jsdelivr.net/npm/vega@6.4.0/build/vega.min.js": ' +
+        'it must be a URL that starts with https:// or with /, such as "/assets/vega/vega.min.js"']
     ]) {
       await withConfig(search, replacement, async () => {
         const result = run(["build"], site);

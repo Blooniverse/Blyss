@@ -47,6 +47,24 @@
 - **Component names ending in Hero or Overlay**: a component directory named
   like the variant of another, such as `components/componentSliderHero/` next
   to `components/componentSlider/`, stops the build; rename it.
+- **Dollar signs start formulas**: in every Markdown text, `$…$` and `$$…$$`
+  are now LaTeX formulas. A text between two dollar signs is read as a formula
+  if no space follows the first one, no space precedes the second one and no
+  digit follows it, and the build stops if it is not valid LaTeX. Write `\$`
+  for such a dollar sign; prices such as `$5 and $10` and dollar signs in code
+  need no change.
+- **Footnote syntax**: in pages, posts and docs, `[^name]` and
+  `[^name]: Text` are now footnotes. Previously they were a link and its
+  reference definition.
+- **Highlighted code**: a fenced code block in a language that highlight.js
+  knows now holds `<span class="hljs-…">` elements around the parts of its
+  code. Existing websites need the colours of these classes in their
+  stylesheet, and Temml's stylesheet and font for formulas: copy
+  `static/assets/temml/` and the blocks for formulas, highlighted code and
+  footnotes of `static/assets/css/main.css` from the starter, and link
+  `/assets/temml/Temml-Local.css` in `templates/document.html`.
+- **Dependencies**: Blyss now depends on `temml` and `highlight.js` besides
+  `marked`; neither has dependencies of its own.
 
 ### New features
 
@@ -190,6 +208,43 @@
   type `TechArticle`; the archive, the tags and `{{recentPosts}}` leave them
   out. The new labels `book`, `onThisPage`, `previous` and `next` default
   to English.
+- **Formulas**: `$…$` within a text and `$$…$$` on lines of its own are
+  LaTeX formulas, which Temml turns into MathML during the build; browsers
+  show it without a script. They appear in every Markdown text: in pages,
+  posts and docs, in the texts of components, in fragments and in the texts
+  of the hero and of the overlay. As in Pandoc, no space follows the first
+  dollar sign of a formula within a text or precedes its second one, and no
+  digit follows that one; such a formula ends before a code span, and `\$` is
+  a dollar sign that starts none. A formula that is not valid LaTeX stops the
+  build with the name of its file before the previous output is deleted.
+- **Footnotes**: in pages, posts and docs, `[^name]` refers to the footnote
+  that `[^name]: Text` defines on a line of its own; further paragraphs of a
+  footnote are indented by four spaces. The footnotes are numbered in the
+  order of their first references and follow the text as a list, each with a
+  link back to each of its references. Their ids are `fn:1` and `fnref:1`,
+  which no heading can have. The new labels `footnotes` and `backToText`
+  name the list and the links back for screen readers and default to English.
+- **Highlighted code**: highlight.js highlights fenced code in the languages
+  it knows during the build; other code stays plain.
+- **Code blocks shown by components**: a component's data file can name the
+  languages of the fenced code blocks that the component shows, such as
+  `export const languages = ["mermaid"]`. A code block in such a language is
+  a block of the component with the code as its text, taken as it is, without
+  front matter. Such a component takes code instead of Markdown in its
+  `{{<name>}}` blocks and in its text file, too: `{{content}}` is the code,
+  escaped for HTML. Every data file now also receives `source`, its text as
+  it is written. Two components that name the same language stop the build.
+- **Diagrams in the starter**: the components `componentMermaid`,
+  `componentFlowchart` and `componentVegaLite` show the code blocks in
+  `mermaid`, in `flowchart` or `flow` and in `vega-lite` as Mermaid diagrams,
+  flowchart.js flowcharts and Vega-Lite charts. The browser draws a diagram
+  once it comes near the window and loads its library only then, from the
+  URLs in `components.<name>` in `blyss.config.js`: jsDelivr by default, or a
+  copy in `static/`, as the starter's README describes. Until then, without
+  JavaScript and if a diagram cannot be drawn, its code is shown. A
+  `{{<name>}}` block gives one diagram a title and settings of its own, such
+  as Mermaid's `theme`; the build stops if the code of a Vega-Lite chart is
+  not JSON.
 
 ### Changes
 
@@ -273,17 +328,28 @@
   Two content files with the same URL stop the build with an error instead of
   one silently overwriting the other. Generated list pages use the JSON-LD
   type `CollectionPage`.
-- **Server**: `blyss serve` sends AVIF images as `image/avif`.
+- **Server**: `blyss serve` sends AVIF images as `image/avif`, `.woff2` fonts
+  as `font/woff2` and `.mjs` modules as JavaScript, which browsers require of
+  modules such as a copy of Mermaid in `static/`.
 - **Language order**: the language switcher and the `hreflang` alternates
   list the languages in the order of `site.languages` instead of the
   alphabetical order of their directories, so the starter's switcher now
   shows English before Deutsch.
 - **Default labels**: the labels of what Blyss generates (`language`,
   `recentPosts`, `posts`, `tags`, `tag`, `page`, `pagination`, `newerPosts`,
-  `olderPosts`, `book`, `onThisPage`, `previous` and `next`) default to
-  English for every use, including their `{{<key>Label}}` placeholders;
-  previously only `{{postsLabel}}` and `{{tagsLabel}}` had defaults, and the
-  language switcher had none.
+  `olderPosts`, `book`, `onThisPage`, `previous`, `next`, `footnotes` and
+  `backToText`) default to English for every use, including their
+  `{{<key>Label}}` placeholders; previously only `{{postsLabel}}` and
+  `{{tagsLabel}}` had defaults, and the language switcher had none.
+- **Starter formulas, footnotes and code**: `templates/document.html` links
+  Temml's stylesheet, `static/assets/temml/Temml-Local.css`, which the
+  starter ships with its font and its licence, in the version of Temml that
+  Blyss uses. `static/assets/css/main.css` styles formulas on lines of their
+  own, which scroll sideways if they are wider than the text, footnotes and
+  highlighted code, in colours with a contrast of at least 4.5 to 1.
+  `blyss.config.js` translates the labels `footnotes` and `backToText` and
+  holds the settings of the diagrams. The new doc “Formulas, footnotes, code
+  and diagrams” shows all of them in English and in German.
 - **Tests**: recent posts are checked to be the three newest of each language,
   ordered by `datePublished`; the archive, tags, sitemap, JSON-LD escaping and
   build errors are covered too, as are pagination, not-found pages, the Azure
@@ -294,7 +360,10 @@
   language, a default language other than the first, a hidden language
   switcher and refused values. Further tests cover the docs: their
   navigation, order, links to the previous and the next doc, heading ids,
-  table of contents, JSON-LD, the fallback to `page.html` and refused docs.
+  table of contents, JSON-LD, the fallback to `page.html` and refused docs;
+  and formulas, footnotes, highlighted code, code blocks shown by components
+  and the starter's diagrams, with a check that the starter ships the
+  stylesheet and the font of the installed version of Temml.
 
 ### Fixes
 

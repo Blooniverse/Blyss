@@ -49,6 +49,8 @@ export default {
           onThisPage: "On this page",
           previous: "Previous",
           next: "Next",
+          footnotes: "Footnotes",
+          backToText: "Back to the text",
           overlay: "Overlay",
           hero: "Highlights",
           close: "Close",
@@ -77,6 +79,8 @@ export default {
           onThisPage: "Auf dieser Seite",
           previous: "Zurück",
           next: "Weiter",
+          footnotes: "Fußnoten",
+          backToText: "Zurück zum Text",
           overlay: "Overlay",
           hero: "Highlights",
           close: "Schließen",
@@ -135,10 +139,10 @@ export default {
   // overlay.components and overlay.texts say; overlayTexts.md is not used, and overlay.showOn still applies.
   synchroniseHeroOverlay: false,
 
-  // 7. Components: the settings of the components in components/<name>/. Each component has a variant for the hero,
-  // <name>Hero, and one for the overlay, <name>Overlay, each with settings of its own and with its texts in
-  // _content/<language>/components/<variant>.md. Templates, pages and posts show a variant by its name, like a
-  // component. Each duration is a time in ms or s.
+  // 7. Components: the settings of the components in components/<name>/. The slider, the gallery and the flower each
+  // have a variant for the hero, <name>Hero, and one for the overlay, <name>Overlay, each with settings of its own
+  // and with its texts in _content/<language>/components/<variant>.md. Templates, pages and posts show a variant by
+  // its name, like a component. Each duration is a time in ms or s.
   components: {
     // The slider runs through the whole numbers from start to end. Each step marks a value on the way and has a
     // description in every language; change, add or remove steps as you like.
@@ -201,6 +205,23 @@ export default {
       animationSpeedFading: "4s",
       opacityFallen: "20%",
       fontSizeText: "60%"
+    },
+    // The diagrams show the fenced code blocks in their languages: mermaid, flowchart or flow, and vega-lite. The
+    // browser draws them with the libraries below, which it loads from these URLs when a page shows such a diagram.
+    // By default they come from the content delivery network jsDelivr; README.md tells how to host them yourself.
+    componentMermaid: {
+      library: "https://cdn.jsdelivr.net/npm/mermaid@12.3.0/dist/mermaid.esm.min.mjs", // or your copy, such as "/assets/mermaid/mermaid.esm.min.mjs"
+      theme: "neutral" // or "default", "dark", "forest" or "base": Mermaid's themes
+    },
+    componentFlowchart: {
+      libraryRaphael: "https://cdn.jsdelivr.net/npm/raphael@2.3.0/raphael.min.js", // Raphaël, which flowchart.js draws with
+      libraryFlowchart: "https://cdn.jsdelivr.net/gh/adrai/flowchart.js@v1.18.1/release/flowchart.min.js",
+      lineWidth: 2 // the width of the lines, from above 0 to 10
+    },
+    componentVegaLite: {
+      libraryVega: "https://cdn.jsdelivr.net/npm/vega@6.4.0/build/vega.min.js", // Vega, which Vega-Lite draws with
+      libraryVegaLite: "https://cdn.jsdelivr.net/npm/vega-lite@6.5.0/build/vega-lite.min.js",
+      renderer: "svg" // or "canvas"
     }
   },
 

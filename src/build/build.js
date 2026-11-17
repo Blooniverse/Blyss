@@ -143,10 +143,12 @@ export async function build(projectDir, configPath = './blyss.config.js') {
   // refuses stops the build in time.
   const pages = [];
   for (const record of records) {
+    const file = record.sourceFile && relative(projectDir, record.sourceFile);
     const html = await renderRecord({
-      record, templates, translationIndex, site: config.site, records: content, layout, regions,
+      record, file, templates, translationIndex, site: config.site, records: content, layout, regions,
       fragments: fragments.get(record.languageKey),
-      components: components.placeholders(record.languageKey, record.sourceFile && relative(projectDir, record.sourceFile)),
+      components: components.placeholders(record.languageKey, file),
+      languages: components.languages,
       book: books.placeholders(record)
     });
     pages.push({ record, html });

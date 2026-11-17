@@ -18,10 +18,10 @@ npm start       # serve public/ on http://localhost:3000
 | `_content/de/pages/`, `_content/de/posts/`, `_content/de/book/` | German Markdown pages, posts and docs |
 | `_content/en/heroTexts.md` and `_content/de/heroTexts.md` | The texts of the [hero](#hero) |
 | `_content/en/overlayTexts.md` and `_content/de/overlayTexts.md` | The texts of the [overlay](#overlay) |
-| `_content/en/components/`, `_content/de/components/` | The texts of the components' [variants](#variants) for the hero and the overlay |
-| `components/` | The [components](#components) `componentSlider/`, `componentGallery/` and `componentFlower/`, each with its template, stylesheet and script |
+| `_content/en/components/`, `_content/de/components/` | The texts of the components' [variants](#variants) for the hero and the overlay, and those of the [diagrams](#diagrams) |
+| `components/` | The [components](#components) `componentSlider/`, `componentGallery/` and `componentFlower/`, and the [diagrams](#diagrams) `componentMermaid/`, `componentFlowchart/` and `componentVegaLite/`, each with its template, stylesheet and script |
 | `templates/` | HTML templates: `document.html`, `home.html`, `page.html`, `post.html`, `book.html`, `hero.html`, `overlay.html` |
-| `static/` | Static files such as `static/assets/css/main.css`, `static/assets/img/logo.svg`, the gallery's images in `static/assets/img/gallery/`, `static/robots.txt` and `static/staticwebapp.config.json`, copied unchanged into `public/` |
+| `static/` | Static files such as `static/assets/css/main.css`, `static/assets/img/logo.svg`, the gallery's images in `static/assets/img/gallery/`, the stylesheet and the font of the [formulas](#formulas) in `static/assets/temml/`, `static/robots.txt` and `static/staticwebapp.config.json`, copied unchanged into `public/` |
 | `blyss.config.js` | Site, language, pagination, layout, hero, overlay, component and directory configuration, in this order |
 | `public/` | Generated website — do not edit |
 
@@ -48,6 +48,7 @@ tags: [Blyss, Markdown]
 - Translations are associated by giving them the same `translationKey`. Blyss links them in the language switcher and with `hreflang` alternate links.
 - A page containing `{{recentPosts}}` lists the three newest posts of its language, ordered by `datePublished`.
 - A paragraph that consists of the name of a component or a [variant](#variants) in double curly braces alone, such as `{{componentSliderHero}}`, shows that [component](#components) in a page, post or doc. A fenced code block with that placeholder as its language, a [block](#blocks), shows it with a text and settings of its own.
+- [Formulas](#formulas) stand between dollar signs, [footnotes](#footnotes) have a name after a caret in square brackets, fenced [code](#code) is highlighted, and a code block in `mermaid`, `flowchart` or `vega-lite` shows a [diagram](#diagrams). The doc “Formulas, footnotes, code and diagrams” shows each of them.
 - Posts can have `tags`. Blyss generates the archive `/<language>/posts/`, the tag index `/<language>/tags/` and one page per tag, such as `/en/tags/markdown/`. Do not create content at these URLs.
 - The archive and tag pages show `pagination.pageSize` posts (10 by default, set in `blyss.config.js`). Older posts continue on `/<language>/posts/page/2/`, `/<language>/tags/<tag>/page/2/` and so on, linked by “Newer posts” and “Older posts”.
 - Markdown files directly in `_content/<language>/`, such as `heroTexts.md`, are fragments: Blyss publishes no page for them, but `templates/document.html` can show them on every page of their language as `{{<name>Title}}`, the `title` of their front matter, and `{{<name>Content}}`, their text, such as `{{heroTextsTitle}}` and `{{heroTextsContent}}`. Their file names must start with a Latin letter and contain only Latin letters and digits. `heroTexts.md` and `overlayTexts.md` also hold the texts of the [hero](#hero) and of the [overlay](#overlay).
@@ -65,6 +66,29 @@ tags: [Blyss, Markdown]
 - Each heading of a doc gets an id from its text, as on GitHub, so that a link to `#front-matter` leads to the heading “Front matter”.
 - The labels `book`, `onThisPage`, `previous` and `next` in `blyss.config.js` name the navigation, the table of contents and the links to the previous and the next doc.
 - Docs are described as `TechArticle` in their JSON-LD and listed in `sitemap.xml`, but neither in the archive nor on the tag pages.
+
+## Formulas
+
+A formula is LaTeX between dollar signs. Blyss turns it into MathML during the build, which browsers show without a script.
+
+- `$e^{i\pi} + 1 = 0$` is a formula within a text. No space follows its first dollar sign or precedes its second, and no digit follows that one, so that prices such as `$5 and $10` stay text.
+- `$$…$$` on lines of its own is a formula between the paragraphs, on one line or several.
+- `\$` is a dollar sign that starts no formula; within code, dollar signs need nothing.
+- The build stops and names the file if a formula is not valid LaTeX; [Temml](https://temml.org/docs/en/supported.html), which Blyss uses, lists what it supports.
+- `templates/document.html` loads Temml's stylesheet, `static/assets/temml/Temml-Local.css`, which lays the formulas out with the font beside it; `LICENSE.txt` there is Temml's licence. Both belong to the version of Temml that your version of Blyss uses: after an update of Blyss, replace them with `Temml-Local.css` and `Temml.woff2` from `node_modules/temml/dist/` if the changelog says so. [Fonts](#fonts) tells which fonts the formulas use.
+- `.math` in `static/assets/css/main.css` sets the space around a formula on lines of its own and lets a wide one scroll sideways.
+
+## Footnotes
+
+`[^name]` refers to a footnote, and `[^name]: Text` on a line of its own defines it, anywhere in the file. A further paragraph of a footnote is indented by four spaces.
+
+- Blyss numbers the footnotes in the order of their first references and lists them below the text, each with a link back to each reference. A footnote that nothing refers to is left out.
+- Pages, posts and docs have footnotes; the texts of the components, of the hero and of the overlay have none.
+- The labels `footnotes` and `backToText` in `blyss.config.js` name the list and the links back for screen readers, and `.footnotes` and `.footnote-ref` in `static/assets/css/main.css` style them.
+
+## Code
+
+A fenced code block that names its language, such as `js`, is highlighted during the build, in any language that [highlight.js](https://highlightjs.org/demo) knows; other code stays plain. The highlighted parts have classes such as `hljs-keyword` and `hljs-string`, which `static/assets/css/main.css` colours in its block for highlighted code. Each of these colours has a contrast of at least 4.5 to 1 on the background of code; keep that if you change them.
 
 ## Languages
 
@@ -227,9 +251,64 @@ The flower stands on a short stem above the ground, the bottom of the component.
 - The flower has no background, so it takes that of its surroundings. `--size` in `components/componentFlower/componentFlower.css` sets the diameter of the bloom, and the texts take the room they need below the flower from the start, so that nothing moves when a text appears.
 - With reduced motion, a plucked petal lies on the ground and its text appears at once. Without JavaScript, the flower shows all its texts, and its petals cannot be plucked.
 
+### Diagrams
+
+Three components show the fenced code blocks of their languages as diagrams. The code is written as their libraries expect it, so that other Markdown tools show the same diagrams:
+
+| Language of the code block | Component | Shows |
+| --- | --- | --- |
+| `mermaid` | `componentMermaid` | A [Mermaid](https://mermaid.js.org/) diagram: a flowchart, a sequence, a Gantt chart and many more |
+| `flowchart` or `flow` | `componentFlowchart` | A [flowchart.js](https://flowchart.js.org/) flowchart |
+| `vega-lite` | `componentVegaLite` | A [Vega-Lite](https://vega.github.io/vega-lite/) chart from its specification in JSON |
+
+````markdown
+```mermaid
+flowchart LR
+  Markdown --> Blyss --> HTML
+```
+````
+
+- The browser draws a diagram once it comes near the window, or once an overlay that holds it opens, and loads its library only then; pages without diagrams load none. Until a diagram is drawn, and without JavaScript, its code is shown. If the library cannot be loaded or cannot read the code, the code stays below a message, the `error` of the component's text.
+- A code block shows the diagram as it is. A [block](#blocks) with the component's name in double curly braces as its language gives one diagram a `title`, shown below it, and settings of its own in its front matter, followed by the code:
+
+  ````markdown
+  ```{{componentMermaid}}
+  ---
+  title: From Markdown to HTML
+  theme: forest
+  ---
+
+  flowchart LR
+    Markdown --> Blyss --> HTML
+  ```
+  ````
+
+- `_content/<language>/components/componentMermaid.md`, `componentFlowchart.md` and `componentVegaLite.md` hold the texts of the diagrams in each language: `error`, the message above code that cannot be drawn, and for the flowcharts `yes` and `no`, the texts at the two ways out of a condition.
+- `components.componentMermaid` in `blyss.config.js` sets `library`, the URL of Mermaid, and `theme`, one of Mermaid's themes: `"neutral"` (the default), `"default"`, `"dark"`, `"forest"` or `"base"`. A diagram has the font of the text around it.
+- `components.componentFlowchart` sets `libraryRaphael` and `libraryFlowchart`, the URLs of Raphaël and of flowchart.js, which draws with it, and `lineWidth`, the width of the lines from above `0` to `10`, `2` by default. A flowchart has the colour that `components/componentFlowchart/componentFlowchart.css` gives the component and the font of the text around it.
+- `components.componentVegaLite` sets `libraryVega` and `libraryVegaLite`, the URLs of Vega and of Vega-Lite, which draws with it, and `renderer`, `"svg"` (the default) or `"canvas"`. A chart has the font of the text around it and no background, unless its specification sets them; `"width": "container"` makes it as wide as the text. The build stops if the code is not JSON.
+- Like every component, each has a variant for the hero and one for the overlay, such as `componentMermaidHero` with its code in `_content/<language>/components/componentMermaidHero.md`, below the front matter.
+- Each URL starts with `https://` or, for a file in `static/`, with `/`. To show the code blocks of another language, name it in `languages` in the component's data file, such as `components/componentMermaid/componentMermaid.data.js`.
+
+#### Hosting the libraries yourself
+
+By default, the browser loads the libraries from [jsDelivr](https://www.jsdelivr.com/), a content delivery network: a visit to a page with a diagram sends the visitor's IP address there, as [the font](#fonts) sends it to Google. To avoid that, copy the libraries into `static/` and set their URLs in `blyss.config.js`:
+
+| Setting | Files | Source | Example of the setting |
+| --- | --- | --- | --- |
+| `componentMermaid.library` | `dist/mermaid.esm.min.mjs` and, beside it, the `.mjs` files of `dist/chunks/mermaid.esm.min/` in `chunks/mermaid.esm.min/` | npm package `mermaid@12.3.0` | `"/assets/mermaid/mermaid.esm.min.mjs"` |
+| `componentFlowchart.libraryRaphael` | `raphael.min.js` | npm package `raphael@2.3.0` | `"/assets/flowchart/raphael.min.js"` |
+| `componentFlowchart.libraryFlowchart` | `release/flowchart.min.js` | [flowchart.js on GitHub](https://github.com/adrai/flowchart.js/tree/v1.18.1/release), tag `v1.18.1` | `"/assets/flowchart/flowchart.min.js"` |
+| `componentVegaLite.libraryVega` | `build/vega.min.js` | npm package `vega@6.4.0` | `"/assets/vega/vega.min.js"` |
+| `componentVegaLite.libraryVegaLite` | `build/vega-lite.min.js` | npm package `vega-lite@6.5.0` | `"/assets/vega/vega-lite.min.js"` |
+
+`npm pack mermaid@12.3.0` downloads a package as a `.tgz` archive without installing it; unpack it and copy the files. Mermaid loads only the parts that a diagram needs from its `chunks/` directory, about 5 MB in all. Keep the versions of Vega and Vega-Lite, and those of Raphaël and flowchart.js, in step when you update them.
+
 ## Fonts
 
 `templates/document.html` loads the font Titillium Web from Google Fonts. Each visit then sends the visitor's IP address to Google, which a German court held to violate the GDPR without consent (Landgericht München I, 3 O 17493/20, 20 January 2022). To host the font yourself, download it from [Google Fonts](https://fonts.google.com/specimen/Titillium+Web), put the `.woff2` files into `static/assets/fonts/`, declare them with `@font-face` in `static/assets/css/main.css` and remove the three Google Fonts `<link>` elements.
+
+[Formulas](#formulas) load nothing from other servers. `static/assets/temml/Temml-Local.css` asks for a mathematical font of the visitor's system: Cambria Math, which Windows has, STIX Two Math, which Apple's systems have, or Noto Sans Math, and otherwise the browser's own choice, so formulas look plainer on a system without such a font. `Temml.woff2` beside it only holds the script capitals and the primes. For the same look everywhere, Temml's `dist/` directory has further stylesheets, such as `Temml-Latin-Modern.css` for the font Latin Modern Math; its [installation guide](https://temml.org/docs/en/administration.html) tells where to get that font.
 
 ## Generated output
 
@@ -245,6 +324,8 @@ Replace the values marked `CHANGE BEFORE PRODUCTION` in `blyss.config.js`:
 - `site.languages.en.description` and `site.languages.de.description`
 
 Also replace the `Sitemap:` URL in `static/robots.txt`, which is marked the same way, the placeholder logo `static/assets/img/logo.svg` (see [Top bar](#top-bar)) and the gallery's placeholder images in `static/assets/img/gallery/` with their descriptions in `_content/<language>/components/componentGalleryHero.md` and `componentGalleryOverlay.md` (see [Gallery](#gallery)).
+
+Decide whether your visitors' browsers may load the font from Google (see [Fonts](#fonts)) and the libraries of the diagrams from jsDelivr, or host them yourself (see [Hosting the libraries yourself](#hosting-the-libraries-yourself)).
 
 If you change `site.defaultLanguage`, also change the `/en/` redirect in `static/staticwebapp.config.json` and in your deployment workflow.
 

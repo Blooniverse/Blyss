@@ -15,7 +15,9 @@ const defaultLabels = {
   book: "Book",
   onThisPage: "On this page",
   previous: "Previous",
-  next: "Next"
+  next: "Next",
+  footnotes: "Footnotes",
+  backToText: "Back to the text"
 };
 
 const isObject = value => typeof value === "object" && value !== null && !Array.isArray(value);

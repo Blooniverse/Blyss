@@ -1,6 +1,6 @@
 import { relative } from "node:path";
-import { marked } from "marked";
 import { BlyssError } from "../errors.js";
+import { renderMarkdown } from "./markdown.js";
 import { escapeHtml } from "./render.js";
 
 // A Markdown file directly in _content/<language>/, such as heroTexts.md, is a fragment: it is not published, but every
@@ -16,7 +16,7 @@ export function renderFragments(projectDir, fragments) {
     }
     const values = valuesByLanguage.get(languageKey) ?? {};
     values[`${name}Title`] = escapeHtml(metadata.title);
-    values[`${name}Content`] = marked.parse(markdown);
+    values[`${name}Content`] = renderMarkdown(markdown, file);
     valuesByLanguage.set(languageKey, values);
   }
   return valuesByLanguage;

@@ -28,3 +28,47 @@ A top-level `pages/404.md` is published at `/<language>/404.html` instead of at 
 
 Tag URLs use ASCII slugs (`Über Blyss` becomes `/en/tags/uber-blyss/`), and tag pages with the same slug are linked across languages. A tag is displayed as spelled in its newest post. A content file whose URL is already taken by another file or a generated page stops the build with an error.
 
+## Formulas
+
+A formula is LaTeX between dollar signs, which Blyss turns into MathML during the build:
+
+- `$e^{i\pi} + 1 = 0$` is a formula within a text. No space follows its first dollar sign or precedes its second, and no digit follows that one, so that `$5 and $10` stays text. It ends before a code span, whose backtick it cannot contain.
+- `$$…$$` on lines of its own is a formula between the paragraphs, on one line or several. Within a text, `$$…$$` shows the formula in the same way.
+- `\$` is a dollar sign that starts no formula. In code, a dollar sign is always just that.
+- Temml lists the [LaTeX that it supports](https://temml.org/docs/en/supported.html). A formula that is not valid LaTeX stops the build with the name of its file.
+
+Formulas appear in every text, also in those of the components, of the hero and of the overlay.
+
+## Footnotes
+
+`[^name]` refers to a footnote, and `[^name]: Text` on a line of its own defines it, anywhere in the file:
+
+```markdown
+Blyss numbers the footnotes[^order].
+
+[^order]: In the order of their first references, whatever their names.
+
+    A further paragraph of a footnote is indented by four spaces.
+```
+
+- The footnotes follow the text as a numbered list, each with a link back to each of its references. A footnote without a reference is left out, and a reference without a footnote stays as it is written.
+- A name is a word or a number, without spaces.
+- Pages, posts and docs have footnotes; the texts of the components, of the hero and of the overlay have none.
+
+## Code
+
+A fenced code block that names its language, such as `js`, `css` or `bash`, is highlighted during the build, in any of the [languages of highlight.js](https://highlightjs.org/demo). A block without a language, or in one that highlight.js does not know, stays plain.
+
+## Diagrams
+
+A fenced code block in the language of a component shows that component instead of the code (see [Code blocks](README_USAGE.md#code-blocks)). The starter has three such components, which draw diagrams in the browser: `mermaid` shows a [Mermaid](https://mermaid.js.org/) diagram, `flowchart` or `flow` a [flowchart.js](https://flowchart.js.org/) flowchart and `vega-lite` a [Vega-Lite](https://vega.github.io/vega-lite/) chart.
+
+````markdown
+```mermaid
+flowchart LR
+  Markdown --> Blyss --> HTML
+```
+````
+
+The code is written as these tools expect it, so that other Markdown tools show the same diagram. A [block](README_USAGE.md#blocks) of the component, with `{{componentMermaid}}` as its language, gives one diagram a title and settings of its own in its front matter, followed by the code. Such a code block stands on its own: within a list or a quotation, it stays code.
+

@@ -1,0 +1,9 @@
+/* A chart that Vega-Lite draws from the code of the component, which is shown instead until the script has drawn it,
+   without JavaScript and if the chart cannot be drawn. A chart wider than the text shrinks to its width; one whose
+   width is "container" is as wide as the text. */
+component-vega-lite { display: block; }
+component-vega-lite figure { margin: 0; }
+component-vega-lite :is(svg, canvas) { display: block; max-width: 100%; height: auto; margin-inline: auto; }
+component-vega-lite figcaption { margin-top: .3em; font-size: .85rem; color: var(--color202grey); }
+component-vega-lite figcaption:empty, component-vega-lite pre:empty { display: none; }
+component-vega-lite [role="alert"] { margin-bottom: .3em; font-size: .85rem; color: #a11; }
