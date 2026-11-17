@@ -54,7 +54,6 @@ my-site/
 export default {
   site: { 
     defaultLanguage: "en",
-    ...
     languages: {
     ...
     }
