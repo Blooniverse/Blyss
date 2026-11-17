@@ -14,7 +14,7 @@ import { renderSitemap } from "./sitemap.js";
 import { arrangeBooks } from "./book.js";
 import { indexTranslations } from "./translations.js";
 
-// The sections of content/<language>/ that hold published content, and the type of their content.
+// The sections of _content/<language>/ that hold published content, and the type of their content.
 const sections = { pages: 'page', posts: 'post', book: 'book' };
 
 async function findMarkdownFiles(directory) {
@@ -45,7 +45,7 @@ async function discoverContent(projectDir, config, contentDirectory, locate) {
   return Promise.all(files.map(async sourceFile => {
     const parts = relative(contentDirectory, sourceFile).split(sep);
     const [languageKey, section] = parts;
-    // The content of each language lies in content/<language>/, named by its key in site.languages.
+    // The content of each language lies in _content/<language>/, named by its key in site.languages.
     if (parts.length < 2 || !Object.hasOwn(config.site.languages, languageKey)) {
       const file = relative(projectDir, sourceFile);
       const example = join(relative(projectDir, contentDirectory), config.site.defaultLanguage, sep);
@@ -56,9 +56,9 @@ async function discoverContent(projectDir, config, contentDirectory, locate) {
     const languageConfig = config.site.languages[languageKey];
     const { metadata, markdown } = parseFrontMatter(await readFile(sourceFile, "utf8"));
     const filename = basename(sourceFile, '.md');
-    // Files directly in content/<language>/, such as heroTexts.md, are fragments for templates (see fragments.js).
+    // Files directly in _content/<language>/, such as heroTexts.md, are fragments for templates (see fragments.js).
     if (parts.length === 2) return { sourceFile, languageKey, type: 'fragment', name: filename, metadata, markdown };
-    // Those directly in content/<language>/components/ hold the texts of the components (see components.js).
+    // Those directly in _content/<language>/components/ hold the texts of the components (see components.js).
     if (section === 'components') {
       if (parts.length === 3) return { sourceFile, languageKey, type: 'component', name: filename, metadata, markdown };
       throw new BlyssError(`Cannot build ${relative(projectDir, sourceFile)}: the text of a component lies directly in ` +

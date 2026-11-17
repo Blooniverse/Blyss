@@ -178,7 +178,7 @@ describe("blyss init", () => {
     for (const path of ["package.json", "src", "starters"]) {
       await cp(join(root, path), join(copy, path), { recursive: true });
     }
-    await chmod(join(copy, "starters", "lean", "_templates", "post.html"), 0o000);
+    await chmod(join(copy, "starters", "lean", "templates", "post.html"), 0o000);
     const { init } = await import(pathToFileURL(join(copy, "src", "init", "init.js")).href);
     const failure = { name: "BlyssError", message: /^Cannot initialize .+:\n {2}EACCES: permission denied/ };
 
@@ -207,11 +207,11 @@ describe("a generated starter", () => {
         "tags/markdown/", "book/", ...docs.map(doc => `book/${doc}/`)].map(path => `${language}/${path}index.html`));
     const notFoundPages = ["404.html", "en/404.html", "de/404.html"];
     // Static files are copied as they are; components publish their files but their templates and data files.
-    const componentFiles = (await listFiles(join(starter, "_components"))).filter(file => !/\.(?:html|data\.js)$/.test(file));
+    const componentFiles = (await listFiles(join(starter, "components"))).filter(file => !/\.(?:html|data\.js)$/.test(file));
     assert.deepEqual(componentFiles, ["componentFlower", "componentGallery", "componentSlider"]
       .flatMap(name => ["css", "js"].map(type => `${name}/${name}.${type}`)));
     assert.deepEqual(await listFiles(join(site, "public")), [...await listFiles(join(starter, "static")),
-      ...componentFiles.map(file => `_components/${file}`), "sitemap.xml", ...pages, ...notFoundPages].sort());
+      ...componentFiles.map(file => `components/${file}`), "sitemap.xml", ...pages, ...notFoundPages].sort());
     for (const page of [...pages, ...notFoundPages]) {
       const html = await readFile(join(site, "public", page), "utf8");
       assert.doesNotMatch(html, /{{\w+}}/, page);
@@ -301,8 +301,8 @@ describe("a generated starter", () => {
       assert.equal(home.headers.get("location"), "/en/");
       for (const [path, status] of [["/en/", 200], ["/de/posts/hallo-welt/", 200], ["/en/posts/", 200], ["/de/tags/blyss/", 200],
         ["/en/book/", 200], ["/de/book/schreiben/navigation/", 200], ["/de/404.html", 200], ["/sitemap.xml", 200], ["/assets/css/main.css", 200], ["/assets/img/logo.svg", 200],
-        ["/_components/componentSlider/componentSlider.js", 200], ["/_components/componentSlider/componentSlider.html", 404],
-        ["/_components/componentSlider/componentSlider.data.js", 404], ["/missing/", 404]]) {
+        ["/components/componentSlider/componentSlider.js", 200], ["/components/componentSlider/componentSlider.html", 404],
+        ["/components/componentSlider/componentSlider.data.js", 404], ["/missing/", 404]]) {
         const response = await fetch(base + path);
         await response.text();
         assert.equal(response.status, status, path);
@@ -337,8 +337,8 @@ describe("a site with a third language and German as its default", () => {
     await writeFile(configFile, config.replace('defaultLanguage: "en"', 'defaultLanguage: "de"')
       .replace("      de: {", `${french}      de: {`).replaceAll(', de: "', ', fr: "Étape", de: "'));
     // The French content copies the English one but for the title and the slug of the first post.
-    await cp(join(site, "content", "en"), join(site, "content", "fr"), { recursive: true });
-    const post = join(site, "content", "fr", "posts", "hello-world.md");
+    await cp(join(site, "_content", "en"), join(site, "_content", "fr"), { recursive: true });
+    const post = join(site, "_content", "fr", "posts", "hello-world.md");
     await writeFile(post, (await readFile(post, "utf8")).replace("title: Hello World", "title: Bonjour le monde")
       .replace("slug: hello-world", "slug: bonjour-le-monde"));
     const result = run(["build"], site);
@@ -438,7 +438,7 @@ describe("a site with several tagged posts", () => {
     assert.ok(config.includes("pageSize: 10"));
     await writeFile(configFile, config.replace("pageSize: 10", "pageSize: 2"));
     for (const language of ["en", "de"]) {
-      const home = join(site, "content", language, "pages", "index.md");
+      const home = join(site, "_content", language, "pages", "index.md");
       await writeFile(home, `${await readFile(home, "utf8")}\n{{recentPosts}}\n`);
     }
     const posts = {
@@ -448,9 +448,9 @@ describe("a site with several tagged posts", () => {
       older: ["title: Older\ndatePublished: 2026-06-30\ntags: [blyss, static sites]", "Text."]
     };
     for (const [slug, [frontMatter, body]] of Object.entries(posts)) {
-      await writeFile(join(site, "content", "en", "posts", `${slug}.md`), `---\n${frontMatter}\n---\n\n${body}\n`);
+      await writeFile(join(site, "_content", "en", "posts", `${slug}.md`), `---\n${frontMatter}\n---\n\n${body}\n`);
     }
-    await writeFile(join(site, "content", "de", "posts", "dollar.md"),
+    await writeFile(join(site, "_content", "de", "posts", "dollar.md"),
       '---\ntitle: Dollar $& $$ $` $\' "$"\ndatePublished: 2026-12-01\n---\n\nText.\n');
     const result = run(["build"], site);
     assert.equal(result.status, 0, result.stderr);
@@ -499,8 +499,8 @@ describe("a site with several tagged posts", () => {
   });
 
   test("rejects a post at the URL of a generated page", async () => {
-    const post = join("content", "en", "posts", "page", "2.md");
-    await mkdir(join(site, "content", "en", "posts", "page"));
+    const post = join("_content", "en", "posts", "page", "2.md");
+    await mkdir(join(site, "_content", "en", "posts", "page"));
     await writeFile(join(site, post), "---\ntitle: Two\n---\n");
     try {
       const result = run(["build"], site);
@@ -508,7 +508,7 @@ describe("a site with several tagged posts", () => {
       assert.equal(result.stderr, `Cannot build /en/posts/page/2/: ${post} and the generated page "Posts – Page 2" have the same URL.\n` +
         `Rename ${post} or give it a different slug.\n`);
     } finally {
-      await rm(join(site, "content", "en", "posts", "page"), { recursive: true });
+      await rm(join(site, "_content", "en", "posts", "page"), { recursive: true });
     }
   });
 
@@ -569,7 +569,7 @@ describe("a site without templates/home.html", () => {
   test("renders its home pages with page.html", async () => {
     const site = join(sandbox, "without-home-template");
     assert.equal(run(["init", site], sandbox).status, 0);
-    await rm(join(site, "_templates", "home.html"));
+    await rm(join(site, "templates", "home.html"));
     const result = run(["build"], site);
     assert.equal(result.status, 0, result.stderr);
     const html = await readFile(join(site, "public", "en", "index.html"), "utf8");
@@ -586,7 +586,7 @@ describe("a site with technical documentation", () => {
   before(async () => {
     site = join(sandbox, "book");
     assert.equal(run(["init", site], sandbox).status, 0);
-    const docs = join(site, "content", "en", "book");
+    const docs = join(site, "_content", "en", "book");
     await rm(docs, { recursive: true });
     await mkdir(join(docs, "guides"), { recursive: true });
     const headings = "## Overview\n\n### Details\n\n#### Deep\n\n## Overview\n\n## Overlay\n\n## Install & *run*\n\n## ???\n\n## Demo\n\n" +
@@ -662,7 +662,7 @@ describe("a site with technical documentation", () => {
   });
 
   test("renders docs with page.html without templates/book.html", async () => {
-    const template = join(site, "_templates", "book.html");
+    const template = join(site, "templates", "book.html");
     const source = await readFile(template, "utf8");
     await rm(template);
     try {
@@ -687,10 +687,10 @@ describe("a site with its own hero texts and fragments", () => {
     assert.equal(run(["init", site], sandbox).status, 0);
     const texts = [`### One\n\n${long}\n\n#### Part of one\n\nMore.`, "### Two\n\n```md\n### Not a text\n```",
       ...[3, 4, 5, 6, 7, 8, 9].map(number => `### Text ${number}\n\nText.`)];
-    await writeFile(join(site, "content", "en", "heroTexts.md"),
+    await writeFile(join(site, "_content", "en", "heroTexts.md"),
       `---\ntitle: Nine <texts>\n---\n\n<!-- Each ### heading starts a text. -->\n\n${texts.join("\n\n")}\n`);
-    await writeFile(join(site, "content", "en", "notice.md"), "---\ntitle: Notice\n---\n\nClosed on *Monday*.\n");
-    const documentFile = join(site, "_templates", "document.html");
+    await writeFile(join(site, "_content", "en", "notice.md"), "---\ntitle: Notice\n---\n\nClosed on *Monday*.\n");
+    const documentFile = join(site, "templates", "document.html");
     const template = await readFile(documentFile, "utf8");
     await writeFile(documentFile, template.replace('  <div class="page">',
       '  <section class="notice"><h2>{{noticeTitle}}</h2>{{noticeContent}}</section>\n  <div class="page">'));
@@ -707,7 +707,7 @@ describe("a site with its own hero texts and fragments", () => {
     assert.ok(hero.includes('<div>\n<h3>Two</h3>\n<pre><code class="language-md">### Not a text\n</code></pre>\n</div>'));
   });
 
-  test("gives templates each Markdown file directly in content/<language>/ without publishing it", async () => {
+  test("gives templates each Markdown file directly in _content/<language>/ without publishing it", async () => {
     assert.ok((await page("en/posts/index.html")).includes(
       '<section class="notice"><h2>Notice</h2><p>Closed on <em>Monday</em>.</p>\n</section>'));
     assert.ok((await page("de/posts/index.html")).includes('<section class="notice"><h2></h2></section>'));
@@ -742,7 +742,7 @@ describe("a site with its own layout and component settings", () => {
     configFile = join(site, "blyss.config.js");
     const config = await readFile(configFile, "utf8");
     // The German flower has an introduction, two texts and no name for its petals.
-    await writeFile(join(site, "content", "de", "components", "componentFlower.md"),
+    await writeFile(join(site, "_content", "de", "components", "componentFlower.md"),
       "---\ntitle: Blume\n---\n\nEinleitung.\n\n### Eins\n\nText *eins*.\n\n#### Mehr\n\n### Zwei\n");
     await writeFile(configFile, config.replace(settings(config), `  layout: { margin: "3rem", paddingHero: "4vh", paddingOverlay: "5vh", alignHome: "left", alignOther: "centerLeft", alignHero: "center", alignOverlay: "left" },
 ${regions}  components: {
@@ -906,7 +906,7 @@ describe("a site with its own hero and overlay", () => {
   });
 
   test("has neither a hero nor an overlay without their templates", async () => {
-    for (const template of ["hero.html", "overlay.html"]) await rm(join(site, "_templates", template));
+    for (const template of ["hero.html", "overlay.html"]) await rm(join(site, "templates", template));
     await writeFile(configFile, config);
     const result = run(["build"], site);
     assert.equal(result.status, 0, result.stderr);
@@ -921,12 +921,12 @@ describe("a site with a component of its own", () => {
   let site;
   let configFile;
   const page = path => readFile(join(site, "public", path), "utf8");
-  const blocks = join("content", "en", "pages", "blocks.md");
+  const blocks = join("_content", "en", "pages", "blocks.md");
 
   before(async () => {
     site = join(sandbox, "component");
     assert.equal(run(["init", site], sandbox).status, 0);
-    const component = join(site, "_components", "notice");
+    const component = join(site, "components", "notice");
     await mkdir(component);
     await writeFile(join(component, "notice.html"),
       '<aside id="{{id}}" data-level="{{level}}"><h2>{{title}}</h2><small>{{hint}} {{closeLabel}}</small>{{content}}{{hours}}</aside>\n');
@@ -940,17 +940,17 @@ describe("a site with a component of its own", () => {
     const config = await readFile(configFile, "utf8");
     assert.ok(config.includes("\n  components: {"));
     await writeFile(configFile, config.replace("\n  components: {", '\n  components: {\n    notice: { level: "high & <dry>", hours: ["9", "17"] },'));
-    await writeFile(join(site, "content", "en", "components", "notice.md"), "---\ntitle: Notice\nhint: Read <this>\n---\n\nClosed on *Monday*.\n");
-    const about = join(site, "content", "en", "pages", "about.md");
+    await writeFile(join(site, "_content", "en", "components", "notice.md"), "---\ntitle: Notice\nhint: Read <this>\n---\n\nClosed on *Monday*.\n");
+    const about = join(site, "_content", "en", "pages", "about.md");
     await writeFile(about, `${await readFile(about, "utf8")}\n{{notice}}\n\nWrite \`{{notice}}\` in a paragraph of its own:\n\n  {{notice}}\n`);
-    const documentFile = join(site, "_templates", "document.html");
+    const documentFile = join(site, "templates", "document.html");
     await writeFile(documentFile, (await readFile(documentFile, "utf8")).replace("  <footer>", "{{notice}}  <footer>"));
     // Blocks: with front matter and Markdown of its own, empty, with a front matter without fields, with a setting
     // alone, and of a component that is missing.
     await writeFile(join(site, blocks), "---\ntitle: Blocks\n---\n\n" +
       '```{{notice}}\n---\ntitle: Block & <own>\nlevel: low\nhours: ["8", "12"]\n---\n\nOpen on *Sunday*.\n```\n\n' +
       "```{{notice}}\n```\n\n```{{notice}}\n---\n---\n```\n\n~~~{{notice}}\n---\nhours:\n  - 1\n  - 2\n---\n~~~\n\n```{{missing}}\ntext\n```\n");
-    await writeFile(join(site, "content", "de", "pages", "blocks.md"), "---\ntitle: Blöcke\n---\n\n" +
+    await writeFile(join(site, "_content", "de", "pages", "blocks.md"), "---\ntitle: Blöcke\n---\n\n" +
       "```{{componentFlower}}\n---\npetals: 3\ncolourSystem: complementary\nfontSizeText: 80%\n---\n\n### Eins\n\nText.\n\n### Zwei\n```\n");
     const result = run(["build"], site);
     assert.equal(result.status, 0, result.stderr);
@@ -969,7 +969,7 @@ describe("a site with a component of its own", () => {
   });
 
   test("publishes its files but its template and its data file", async () => {
-    assert.deepEqual(await listFiles(join(site, "public", "_components", "notice")), ["notice.css"]);
+    assert.deepEqual(await listFiles(join(site, "public", "components", "notice")), ["notice.css"]);
   });
 
   test("gives a fenced code block that names it a text and settings of its own", async () => {
@@ -1030,20 +1030,20 @@ describe("invalid content", () => {
     assert.equal(run(["build"], site).status, 0);
   });
 
-  const page = join("content", "en", "pages", "about", "index.md");
-  const about = join("content", "en", "pages", "about.md");
-  const post = join("content", "en", "posts", "symbols.md");
-  const hero = join("content", "en", "heroTexts.md");
-  const overlay = join("content", "en", "overlayTexts.md");
-  const fragment = join("content", "en", "my-hero.md");
-  const text = join("content", "en", "components", "componentSlyder.md");
-  const french = join("content", "fr", "pages", "index.md");
-  const loose = join("content", "index.md");
-  const section = join("content", "en", "docs", "intro.md");
-  const doc = join("content", "en", "book", "guides", "setup.md");
-  const sectionIndex = join("content", "en", "book", "guides", "index.md");
-  const order = join("content", "en", "book", "order.md");
-  const english = join("content", "en", sep);
+  const page = join("_content", "en", "pages", "about", "index.md");
+  const about = join("_content", "en", "pages", "about.md");
+  const post = join("_content", "en", "posts", "symbols.md");
+  const hero = join("_content", "en", "heroTexts.md");
+  const overlay = join("_content", "en", "overlayTexts.md");
+  const fragment = join("_content", "en", "my-hero.md");
+  const text = join("_content", "en", "components", "componentSlyder.md");
+  const french = join("_content", "fr", "pages", "index.md");
+  const loose = join("_content", "index.md");
+  const section = join("_content", "en", "docs", "intro.md");
+  const doc = join("_content", "en", "book", "guides", "setup.md");
+  const sectionIndex = join("_content", "en", "book", "guides", "index.md");
+  const order = join("_content", "en", "book", "order.md");
+  const english = join("_content", "en", sep);
   const cases = [
     ["a page with the URL of another page", page, "---\ntitle: About\n---\n",
       `Cannot build /en/pages/about/: ${about} and ${page} have the same URL.\nRename ${about} or give it a different slug.\n`],
@@ -1057,7 +1057,7 @@ describe("invalid content", () => {
       `Cannot build ${fragment}: templates use its name in placeholders, so it must start with a Latin letter and contain ` +
       "only Latin letters and digits, such as heroTexts.md.\n"],
     ["a text for a component that does not exist", text, "---\ntitle: Slider\n---\n",
-      `Cannot build ${text}: there is no component "componentSlyder" in _components/.\n`],
+      `Cannot build ${text}: there is no component "componentSlyder" in components/.\n`],
     ["content in the directory of a language that site.languages lacks", french, "---\ntitle: Accueil\n---\n",
       `Cannot build ${french}: there is no language "fr" in site.languages.\nAdd the language to site.languages, or move the file ` +
       `to the directory of one of its languages, such as ${english}.\n`],
@@ -1113,7 +1113,7 @@ describe("invalid configuration", () => {
 
   // Each value would delete the website or one of its sources if Blyss accepted it.
   for (const [value, requirement] of [[".", "a subdirectory of SITE"], ["..", "a subdirectory of SITE"],
-    ["content", "separate from directories.content"], ["static/assets", "separate from directories.static"]]) {
+    ["_content", "separate from directories.content"], ["static/assets", "separate from directories.static"]]) {
     test(`refuses directories.public "${value}" without deleting anything`, async () => {
       const files = await listFiles(join(sandbox, "unsafe"));
       const message = `Cannot use directories.public "${value}": every build deletes it, so it must be ` +
@@ -1174,15 +1174,15 @@ describe("invalid configuration", () => {
       ['alignOverlay: "centerExtra"', 'alignOverlay: "centerLeft"',
         'layout.alignOverlay "centerLeft": it must be "centerExtra", "left" or "center"'],
       ["componentSlider: true", "componentSlyder: true",
-        'hero.components.componentSlyder: there is no component "componentSlyder" in _components/'],
+        'hero.components.componentSlyder: there is no component "componentSlyder" in components/'],
       ["componentFlower: true", 'componentFlower: "on"', 'hero.components.componentFlower "on": it must be true (on) or false (off)'],
-      ["texts: true // all texts of content/<language>/heroTexts.md", "texts: 1 // all texts of content/<language>/heroTexts.md",
+      ["texts: true // all texts of _content/<language>/heroTexts.md", "texts: 1 // all texts of _content/<language>/heroTexts.md",
         "hero.texts 1: it must be true (on) or false (off)"],
       ["post: true,", "posts: true,",
         'overlay.showOn.posts: there is no kind of page "posts", only "home", "page", "post", "book", "list" and "not-found"'],
       ["home: false,", "home: 0,", "overlay.showOn.home 0: it must be true (on) or false (off)"],
       ["synchroniseHeroOverlay: false", 'synchroniseHeroOverlay: "yes"', 'synchroniseHeroOverlay "yes": it must be true (on) or false (off)'],
-      ["componentGallery: {", "componentGalery: {", 'components.componentGalery: there is no component "componentGalery" in _components/'],
+      ["componentGallery: {", "componentGalery: {", 'components.componentGalery: there is no component "componentGalery" in components/'],
       ["start: 1,", "start: 1.5,", "components.componentSlider.start 1.5: it must be a whole number"],
       ["end: 1000", "end: 1", "components.componentSlider.end 1: it must be a whole number greater than start (1)"],
       ["value: 250,", "value: 1001,", "components.componentSlider.steps[1].value 1001: it must be a whole number from 1 to 1000"],

@@ -20,4 +20,4 @@ Jede Überschrift eines Dokuments erhält eine ID aus ihrem Text, wie auf GitHub
 
 ## Vorlagen
 
-`_templates/book.html` ordnet die Dokumente an: die Navigation, den Titel, das Inhaltsverzeichnis, den Text und die Links zum vorherigen und zum nächsten Dokument. Ihre Platzhalter heißen bookNavigation, bookToc und bookPager, jeweils in doppelten geschweiften Klammern. Ohne diese Vorlage verwenden Dokumente `_templates/page.html`.
+`templates/book.html` ordnet die Dokumente an: die Navigation, den Titel, das Inhaltsverzeichnis, den Text und die Links zum vorherigen und zum nächsten Dokument. Ihre Platzhalter heißen bookNavigation, bookToc und bookPager, jeweils in doppelten geschweiften Klammern. Ohne diese Vorlage verwenden Dokumente `templates/page.html`.

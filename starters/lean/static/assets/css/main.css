@@ -33,7 +33,7 @@ html {
 
 body {
   min-height: 100svh;
-  padding: var(--site-margin); /* layout.margin in blyss.config.js, set by _templates/document.html */
+  padding: var(--site-margin); /* layout.margin in blyss.config.js, set by templates/document.html */
   border: 1.6vmin solid;
   border-image: linear-gradient(15deg, var(--color040border), var(--color202border)) 1% 1 1 stretch;
 }
@@ -94,7 +94,7 @@ nav ul { display: flex; flex-wrap: wrap; gap: .25rem 1rem; padding: 0; list-styl
 
 footer { margin-top: 4vh; font-size: .9rem; color: var(--color202grey); letter-spacing: -.03em; line-height: 1.1; }
 
-/* Docs (_templates/book.html): the navigation of the documentation, beside the doc on wide screens and above it on
+/* Docs (templates/book.html): the navigation of the documentation, beside the doc on wide screens and above it on
    others, the table of contents at the start of the doc and the links to the previous and the next doc below it. */
 :is(.book > nav, .book article > nav) { font-size: .85rem; text-align: start; }
 :is(.book > nav, .book article > nav) ul { display: block; margin: 0; }
@@ -128,8 +128,8 @@ footer { margin-top: 4vh; font-size: .9rem; color: var(--color202grey); letter-s
 :is([data-align="center"], [data-align="centerLeft"]) main { margin-inline: auto; }
 [data-align="centerLeft"] > footer { max-width: var(--column); margin-inline: auto; }
 
-/* The hero (_templates/hero.html) follows the page on the home pages: a panel as tall as its content, with
-   layout.paddingHero in blyss.config.js above and below it, set by _templates/document.html. */
+/* The hero (templates/hero.html) follows the page on the home pages: a panel as tall as its content, with
+   layout.paddingHero in blyss.config.js above and below it, set by templates/document.html. */
 .hero { margin-top: 1rem; }
 .hero-panel {
   padding: var(--hero-padding) 1rem;
@@ -137,7 +137,7 @@ footer { margin-top: 4vh; font-size: .9rem; color: var(--color202grey); letter-s
   background: linear-gradient(var(--tint), var(--tint)), #fff;
 }
 
-/* The overlay (_templates/overlay.html): a bar at the bottom of the window whose button opens it as a popover,
+/* The overlay (templates/overlay.html): a bar at the bottom of the window whose button opens it as a popover,
    closed by its own button, by Escape or by a click outside. */
 .overlay-toggle {
   padding: .15em .6em;
@@ -173,7 +173,7 @@ body:has(> .overlay) { padding-bottom: calc(var(--site-margin) + 2rem); } /* lea
   width: auto;
   height: 80vh;
   margin: 0;
-  padding: var(--overlay-padding) 1rem; /* layout.paddingOverlay in blyss.config.js, set by _templates/document.html */
+  padding: var(--overlay-padding) 1rem; /* layout.paddingOverlay in blyss.config.js, set by templates/document.html */
   border: 0;
   border-top: 1px solid var(--card-border);
   color: inherit;
@@ -185,7 +185,7 @@ body:has(> .overlay) { padding-bottom: calc(var(--site-margin) + 2rem); } /* lea
    their texts. */
 :is(.hero-panel, #overlay) h3 { margin-top: 0; }
 :is(.hero-panel, #overlay) h3:empty { display: none; } /* such as the title of the texts when there is none */
-/* The components of the hero and of the overlay follow each other; each brings its own styles from _components/. */
+/* The components of the hero and of the overlay follow each other; each brings its own styles from components/. */
 .component { margin: 0 0 1rem; }
 /* The texts of heroTexts.md and of overlayTexts.md, side by side in as many columns as fit, each in full length. */
 .region-texts {
