@@ -105,8 +105,8 @@ export default {
   hero: {
     components: { // its components from components/, in this order
       componentSlider: true,
-      componentGallery: true,
-      componentFlower: true
+      componentGallery: false,
+      componentFlower: false
     },
     texts: true // all texts of _content/<language>/heroTexts.md, with their title
   },
@@ -124,7 +124,7 @@ export default {
     },
     components: { // its components from components/, in this order
       componentSlider: true,
-      componentGallery: true,
+      componentGallery: false,
       componentFlower: false
     },
     texts: true // all texts of _content/<language>/overlayTexts.md, with their title
@@ -143,19 +143,20 @@ export default {
     // description in every language; change, add or remove steps as you like.
     componentSlider: {
       start: 1,
-      end: 1000,
+      end: 10000,
       steps: [
-        { value: 1, description: { en: "Start", de: "Anfang" } },
-        { value: 250, description: { en: "Quarter", de: "Viertel" } },
-        { value: 500, description: { en: "Half", de: "Hälfte" } },
-        { value: 1000, description: { en: "Full", de: "Voll" } }
+        { value:     1, description: { en: "A Start", de: "Ein Anfang" } },
+        { value:  2500, description: { en: "A Quarter", de: "Ein Viertel" } },
+        { value:  5000, description: { en: "A Half", de: "Die Hälfte" } },
+        { value:  7500, description: { en: "Three Quarters", de: "Drei Viertel" } },
+        { value: 10000, description: { en: "And Full", de: "Und Voll" } }
       ]
     },
     // The gallery shows the images that its text lists, side by side, and enlarges the image in its centre, which a
     // click or a touch expands further.
     componentGallery: {
       heightOverall: "8rem", // the height of the images: a CSS length in px, rem, vw, vh, vmin or vmax
-      heightCenter: "130%", // the height of the image in the centre: a percentage of heightOverall, from 100% up
+      heightCenter: "140%", // the height of the image in the centre: a percentage of heightOverall, from 100% up
       heightExpanded: "70%", // the height of the image in the centre after a click or a touch: a percentage of the height of the screen, up to 100%
       animationSpeedScrolling: "400ms", // the time an arrow takes to bring the next image to the centre
       animationSpeedImgEnlargement: "300ms" // the time the image in the centre takes to grow and to expand
@@ -163,13 +164,13 @@ export default {
     // The flower loses a petal at each click or touch: the petal twirls, falls to the ground and fades there, while
     // its text appears. The texts of the petals are those of its text file: the first for the first petal, and so on.
     componentFlower: {
-      petals: 8, // the number of petals, from 3 to 24
+      petals: 4, // the number of petals, from 3 to 24
       colourSystem: "triadic", // or "complementary": the colours of the petals, the centre and the stem, derived from colourBaseHue
       colourBaseHue: 202, // the hue of the base colour, that of the petals: an angle on the HSL colour wheel, from 0 to 360
       animationSpeedFalling: "3s", // the time a petal takes from the click or the touch to the ground
       animationSpeedText: "3s", // the time the text of a fallen petal takes to appear
       animationSpeedFading: "4s", // the time a fallen petal takes to fade
-      opacityFallen: "30%", // what remains visible of a fallen petal: a percentage from 1% to 100%
+      opacityFallen: "20%", // what remains visible of a fallen petal: a percentage from 1% to 100%
       fontSizeText: "60%" // the size of the texts of the petals: a percentage of the default text size
     }
   },
