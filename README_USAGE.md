@@ -115,9 +115,9 @@ Blyss ships no default templates; customise the ones `blyss init` copies into `t
 - `{{languageSwitcher}}` links the page to its translations in the order of `site.languages`; it is empty if `site.languageSwitcher` is `false`.
 - Every label of the language is available as `{{<key>Label}}`, such as `{{postsLabel}}` for `labels.posts`; those of what Blyss generates default to English.
 
-## Hero and overlay
+## Regions: Hero and Overlay
 
-The hero and the overlay are two independent regions that accompany the pages, each with a template, components and texts of its own:
+The Hero and the Overlay are two independent regions that accompany the pages, each with a template, components and texts of its own:
 
 | | Hero | Overlay |
 | --- | --- | --- |
