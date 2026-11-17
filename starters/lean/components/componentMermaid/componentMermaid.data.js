@@ -5,11 +5,11 @@ export const languages = ["mermaid"];
 
 const themes = ["default", "neutral", "dark", "forest", "base"];
 
-export default function ({ settings, refuse }) {
+export default function ({ settings, escapeHtml, refuse }) {
   const { library = "https://cdn.jsdelivr.net/npm/mermaid@12.3.0/dist/mermaid.esm.min.mjs", theme = "neutral" } = settings;
   if (typeof library !== "string" || !/^(?:https:\/\/|\/(?!\/))\S+$/.test(library)) {
     throw refuse("library", library, 'the URL of Mermaid, starting with https:// or with /, such as "/assets/mermaid/mermaid.esm.min.mjs"');
   }
   if (!themes.includes(theme)) throw refuse("theme", theme, '"default", "neutral", "dark", "forest" or "base"');
-  return { library, theme };
+  return { library: escapeHtml(library), theme };
 }

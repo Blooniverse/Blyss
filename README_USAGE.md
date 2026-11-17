@@ -271,7 +271,7 @@ npm test        # build, then run the test suite
 
 Website content, static assets, templates and components belong in `starters/lean/`, from where `blyss init` copies them into new websites.
 
-Blyss has three dependencies, none with dependencies of its own: `marked` reads Markdown, `temml` turns formulas into MathML and `highlight.js` highlights code. `src/build/markdown.js` alone uses them. `temml` is set to one exact version, because the starter ships that version's stylesheet and font in `starters/lean/static/assets/temml/`; after changing the version, copy `Temml-Local.css` and `Temml.woff2` from `node_modules/temml/dist/` there again, which a test checks.
+Blyss has three dependencies, none with dependencies of its own: `marked` reads Markdown, `temml` turns formulas into MathML and `highlight.js` highlights code. `src/build/markdown.js` alone uses them. `marked` is at least 16.4.2, the version Blyss is tested with: versions before 16.3.0 lack the hook that keeps the `*` and `_` of a formula out of an emphasis, and stop every command. `temml` is set to one exact version, because the starter ships that version's stylesheet and font in `starters/lean/static/assets/temml/`; after changing the version, copy `Temml-Local.css` and `Temml.woff2` from `node_modules/temml/dist/` there again, which a test checks.
 
 ## Acknowledgments
 

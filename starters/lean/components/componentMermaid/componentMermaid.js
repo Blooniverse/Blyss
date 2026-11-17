@@ -9,8 +9,9 @@ customElements.define("component-mermaid", class extends HTMLElement {
   connectedCallback() {
     if (this.#started) return; // already set up when the diagram moves within the page
     this.#started = true;
-    new IntersectionObserver(([entry], observer) => {
-      if (!entry.isIntersecting) return;
+    // The browser may report several changes at once, the oldest first.
+    new IntersectionObserver((entries, observer) => {
+      if (!entries.some(entry => entry.isIntersecting)) return;
       observer.disconnect();
       drawing = drawing.then(() => this.#draw());
     }, { rootMargin: "50%" }).observe(this);

@@ -6,7 +6,7 @@ export const languages = ["vega-lite"];
 
 const url = /^(?:https:\/\/|\/(?!\/))\S+$/;
 
-export default function ({ settings, source, refuse }) {
+export default function ({ settings, source, escapeHtml, refuse }) {
   const { libraryVega = "https://cdn.jsdelivr.net/npm/vega@6.4.0/build/vega.min.js",
     libraryVegaLite = "https://cdn.jsdelivr.net/npm/vega-lite@6.5.0/build/vega-lite.min.js", renderer = "svg" } = settings;
   for (const [name, value] of Object.entries({ libraryVega, libraryVegaLite })) {
@@ -24,5 +24,5 @@ export default function ({ settings, source, refuse }) {
       throw refuse("the code", start.length > 40 ? `${start.slice(0, 40)}…` : start, `a Vega-Lite specification in JSON (${error.message})`);
     }
   }
-  return { libraryVega, libraryVegaLite, renderer };
+  return { libraryVega: escapeHtml(libraryVega), libraryVegaLite: escapeHtml(libraryVegaLite), renderer };
 }

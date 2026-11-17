@@ -64,7 +64,8 @@
   footnotes of `static/assets/css/main.css` from the starter, and link
   `/assets/temml/Temml-Local.css` in `templates/document.html`.
 - **Dependencies**: Blyss now depends on `temml` and `highlight.js` besides
-  `marked`; neither has dependencies of its own.
+  `marked`, of which it needs version 16.4.2 or newer; none of them has
+  dependencies of its own.
 
 ### New features
 
@@ -215,15 +216,18 @@
   of the hero and of the overlay. As in Pandoc, no space follows the first
   dollar sign of a formula within a text or precedes its second one, and no
   digit follows that one; such a formula ends before a code span, and `\$` is
-  a dollar sign that starts none. A formula that is not valid LaTeX stops the
-  build with the name of its file before the previous output is deleted.
+  a dollar sign that starts none. In the description of an image, a formula
+  stays as it is written. A formula that is not valid LaTeX stops the build
+  with the name of its file before the previous output is deleted.
 - **Footnotes**: in pages, posts and docs, `[^name]` refers to the footnote
-  that `[^name]: Text` defines on a line of its own; further paragraphs of a
-  footnote are indented by four spaces. The footnotes are numbered in the
-  order of their first references and follow the text as a list, each with a
-  link back to each of its references. Their ids are `fn:1` and `fnref:1`,
-  which no heading can have. The new labels `footnotes` and `backToText`
-  name the list and the links back for screen readers and default to English.
+  that `[^name]: Text` defines on a line of its own; further lines and
+  paragraphs of a footnote are indented by four spaces. The footnotes are
+  numbered in the order of their first references and follow the text as a
+  list, each with a link back to each of its references. A reference stays as
+  it is written without a footnote, in the text of a link and in the
+  description of an image. Their ids are `fn:1` and `fnref:1`, which no
+  heading can have. The new labels `footnotes` and `backToText` name the list
+  and the links back for screen readers and default to English.
 - **Highlighted code**: highlight.js highlights fenced code in the languages
   it knows during the build; other code stays plain.
 - **Code blocks shown by components**: a component's data file can name the

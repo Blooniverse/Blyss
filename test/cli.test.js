@@ -1120,8 +1120,13 @@ export default ({ settings, source, texts, refuse }) => {
     await writeFile(join(site, notes), "---\ntitle: Notes\n---\n\n" +
       "Inline $a$ and $$b$$ here, but $5 and $10, \\$x\\$ and `$c$` stay, as *does $d*e$ in* an emphasis.\n\n$$\n\\frac{1}{2}\n$$\n\n" +
       "First[^b], second[^a] and first again[^b]; [^missing] stays.\n\n[^a]: Note *a*.\n[^b]: Note b.\n[^unused]: Unused.\n\n" +
+      // Code directly below a paragraph, and what holds no formula and no link: the description of an image and the text of a link.
+      "Code below a paragraph:\n```\n$$\n\\frac{1\n$$\n```\n\nAnd:\n~~~\n[^b]: Not a footnote.\n~~~\n\n" +
+      "![A plot of $f$ and [^a]](/plot.png), [a link to [^a]](/x/) and ``quotes'' before $q$.\n\n" +
+      "After ~5, a_b, 5 * 3, a < b, wow! and www.example.com comes $w$.\n\n" +
       "```chart\n---\ntitle: Not front matter\n---\nx < y & $z$\n```\n\n```plot with further words\np\n```\n\n" +
-      "```{{chart}}\n---\ntitle: Own & <title>\nkind: bar\n---\n\none\ntwo\n```\n\n{{chart}}\n\n- ```chart\n  nested\n  ```\n");
+      "```{{chart}}\n---\ntitle: Own & <title>\nkind: bar\n---\n\none\ntwo\n```\n\n{{chart}}\n\n- ```chart\n  nested\n  ```\n\n" +
+      '```{{componentMermaid}}\n---\nlibrary: /mermaid.mjs?v=1&x="y"\n---\n\ngraph TD\n```\n');
     // Formulas are read in every text: in that of a component and in those of the hero.
     await writeFile(join(site, sliderText), `${await readFile(join(site, sliderText), "utf8")}\nA formula $s$.\n`);
     const heroTexts = join(site, "_content", "en", "heroTexts.md");
@@ -1136,6 +1141,13 @@ export default ({ settings, source, texts, refuse }) => {
     assert.ok(html.includes(`<p>Inline ${formula("a")} and <math display="block" class="tml-display" style="display:block math;"><mi>b</mi></math> ` +
       "here, but $5 and $10, $x$ and <code>$c$</code> stay, as <em>does <math><mrow><mi>d</mi><mo>∗</mo><mi>e</mi></mrow></math> in</em> an emphasis.</p>"));
     assert.ok(html.includes('<div class="math"><math display="block" class="tml-display" style="display:block math;"><mfrac><mn>1</mn><mn>2</mn></mfrac></math></div>'));
+    // Code below a paragraph stays code, whatever it starts with, and the description of an image stays plain text.
+    assert.ok(html.includes("<p>Code below a paragraph:</p>\n<pre><code>$$\n\\frac{1\n$$\n</code></pre>\n<p>And:</p>\n<pre><code>[^b]: Not a footnote.\n</code></pre>"));
+    assert.ok(html.includes('<p><img src="/plot.png" alt="A plot of $f$ and [^a]">, <a href="/x/">a link to [^a]</a> ' +
+      `and \`\`quotes&#39;&#39; before ${formula("q")}.</p>`));
+    // A formula is found after every character at which marked ends a text.
+    assert.ok(html.includes('<p>After ~5, a_b, 5 * 3, a &lt; b, wow! and <a href="http://www.example.com">www.example.com</a> ' +
+      `comes ${formula("w")}.</p>`));
     const home = await page("en/index.html");
     assert.ok(home.includes(`<p>A formula ${formula("s")}.</p>`));
     assert.ok(home.includes(`<div>\n<h3>Formula</h3>\n<p>A formula ${formula("h")}.</p>\n</div>`));
@@ -1162,6 +1174,8 @@ export default ({ settings, source, texts, refuse }) => {
     assert.ok(html.includes(chart(3, 2, "bar", "Own &amp; &lt;title&gt;", "one\ntwo")));
     assert.ok(html.includes(chart(4, 1, "", "Default", "### a &lt;b&gt; &amp; $x$")));
     assert.ok(html.includes('<pre><code class="language-chart">nested\n</code></pre>'));
+    // A block of a diagram sets the URL of its library, escaped like every setting.
+    assert.ok(html.includes('<component-mermaid class="component" id="componentMermaid-1" data-library="/mermaid.mjs?v=1&amp;x=&quot;y&quot;" data-theme="neutral" '));
   });
 
   test("refuses a formula that is not LaTeX, a language that two components show and code that a component refuses, and keeps the previous output", async () => {

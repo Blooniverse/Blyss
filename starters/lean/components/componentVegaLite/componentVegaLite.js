@@ -20,8 +20,9 @@ customElements.define("component-vega-lite", class extends HTMLElement {
   connectedCallback() {
     if (this.#started) return; // already set up when the chart moves within the page
     this.#started = true;
-    new IntersectionObserver(([entry], observer) => {
-      if (!entry.isIntersecting) return;
+    // The browser may report several changes at once, the oldest first.
+    new IntersectionObserver((entries, observer) => {
+      if (!entries.some(entry => entry.isIntersecting)) return;
       observer.disconnect();
       this.#draw();
     }, { rootMargin: "50%" }).observe(this);
