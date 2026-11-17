@@ -9,7 +9,7 @@ Blyss is a lean SSG (static site generator). Essence:
 - **Themeable**.
 - **Composable**: Markdown components.
 - **Configurable**: blyss.config.js.
-- **Three dependencies**, none with dependencies of its own: `marked`, `temml` and `highlight.js`.
+- **3 dependencies**: `marked`, `temml` and `highlight.js` (none with dependencies of their own).
 - Lightweight Javascript.
 - Semantic (RDF graph via JSON-LD).
 
