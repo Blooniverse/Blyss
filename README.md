@@ -18,24 +18,19 @@ Option for in-browser content editing:
 
 ```text
 Author
-  │
   ▼
 Git Client
 (CLI, GUI, CMS)
-  │
   ▼
 Git Repository
-  │
-  ├─────────────┐
-  ▼             │
-Blyss           │
-  │             │
-  ▼             │
-Website         │
-                │
-                ▼
-Automation Platform
-(Activepieces, Windmill, N8n)
+  ├───────────┐
+  ▼           │
+Blyss         │
+  ▼           │
+Website       │
+              ▼
+        Automation Platform
+    (Activepieces, Windmill, N8n)
 ```
 
 
