@@ -10,7 +10,7 @@ function within(parent, child) {
 export function resolvePaths(projectDir, config) {
   const root = resolve(projectDir);
   const paths = {
-    componentsDirectory: resolve(root, config.directories.components ?? "_components"),
+    componentsDirectory: resolve(root, config.directories.components ?? "components"),
     contentDirectory: resolve(root, config.directories.content),
     publicDirectory: resolve(root, config.directories.public),
     staticDirectory: resolve(root, config.directories.static),

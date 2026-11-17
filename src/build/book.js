@@ -36,7 +36,7 @@ function renderPager(previous, next, labels) {
   return `<nav aria-label="${escapeHtml(labels.pagination)}">\n<ul>\n${links.map(link => `  <li>${link}</li>`).join("\n")}\n</ul>\n</nav>\n`;
 }
 
-// The docs of a language lie in content/<language>/book/, and each of its directories is a section: its index.md is
+// The docs of a language lie in _content/<language>/book/, and each of its directories is a section: its index.md is
 // the start page of the section and names it in the navigation. Like the sidebars of Docusaurus or MkDocs, the
 // navigation follows the directories, and the docs beside each other are sorted by their order, then by their titles.
 // The previous and the next doc are those before and after a doc in the navigation.

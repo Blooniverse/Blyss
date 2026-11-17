@@ -8,7 +8,7 @@ Blyss is a lean bilingual Markdown transformer and static-site server.
 - Prefer built-in Node.js APIs.
 - Do not introduce dependencies without a demonstrated requirement.
 - Preserve compatibility with Node.js 25 and newer.
-- Keep authored content, static assets, source code, templates, and generated output separate; only a component in _components/<name>/ keeps its template, stylesheet and script together, while its texts stay in content/.
+- Keep authored content, static assets, source code, templates, and generated output separate; only a component in components/<name>/ keeps its template, stylesheet and script together, while its texts stay in content/.
 - Keep every component configurable per instance: a block in the Markdown of a page, post or doc gives a component a text and settings of its own, without a change to the component or to blyss.config.js.
 - Treat public/ as disposable generated output.
 - Preserve English and German language support.

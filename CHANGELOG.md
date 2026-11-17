@@ -4,6 +4,10 @@
 
 ### Breaking changes
 
+- **Directories renamed**: `_components/` and `_templates/` are now
+  `components/` and `templates/`, published at `/components/<name>/`, and
+  `content/` is now `_content/`. Rename them in existing websites and set
+  `directories.components`, `directories.templates` and `directories.content`.
 - **Page URLs follow their files**: pages in `content/<language>/pages/` are
   published below `/<language>/pages/`, such as `pages/about.md` at
   `/en/pages/about/` instead of `/en/about/`. Only `pages/index.md`, the home
@@ -296,6 +300,10 @@
 
 ### Breaking changes
 
+- **Directories renamed**: `_components/` and `_templates/` are now
+  `components/` and `templates/`, published at `/components/<name>/`, and
+  `content/` is now `_content/`. Rename them in existing websites and set
+  `directories.components`, `directories.templates` and `directories.content`.
 - `src/build/paths.js` no longer exports path constants. It now exports
   `resolvePaths(projectDir, config)` which resolves all directories relative
   to `projectDir`.

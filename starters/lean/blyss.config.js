@@ -23,7 +23,7 @@ export default {
       name: "Example Publisher", // CHANGE BEFORE PRODUCTION
       url: "https://example.com" // CHANGE BEFORE PRODUCTION
     },
-    // The languages, in the order of the language switcher. A key such as "en" names the language's directory in content/
+    // The languages, in the order of the language switcher. A key such as "en" names the language's directory in _content/
     // and starts its URLs; every language needs a label, a locale and the same labels. README.md tells how to add one.
     languages: {
       en: {
@@ -99,34 +99,34 @@ export default {
     alignOverlay: "centerExtra" // or "left" or "center" (as above, with the text boxes of overlayTexts.md), which aligns the content of the overlay
   },
 
-  // 4. Hero: the region below the content of the home pages (_templates/hero.html). Each of its parts is switched on
+  // 4. Hero: the region below the content of the home pages (templates/hero.html). Each of its parts is switched on
   // (true) or off (false); a hero without a part that is switched on is not shown at all.
   hero: {
-    components: { // its components from _components/, in this order
+    components: { // its components from components/, in this order
       componentSlider: true,
       componentGallery: true,
       componentFlower: true
     },
-    texts: true // all texts of content/<language>/heroTexts.md, with their title
+    texts: true // all texts of _content/<language>/heroTexts.md, with their title
   },
 
-  // 5. Overlay: the bar at the bottom of the window whose button opens a panel (_templates/overlay.html). It has its
+  // 5. Overlay: the bar at the bottom of the window whose button opens a panel (templates/overlay.html). It has its
   // own parts, switched on (true) or off (false) like those of the hero, and is not shown without one either.
   overlay: {
     showOn: { // the kinds of pages that have the overlay: the three content types, then the other kinds
-      page: true, // the pages in content/<language>/pages/
-      post: true, // the posts in content/<language>/posts/
-      book: true, // the docs in content/<language>/book/
+      page: true, // the pages in _content/<language>/pages/
+      post: true, // the posts in _content/<language>/posts/
+      book: true, // the docs in _content/<language>/book/
       home: false, // the home pages, which have the hero
       list: true, // the archive and the tag pages
       "not-found": true // the "not found" pages
     },
-    components: { // its components from _components/, in this order
+    components: { // its components from components/, in this order
       componentSlider: true,
       componentGallery: true,
       componentFlower: false
     },
-    texts: true // all texts of content/<language>/overlayTexts.md, with their title
+    texts: true // all texts of _content/<language>/overlayTexts.md, with their title
   },
 
   // 6. Synchronisation: true makes the overlay a copy of the hero. The overlay then shows hero.components and, if
@@ -134,9 +134,9 @@ export default {
   // is not used, and overlay.showOn still applies.
   synchroniseHeroOverlay: false,
 
-  // 7. Components: the settings of the components in _components/<name>/. {{<name>}} shows a component in a template
+  // 7. Components: the settings of the components in components/<name>/. {{<name>}} shows a component in a template
   // or, in a paragraph of its own, in the Markdown of a page or post; its texts are in
-  // content/<language>/components/<name>.md. Each duration is a time in ms or s.
+  // _content/<language>/components/<name>.md. Each duration is a time in ms or s.
   components: {
     // The slider runs through the whole numbers from start to end. Each step marks a value on the way and has a
     // description in every language; change, add or remove steps as you like.
@@ -175,11 +175,11 @@ export default {
 
   // 8. Directories
   directories: {
-    components: "_components",
-    content: "content",
+    components: "components",
+    content: "_content",
     public: "public", // generated output: deleted and recreated by every build, so keep it a separate subdirectory
     static: "static",
-    templates: "_templates"
+    templates: "templates"
   },
 
   // 9. Server

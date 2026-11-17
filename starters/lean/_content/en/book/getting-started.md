@@ -23,4 +23,4 @@ A directory, such as `content/en/book/writing/`, is a section of the documentati
 
 ## Translating docs
 
-Each language has its own docs in `content/<language>/book/`. As elsewhere, translations share their `translationKey`, while the names of their files and directories may differ: this doc is `/de/book/erste-schritte/` in German.
+Each language has its own docs in `_content/<language>/book/`. As elsewhere, translations share their `translationKey`, while the names of their files and directories may differ: this doc is `/de/book/erste-schritte/` in German.

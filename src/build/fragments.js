@@ -3,7 +3,7 @@ import { marked } from "marked";
 import { BlyssError } from "../errors.js";
 import { escapeHtml } from "./render.js";
 
-// A Markdown file directly in content/<language>/, such as heroTexts.md, is a fragment: it is not published, but every
+// A Markdown file directly in _content/<language>/, such as heroTexts.md, is a fragment: it is not published, but every
 // page of its language can show it in document.html as {{<name>Title}} and {{<name>Content}}. Returns these values by
 // language. heroTexts.md and overlayTexts.md also hold the texts of the hero and of the overlay (see regions.js).
 export function renderFragments(projectDir, fragments) {

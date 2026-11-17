@@ -53,7 +53,7 @@ function readTexts(projectDir, fragments, names) {
 // - a template, <region>.html, which {{<region>}} shows in document.html; without it, the website lacks the region;
 // - components, <region>.components in blyss.config.js: each is switched on (true) or off (false), and they appear in
 //   the order of that setting;
-// - texts, content/<language>/<region>Texts.md, which start at its ### headings and which <region>.texts switches on
+// - texts, _content/<language>/<region>Texts.md, which start at its ### headings and which <region>.texts switches on
 //   or off as a whole.
 // synchroniseHeroOverlay gives the overlay the components and the texts of the hero instead of its own.
 export function arrangeRegions(projectDir, config, templates, fragments, componentNames, componentsLocation) {

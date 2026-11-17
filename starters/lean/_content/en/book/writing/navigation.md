@@ -20,4 +20,4 @@ Each heading of a doc gets an id from its text, as on GitHub: this one is `#head
 
 ## Templates
 
-`_templates/book.html` arranges the docs: the navigation, the title, the table of contents, the text and the links to the previous and the next doc. Its placeholders are named bookNavigation, bookToc and bookPager, each in double curly braces. Without this template, docs use `_templates/page.html`.
+`templates/book.html` arranges the docs: the navigation, the title, the table of contents, the text and the links to the previous and the next doc. Its placeholders are named bookNavigation, bookToc and bookPager, each in double curly braces. Without this template, docs use `templates/page.html`.

@@ -42,17 +42,17 @@ async function importData(file, location) {
   throw new BlyssError(`Cannot build ${location}: its default export must be a function that returns values for the template.`);
 }
 
-// A component is a directory _components/<name>/ with a template, <name>.html, which {{<name>}} shows in the templates
+// A component is a directory components/<name>/ with a template, <name>.html, which {{<name>}} shows in the templates
 // of the website and in its Markdown. The placeholders of that template are, each replacing an earlier one of its name:
 // - {{<key>Label}}: the labels of the page's language;
 // - {{<setting>}}: the component's settings, components.<name> in blyss.config.js;
-// - {{<field>}} and {{content}}: the front matter and the text of content/<language>/components/<name>.md;
+// - {{<field>}} and {{content}}: the front matter and the text of _content/<language>/components/<name>.md;
 // - the values that its data file, <name>.data.js, returns for these settings, that front matter, that text and the
 //   texts that its ### headings start;
 // - {{id}}: unique on the page, for the ids of its elements.
 // In Markdown, a fenced code block with {{<name>}} as its language is an instance of the component with a text and
 // settings of its own, which the block holds in place of that file and of blyss.config.js (see valuesOf below).
-// Every other file of the directory, such as a stylesheet or a script, is published at /_components/<name>/.
+// Every other file of the directory, such as a stylesheet or a script, is published at /components/<name>/.
 export async function loadComponents(projectDir, config, directory, texts) {
   const location = relative(projectDir, directory);
   const entries = await readdir(directory, { withFileTypes: true }).catch(error => {
@@ -136,7 +136,7 @@ export async function loadComponents(projectDir, config, directory, texts) {
       for (const [name, { path }] of components) {
         for (const file of await readdir(path)) {
           if (file === `${name}.html` || file === `${name}.data.js`) continue;
-          await cp(join(path, file), join(publicDirectory, "_components", name, file), { recursive: true });
+          await cp(join(path, file), join(publicDirectory, "components", name, file), { recursive: true });
         }
       }
     }
