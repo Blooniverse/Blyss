@@ -93,7 +93,7 @@ export default {
   layout: {
     margin: "2vmin", // the space between the frame and the content
     alignHome: "center", // or "left", which aligns all content of the home pages (only the home pages)
-    alignOther: "left", // or "center" or "centerLeft" (which centers the content, but aligns its text left nonetheless), which aligns all content of the other pages (pages, posts, docs, lists and not-found pages)
+    alignOther: "centerLeft", // or "center" or "centerLeft" (which centers the content, but aligns its text left nonetheless), which aligns all content of the other pages (pages, posts, docs, lists and not-found pages)
     paddingHero: "1rem", // the space above and below the content of the hero
     alignHero: "centerExtra", // or "left" or "center" ("centerExtra" centers everything apart from the left-aligned text boxes of heroTexts.md, including their headings), which aligns the content of the hero
     paddingOverlay: "1rem", // the space above and below the content of the opened overlay
