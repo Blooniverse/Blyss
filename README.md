@@ -1,8 +1,16 @@
-# Blyss 0.5
+# Blyss 1.0.1
 
-Blyss is a lean bilingual Markdown transformer and static-site server for Node.js, published as an npm package.
-
-Ideal for **local-first & Git-based** build & content workflows!
+Blyss is a lean SSG (static site generator). It is/has in essence:
+- Markdown based – ideal for Obsidian and other knowledge management systems.
+- Local-first & Git-based – for devs as well as for authors.
+- Multilingual – EN/DE bilingual per default.
+- 3 content types: book, page, post.
+- Configurable – via blyss.config.js.
+- Composable – via Markdown-based components.
+- Themeable.
+- Zero dependencies – apart from Node.js' `marked`.
+- Lightweight Javascript.
+- Semantic (RDF graph via JSON-LD).
 
 Option for in-browser content editing:
 [Decap CMS](https://decapcms.org/) or
