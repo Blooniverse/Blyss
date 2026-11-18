@@ -10,7 +10,7 @@ Blyss is an ultra lean SSG (static site generator):
 - **Author with 3 content types**: book doc, page, post.
     - `draft: true` in Frontmatter.
 - **Themeable**: Blyss comes with a lean starter.
-- **Composable**: Markdown components and fragments can be used anywhere.
+- **Composable**: Markdown components and their fragments can be used anywhere.
 - **Configurable**: Via blyss.config.js and component Markdown.
 - **Multilingual**: EN/DE default – can be extended.
 - **AIO & SEO**: Semantic RDF graph (in JSON-LD), plus a classic sitemap.xml.
