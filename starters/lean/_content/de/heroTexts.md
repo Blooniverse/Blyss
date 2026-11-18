@@ -4,12 +4,12 @@ title: Warum Blyss
 
 ### Markdown rein, HTML raus
 
-Seiten und Beiträge sind Markdown-Dateien mit etwas Front Matter. Blyss macht daraus eine statische Website mit sauberen URLs, einer Sitemap und Schema.org-Daten.
+Inhalte aller Art sind Markdown-Dateien mit etwas Front Matter.
 
-### Zwei Sprachen
+### Mehrsprachigkeit
 
-Deutsche und englische Inhalte liegen nebeneinander. Übersetzungen teilen sich einen `translationKey`, sodass jede Seite auf ihr Gegenstück in der anderen Sprache verweist.
+Mehrsprachige Inhalte liegen nebeneinander – Übersetzungen werden synchronisiert.
 
-### Ihre eigenen Texte
+### Eigene Texte
 
-Diese Texte stammen aus `content/de/heroTexts.md`: Der `title` der Datei ist die Überschrift darüber, und jede `###`-Überschrift beginnt einen neuen Text. Der Hero zeigt so viele Texte, wie Sie schreiben, jeden in voller Länge.
+Diese Texte hier stammen aus `content/de/heroTexts.md` – ihre Anzahl ist unbegrenzt.
