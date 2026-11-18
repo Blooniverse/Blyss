@@ -1,10 +1,11 @@
-import { isAbsolute, relative, resolve, sep } from "node:path";
+import nodePath, { resolve } from "node:path";
 import { BlyssError } from "../errors.js";
 
-// True when child is parent itself or lies inside it.
-function within(parent, child) {
-  const path = relative(parent, child);
-  return path !== ".." && !path.startsWith(`..${sep}`) && !isAbsolute(path);
+// True when child is parent itself or lies inside it. On Windows, no relative path leads to another drive: such a
+// path is absolute, and the child is outside as well. path is node:path, or its flavour of another platform.
+export function within(parent, child, path = nodePath) {
+  const fromParent = path.relative(parent, child);
+  return fromParent !== ".." && !fromParent.startsWith(`..${path.sep}`) && !path.isAbsolute(fromParent);
 }
 
 export function resolvePaths(projectDir, config) {

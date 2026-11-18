@@ -1,9 +1,14 @@
 # Changelog
 
-## Unreleased
+## 1.0.1 — unreleased
 
 ### Breaking changes
 
+- **Recent posts in a paragraph of their own**: `{{recentPosts}}` lists the
+  newest posts only where it is a paragraph of its own, like the placeholder
+  of a component. Within a text and in code it stays as it is written, so
+  that a page can name it; it used to be replaced everywhere, also in code.
+  Give it a line of its own between blank lines.
 - **Directories renamed**: `_components/` and `_templates/` are now
   `components/` and `templates/`, published at `/components/<name>/`, and
   `content/` is now `_content/`. Rename them in existing websites and set
@@ -368,9 +373,32 @@
   and formulas, footnotes, highlighted code, code blocks shown by components
   and the starter's diagrams, with a check that the starter ships the
   stylesheet and the font of the installed version of Temml.
+- **Licence**: `package.json` names the licence of the `LICENSE` file, the
+  GNU General Public License v3.0 (`GPL-3.0-only`), instead of MIT, and the
+  README states it. It covers the starter as well.
+- **Package**: `package.json` has a `repository`, a `homepage`, `bugs` and
+  `keywords`, describes Blyss as multilingual, and publishes the scoped
+  package publicly (`publishConfig.access`).
+- **Tests**: the tests of the starter read its titles, headings and layout
+  from the starter, so that a change of its wording no longer fails them, and
+  the workflow runs them for `main` and for pull requests to it.
 
 ### Fixes
 
+- **Files outside `public/` on Windows**: for a request path that names
+  another drive, such as `/D:/notes.txt`, `blyss serve` served that file. It
+  now answers every path that leaves `public/` with the "not found" page.
+- **Server crashes**: `blyss serve` ended with an error if a request met a
+  file that a build was just replacing or that it could not read. Such a
+  request is now answered with the "not found" page. A port that is in use is
+  named in a message instead of a stack trace.
+- **Docs wider than the window**: with `layout.alignOther` set to
+  `"centerLeft"` or `"center"`, a doc with a long line of code, a wide table
+  or a diagram was wider than its column and the page scrolled sideways. In
+  the starter's stylesheet, the doc is now as wide as its column, a wide
+  table scrolls sideways like code, and a long word breaks. Existing
+  websites copy the rules for `main`, `table` and `.book > main` of
+  `static/assets/css/main.css`.
 - **Languages**: a language without `labels` no longer crashes the build, a
   missing `site.defaultLanguage` no longer yields `x-default` URLs ending in
   `/undefined/`, and content in a directory that is not a language, such as

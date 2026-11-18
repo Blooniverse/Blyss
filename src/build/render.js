@@ -100,23 +100,24 @@ function renderToc(headings, label) {
   return `<nav aria-label="${escapeHtml(label)}">\n<p>${escapeHtml(label)}</p>\n<ul>\n${list.join("\n")}\n</ul>\n</nav>\n`;
 }
 
-// A paragraph that consists of {{<name>}} alone shows the component of that name, and a fenced code block with
-// {{<name>}} as its language shows it with the text and the settings that the block holds (see components.js); other
-// code keeps the placeholder as text. A fenced code block in a language of a component, such as mermaid, shows that
-// component with the code as its text. With takenIds, the headings get ids (see identifyHeadings), which are returned
-// with the headings.
+// A paragraph that consists of {{recentPosts}} alone lists the newest posts of the page's language, and one that
+// consists of {{<name>}} alone shows the component of that name; a fenced code block with {{<name>}} as its language
+// shows the component with the text and the settings that the block holds (see components.js). Other code and
+// running text keep a placeholder as it is written. A fenced code block in a language of a component, such as
+// mermaid, shows that component with the code as its text. With takenIds, the headings get ids (see
+// identifyHeadings), which are returned with the headings.
 async function renderBody(record, file, records, components, languages, takenIds) {
   if (record.type === "list") return { html: record.html, headings: [] };
-  // A replacement function, unlike a string, inserts the titles as they are, even with $& or $$ in them.
-  const markdown = record.markdown.replace(/{{recentPosts}}/g, () => renderRecentPosts(record, records));
-  const tokens = lexDocument(markdown, file, record.languageConfig.labels);
+  const tokens = lexDocument(record.markdown, file, record.languageConfig.labels);
   for (const [index, token] of tokens.entries()) {
     const block = token.type === "code" ? token.text : undefined;
     const language = block === undefined ? "" : token.lang ?? "";
     const placeholder = token.type === "paragraph" ? token.text : language;
     const shown = languages.get(language.split(/\s/)[0]);
     const name = shown ?? /^{{([a-zA-Z][a-zA-Z0-9]*)}}$/.exec(placeholder.trim())?.[1];
-    if (name && Object.hasOwn(components, name)) {
+    if (name === "recentPosts" && token.type === "paragraph") {
+      tokens[index] = { type: "html", block: true, raw: token.raw, text: renderRecentPosts(record, records) };
+    } else if (name && Object.hasOwn(components, name)) {
       tokens[index] = { type: "html", block: true, raw: token.raw, text: await components[name](block, Boolean(shown)) };
     }
   }

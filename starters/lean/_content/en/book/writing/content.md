@@ -30,7 +30,9 @@ Give translations the same `translationKey` to connect them in the language swit
 
 Posts may have tags as `tags: [Blyss, Markdown]`, a comma-separated value or a YAML block list. Blyss generates `/<language>/posts/`, `/<language>/tags/` and `/<language>/tags/<tag>/`; do not create content at those URLs. Tag URLs use ASCII slugs, and matching slugs link across languages. The newest post determines a tag's displayed spelling.
 
-Archives and tag pages are ordered newest first and paginated by `pagination.pageSize`, with later pages at `page/2/` and so on. A page containing `{{recentPosts}}` lists its three newest posts by `datePublished`. URL collisions stop the build.
+Archives and tag pages are ordered newest first and paginated by `pagination.pageSize`, with later pages at `page/2/` and so on. URL collisions stop the build.
+
+A paragraph that consists of `{{recentPosts}}` alone lists the three newest posts of its language, ordered by `datePublished`. In code and in running text, the placeholder stays as it is written.
 
 ## Fragments and components
 

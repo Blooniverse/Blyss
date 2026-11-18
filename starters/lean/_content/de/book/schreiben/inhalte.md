@@ -33,7 +33,7 @@ Beiträge können Tags als `tags: [Blyss, Markdown]`, `tags: Blyss, Markdown` od
 
 Tags erhalten ASCII-Slugs: `Über Blyss` wird `/de/tags/uber-blyss/`. Gleiche Slugs verbinden Tagseiten über Sprachen hinweg; angezeigt wird die Schreibweise des neuesten Beitrags. Archiv und Tagseiten sind nach Datum absteigend sortiert und zeigen `pagination.pageSize` Beiträge pro Seite; weitere Seiten liegen etwa unter `/de/posts/page/2/` und `/de/tags/markdown/page/2/`, mit Links zu neueren und älteren Beiträgen.
 
-Ein Platzhalter `{{recentPosts}}` in einer Seite zeigt die drei neuesten Beiträge ihrer Sprache, geordnet nach `datePublished`. Dokumente gehören weder dazu noch ins Archiv oder zu Tags.
+Ein Absatz, der nur aus `{{recentPosts}}` besteht, zeigt die drei neuesten Beiträge seiner Sprache, geordnet nach `datePublished`. In Code und im Fließtext bleibt der Platzhalter so stehen, wie er geschrieben ist. Dokumente gehören weder dazu noch ins Archiv oder zu Tags.
 
 ## Dokumentation und Fragmente
 
