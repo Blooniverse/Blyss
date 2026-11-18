@@ -9,6 +9,7 @@ Blyss is an ultra lean SSG (static site generator):
     - **Compatibility**: [Marktext.me](https://marktext.me) as well as [Obsidian.md](https://obsidian.md)
 - **Authoring with 3 content types**: book doc, page, post.
     - `draft: true` in Frontmatter.
+    - In-browser content editing via: [Decap CMS](https://decapcms.org/) or [Tina](https://tina.io/).
 - **Themeable**: Blyss comes with a lean starter.
 - **Composable**: Markdown components and their fragments can be used anywhere.
 - **Configurable**: Via blyss.config.js and component Markdown.
@@ -19,10 +20,6 @@ Blyss is an ultra lean SSG (static site generator):
 - **Local-first & Git-based**: For devs & authors.
 
 <img alt="" src="https://blooniverse.com/assets/logosignet.svg" />
-
-Option for in-browser content editing:
-[Decap CMS](https://decapcms.org/) or
-[Tina](https://tina.io/):
 
 ```text
 Author
