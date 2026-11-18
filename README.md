@@ -18,6 +18,7 @@ Blyss is an ultra lean SSG (static site generator):
 - **3 dependencies only**: `highlight.js`, `marked`, `temml` (nor any further dependencies).
 - **Local-first & Git-based**: For devs & authors.
 
+<img src="data:image/png;base64,...">
 
 Option for in-browser content editing:
 [Decap CMS](https://decapcms.org/) or
