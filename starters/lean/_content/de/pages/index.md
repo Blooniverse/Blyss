@@ -1,6 +1,6 @@
 ---
-title: Blyss (H1)
-description: Slogan (H2)
+title: Blyss SSG (H1)
+description: Lean for knowledge (H2)
 translationKey: home
 ---
 
