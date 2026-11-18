@@ -7,7 +7,7 @@ translationKey: book-configuration
 
 ## Website einstellen
 
-Die Kommentare in `blyss.config.js` erklären die Einstellungen des Starters und seiner Komponenten. Ersetzen Sie vor der Veröffentlichung insbesondere die mit `CHANGE BEFORE PRODUCTION` markierten Werte für Website und Publisher. `site.baseUrl` bestimmt die öffentlichen URLs für Canonical-Links, `hreflang` und JSON-LD.
+Die Kommentare in `blyss.config.js` erklären die Einstellungen des Starters und seiner Komponenten. Ersetzen Sie vor der Veröffentlichung insbesondere die mit `CHANGE BEFORE PRODUCTION` markierten Werte für Website und Publisher. `site.baseUrl` bestimmt die öffentlichen URLs für Canonical-Links, `hreflang` und JSON-LD; mit einem Pfad, wie in `https://example.com/docs`, liegt die Website [unterhalb dieses Pfads](/de/book/bereitstellung/#unterhalb-eines-pfads).
 
 `pagination.pageSize` legt die Anzahl der Beiträge je Archiv- und Schlagwortseite fest; der Standard ist 10, erlaubt sind positive ganze Zahlen. `layout` steuert Abstände und Ausrichtung; Hero und Overlay sowie ihre Schalter beschreibt [Vorlagen](/de/book/vorlagen/). Einstellungen einzelner Komponenten stehen unter `components`; ein [Block](/de/book/komponenten/) kann sie für eine einzelne Verwendung ersetzen.
 

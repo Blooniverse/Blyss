@@ -3,12 +3,13 @@ import { basename, extname, join, relative, sep } from "node:path";
 import { loadConfig } from "../config.js";
 import { BlyssError } from "../errors.js";
 import { loadComponents } from "./components.js";
+import { escapeHtml } from "./html.js";
 import { createListRecords, parseTags } from "./lists.js";
 import { renderFragments } from "./fragments.js";
 import { languagesOf } from "./languages.js";
 import { resolvePaths } from "./paths.js";
 import { parseFrontMatter, renderRecord } from "./render.js";
-import { assertSite, layoutOf } from "./settings.js";
+import { assertSite, basePathOf, layoutOf } from "./settings.js";
 import { arrangeRegions } from "./regions.js";
 import { renderSitemap } from "./sitemap.js";
 import { arrangeBooks } from "./book.js";
@@ -140,6 +141,15 @@ function assertUniqueTranslations(projectDir, records) {
   }
 }
 
+// A website below a path, such as /docs for https://example.com/docs/, finds its pages and its files below that
+// path: every href, src, poster and action of a page that starts at the root of the website, with a single "/",
+// gets the path. The content, the templates and the components need not know it.
+function withBasePath(html, basePath) {
+  if (!basePath) return html;
+  const path = escapeHtml(basePath);
+  return html.replace(/(\s(?:href|src|poster|action)=["'])\/(?!\/)/g, (match, start) => `${start}${path}/`);
+}
+
 export async function build(projectDir, configPath = './blyss.config.js') {
   const loaded = await loadConfig(projectDir, configPath);
   assertSite(loaded);
@@ -148,6 +158,7 @@ export async function build(projectDir, configPath = './blyss.config.js') {
   const { componentsDirectory, contentDirectory, publicDirectory, staticDirectory, templatesDirectory } = resolvePaths(projectDir, config);
   const locate = createLocator(config, publicDirectory);
   const layout = layoutOf(config);
+  const basePath = basePathOf(config);
 
   // Content is read and validated before the previous output is deleted.
   const readOptionalTemplate = name => readFile(join(templatesDirectory, name), 'utf8').catch(error => {
@@ -190,13 +201,13 @@ export async function build(projectDir, configPath = './blyss.config.js') {
   for (const record of records) {
     const file = record.sourceFile && relative(projectDir, record.sourceFile);
     const html = await renderRecord({
-      record, file, templates, translationIndex, site: config.site, records: content, layout, regions,
+      record, file, templates, translationIndex, site: config.site, records: content, layout, regions, basePath,
       fragments: fragments.get(record.languageKey),
       components: components.placeholders(record.languageKey, file),
       languages: components.languages,
       book: books.placeholders(record)
     });
-    pages.push({ record, html });
+    pages.push({ record, html: withBasePath(html, basePath) });
   }
 
   // Without a static directory, there are no files to copy.

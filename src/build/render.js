@@ -159,9 +159,10 @@ function renderTags(record) {
 // file names the record's Markdown file in errors; components holds a function for each component of the website,
 // which renders it in the language of the record, and resolves to it for a block of the record's Markdown; languages
 // names the component that shows the code blocks of a language; regions tells which of the hero and the overlay the
-// page shows (see regions.js); book holds the navigation and the pager of a doc (see book.js).
+// page shows (see regions.js); book holds the navigation and the pager of a doc (see book.js); basePath is the path
+// below which the website is hosted, {{basePath}} in every template.
 export async function renderRecord({ record, file, templates, translationIndex, site, records = [], layout, fragments = {}, components = {},
-  languages = new Map(), regions = { of: () => ({}) }, book = {} }) {
+  languages = new Map(), regions = { of: () => ({}) }, book = {}, basePath = "" }) {
   const metadata = record.metadata;
   const title = metadata.title || site.name;
   const description = metadata.description || record.languageConfig.description;
@@ -181,6 +182,7 @@ export async function renderRecord({ record, file, templates, translationIndex, 
     ...book,
     bookToc: isBook ? renderToc(body.headings, record.languageConfig.labels.onThisPage) : "",
     title: escapeHtml(title), description: escapeHtml(description), dateBlock, tags: renderTags(record),
+    basePath: escapeHtml(basePath),
     content: body.html
   });
   const pageTitle = title === site.name ? title : `${title} | ${site.name}`;
@@ -206,6 +208,7 @@ export async function renderRecord({ record, file, templates, translationIndex, 
     layoutAlign: home ? layout.alignHome : layout.alignOther,
     layoutAlignHero: layout.alignHero,
     layoutAlignOverlay: layout.alignOverlay,
+    basePath: escapeHtml(basePath),
     content
   };
   // {{hero}} and {{overlay}} show the regions of the page, each rendered by its template, which has the placeholders

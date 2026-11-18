@@ -484,6 +484,63 @@ describe("a page with quoted front matter", () => {
   });
 });
 
+describe("a website below a path", () => {
+  let site;
+  const page = (...path) => readFile(join(site, "public", ...path), "utf8");
+  before(async () => {
+    site = join(sandbox, "below");
+    assert.equal(run(["init", site], sandbox).status, 0);
+    // The website lies below /docs, hosts Mermaid itself and names its path in a template.
+    const configFile = join(site, "blyss.config.js");
+    const config = await readFile(configFile, "utf8");
+    const library = 'library: "https://cdn.jsdelivr.net/npm/mermaid@12.3.0/dist/mermaid.esm.min.mjs"';
+    assert.ok(config.includes('baseUrl: "https://example.com"') && config.includes(library));
+    await writeFile(configFile, config.replace('baseUrl: "https://example.com"', 'baseUrl: "https://example.com/docs/"')
+      .replace(library, 'library: "/assets/mermaid/mermaid.esm.min.mjs"'));
+    const document = join(site, "templates", "document.html");
+    await writeFile(document, (await readFile(document, "utf8")).replace("<body ", '<body data-base="{{basePath}}" '));
+    const result = run(["build"], site);
+    assert.equal(result.status, 0, result.stderr);
+  });
+
+  test("starts the links and the files of every page with the path, and leaves its absolute URLs as they are", async () => {
+    for (const file of (await listFiles(join(site, "public"))).filter(file => file.endsWith(".html"))) {
+      const html = await page(file);
+      assert.equal(html.match(/\s(?:href|src)="\/(?!docs\/)[^"]*"/), null, file);
+      assert.doesNotMatch(html, /docs\/docs/, file);
+    }
+    const home = await page("en", "index.html");
+    for (const expected of ['<link rel="canonical" href="https://example.com/docs/en/">', '<link rel="stylesheet" href="/docs/assets/css/main.css">',
+      '<a class="logo" href="/docs/en/"><img src="/docs/assets/img/logo.svg"', '<li><a href="/docs/en/posts/">Posts</a></li>',
+      '<script type="module" src="/docs/components/componentSlider/componentSlider.js"></script>', '<body data-base="/docs" ']) {
+      assert.ok(home.includes(expected), expected);
+    }
+    // A link of the Markdown, and the URL of a library in static/, which its component writes into a data attribute.
+    assert.ok((await page("en", "book", "index.html")).includes('<a href="/docs/en/book/installation/">'));
+    assert.ok((await page("en", "book", "writing", "formulas-and-diagrams", "index.html"))
+      .includes('data-library="/docs/assets/mermaid/mermaid.esm.min.mjs"'));
+    assert.ok((await page("sitemap.xml")).includes("<loc>https://example.com/docs/en/</loc>"));
+  });
+
+  test("is served below the path, to which / redirects", { timeout: 15_000 }, async () => {
+    const stderr = await whileServing(site, async base => {
+      for (const path of ["/", "/docs", "/docs/"]) {
+        const response = await fetch(base + path, { redirect: "manual" });
+        await response.text();
+        assert.equal(response.status, 302, path);
+        assert.equal(response.headers.get("location"), "/docs/en/", path);
+      }
+      for (const [path, status] of [["/docs/en/", 200], ["/docs/de/book/", 200], ["/docs/assets/css/main.css", 200], ["/docs/missing/", 404],
+        ["/en/", 404], ["/assets/css/main.css", 404]]) {
+        const response = await fetch(base + path);
+        await response.text();
+        assert.equal(response.status, status, path);
+      }
+    });
+    assert.equal(stderr, "");
+  });
+});
+
 describe("a site with a third language and German as its default", () => {
   let site;
   let configFile;

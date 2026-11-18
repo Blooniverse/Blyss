@@ -15,7 +15,7 @@ export default {
   // 1. Site
   site: {
     name: "My Website", // CHANGE BEFORE PRODUCTION
-    baseUrl: "https://example.com", // CHANGE BEFORE PRODUCTION: canonical, hreflang and JSON-LD URLs use it
+    baseUrl: "https://example.com", // CHANGE BEFORE PRODUCTION: canonical, hreflang and JSON-LD URLs use it; with a path, as in "https://example.com/docs", the website lies below that path
     defaultLanguage: "en", // the language of / and /404.html, one of the languages below (the first, if omitted); see _content/en/book/configuration.md
     languageSwitcher: true, // or false, which hides the language switcher of the top bar; the hreflang alternates remain
     // Dedicated RDF graph nodes (serialised as JSON-LD):

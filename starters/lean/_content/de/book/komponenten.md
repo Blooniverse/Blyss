@@ -11,7 +11,7 @@ Eine Komponente liegt in `components/<name>/`; ihr Name beginnt mit einem latein
 
 Ein Absatz, der nur den Namen der Komponente in doppelten geschweiften Klammern enthält, fügt sie in eine Seite, einen Beitrag oder ein Dokument ein. In Vorlagen funktioniert derselbe Platzhalter; in Code bleibt er Text. Eine Komponente kann mehrfach vorkommen. Für eine einzelne Verwendung mit eigenen Texten und Einstellungen verwenden Sie einen Block.
 
-Die Vorlage erhält Sprachlabels als `{{<key>Label}}`, einfache Einstellungen, Front-Matter-Felder wie `{{title}}`, `{{content}}` für den gerenderten Text und Werte der Datendatei. Bei gleichen Namen ersetzen spätere Werte frühere in dieser Reihenfolge; `{{id}}` hat zuletzt Vorrang und ist pro Seite eindeutig, etwa `componentFlower-1`. Labels, Einstellungen und Front Matter werden HTML-escaped; Rückgabewerte der Datendatei werden unverändert eingesetzt und müssen bei Bedarf selbst escaped werden.
+Die Vorlage erhält `{{basePath}}`, den Pfad einer Website [unterhalb eines Pfads](/de/book/bereitstellung/#unterhalb-eines-pfads), Sprachlabels als `{{<key>Label}}`, einfache Einstellungen, Front-Matter-Felder wie `{{title}}`, `{{content}}` für den gerenderten Text und Werte der Datendatei. Bei gleichen Namen ersetzen spätere Werte frühere in dieser Reihenfolge; `{{id}}` hat zuletzt Vorrang und ist pro Seite eindeutig, etwa `componentFlower-1`. Labels, Einstellungen und Front Matter werden HTML-escaped; Rückgabewerte der Datendatei werden unverändert eingesetzt und müssen bei Bedarf selbst escaped werden.
 
 ```js
 export default function ({ settings, languageKey, escapeHtml, refuse }) {
@@ -21,7 +21,7 @@ export default function ({ settings, languageKey, escapeHtml, refuse }) {
 }
 ```
 
-Die Funktion erhält auch `content` als HTML, `source` als ursprünglichen Text, `frontMatter` und `texts`: Letzteres enthält die durch `###` eingeleiteten Textabschnitte. Sie wird für jede Sprache und jeden Block aufgerufen. `refuse` erzeugt eine aussagekräftige Fehlermeldung. Ungültige Einstellungen stoppen den Build.
+Die Funktion erhält auch `content` als HTML, `source` als ursprünglichen Text, `frontMatter` und `texts`: Letzteres enthält die durch `###` eingeleiteten Textabschnitte. `basePath` ist der Pfad einer Website unterhalb eines Pfads, für URLs, die die Datendatei schreibt. Sie wird für jede Sprache und jeden Block aufgerufen. `refuse` erzeugt eine aussagekräftige Fehlermeldung. Ungültige Einstellungen stoppen den Build.
 
 ## Varianten
 
@@ -61,4 +61,4 @@ Der Browser lädt die Bibliothek erst, wenn das Diagramm nahe am Fenster ist ode
 | `componentVegaLite.libraryVega` | `build/vega.min.js` aus npm `vega@6.4.0` | `/assets/vega/vega.min.js` |
 | `componentVegaLite.libraryVegaLite` | `build/vega-lite.min.js` aus npm `vega-lite@6.5.0` | `/assets/vega/vega-lite.min.js` |
 
-`npm pack mermaid@12.3.0` lädt das Paket als Archiv, ohne es zu installieren. Entpacken Sie es und kopieren Sie auch die Mermaid-Chunks in der gleichen relativen Verzeichnisstruktur. Halten Sie beim Aktualisieren Vega und Vega-Lite beziehungsweise Raphaël und flowchart.js aufeinander abgestimmt. Bibliotheks-URLs müssen mit `https://` oder für lokale Dateien mit `/` beginnen.
+`npm pack mermaid@12.3.0` lädt das Paket als Archiv, ohne es zu installieren. Entpacken Sie es und kopieren Sie auch die Mermaid-Chunks in der gleichen relativen Verzeichnisstruktur. Halten Sie beim Aktualisieren Vega und Vega-Lite beziehungsweise Raphaël und flowchart.js aufeinander abgestimmt. Bibliotheks-URLs müssen mit `https://` oder für lokale Dateien mit `/` beginnen. Bei einer Website unterhalb eines Pfads setzen die Komponenten diesen Pfad vor eine URL, die mit `/` beginnt.
