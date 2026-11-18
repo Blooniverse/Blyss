@@ -12,4 +12,4 @@ Mehrsprachige Inhalte liegen nebeneinander – Übersetzungen werden synchronisi
 
 ### Eigene Texte
 
-Diese Texte hier stammen aus `content/de/heroTexts.md` – ihre Anzahl ist unbegrenzt.
+Diese Texte hier stammen aus `_content/de/heroTexts.md` – ihre Anzahl ist unbegrenzt.

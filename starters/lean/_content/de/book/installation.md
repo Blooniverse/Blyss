@@ -7,7 +7,7 @@ translationKey: book-installation
 
 ## Voraussetzungen und Installation
 
-Blyss benötigt Node.js 25 oder neuer und npm. Legen Sie mit dem veröffentlichten Paket eine Website an:
+Blyss benötigt Node.js 24 oder neuer und npm. Legen Sie mit dem veröffentlichten Paket eine Website an:
 
 ```bash
 npx @blooniverse/blyss init meine-website
@@ -21,17 +21,17 @@ npm start
 
 ## Befehle
 
-Führen Sie Befehle im Wurzelverzeichnis der Website mit `blyss.config.js` aus:
-
 ```bash
-npx blyss init [verzeichnis]
-npx blyss build
-npx blyss serve
+npx @blooniverse/blyss init [verzeichnis]  # den Starter kopieren
+npm run build                              # blyss build: directories.public erzeugen
+npm start                                  # blyss serve: auf PORT oder server.fallbackPort ausliefern
 ```
+
+Führen Sie `npm run build` und `npm start` im Wurzelverzeichnis der Website aus, in dem `blyss.config.js` liegt: Sie rufen `blyss build` und `blyss serve` des Blyss auf, das `npm install` in die Website gelegt hat. Schreiben Sie für `init` den vollen Namen `npx @blooniverse/blyss`: Außerhalb einer solchen Website lädt `npx blyss` ein fremdes npm-Paket namens `blyss`.
 
 Ohne Verzeichnis verwendet `init` das aktuelle Verzeichnis. Ein fehlendes Verzeichnis wird angelegt, ein vorhandenes muss leer sein. `init` überschreibt nie vorhandene Dateien und bietet kein `--force`; bei einem Kopierfehler entfernt es nur selbst angelegte Dateien und Verzeichnisse. Es installiert keine Pakete, initialisiert kein Git, erstellt oder startet die Website nicht und verwendet selbst kein Netzwerk. `npx` und `npm install` können hingegen Pakete herunterladen.
 
-Die erzeugte `package.json` trägt den Namen des Verzeichnisses, hängt von der ausgeführten Blyss-Version ab und bietet `npm run build` und `npm start`. Ohne `blyss.config.js` brechen `build` und `serve` ab und empfehlen `init`.
+Die erzeugte `package.json` trägt den Namen des Verzeichnisses, hängt von der ausgeführten Blyss-Version ab und bietet `npm run build` und `npm start`. Ohne `blyss.config.js` brechen `build` und `serve` ab und empfehlen `init`. `serve` erstellt die Website nicht: Fehlt `public/`, meldet der Server das und beantwortet jede Anfrage mit „404 Not Found“.
 
 ## Aufbau
 

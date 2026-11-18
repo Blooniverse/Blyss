@@ -1,4 +1,4 @@
-import { open } from "node:fs/promises";
+import { open, stat } from "node:fs/promises";
 import { createServer } from "node:http";
 import nodePath, { extname, join } from "node:path";
 import { pipeline } from "node:stream";
@@ -34,9 +34,12 @@ async function sendFile(response, status, filePath) {
 }
 
 export function serve(projectDir, config) {
-  const port = Number(process.env.PORT) || config.server.fallbackPort;
+  const port = Number(process.env.PORT) || (config.server?.fallbackPort ?? 3000);
   const { publicDirectory } = resolvePaths(projectDir, config);
   const { defaultLanguage } = languagesOf(config);
+  // A website that was never built has no output directory: the server says so, in the terminal and in the browser.
+  const unbuilt = `There is no ${config.directories.public}/ yet. Build the website first: npm run build`;
+  const isBuilt = () => stat(publicDirectory).then(info => info.isDirectory(), () => false);
   const server = createServer(async (request, response) => {
     try {
       const requestUrl = new URL(request.url ?? "/", "http://localhost");
@@ -54,9 +57,9 @@ export function serve(projectDir, config) {
       await sendFile(response, 200, filePath);
     } catch {
       // Like static hosts, answer every missing file with the generated 404.html, if there is one.
-      await sendFile(response, 404, join(publicDirectory, "404.html")).catch(() => {
+      await sendFile(response, 404, join(publicDirectory, "404.html")).catch(async () => {
         response.writeHead(404, { "Content-Type": "text/plain; charset=utf-8", "X-Content-Type-Options": "nosniff" });
-        response.end("404 Not Found");
+        response.end(await isBuilt() ? "404 Not Found" : `404 Not Found\n\n${unbuilt}\n`);
       });
     }
   });
@@ -68,6 +71,9 @@ export function serve(projectDir, config) {
       : `Cannot serve on port ${port}: ${error.message}`);
     process.exitCode = 1;
   });
-  server.listen(port, "0.0.0.0", () => console.log(`Blyss is serving ${config.directories.public}/ on port ${port}`));
+  server.listen(port, "0.0.0.0", async () => {
+    console.log(`Blyss is serving ${config.directories.public}/ on port ${port}`);
+    if (!await isBuilt()) console.error(unbuilt);
+  });
   return server;
 }

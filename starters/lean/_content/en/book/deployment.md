@@ -13,13 +13,15 @@ Blyss generates canonical and `hreflang` links, Schema.org JSON-LD using `@graph
 
 ## Hosting
 
-Deploy `public/`, not the source directories. Blyss does not generate `public/index.html`: configure the host to redirect `/` to the configured default language with HTTP 302 and serve `/404.html` with HTTP 404 for missing routes. `blyss serve` already does this. Component files are published below `/components/`; GitHub Pages requires `public/.nojekyll` to include paths starting with an underscore.
+Deploy `public/`, not the source directories. Blyss does not generate `public/index.html`: configure the host to redirect `/` to the configured default language with HTTP 302 and serve `/404.html` with HTTP 404 for missing routes. `blyss serve` already does this. Component files are published below `/components/`.
+
+Host the website at the root of its domain. Its links and files start with `/`, so a website below a path, such as a GitHub Pages project site at `https://user.github.io/repository/`, does not find them.
 
 The starter's `static/staticwebapp.config.json` configures the redirect to `/en/` and the 404 response for Azure Static Web Apps. If the default language changes, update that redirect and any deployment workflow.
 
 ### Azure Static Web Apps
 
-Azure's build service may not provide Node.js 25 or newer. Build in GitHub Actions and upload `public/` with `skip_app_build: true`:
+Azure's build service may not provide Node.js 24 or newer. Build in GitHub Actions and upload `public/` with `skip_app_build: true`:
 
 ```yaml
 name: Deploy
@@ -33,7 +35,7 @@ jobs:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
-          node-version: lts/* # Blyss requires Node.js 25 or newer
+          node-version: lts/* # Blyss requires Node.js 24 or newer
       - run: npm ci
       - run: npm run build
       # Azure requires this stub; the configured / redirect hides it.

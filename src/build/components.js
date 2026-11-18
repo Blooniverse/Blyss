@@ -15,16 +15,17 @@ function scalars(values = {}) {
 }
 
 // The front matter of a block sets settings of its component: a value that is JSON, such as 5, true or [1, 2], is
-// taken as such, and any other value as a text.
-function settingsOf(metadata) {
-  const typed = value => {
+// taken as such, and any other value as a text, without the quotes around it.
+function settingsOf({ written, metadata }) {
+  const typed = (value, text) => {
     try {
       return JSON.parse(value);
     } catch {
-      return value;
+      return text;
     }
   };
-  return Object.fromEntries(Object.entries(metadata).map(([key, value]) => [key, Array.isArray(value) ? value.map(typed) : typed(value)]));
+  return Object.fromEntries(Object.entries(written).map(([key, value]) =>
+    [key, Array.isArray(value) ? value.map((item, index) => typed(item, metadata[key][index])) : typed(value, metadata[key])]));
 }
 
 // A component's optional data file checks its settings and returns further values for its template. It can also name
@@ -129,7 +130,7 @@ export async function loadComponents(projectDir, config, directory, texts) {
   // is the code of one of the component's languages is taken as it is, without front matter.
   async function valuesOf(name, languageKey, block, file, isCode) {
     const text = texts.find(text => text.name === name && text.languageKey === languageKey);
-    let own = { metadata: {}, markdown: "" };
+    let own = { metadata: {}, written: {}, markdown: "" };
     if (isCode) {
       own.markdown = block;
     } else if (block !== undefined) {
@@ -141,7 +142,7 @@ export async function loadComponents(projectDir, config, directory, texts) {
     }
     const metadata = { ...text?.metadata, ...own.metadata };
     const [markdown, origin] = own.markdown.trim() ? [own.markdown, file] : [text?.markdown ?? "", text && relative(projectDir, text.sourceFile)];
-    const ownSettings = { ...settings[name], ...settingsOf(own.metadata) };
+    const ownSettings = { ...settings[name], ...settingsOf(own) };
     const { data, code } = components.get(name);
     const content = code ? escapeHtml(markdown.replace(/^\n+|\s+$/g, "")) : renderMarkdown(markdown, origin);
     return {

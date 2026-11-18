@@ -9,7 +9,7 @@ translationKey: book-development
 
 Das Blyss-Repository enthält die Engine in `bin/` und `src/`, den gebündelten Starter in `starters/lean/` und Tests in `test/`. Die `blyss.config.js` im Repository rendert den Starter zur Vorschau; Inhalte, statische Dateien, Vorlagen und Komponenten gehören in `starters/lean/`, nicht in die Repository-Wurzel. `blyss init` kopiert diesen Starter in neue Websites.
 
-Mit Node.js 25 oder neuer:
+Mit Node.js 24 oder neuer:
 
 ```bash
 npm install
@@ -22,6 +22,6 @@ npm test
 
 ## Markdown-Abhängigkeiten
 
-`src/build/markdown.js` verwendet `marked` für Markdown, `temml` für MathML und `highlight.js` für Syntaxhervorhebung. `marked` benötigt mindestens Version 16.4.2; Versionen vor 16.3.0 fehlen Hooks, die Formeln vor Markdown-Hervorhebung schützen. Temml ist auf eine exakte Version festgelegt, da der Starter das zugehörige Stylesheet und die Schrift mitliefert. Nach einer Versionsänderung kopieren Sie `Temml-Local.css` und `Temml.woff2` aus `node_modules/temml/dist/` nach `starters/lean/static/assets/temml/`; ein Test prüft deren Übereinstimmung.
+`src/build/markdown.js` verwendet `marked` für Markdown, `temml` für MathML und `highlight.js` für Syntaxhervorhebung. Getestet ist die Engine mit `marked` 18; Versionen vor 16.3.0 fehlen Hooks, die Formeln vor Markdown-Hervorhebung schützen. Temml ist auf eine exakte Version festgelegt, da der Starter das zugehörige Stylesheet und die Schrift mitliefert. Nach einer Versionsänderung kopieren Sie `Temml-Local.css` und `Temml.woff2` aus `node_modules/temml/dist/` nach `starters/lean/static/assets/temml/`; ein Test prüft deren Übereinstimmung.
 
 Prüfen Sie Änderungen an der Engine zusammen mit dem Starter und beiden Sprachen. Hinweise zur Pflege einer erzeugten Website stehen unter [Installation](/de/book/installation/) und [Bereitstellung](/de/book/bereitstellung/).

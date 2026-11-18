@@ -9,7 +9,7 @@ Click or touch a petal: it twirls, falls to the ground and leaves its text behin
 
 ### One text each
 
-Every `###` heading of `componentFlowerHero.md` in `content/en/components/` starts the text of the next petal.
+Every `###` heading of `componentFlowerHero.md` in `_content/en/components/` starts the text of the next petal.
 
 ### Count them
 
