@@ -1,9 +1,11 @@
 ---
-title: Formulas, footnotes, code and diagrams
+title: Markdown spice
 description: How to write formulas, footnotes, highlighted code, diagrams and charts in Markdown.
-order: 2
-translationKey: book-formulas-and-diagrams
+order: 4
+translationKey: book-markdown-spice
 ---
+
+Beyond plain Markdown, Blyss renders formulas, footnotes, highlighted code and diagrams. This doc shows each of them at work.
 
 ## Formulas
 

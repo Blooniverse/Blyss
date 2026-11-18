@@ -1,8 +1,15 @@
 ---
 title: Schreiben
-description: Inhalte schreiben, übersetzen und in der Dokumentation ordnen.
-order: 2
+description: Dokumente, Seiten und Beiträge schreiben, übersetzen und ihr Markdown würzen.
+order: 5
 translationKey: book-writing
 ---
 
-Dieser Abschnitt liegt in `_content/de/book/schreiben/`; `index.md` ist seine Startseite. Unter [Inhalte](/de/book/schreiben/inhalte/) stehen Front Matter, URLs, Übersetzungen und generierte Seiten. [Navigation und Überschriften](/de/book/schreiben/navigation/) beschreibt die Gliederung des Buchs; [Formeln, Fußnoten, Code und Diagramme](/de/book/schreiben/formeln-und-diagramme/) zeigt ausführbare Beispiele für Markdown.
+Alle Inhalte sind Markdown in `_content/<Sprache>/`, mit einem Verzeichnis für jede Art von Inhalt:
+
+- [Buch](/de/book/schreiben/buch/): die Dokumente einer Dokumentation wie dieser, in `book/`, mit ihren [Abschnitten](/de/book/schreiben/buch/dokumente/) und ihrer [Navigation](/de/book/schreiben/buch/navigation/).
+- [Seiten und Beiträge](/de/book/schreiben/seiten-und-beitraege/): einzelne Seiten in `pages/` und datierte Beiträge mit Schlagwörtern in `posts/`, mit ihrem Front Matter und ihren URLs.
+- [Übersetzungen](/de/book/schreiben/uebersetzungen/): wie Blyss die Fassungen einer Seite in mehreren Sprachen verknüpft.
+- [Markdown-Würze](/de/book/schreiben/markdown-wuerze/): Formeln, Fußnoten, hervorgehobener Code und Diagramme.
+
+Dieser Abschnitt liegt in `_content/de/book/schreiben/`; `index.md` ist seine Startseite.

@@ -1,7 +1,7 @@
 ---
 title: Konfiguration und Sprachen
 description: Website, Sprachen, Verzeichnisse und Darstellung konfigurieren.
-order: 4
+order: 2
 translationKey: book-configuration
 ---
 
@@ -17,7 +17,7 @@ Alle Verzeichnisse werden relativ zum Website-Wurzelverzeichnis aufgelöst. Jede
 
 `site.languages` enthält beliebig viele Sprachen in der Reihenfolge des Sprachwechslers und der `hreflang`-Alternativen. Ein Schlüssel wie `de` oder `pt-br` darf nur kleine lateinische Buchstaben, Ziffern und Bindestriche enthalten. Er benennt das Verzeichnis unter `_content/` und beginnt die URLs. Jede Sprache braucht ein `label`, ein `locale` wie `de` oder `en-GB`, eine `description` als Ersatz für Seiten ohne eigene Beschreibung und dieselben `labels` wie die anderen Sprachen. Die Labels der von Blyss erzeugten Elemente fallen andernfalls auf Englisch zurück.
 
-`site.defaultLanguage` bestimmt das Ziel der Weiterleitung von `/` und die Sprache von `/404.html`; ohne Angabe ist es die erste Sprache. `site.languageSwitcher: false` versteckt den Sprachwechsler, nicht aber die `hreflang`-Links. Übersetzte Dateien erhalten denselben `translationKey`, dürfen aber unterschiedliche Pfade und Slugs haben.
+`site.defaultLanguage` bestimmt das Ziel der Weiterleitung von `/` und die Sprache von `/404.html`; ohne Angabe ist es die erste Sprache. `site.languageSwitcher: false` versteckt den Sprachwechsler, nicht aber die `hreflang`-Links. [Übersetzte Dateien](/de/book/schreiben/uebersetzungen/) erhalten denselben `translationKey`, dürfen aber unterschiedliche Pfade und Slugs haben.
 
 ### Sprache hinzufügen
 

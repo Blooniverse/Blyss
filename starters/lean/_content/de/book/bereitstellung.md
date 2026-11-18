@@ -1,7 +1,7 @@
 ---
 title: Veröffentlichung
 description: SEO, Datenschutz und statisches Hosting einschließlich Azure vorbereiten.
-order: 7
+order: 6
 translationKey: book-deployment
 ---
 
@@ -9,7 +9,7 @@ translationKey: book-deployment
 
 Setzen Sie `site.baseUrl`, Publisher-Daten und Sprachbeschreibungen in `blyss.config.js` auf die tatsächlichen Werte; ersetzen Sie auch die `Sitemap:`-URL in `static/robots.txt`. Tauschen Sie das Platzhalterlogo und die Galeriebilder samt Beschreibungen in den sprachabhängigen Galerietexten aus. Prüfen Sie, ob externe Abrufe von Google Fonts und jsDelivr für Ihre Website zulässig sind, oder hosten Sie [Schriften](/de/book/vorlagen/) und [Diagrammbibliotheken](/de/book/komponenten/) selbst.
 
-Die Vorlagen enthalten Canonical- und `hreflang`-Links sowie Schema.org-JSON-LD mit einem `@graph`; Dokumente haben darin den Typ `TechArticle`. `sitemap.xml` enthält die erzeugten Seiten mit Übersetzungslinks und `lastmod` aus `dateModified` oder `datePublished`, aber keine 404-Seiten. Kontrollieren Sie URLs und strukturierte Daten nach dem Build.
+Die Vorlagen enthalten Canonical- und `hreflang`-Links sowie Schema.org-JSON-LD mit einem `@graph`; Beiträge haben darin den Typ `BlogPosting` und Dokumente den Typ `TechArticle`, jeweils mit ihrer Überschrift, ihren Daten und dem Publisher der Website als Autor. Die Alternative `x-default` einer Seite ist ihre Übersetzung in der Standardsprache. `sitemap.xml` enthält die erzeugten Seiten mit Übersetzungslinks und `lastmod` aus `dateModified` oder `datePublished`, aber keine 404-Seiten. Kontrollieren Sie URLs und strukturierte Daten nach dem Build.
 
 ## Statisches Hosting
 

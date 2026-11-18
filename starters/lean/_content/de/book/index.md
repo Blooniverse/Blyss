@@ -1,10 +1,28 @@
 ---
 title: Dokumentation
-description: Anleitung zum Erstellen, Gestalten und Veröffentlichen einer Blyss-Website.
-order: 0
+description: Eine Blyss-Website installieren, konfigurieren, gestalten, schreiben und veröffentlichen.
 translationKey: book
 ---
 
-Diese Dokumentation begleitet Sie vom Anlegen einer Blyss-Website bis zu ihrer Veröffentlichung. Beginnen Sie mit der [Installation](/de/book/installation/) und der [Konfiguration](/de/book/konfiguration/). Unter [Schreiben](/de/book/schreiben/) finden Sie Inhalte, Navigation und Markdown; [Vorlagen](/de/book/vorlagen/) und [Komponenten](/de/book/komponenten/) erklären die Gestaltung. Für den Betrieb lesen Sie [Bereitstellung](/de/book/bereitstellung/), für Änderungen am Generator [Entwicklung](/de/book/entwicklung/).
+Blyss ist ein schlanker Static-Site-Generator: Er macht aus Markdown eine mehrsprachige Website mit Seiten, Beiträgen und einem Buch wie diesem. Diese Dokumentation führt von einer neuen Website bis zu ihrer Veröffentlichung.
 
-Diese Startseite liegt in `_content/de/book/index.md`. Jede Markdown-Datei in `_content/de/book/` und seinen Verzeichnissen ist ein Dokument unterhalb von `/de/book/`. Die Navigation listet sie auf, das Inhaltsverzeichnis zeigt die Abschnitte der aktuellen Seite, und die Links darunter führen zum vorherigen und zum nächsten Dokument. Wie Sie dieses Buch erweitern, zeigen die [ersten Schritte](/de/book/erste-schritte/).
+## Kapitel
+
+1. [Installation und Einstieg](/de/book/installation/): eine Website anlegen, erstellen und lokal ansehen.
+2. [Konfiguration und Sprachen](/de/book/konfiguration/): die Einstellungen in `blyss.config.js`, darunter die Sprachen.
+3. [Vorlagen und Gestaltung](/de/book/vorlagen/): das HTML um die Inhalte, das Layout, der Hero und das Overlay.
+4. [Komponenten](/de/book/komponenten/): wiederverwendbare Elemente wie der Slider, die Galerie und die Diagramme.
+5. [Schreiben](/de/book/schreiben/): Dokumente, Seiten und Beiträge, ihre Übersetzungen und Markdown über reinen Text hinaus.
+6. [Veröffentlichung](/de/book/bereitstellung/): was vor der Veröffentlichung zu ersetzen ist und wie die Website gehostet wird.
+7. [Blyss entwickeln](/de/book/entwicklung/): an der Engine und an ihrem Starter arbeiten.
+
+Die Kapitel 1 bis 4 und 6 richten sich an alle, die eine Website einrichten und gestalten, Kapitel 5 an ihre Autorinnen und Autoren und Kapitel 7 an alle, die an Blyss mitarbeiten.
+
+## Über diese Dokumentation
+
+- **Gegenstand**: Blyss und sein Starter „lean“ in der Version, mit der diese Website angelegt wurde; das [Changelog](https://github.com/Blooniverse/Blyss/blob/main/CHANGELOG.md) nennt spätere Änderungen.
+- **Quelle**: die Markdown-Dateien in `_content/de/book/`. Das Buch gehört zum Starter, und Blyss erstellt es wie jede andere Seite: Passen Sie es für Ihre eigene Website an oder ersetzen Sie es.
+- **Sprachen**: Deutsch und [Englisch](/en/book/); der Sprachwechsler führt zur Übersetzung des aktuellen Dokuments.
+- **Lesen**: Die Navigation listet die Dokumente auf, das Inhaltsverzeichnis die Überschriften des aktuellen Dokuments, und die Links unter einem Dokument führen zum vorherigen und zum nächsten.
+- **Lizenz**: Blyss, sein Starter und diese Dokumentation stehen unter der [GNU General Public License v3.0](https://github.com/Blooniverse/Blyss/blob/main/LICENSE).
+- **Projekt**: [github.com/Blooniverse/Blyss](https://github.com/Blooniverse/Blyss); Fragen und Fehler sind dort als Issues willkommen.

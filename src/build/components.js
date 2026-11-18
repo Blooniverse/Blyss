@@ -1,5 +1,5 @@
 import { cp, readdir, readFile } from "node:fs/promises";
-import { join, relative } from "node:path";
+import { basename, join, relative } from "node:path";
 import { pathToFileURL } from "node:url";
 import { BlyssError } from "../errors.js";
 import { renderMarkdown } from "./markdown.js";
@@ -54,6 +54,11 @@ async function importData(file, location) {
 // The variants of every component, by the suffix of their names: one for each region.
 const variants = { Hero: "hero", Overlay: "overlay" };
 
+// A name that starts with a dot or an underscore marks what the browser does not need, such as a module that a data
+// file imports, notes or the files of an editor: such a file or directory of a component is not published, wherever
+// it lies in the directory of the component, and such a directory beside the components is no component.
+const isPublished = file => !/^[._]/.test(basename(file));
+
 // A component is a directory components/<name>/ with a template, <name>.html, which {{<name>}} shows in the templates
 // of the website and in its Markdown. It has a variant for each region, <name>Hero and <name>Overlay: the same
 // component under another name, with settings and a text of its own, so that the hero and the overlay can show it
@@ -72,7 +77,8 @@ const variants = { Hero: "hero", Overlay: "overlay" };
 // A component whose data file names languages shows the fenced code blocks in these languages, each as an instance
 // with the code as its text. Its text is code wherever it comes from: {{content}} is that code, escaped for HTML.
 // Every other file of the directory, such as a stylesheet or a script, is published at /components/<name>/ under the
-// name of the component, which its variants share.
+// name of the component, which its variants share, unless its name or that of one of its directories starts with a
+// dot or an underscore (see isPublished above).
 export async function loadComponents(projectDir, config, directory, texts) {
   const location = relative(projectDir, directory);
   const entries = await readdir(directory, { withFileTypes: true }).catch(error => {
@@ -81,8 +87,10 @@ export async function loadComponents(projectDir, config, directory, texts) {
   });
   const components = new Map();
   const languages = new Map(); // the component that shows the code blocks of each language
-  // In this order, a component comes before any directory whose name starts with the component's name.
-  for (const name of entries.filter(entry => entry.isDirectory()).map(entry => entry.name).sort()) {
+  // In this order, a component comes before any directory whose name starts with the component's name. A directory
+  // whose name starts with a dot or an underscore is no component: it can hold what the data files of several
+  // components import.
+  for (const name of entries.filter(entry => entry.isDirectory() && isPublished(entry.name)).map(entry => entry.name).sort()) {
     const path = join(directory, name);
     if (!/^[a-zA-Z][a-zA-Z0-9]*$/.test(name)) {
       throw new BlyssError(`Cannot build ${join(location, name)}: templates use its name as a placeholder, so it must start with a ` +
@@ -200,8 +208,8 @@ export async function loadComponents(projectDir, config, directory, texts) {
       for (const [name, { path, base }] of components) {
         if (base) continue;
         for (const file of await readdir(path)) {
-          if (file === `${name}.html` || file === `${name}.data.js`) continue;
-          await cp(join(path, file), join(publicDirectory, "components", name, file), { recursive: true });
+          if (file === `${name}.html` || file === `${name}.data.js` || !isPublished(file)) continue;
+          await cp(join(path, file), join(publicDirectory, "components", name, file), { recursive: true, filter: isPublished });
         }
       }
     }

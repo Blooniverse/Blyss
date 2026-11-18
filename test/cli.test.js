@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { spawn, spawnSync } from "node:child_process";
 import { once } from "node:events";
 import { chmod, cp, mkdir, mkdtemp, readdir, readFile, realpath, rename, rm, stat, writeFile } from "node:fs/promises";
-import { createServer } from "node:net";
+import { connect, createServer } from "node:net";
 import { tmpdir } from "node:os";
 import { dirname, join, posix, relative, sep, win32 } from "node:path";
 import { after, before, describe, test } from "node:test";
@@ -85,6 +85,34 @@ async function whileServing(site, check) {
   return stderr;
 }
 
+describe("blyss", () => {
+  test("shows its commands for --help and its version for --version", () => {
+    for (const args of [["--help"], ["-h"], ["build", "--help"]]) {
+      const result = run(args, sandbox);
+      assert.equal(result.status, 0, args.join(" "));
+      assert.match(result.stdout, /^Usage: blyss init \[directory\] .+\n {7}blyss build .+\n {7}blyss serve .+\n {7}blyss --help .+\n {7}blyss --version .+\n$/);
+      assert.equal(result.stderr, "");
+    }
+    for (const flag of ["--version", "-v"]) {
+      const result = run([flag], sandbox);
+      assert.equal(result.status, 0, flag);
+      assert.equal(result.stdout, `${blyss.version}\n`);
+    }
+  });
+
+  test("refuses a missing or unknown command and arguments of build and serve, and names the commands", async () => {
+    const cwd = await emptyDirectory("commands");
+    for (const [args, problem] of [[[], "Blyss needs a command."], [["bild"], "Unknown command: bild"],
+      [["build", "now"], "Unexpected argument: now"], [["serve", "--port", "4000"], "Unexpected argument: --port"]]) {
+      const result = run(args, cwd);
+      assert.equal(result.status, 1, args.join(" "));
+      assert.ok(result.stderr.startsWith(`${problem}\nUsage: blyss init [directory] `), result.stderr);
+      assert.equal(result.stdout, "");
+    }
+    assert.deepEqual(await readdir(cwd), []);
+  });
+});
+
 describe("blyss init <new-directory>", () => {
   let result;
   let site;
@@ -142,6 +170,16 @@ describe("blyss init", () => {
     assert.equal(result.stdout, `Created a lean Blyss website in ${site}.\n\nNext steps:\n` +
       "  npm install\n  npm run build\n  npm start\n");
     assert.deepEqual(await listFiles(site), await starterFiles());
+  });
+
+  test("accepts a directory that holds nothing but .git, which it leaves as it is", async () => {
+    const site = await emptyDirectory("repository");
+    await mkdir(join(site, ".git"));
+    await writeFile(join(site, ".git", "HEAD"), "ref: refs/heads/main\n");
+    const result = run(["init", site], sandbox);
+    assert.equal(result.status, 0, result.stderr);
+    assert.deepEqual(await listFiles(site), [".git/HEAD", ...await starterFiles()].sort());
+    assert.equal(await readFile(join(site, ".git", "HEAD"), "utf8"), "ref: refs/heads/main\n");
   });
 
   test("refuses a non-empty directory or a file without changing it", async () => {
@@ -223,8 +261,8 @@ describe("a generated starter", () => {
   test("builds with the local Blyss package", async () => {
     const result = run(["build"], site);
     assert.equal(result.status, 0, result.stderr);
-    const pages = [["en", ["hello-world", "templates", "translations"], ["getting-started", "installation", "configuration", "templates", "components", "deployment", "development", "writing", "writing/content", "writing/formulas-and-diagrams", "writing/navigation"]],
-      ["de", ["hallo-welt", "uebersetzungen", "vorlagen"], ["erste-schritte", "installation", "konfiguration", "vorlagen", "komponenten", "bereitstellung", "entwicklung", "schreiben", "schreiben/inhalte", "schreiben/formeln-und-diagramme", "schreiben/navigation"]]]
+    const pages = [["en", ["hello-world", "templates", "translations"], ["installation", "configuration", "templates", "components", "deployment", "development", "writing", "writing/book", "writing/book/docs", "writing/book/navigation", "writing/pages-and-posts", "writing/translations", "writing/markdown-spice"]],
+      ["de", ["hallo-welt", "uebersetzungen", "vorlagen"], ["installation", "konfiguration", "vorlagen", "komponenten", "bereitstellung", "entwicklung", "schreiben", "schreiben/buch", "schreiben/buch/dokumente", "schreiben/buch/navigation", "schreiben/seiten-und-beitraege", "schreiben/uebersetzungen", "schreiben/markdown-wuerze"]]]
       .flatMap(([language, posts, docs]) => ["", "pages/about/", "posts/", ...posts.map(post => `posts/${post}/`), "tags/", "tags/blyss/",
         "tags/markdown/", "book/", ...docs.map(doc => `book/${doc}/`)].map(path => `${language}/${path}index.html`));
     const notFoundPages = ["404.html", "en/404.html", "de/404.html"];
@@ -239,6 +277,8 @@ describe("a generated starter", () => {
       assert.doesNotMatch(html.replace(/<code\b[^>]*>[\s\S]*?<\/code>/g, ""), /{{\w+}}/, page);
       const jsonLd = JSON.parse(html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)[1]);
       assert.ok(Array.isArray(jsonLd["@graph"]), page);
+      // Only the not-found pages ask search engines to leave them out.
+      assert.equal(html.includes('<meta name="robots" content="noindex">'), notFoundPages.includes(page), page);
     }
     const post = await readFile(join(site, "public", "en", "posts", "hello-world", "index.html"), "utf8");
     assert.match(post, /<a lang="de" hreflang="de" href="\/de\/posts\/hallo-welt\/">Deutsch<\/a>/);
@@ -246,11 +286,13 @@ describe("a generated starter", () => {
     assert.match(await readFile(join(site, "public", "de", "404.html"), "utf8"), /<h1>Seite nicht gefunden<\/h1>/);
   });
 
-  test("links each new documentation page to its translation", async () => {
+  test("links each doc to its translation, also in a section within a section", async () => {
     for (const [english, german] of [
       ["installation", "installation"], ["configuration", "konfiguration"], ["templates", "vorlagen"],
       ["components", "komponenten"], ["deployment", "bereitstellung"], ["development", "entwicklung"],
-      ["writing/content", "schreiben/inhalte"]
+      ["writing", "schreiben"], ["writing/book", "schreiben/buch"], ["writing/book/docs", "schreiben/buch/dokumente"],
+      ["writing/book/navigation", "schreiben/buch/navigation"], ["writing/pages-and-posts", "schreiben/seiten-und-beitraege"],
+      ["writing/translations", "schreiben/uebersetzungen"], ["writing/markdown-spice", "schreiben/markdown-wuerze"]
     ]) {
       const en = await readFile(join(site, "public", "en", "book", english, "index.html"), "utf8");
       const de = await readFile(join(site, "public", "de", "book", german, "index.html"), "utf8");
@@ -333,7 +375,7 @@ describe("a generated starter", () => {
     const { default: { layout } } = await import(pathToFileURL(join(site, "blyss.config.js")).href);
     const kinds = { "en/index.html": "home", "de/pages/about/index.html": "page", "en/posts/hello-world/index.html": "post",
       "de/posts/index.html": "list", "en/tags/blyss/index.html": "list", "en/book/index.html": "book",
-      "de/book/schreiben/navigation/index.html": "book", "de/404.html": "not-found" };
+      "de/book/schreiben/buch/navigation/index.html": "book", "de/404.html": "not-found" };
     for (const [path, kind] of Object.entries(kinds)) {
       const html = await readFile(join(site, "public", path), "utf8");
       const align = kind === "home" ? layout.alignHome : layout.alignOther;
@@ -351,8 +393,8 @@ describe("a generated starter", () => {
   });
 
   test("shows formulas as MathML, footnotes, highlighted code and diagrams in the doc that describes them", async () => {
-    const english = await readFile(join(site, "public", "en", "book", "writing", "formulas-and-diagrams", "index.html"), "utf8");
-    const german = await readFile(join(site, "public", "de", "book", "schreiben", "formeln-und-diagramme", "index.html"), "utf8");
+    const english = await readFile(join(site, "public", "en", "book", "writing", "markdown-spice", "index.html"), "utf8");
+    const german = await readFile(join(site, "public", "de", "book", "schreiben", "markdown-wuerze", "index.html"), "utf8");
     for (const html of [english, german]) {
       assert.ok(html.includes('<link rel="stylesheet" href="/assets/temml/Temml-Local.css">'));
       assert.match(html, / in <math><mrow><msup><mi>e<\/mi>/);
@@ -391,7 +433,7 @@ describe("a generated starter", () => {
       assert.equal(home.status, 302);
       assert.equal(home.headers.get("location"), "/en/");
       for (const [path, status] of [["/en/", 200], ["/de/posts/hallo-welt/", 200], ["/en/posts/", 200], ["/de/tags/blyss/", 200],
-        ["/en/book/", 200], ["/de/book/schreiben/navigation/", 200], ["/de/404.html", 200], ["/sitemap.xml", 200], ["/assets/css/main.css", 200], ["/assets/img/logo.svg", 200],
+        ["/en/book/", 200], ["/de/book/schreiben/buch/navigation/", 200], ["/de/404.html", 200], ["/sitemap.xml", 200], ["/assets/css/main.css", 200], ["/assets/img/logo.svg", 200],
         ["/components/componentSlider/componentSlider.js", 200], ["/components/componentSlider/componentSlider.html", 404],
         ["/components/componentSlider/componentSlider.data.js", 404], ["/missing/", 404]]) {
         const response = await fetch(base + path);
@@ -441,6 +483,50 @@ describe("blyss serve", () => {
         const response = await fetch(base + path);
         await response.text();
         assert.equal(response.status, status, path);
+      }
+    });
+    assert.equal(stderr, "");
+  });
+
+  test("leads a directory that is requested without its final slash to its page, never to another host", { timeout: 15_000 }, async () => {
+    const stderr = await whileServing(site, async base => {
+      for (const [path, location] of [["/en", "/en/"], ["/de/book?page=2", "/de/book/?page=2"], ["/en/posts/hello-world", "/en/posts/hello-world/"]]) {
+        const response = await fetch(base + path, { redirect: "manual" });
+        await response.text();
+        assert.equal(response.status, 302, path);
+        assert.equal(response.headers.get("location"), location, path);
+      }
+      // A directory without a page, a file and a missing path are answered as they are.
+      for (const [path, status] of [["/assets", 404], ["/assets/css/main.css", 200], ["/en/missing", 404]]) {
+        const response = await fetch(base + path, { redirect: "manual" });
+        await response.text();
+        assert.equal(response.status, status, path);
+      }
+      // fetch would resolve this path itself, so the request is written as it is: a redirect to //en/ would lead to
+      // the host "en".
+      const answer = await new Promise((resolve, reject) => {
+        const socket = connect(Number(new URL(base).port), "127.0.0.1", () => {
+          socket.write("GET /.//en HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n");
+        });
+        let received = "";
+        socket.setEncoding("utf8").on("data", chunk => { received += chunk; }).on("end", () => resolve(received)).on("error", reject);
+      });
+      assert.ok(answer.startsWith("HTTP/1.1 302 "), answer);
+      assert.match(answer, /\r\nLocation: \/en\/\r\n/);
+    });
+    assert.equal(stderr, "");
+  });
+
+  test("answers the requests that read, GET and HEAD, and no other", { timeout: 15_000 }, async () => {
+    const stderr = await whileServing(site, async base => {
+      const head = await fetch(`${base}/en/`, { method: "HEAD" });
+      assert.equal(head.status, 200);
+      assert.equal(await head.text(), "");
+      for (const method of ["POST", "PUT", "DELETE"]) {
+        const response = await fetch(`${base}/en/`, { method });
+        assert.equal(response.status, 405, method);
+        assert.equal(response.headers.get("allow"), "GET, HEAD", method);
+        assert.equal(await response.text(), "");
       }
     });
     assert.equal(stderr, "");
@@ -517,7 +603,7 @@ describe("a website below a path", () => {
     }
     // A link of the Markdown, and the URL of a library in static/, which its component writes into a data attribute.
     assert.ok((await page("en", "book", "index.html")).includes('<a href="/docs/en/book/installation/">'));
-    assert.ok((await page("en", "book", "writing", "formulas-and-diagrams", "index.html"))
+    assert.ok((await page("en", "book", "writing", "markdown-spice", "index.html"))
       .includes('data-library="/docs/assets/mermaid/mermaid.esm.min.mjs"'));
     assert.ok((await page("sitemap.xml")).includes("<loc>https://example.com/docs/en/</loc>"));
   });
@@ -556,11 +642,10 @@ describe("a site with a third language and German as its default", () => {
       .replace('language: "Language"', 'language: "Langue"');
     await writeFile(configFile, config.replace('defaultLanguage: "en"', 'defaultLanguage: "de"')
       .replace("      de: {", `${french}      de: {`).replaceAll(', de: "', ', fr: "Étape", de: "'));
-    // The French content copies the English one but for the title and the slug of the first post.
+    // The French content copies the English one but for the title of the first post, which gets a slug of its own.
     await cp(join(site, "_content", "en"), join(site, "_content", "fr"), { recursive: true });
     const post = join(site, "_content", "fr", "posts", "hello-world.md");
-    await writeFile(post, (await readFile(post, "utf8")).replace("title: Hello World", "title: Bonjour le monde")
-      .replace("slug: hello-world", "slug: bonjour-le-monde"));
+    await writeFile(post, (await readFile(post, "utf8")).replace("title: Hello World", "title: Bonjour le monde\nslug: bonjour-le-monde"));
     const result = run(["build"], site);
     assert.equal(result.status, 0, result.stderr);
   });
@@ -593,7 +678,8 @@ describe("a site with a third language and German as its default", () => {
     const switcher = post.slice(post.indexOf('<nav aria-label="Language">'));
     assert.deepEqual([...switcher.slice(0, switcher.indexOf("</nav>")).matchAll(/hreflang="(\w+)" href="([^"]+)"[^>]*>([^<]+)</g)]
       .map(match => match.slice(1)), [["en", urls.en, "English"], ["fr", urls.fr, "Français"], ["de", urls.de, "Deutsch"]]);
-    const alternates = [...Object.entries(urls), ["x-default", "/de/"]].map(([hreflang, url]) => [hreflang, `https://example.com${url}`]);
+    // The translation in the default language, German, is x-default as well.
+    const alternates = [...Object.entries(urls), ["x-default", urls.de]].map(([hreflang, url]) => [hreflang, `https://example.com${url}`]);
     assert.deepEqual([...post.matchAll(/<link rel="alternate" hreflang="([\w-]+)" href="([^"]+)">/g)].map(match => match.slice(1)), alternates);
     const sitemap = await page("sitemap.xml");
     const entry = sitemap.slice(sitemap.indexOf(`<loc>https://example.com${urls.fr}</loc>`)).split("</url>")[0];
@@ -619,7 +705,8 @@ describe("a site with a third language and German as its default", () => {
   test("makes the first language the default if site.defaultLanguage is omitted", { timeout: 15_000 }, async () => {
     await buildWith(config => config.replace(/^ *defaultLanguage: .*\n/m, ""), async () => {
       assert.equal(await page("404.html"), await page("en/404.html"));
-      assert.ok((await page("de/index.html")).includes('<link rel="alternate" hreflang="x-default" href="https://example.com/en/">'));
+      assert.ok((await page("de/posts/hallo-welt/index.html"))
+        .includes('<link rel="alternate" hreflang="x-default" href="https://example.com/en/posts/hello-world/">'));
       const stderr = await whileServing(site, async base => {
         const home = await fetch(`${base}/`, { redirect: "manual" });
         await home.text();
@@ -781,9 +868,22 @@ describe("a site with several tagged posts", () => {
     assert.doesNotMatch(sitemap, /404/);
     const post = sitemap.split("<url>").find(entry => entry.includes("<loc>https://example.com/en/posts/hello-world/</loc>"));
     assert.match(post, /<lastmod>2026-11-10<\/lastmod>/);
-    for (const [hreflang, path] of [["de", "de/posts/hallo-welt/"], ["en", "en/posts/hello-world/"], ["x-default", "en/"]]) {
+    for (const [hreflang, path] of [["de", "de/posts/hallo-welt/"], ["en", "en/posts/hello-world/"], ["x-default", "en/posts/hello-world/"]]) {
       assert.ok(post.includes(`<xhtml:link rel="alternate" hreflang="${hreflang}" href="https://example.com/${path}"/>`), hreflang);
     }
+    // A page without a translation in the default language has no x-default.
+    const german = sitemap.split("<url>").find(entry => entry.includes("<loc>https://example.com/de/posts/dollar/</loc>"));
+    assert.deepEqual([...german.matchAll(/hreflang="([\w-]+)"/g)].map(match => match[1]), ["de"]);
+    assert.doesNotMatch(await page("de/posts/dollar"), /hreflang="x-default"/);
+  });
+
+  test("describes a post as a BlogPosting with its title as its headline and the publisher as its author", async () => {
+    const html = await page("en/posts/oldest");
+    const graph = JSON.parse(html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)[1])["@graph"];
+    const post = graph.find(node => node["@type"] === "BlogPosting");
+    assert.equal(post.headline, "Oldest");
+    assert.equal(post.datePublished, "2026-01-01");
+    assert.deepEqual(post.author, { "@id": "https://example.com/#publisher" });
   });
 
   test("escapes JSON-LD so that content cannot close its script element", async () => {
@@ -855,9 +955,12 @@ describe("a site with technical documentation", () => {
     assert.ok((await page("en/book")).includes(pager(null, ["apple/", "Apple"])));
     assert.ok((await page("en/book/guides")).includes(pager(["zebra/", "Zebra"], ["guides/setup/", "Setup"])));
     assert.ok((await page("en/book/later")).includes(pager(["guides/shipping/", "Deploy"], null)));
-    assert.ok((await page("de/book/erste-schritte")).includes('<nav aria-label="Seitennavigation">\n<ul>\n' +
-      '  <li><a href="/de/book/" rel="prev">Zurück: Dokumentation</a></li>\n' +
-      '  <li><a href="/de/book/schreiben/" rel="next">Weiter: Schreiben</a></li>\n</ul>\n</nav>'));
+    // In the starter's German docs: from the last doc of a section within a section to the doc that follows the section.
+    const [previous, next] = await Promise.all([starterText("de", "book", "schreiben", "buch", "dokumente.md"),
+      starterText("de", "book", "schreiben", "seiten-und-beitraege.md")]);
+    assert.ok((await page("de/book/schreiben/buch/navigation")).includes('<nav aria-label="Seitennavigation">\n<ul>\n' +
+      `  <li><a href="/de/book/schreiben/buch/dokumente/" rel="prev">Zurück: ${previous.title}</a></li>\n` +
+      `  <li><a href="/de/book/schreiben/seiten-und-beitraege/" rel="next">Weiter: ${next.title}</a></li>\n</ul>\n</nav>`));
   });
 
   test("gives the headings of a doc unique ids and lists its ## and ### headings above its text", async () => {
@@ -874,7 +977,7 @@ describe("a site with technical documentation", () => {
       '  <li><a href="#demo-1">Demo</a></li>\n</ul>\n</nav>'));
     const ids = html.match(/ id="[^"]+"/g);
     assert.equal(ids.length, new Set(ids).size);
-    assert.ok((await page("de/book/schreiben/navigation")).includes('<h2 id="überschriften">Überschriften</h2>'));
+    assert.ok((await page("de/book/schreiben/buch/navigation")).includes('<h2 id="überschriften">Überschriften</h2>'));
     assert.doesNotMatch(await page("en/book/later"), /On this page/);
   });
 
@@ -884,6 +987,7 @@ describe("a site with technical documentation", () => {
     const graph = JSON.parse(html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)[1])["@graph"];
     const doc = graph.find(node => node["@type"] === "TechArticle");
     assert.equal(doc.url, "https://example.com/en/book/apple/");
+    assert.equal(doc.headline, "Apple");
     assert.equal(doc.datePublished, "2026-11-01");
     assert.deepEqual(doc.mainEntityOfPage, { "@id": `${doc.url}#webpage` });
     assert.equal(doc.keywords, undefined);
@@ -906,6 +1010,93 @@ describe("a site with technical documentation", () => {
     } finally {
       await writeFile(template, source);
     }
+  });
+});
+
+describe("a site with drafts", () => {
+  let site;
+  const page = path => readFile(join(site, "public", path), "utf8");
+  const drafts = { post: join("_content", "en", "posts", "zeppelin.md"), page: join("_content", "en", "pages", "quokka.md"),
+    doc: join("_content", "en", "book", "yucca.md") };
+  // The pages of the output, and its sitemap, that name a draft or link to one.
+  const traces = async () => {
+    const files = (await listFiles(join(site, "public"))).filter(file => /\.(?:html|xml)$/.test(file));
+    const texts = await Promise.all(files.map(page));
+    return files.filter((file, index) => /zeppelin|quokka|yucca|xylophone/i.test(texts[index]));
+  };
+
+  before(async () => {
+    site = join(sandbox, "drafts");
+    assert.equal(run(["init", site], sandbox).status, 0);
+    // A draft of each kind: the newest post, with a tag of its own and a German translation that is published, a
+    // page whose date is not one yet, and the first doc of the documentation.
+    await writeFile(join(site, drafts.post),
+      "---\ntitle: Zeppelin\ndatePublished: 2026-12-24\ntranslationKey: zeppelin\ntags: [Xylophone]\ndraft: true\n---\n\nText.\n");
+    await writeFile(join(site, "_content", "de", "posts", "luftschiff.md"),
+      "---\ntitle: Luftschiff\ndatePublished: 2026-12-24\ntranslationKey: zeppelin\n---\n\nText.\n");
+    await writeFile(join(site, drafts.page), "---\ntitle: Quokka\ndatePublished: soon\ndraft: true\n---\n\nText.\n");
+    await writeFile(join(site, drafts.doc), "---\ntitle: Yucca\norder: 0\ndraft: true\n---\n\nText.\n");
+  });
+
+  test("leaves a draft out of the pages, the lists, the navigation, the translations and the sitemap, unchecked, and names it", async () => {
+    const result = run(["build"], site);
+    assert.equal(result.status, 0, result.stderr);
+    assert.deepEqual(await traces(), []);
+    // The German post is published without its English translation.
+    assert.doesNotMatch(await page("de/posts/luftschiff/index.html"), /hreflang="(?:en|x-default)"/);
+    for (const file of Object.values(drafts)) assert.ok(result.stdout.includes(`Left out the draft ${file}\n`), file);
+    assert.doesNotMatch(result.stdout, /\(draft\)|draft\(s\)/);
+  });
+
+  test("builds the drafts for --drafts, checked like every page and marked in the output of the build", async () => {
+    // Only now does the date of the draft page matter.
+    const unchecked = run(["build", "--drafts"], site);
+    assert.equal(unchecked.status, 1);
+    assert.equal(unchecked.stderr, `Cannot build ${drafts.page}: its datePublished "soon" is not a date.\n` +
+      "Write a date as 2026-11-10, or with its time as 2026-11-10T09:30:00+01:00.\n");
+    await writeFile(join(site, drafts.page), "---\ntitle: Quokka\ndraft: true\n---\n\nText.\n");
+    const result = run(["build", "--drafts"], site);
+    assert.equal(result.status, 0, result.stderr);
+    for (const url of ["/en/posts/zeppelin/", "/en/pages/quokka/", "/en/book/yucca/"]) {
+      assert.ok(result.stdout.includes(`Built ${url} (draft)\n`), url);
+    }
+    assert.match(result.stdout, /\nBlyss built \d+ localized page\(s\), including 3 draft\(s\)\.\n$/);
+    assert.doesNotMatch(result.stdout, /Left out/);
+    // The draft post leads the archive, has the page of its tag and is the translation of the German post; the draft
+    // doc is the first of the navigation.
+    const archive = await page("en/posts/index.html");
+    assert.ok(archive.slice(archive.indexOf("<main>")).includes(
+      '<ul>\n  <li><time datetime="2026-12-24">2026-12-24</time> <a href="/en/posts/zeppelin/">Zeppelin</a></li>'));
+    assert.ok((await page("en/tags/xylophone/index.html")).includes('<a href="/en/posts/zeppelin/">Zeppelin</a>'));
+    assert.ok((await page("de/posts/luftschiff/index.html"))
+      .includes('<link rel="alternate" hreflang="en" href="https://example.com/en/posts/zeppelin/">'));
+    assert.match(await page("en/book/index.html"),
+      /<nav aria-label="Documentation">\n<ul>\n {2}<li><a href="\/en\/book\/"[^>]*>[^<]+<\/a><\/li>\n {2}<li><a href="\/en\/book\/yucca\/">Yucca<\/a><\/li>/);
+    assert.ok((await page("en/pages/quokka/index.html")).includes("<h1>Quokka</h1>"));
+    assert.ok((await page("sitemap.xml")).includes("<loc>https://example.com/en/book/yucca/</loc>"));
+  });
+
+  test("refuses a doc whose section has a draft as its start page and a draft that is neither true nor false", async () => {
+    const index = join("_content", "en", "book", "guides", "index.md");
+    const doc = join("_content", "en", "book", "guides", "setup.md");
+    await mkdir(join(site, dirname(index)));
+    await writeFile(join(site, index), "---\ntitle: Guides\ndraft: true\n---\n");
+    for (const [frontMatter, message] of [
+      ["title: Setup", `Cannot build ${doc}: ${index}, the start page of its section, is a draft.\n` +
+        "Make the doc a draft as well, or publish the start page: its title names the section in the navigation.\n"],
+      ["title: Setup\ndraft: yes", `Cannot build ${doc}: its draft "yes" is neither true nor false.\n` +
+        "Set draft to true to leave the page out of the build, or remove the field to publish it.\n"]
+    ]) {
+      await writeFile(join(site, doc), `---\n${frontMatter}\n---\n`);
+      const result = run(["build"], site);
+      assert.equal(result.status, 1, frontMatter);
+      assert.equal(result.stderr, message);
+    }
+    // A section of drafts alone is left out as a whole.
+    await writeFile(join(site, doc), "---\ntitle: Setup\ndraft: true\n---\n");
+    const result = run(["build"], site);
+    assert.equal(result.status, 0, result.stderr);
+    await assert.rejects(stat(join(site, "public", "en", "book", "guides")), { code: "ENOENT" });
   });
 });
 
@@ -1105,7 +1296,7 @@ describe("a site with its own hero and overlay", () => {
     for (const heading of headings.overlay.en) assert.ok(overlay.includes(heading), heading);
     const home = await page("en/index.html");
     assert.equal(home.match(/ id="[^"]+"/g).length, new Set(home.match(/ id="[^"]+"/g)).size);
-    for (const [path, shown] of [["en/book/index.html", false], ["de/book/schreiben/navigation/index.html", false],
+    for (const [path, shown] of [["en/book/index.html", false], ["de/book/schreiben/buch/navigation/index.html", false],
       ["en/posts/hello-world/index.html", true], ["de/tags/index.html", true], ["404.html", true]]) {
       assert.equal(Boolean(await region(path, "overlay")), shown, path);
       assert.equal(await region(path, "hero"), "", path);
@@ -1175,13 +1366,21 @@ describe("a site with a component of its own", () => {
     site = join(sandbox, "component");
     assert.equal(run(["init", site], sandbox).status, 0);
     const component = join(site, "components", "notice");
-    await mkdir(component);
+    await mkdir(join(component, "img"), { recursive: true });
     await writeFile(join(component, "notice.html"),
       '<aside id="{{id}}" data-level="{{level}}"><h2>{{title}}</h2><small>{{hint}} {{closeLabel}}</small>{{content}}{{hours}}</aside>\n');
     await writeFile(join(component, "notice.css"), "aside { color: red; }\n");
-    await writeFile(join(component, "notice.data.js"), `export default ({ settings, languageKey, escapeHtml, refuse }) => {
+    await writeFile(join(component, "img", "icon.svg"), '<svg xmlns="http://www.w3.org/2000/svg"/>\n');
+    // What the browser does not need has a name that starts with a dot or an underscore: notes, the file of an editor
+    // and, in a directory that is no component, a module that the data file imports.
+    await writeFile(join(component, "_notes.md"), "Notes.\n");
+    await writeFile(join(component, "img", ".DS_Store"), "");
+    await mkdir(join(site, "components", "_shared"));
+    await writeFile(join(site, "components", "_shared", "list.js"), 'export const list = items => items.join(" & ");\n');
+    await writeFile(join(component, "notice.data.js"), `import { list } from "../_shared/list.js";
+export default ({ settings, languageKey, escapeHtml, refuse }) => {
   if (!Array.isArray(settings.hours)) throw refuse("hours", settings.hours, "a list of hours");
-  return { hours: \`<p>\${escapeHtml(settings.hours.join(" & "))} (\${languageKey})</p>\` };
+  return { hours: \`<p>\${escapeHtml(list(settings.hours))} (\${languageKey})</p>\` };
 };
 `);
     configFile = join(site, "blyss.config.js");
@@ -1216,8 +1415,10 @@ describe("a site with a component of its own", () => {
     assert.ok((await page("de/pages/about/index.html")).includes(notice(1, "<h2></h2><small> Schließen</small>", "de")));
   });
 
-  test("publishes its files but its template and its data file", async () => {
-    assert.deepEqual(await listFiles(join(site, "public", "components", "notice")), ["notice.css"]);
+  test("publishes its files but its template, its data file and what has a name that starts with a dot or an underscore", async () => {
+    // Beside the components of the starter, whose names start with "component".
+    assert.deepEqual((await listFiles(join(site, "public", "components"))).filter(file => !file.startsWith("component")),
+      ["notice/img/icon.svg", "notice/notice.css"]);
   });
 
   test("gives a fenced code block that names it a text and settings of its own", async () => {
@@ -1415,7 +1616,10 @@ describe("invalid content", () => {
   const open = join("_content", "en", "posts", "open.md");
   const escape = join("_content", "en", "posts", "escape.md");
   const twin = join("_content", "en", "pages", "twin.md");
+  const dated = join("_content", "en", "posts", "dated.md");
+  const modified = join("_content", "en", "book", "modified.md");
   const english = join("_content", "en", sep);
+  const notADate = "Write a date as 2026-11-10, or with its time as 2026-11-10T09:30:00+01:00.\n";
   const cases = [
     ["a page with the URL of another page", page, "---\ntitle: About\n---\n",
       `Cannot build /en/pages/about/: ${about} and ${page} have the same URL.\nRename ${about} or give it a different slug.\n`],
@@ -1424,11 +1628,18 @@ describe("invalid content", () => {
       "Give the page a translationKey of its own: only its translations in the other languages share it.\n"],
     ["a post whose front matter lacks its closing ---", open, "---\ntitle: Open\n\nText.\n",
       `Cannot build ${open}: its front matter lacks its closing ---.\n`],
+    ["a post whose description is a text of several lines, as YAML allows", open, "---\ntitle: Folded\ndescription: >-\n  A text\n  of two lines.\n---\n",
+      `Cannot build ${open}: its description is ">-", which starts a text of several lines in YAML, but a field of the front matter ` +
+      'is a single line.\nWrite the text on the line of the field, or ">-" in quotes if it is the text itself.\n'],
     ["a post whose slug leads out of the output directory", escape, "---\ntitle: Escape\nslug: ../../../../escape\n---\n",
       `Cannot build ${escape}: "../../../../escape" cannot be a part of its URL.\nA slug and the names of a file and of its ` +
       'directories contain no "/", "\\", "?" or "#" and are neither "." nor "..": set slug to a name such as "my-page".\n'],
     ["a tag without a Latin letter or digit", post, '---\ntitle: Symbols\ntags: [Blyss, "#"]\n---\n',
       `Cannot build ${post}: the tag "#" needs a Latin letter or digit for its URL.\n`],
+    ["a post whose datePublished is written in another way", dated, "---\ntitle: Dated\ndatePublished: 10.11.2026\n---\n",
+      `Cannot build ${dated}: its datePublished "10.11.2026" is not a date.\n${notADate}`],
+    ["a doc whose dateModified names a day that its month lacks", modified, "---\ntitle: Modified\ndateModified: 2026-02-30\n---\n",
+      `Cannot build ${modified}: its dateModified "2026-02-30" is not a date.\n${notADate}`],
     ["hero texts with content before their first ### heading", hero, "Introduction.\n\n### Text\n\nText.\n",
       `Cannot build ${hero}: each of its texts starts with a ### heading, but there is content before the first one.\n`],
     ["overlay texts with content before their first ### heading", overlay, "---\ntitle: Texts\n---\n\n## Text\n\n### Text\n",
@@ -1645,6 +1856,25 @@ describe("a website without a directory or a template", () => {
         assert.ok((await stat(join(site, "public", "en", "index.html"))).isFile());
       } finally {
         await rename(join(site, `${path}.away`), join(site, path));
+      }
+    }
+  });
+
+  test("names a placeholder that a template cannot fill, in the template of a page, of a region and of the document, and keeps the previous output", async () => {
+    // A misspelt placeholder, a label, which only document.html and the regions have, and a placeholder of another template.
+    for (const [name, placeholder, unknown] of [["document.html", "{{pageTitle}}", "{{pageTitel}}"], ["page.html", "{{title}}", "{{postsLabel}}"],
+      ["overlay.html", "{{texts}}", "{{bookToc}}"]]) {
+      const file = join(site, "templates", name);
+      const template = await readFile(file, "utf8");
+      assert.ok(template.includes(placeholder), placeholder);
+      await writeFile(file, template.replace(placeholder, unknown));
+      try {
+        const result = run(["build"], site);
+        assert.equal(result.status, 1, name);
+        assert.equal(result.stderr, `Cannot build with ${join("templates", name)}: there is no placeholder ${unknown}.\nCorrect its name or remove it.\n`);
+        assert.ok((await stat(join(site, "public", "en", "index.html"))).isFile());
+      } finally {
+        await writeFile(file, template);
       }
     }
   });

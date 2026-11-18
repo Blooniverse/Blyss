@@ -24,7 +24,7 @@ See [templates and the lean theme](starters/lean/_content/en/book/templates.md).
 
 ## Formulas, footnotes and code
 
-See [Markdown extensions](starters/lean/_content/en/book/writing/formulas-and-diagrams.md).
+See [Markdown spice](starters/lean/_content/en/book/writing/markdown-spice.md).
 
 ## Regions: Hero and Overlay
 

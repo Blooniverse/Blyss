@@ -1,7 +1,7 @@
 ---
 title: Deployment and SEO
 description: Prepare and deploy the generated website.
-order: 7
+order: 6
 translationKey: book-deployment
 ---
 
@@ -9,7 +9,7 @@ translationKey: book-deployment
 
 Replace the values marked `CHANGE BEFORE PRODUCTION` in `blyss.config.js` and the `Sitemap:` URL in `static/robots.txt`. Replace the placeholder logo and gallery images and their localized descriptions. Decide whether to [host fonts](/en/book/templates/#top-bar-and-fonts) and [diagram libraries](/en/book/components/#host-diagram-libraries-yourself) locally instead of exposing visitors' IP addresses to external providers.
 
-Blyss generates canonical and `hreflang` links, Schema.org JSON-LD using `@graph`, and `sitemap.xml`, which lists generated pages and their translations except 404 pages. Set `site.baseUrl` to the public URL.
+Blyss generates canonical and `hreflang` links, Schema.org JSON-LD using `@graph`, and `sitemap.xml`, which lists generated pages and their translations except 404 pages. In the JSON-LD, a post is a `BlogPosting` and a doc a `TechArticle`, each with its headline, its dates and the publisher of the website as its author. The `x-default` alternate of a page is its translation in the default language. Set `site.baseUrl` to the public URL.
 
 ## Hosting
 

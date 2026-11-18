@@ -1,7 +1,7 @@
 ---
 title: Configuration and languages
 description: Configure the website and add languages.
-order: 4
+order: 2
 translationKey: book-configuration
 ---
 
@@ -23,7 +23,7 @@ For example, to add French:
 
 1. Add `fr` to `site.languages`, with its label, locale, description and translated labels.
 2. Add French descriptions to the steps of `components.componentSliderHero` and `components.componentSliderOverlay`.
-3. Create `_content/fr/` like `_content/en/`, including `pages/index.md`, `pages/about.md`, `pages/404.md`, `book/index.md`, region and component texts, and any posts and docs. Give translations the same `translationKey`.
+3. Create `_content/fr/` like `_content/en/`, including `pages/index.md`, `pages/about.md`, `pages/404.md`, `book/index.md`, region and component texts, and any posts and docs. Give [translations](/en/book/writing/translations/) the same `translationKey`.
 4. Build. The language switcher and alternate links connect translations.
 
 To remove a language, remove its content directory, configuration entry and slider-step descriptions; change the default if necessary. With one language, hide the switcher if desired.

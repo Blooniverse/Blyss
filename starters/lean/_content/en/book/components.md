@@ -1,13 +1,15 @@
 ---
 title: Components
 description: Use, configure and develop reusable components.
-order: 6
+order: 4
 translationKey: book-components
 ---
 
 ## Files and usage
 
 A component is a directory `components/<name>/`, named with Latin letters and digits starting with a letter. Its only required file is `<name>.html`; it can link to its own `<name>.css` and `<name>.js`. Other files in that directory are published under `/components/<name>/`. Optional `<name>.data.js` checks settings and prepares template values.
+
+A name that starts with `.` or `_` is left out: such a file or directory of a component is not published, wherever it lies in the component's directory, and such a directory in `components/` is no component. Use these names for what the browser does not need: a module that a data file imports, as `_helpers.js` beside it or in `components/_shared/` for several components, or notes such as `_README.md`.
 
 `_content/<language>/components/<name>.md` supplies localized front matter and Markdown, and `components.<name>` in `blyss.config.js` supplies settings. A template can use `{{<name>}}`. A paragraph containing only that placeholder in a page, post or doc displays the component; a block gives one occurrence its own values. Components can appear several times on one page.
 
@@ -39,7 +41,7 @@ Blocks must stand alone: within a list or quotation they remain code. Use a long
 
 ## Component templates and data
 
-Template placeholders are resolved in this order, with later values replacing earlier values of the same name: `{{basePath}}`, the path of a website [below a path](/en/book/deployment/#below-a-path); language labels `{{<key>Label}}`; scalar settings `{{<setting>}}`; front-matter fields and `{{content}}`; values returned by the data file; and `{{id}}`, unique per occurrence, such as `componentSliderHero-1`. Labels, settings and front matter are HTML-escaped; data-file values are inserted as returned.
+Template placeholders are resolved in this order, with later values replacing earlier values of the same name: `{{basePath}}`, the path of a website [below a path](/en/book/deployment/#below-a-path); language labels `{{<key>Label}}`; scalar settings `{{<setting>}}`; front-matter fields and `{{content}}`; values returned by the data file; and `{{id}}`, unique per occurrence, such as `componentSliderHero-1`. Labels, settings and front matter are HTML-escaped; data-file values are inserted as returned. A placeholder without a value is empty, as for a field that a text lacks.
 
 The optional data file exports a function, called for each language and block before the previous output is deleted:
 
@@ -55,7 +57,7 @@ export default function ({ settings, languageKey, content, texts, source, frontM
 
 ## Diagrams and code blocks
 
-The starter includes Mermaid (`mermaid`), flowchart.js (`flowchart` or `flow`) and Vega-Lite (`vega-lite`) components. See [Writing diagrams](/en/book/writing/formulas-and-diagrams/#diagrams) for examples. The browser loads each library only when a diagram comes near the window or its overlay opens; code remains visible without JavaScript or if drawing fails. Localized component files provide error messages and flowchart yes/no labels.
+The starter includes Mermaid (`mermaid`), flowchart.js (`flowchart` or `flow`) and Vega-Lite (`vega-lite`) components. See [Markdown spice](/en/book/writing/markdown-spice/#diagrams) for examples. The browser loads each library only when a diagram comes near the window or its overlay opens; code remains visible without JavaScript or if drawing fails. Localized component files provide error messages and flowchart yes/no labels.
 
 Each diagram's settings and library URLs are documented in `blyss.config.js`. A block named `{{componentMermaid}}`, for example, supplies a title and settings for one diagram, followed by its code. Vega-Lite expects JSON and stops the build if it is invalid; `"width": "container"` makes a chart as wide as the text. Diagrams inherit the surrounding font; flowchart colour is set in `components/componentFlowchart/componentFlowchart.css`.
 

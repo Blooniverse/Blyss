@@ -1,7 +1,7 @@
 ---
 title: Developing Blyss
 description: Work on the engine and bundled starter.
-order: 8
+order: 7
 translationKey: book-development
 ---
 

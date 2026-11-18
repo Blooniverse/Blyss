@@ -4,6 +4,42 @@
 
 ### Breaking changes
 
+- **Component files that stay unpublished**: a file or a directory of a
+  component whose name starts with `.` or `_` is no longer published at
+  `/components/<name>/`, wherever it lies in the directory of the component.
+  Everything but the template and the data file used to be published, also a
+  module that the data file imports, notes and the files of an editor. Rename
+  a file that the browser needs. A directory in `components/` with such a
+  name is no component and no longer stops the build: it can hold what the
+  data files of several components import.
+- **Drafts are left out**: a page, a post or a doc with `draft: true` in its
+  front matter is no longer built, and a `draft` other than `true` or `false`
+  stops the build with a message that names the file. The field used to be
+  ignored, and such a page was published.
+- **Checked dates**: a `datePublished` or a `dateModified` that is not a date
+  such as `2026-11-10`, or one with its time such as
+  `2026-11-10T09:30:00+01:00`, stops the build with a message that names the
+  file. Such a value used to be shown as it was written, ordered the posts as
+  a text and was left out of `sitemap.xml`.
+- **Checked placeholders**: a placeholder that a template of the website
+  cannot fill, such as a misspelt `{{pageTitel}}` in `document.html` or a
+  label in `page.html`, stops the build with a message that names the
+  template; it used to leave a gap in every page. A fragment that only some
+  languages have is still empty in the others, and so is a placeholder
+  without a value in the template of a component.
+- **`x-default`**: the `x-default` alternate of a page, in its head and in
+  `sitemap.xml`, is its translation in the default language; a page without
+  such a translation has none. It used to be the home page of the default
+  language on every page.
+- **Arguments of `build` and `serve`**: `blyss build` takes no argument but
+  `--drafts` and `blyss serve` none at all; they end with a message for any
+  other, as `blyss init` does for an option. They used to ignore arguments
+  such as `--port 4000`.
+- **Front matter on single lines**: a field whose value is `>` or `|`, with
+  which YAML starts a text of several lines, stops the build with a message
+  that names the file; the page used to show the sign and lose the text.
+- **Requests other than `GET` and `HEAD`**: `blyss serve` answers them with
+  405 instead of the page.
 - **Recent posts in a paragraph of their own**: `{{recentPosts}}` lists the
   newest posts only where it is a paragraph of its own, like the placeholder
   of a component. Within a text and in code it stays as it is written, so
@@ -277,9 +313,47 @@
   receives it as `basePath`, for URLs elsewhere; the starter's diagrams add
   it to their libraries in `static/`. The docs have a workflow for GitHub
   Pages.
+- **Help and version**: `blyss --help` lists the commands, and
+  `blyss --version` shows the version of Blyss.
+- **`blyss init` after `git init`**: a directory that holds nothing but
+  `.git` counts as empty, so that a new repository can take the starter.
+- **Not-found pages kept out of search engines**: `{{robots}}` in
+  `document.html` is `<meta name="robots" content="noindex">` on the
+  not-found pages and empty on every other page. Existing websites add the
+  placeholder to the head of their `templates/document.html`.
+- **Drafts**: `draft: true` in the front matter of a page, a post or a doc
+  leaves it out of the build, as if its file did not exist: it has no page of
+  its own and appears in no list, on no tag page, in no navigation, not among
+  the translations of another page and not in `sitemap.xml`, and the rest of
+  its front matter is not checked. `blyss build --drafts` builds the drafts
+  as well, for a look at them; the starter has the script
+  `npm run build:drafts` for it, which existing websites copy from its
+  `package.json`. The build marks each draft that it builds and names each
+  one that it leaves out. A doc cannot be built if the start page of its
+  section is a draft.
 
 ### Changes
 
+- **Order of the starter's book**: the docs follow the way of a new website:
+  installation, configuration, templates, components, writing, deployment
+  and development. "Writing" holds the section "Book" with the docs "Docs",
+  the former "Getting started", and "Navigation", then "Pages and posts",
+  the new doc "Translations" and "Markdown spice", the former "Formulas,
+  footnotes, code and diagrams". The start page lists the chapters and tells
+  about the documentation itself.
+- **Tables in the starter**: `static/assets/css/main.css` formats tables as
+  GitHub does, with lines around the cells, a bold head and a shade on every
+  second row. Existing websites copy the rules for `table`, `th`, `td` and
+  `tr` and the two `--table-…` colours.
+- **Articles in JSON-LD**: the `BlogPosting` of a post and the `TechArticle`
+  of a doc have a `headline`, the title, and an `author`, the publisher of
+  the website.
+- **Starter home pages**: their title, their slogan and their heading no
+  longer end with "(H1)", "(H2)" and "(H3)".
+- **Starter posts without `slug`**: the six posts of the starter take their
+  URLs from the names of their files, as every page does without a `slug`;
+  their `slug` lines, which repeated those names, are gone. The docs describe
+  `slug` as the exception, for a URL that differs from the name of the file.
 - **Underscored building blocks**: the starter keeps its components and
   templates in `_components/` and `_templates/`: the leading underscore sets
   these building blocks apart from content and static files.
@@ -422,6 +496,9 @@
 
 ### Fixes
 
+- **Directories without their final slash**: `blyss serve` answered a
+  request such as `/en` with 404. Like static hosts, it now leads to `/en/`
+  with a redirect, which keeps the query and never names another host.
 - **Files outside `public/` on Windows**: for a request path that names
   another drive, such as `/D:/notes.txt`, `blyss serve` served that file. It
   now answers every path that leaves `public/` with the "not found" page.

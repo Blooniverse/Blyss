@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "blyss build",
+    "build:drafts": "blyss build --drafts",
     "start": "blyss serve"
   },
   "dependencies": {

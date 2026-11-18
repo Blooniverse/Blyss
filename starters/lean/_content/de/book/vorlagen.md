@@ -1,7 +1,7 @@
 ---
 title: Vorlagen und Gestaltung
 description: HTML-Vorlagen, Layout, Hero, Overlay und Schriften anpassen.
-order: 5
+order: 3
 translationKey: book-templates
 ---
 
@@ -9,15 +9,17 @@ translationKey: book-templates
 
 Blyss liefert keine eingebauten Standardvorlagen; bearbeiten Sie die Kopien in `templates/`. Zuerst wird der Inhalt in `home.html`, `page.html`, `post.html` oder `book.html` gerendert, anschließend das Ergebnis in `document.html`. Ohne `home.html` beziehungsweise `book.html` dient `page.html` als Ersatz.
 
-Die Inhaltsvorlagen verwenden unter anderem `{{title}}`, `{{description}}`, `{{dateBlock}}`, `{{tags}}` und `{{content}}`. `book.html` ergänzt `{{bookNavigation}}`, `{{bookToc}}` und `{{bookPager}}`: Navigation, Inhaltsverzeichnis sowie vorheriges und nächstes Dokument. Mehr dazu unter [Navigation](/de/book/schreiben/navigation/).
+Die Inhaltsvorlagen kennen `{{title}}`, `{{description}}`, `{{dateBlock}}`, `{{tags}}`, `{{content}}`, `{{basePath}}` und die Platzhalter der Komponenten. `book.html` ergänzt `{{bookNavigation}}`, `{{bookToc}}` und `{{bookPager}}`: Navigation, Inhaltsverzeichnis sowie vorheriges und nächstes Dokument. Mehr dazu unter [Navigation](/de/book/schreiben/buch/navigation/).
 
-`document.html` enthält unter anderem `{{content}}`, `{{hero}}`, `{{overlay}}`, `{{pageTitle}}`, `{{description}}`, `{{locale}}`, `{{languageKey}}`, `{{canonicalUrl}}`, `{{alternateLinks}}`, `{{jsonLd}}` und `{{languageSwitcher}}`. Sprachlabels stehen als `{{<key>Label}}` bereit, etwa `{{postsLabel}}`; Fragmente als `{{<name>Title}}` und `{{<name>Content}}`. Komponenten lassen sich ebenfalls über ihren Namen in doppelten geschweiften Klammern einfügen. `{{basePath}}` ist der Pfad einer Website [unterhalb eines Pfads](/de/book/bereitstellung/#unterhalb-eines-pfads) und sonst leer. Vorlageneigene Platzhalter haben Vorrang vor gleichnamigen Komponenten oder Fragmenten.
+`document.html` kennt `{{content}}`, `{{hero}}`, `{{overlay}}`, `{{pageTitle}}`, `{{description}}`, `{{robots}}`, `{{locale}}`, `{{languageKey}}`, `{{canonicalUrl}}`, `{{alternateLinks}}`, `{{jsonLd}}`, `{{languageSwitcher}}`, `{{kind}}` und `{{basePath}}`, dazu die Layout-Platzhalter `{{layoutMargin}}`, `{{layoutPaddingHero}}`, `{{layoutPaddingOverlay}}`, `{{layoutAlign}}`, `{{layoutAlignHero}}` und `{{layoutAlignOverlay}}`. Sprachlabels stehen als `{{<key>Label}}` bereit, etwa `{{postsLabel}}`; Fragmente als `{{<name>Title}}` und `{{<name>Content}}`. Komponenten lassen sich ebenfalls über ihren Namen in doppelten geschweiften Klammern einfügen. `{{robots}}` bittet Suchmaschinen, eine Fehlerseite nicht zu indexieren, und ist auf allen anderen Seiten leer. `{{basePath}}` ist der Pfad einer Website [unterhalb eines Pfads](/de/book/bereitstellung/#unterhalb-eines-pfads) und sonst leer. Vorlageneigene Platzhalter haben Vorrang vor gleichnamigen Komponenten oder Fragmenten.
 
 `{{kind}}` unterscheidet `home`, `page`, `post`, `book`, `list` und `not-found`. Die Startervorlage übergibt diesen Wert und die Layout-Einstellungen über `data-*`-Attribute und CSS-Variablen an `static/assets/css/main.css`. Die Kommentare zu `layout` in `blyss.config.js` nennen die möglichen Abstände und Ausrichtungen.
 
+Ein Platzhalter, den seine Vorlage nicht füllen kann, etwa ein falsch geschriebener, stoppt den Build mit einer Meldung, die die Vorlage nennt. Ein Fragment, das nur manche Sprachen haben, ist in den anderen leer.
+
 ## Hero und Overlay
 
-Der Hero begleitet die Startseiten, das Overlay die in `overlay.showOn` gewählten Seitentypen. `hero.html` und `overlay.html` werden über `{{hero}}` und `{{overlay}}` in `document.html` eingefügt. Die Vorlagen der Bereiche erhalten zusätzlich `{{components}}`, `{{textsTitle}}` und `{{texts}}`. `hero.components` und `overlay.components` wählen Komponenten in ihrer Reihenfolge; `texts` schaltet die jeweiligen Texte ein oder aus. Ein nicht aufgeführter Seitentyp hat ein Overlay. Die Schalter gelten für Typen, nicht für einzelne Seiten.
+Der Hero begleitet die Startseiten, das Overlay die in `overlay.showOn` gewählten Seitentypen. `hero.html` und `overlay.html` werden über `{{hero}}` und `{{overlay}}` in `document.html` eingefügt. Die Vorlagen der Bereiche kennen die Platzhalter von `document.html` außer diesen beiden und zusätzlich `{{components}}`, `{{textsTitle}}` und `{{texts}}`. `hero.components` und `overlay.components` wählen Komponenten in ihrer Reihenfolge; `texts` schaltet die jeweiligen Texte ein oder aus. Ein nicht aufgeführter Seitentyp hat ein Overlay. Die Schalter gelten für Typen, nicht für einzelne Seiten.
 
 Die Texte stehen in `_content/<Sprache>/heroTexts.md` und `overlayTexts.md`: `title` ist ihre Überschrift, jede `###`-Überschrift beginnt einen Text bis zur nächsten. Vor der ersten `###`-Überschrift sind nur Leerraum und HTML-Kommentare erlaubt. Ohne Vorlage oder eingeschalteten Inhalt entfällt der jeweilige Bereich. Mit `synchroniseHeroOverlay: true` übernimmt das Overlay Komponenten, Einstellungen und Texte des Heros; `overlay.showOn` und das Overlay-Layout gelten weiterhin.
 

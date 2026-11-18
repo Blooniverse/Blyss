@@ -1,9 +1,9 @@
 ---
-title: Blyss SSG (H1)
-description: Lean for knowledge (H2)
+title: Blyss SSG
+description: Lean for knowledge
 translationKey: home
 ---
 
-### Intro (H3)
+### Intro
 
 Blyss erzeugt diese Website aus Markdown-Dateien. Diese Seite liegt in `_content/de/pages/index.md`.

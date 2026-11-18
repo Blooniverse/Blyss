@@ -38,8 +38,11 @@ export function createJsonLd({ site, record }) {
   ];
 
   const page = graph[2];
-  // Posts and docs are articles: they have dates and are the main entity of their page.
+  // Posts and docs are articles: they have a headline, an author, who is the publisher of the website, and dates, and
+  // they are the main entity of their page.
   if (record.type === "post" || record.type === "book") {
+    page.headline = page.name;
+    page.author = { "@id": publisherId };
     if (record.metadata.datePublished) page.datePublished = record.metadata.datePublished;
     if (record.metadata.dateModified) page.dateModified = record.metadata.dateModified;
     if (record.tags?.length) page.keywords = record.tags.map(tag => tag.name);

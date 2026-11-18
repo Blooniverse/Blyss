@@ -1,6 +1,5 @@
 ---
 title: Templates and styles
-slug: templates
 description: Where the templates, the stylesheet and the components of this website live.
 datePublished: 2026-11-12
 translationKey: templates

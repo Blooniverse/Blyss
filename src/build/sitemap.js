@@ -1,17 +1,16 @@
 import { alternatesFor } from "./translations.js";
 
-const w3cDate = /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:\d{2}))?$/;
-
 function escapeXml(value) {
   return String(value).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&apos;");
 }
 
-export function renderSitemap(records, translationIndex) {
+// The dates of the pages are checked when their content is read (see assertDates in build.js).
+export function renderSitemap(records, translationIndex, defaultLanguage) {
   const entries = [...records].sort((left, right) => (left.url < right.url ? -1 : 1)).map(record => {
     const lines = [`    <loc>${escapeXml(record.canonicalUrl)}</loc>`];
-    const lastmod = [record.metadata.dateModified, record.metadata.datePublished].find(date => date && w3cDate.test(date));
-    if (lastmod) lines.push(`    <lastmod>${lastmod}</lastmod>`);
-    for (const { hreflang, href } of alternatesFor(record, translationIndex)) {
+    const lastmod = record.metadata.dateModified || record.metadata.datePublished;
+    if (lastmod) lines.push(`    <lastmod>${escapeXml(lastmod)}</lastmod>`);
+    for (const { hreflang, href } of alternatesFor(record, translationIndex, defaultLanguage)) {
       lines.push(`    <xhtml:link rel="alternate" hreflang="${escapeXml(hreflang)}" href="${escapeXml(href)}"/>`);
     }
     return `  <url>\n${lines.join("\n")}\n  </url>`;

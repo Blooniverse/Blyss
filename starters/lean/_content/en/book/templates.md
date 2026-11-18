@@ -1,7 +1,7 @@
 ---
 title: Templates and the lean theme
 description: Customize templates, layout, regions and fonts.
-order: 5
+order: 3
 translationKey: book-templates
 ---
 
@@ -9,11 +9,13 @@ translationKey: book-templates
 
 Blyss renders a content template inside `templates/document.html`. The starter supplies `home.html`, `page.html`, `post.html`, `book.html`, `hero.html` and `overlay.html`. Without `home.html` or `book.html`, Blyss uses `page.html`; without a region template, that region is absent.
 
-Content templates can use `{{title}}`, `{{description}}`, `{{dateBlock}}`, `{{tags}}`, `{{content}}` and component placeholders. `book.html` also has `{{bookNavigation}}`, `{{bookToc}}` and `{{bookPager}}`; they are empty outside docs. See [Navigation and headings](/en/book/writing/navigation/).
+Content templates can use `{{title}}`, `{{description}}`, `{{dateBlock}}`, `{{tags}}`, `{{content}}`, `{{basePath}}` and component placeholders. `book.html` also has `{{bookNavigation}}`, `{{bookToc}}` and `{{bookPager}}`; they are empty outside docs. See [Navigation](/en/book/writing/book/navigation/).
 
-`document.html` has `{{content}}`, `{{hero}}`, `{{overlay}}`, `{{pageTitle}}`, `{{description}}`, `{{locale}}`, `{{languageKey}}`, `{{canonicalUrl}}`, `{{alternateLinks}}`, `{{jsonLd}}`, `{{languageSwitcher}}`, `{{kind}}`, `{{basePath}}`, layout placeholders, labels as `{{<key>Label}}`, fragments as `{{<name>Title}}` and `{{<name>Content}}`, and component placeholders. `{{kind}}` is `home`, `page`, `post`, `book`, `list` or `not-found`. `{{basePath}}` is the path of a website [below a path](/en/book/deployment/#below-a-path), and empty otherwise. Template placeholders take precedence over components and fragments of the same name.
+`document.html` has `{{content}}`, `{{hero}}`, `{{overlay}}`, `{{pageTitle}}`, `{{description}}`, `{{robots}}`, `{{locale}}`, `{{languageKey}}`, `{{canonicalUrl}}`, `{{alternateLinks}}`, `{{jsonLd}}`, `{{languageSwitcher}}`, `{{kind}}`, `{{basePath}}`, layout placeholders, labels as `{{<key>Label}}`, fragments as `{{<name>Title}}` and `{{<name>Content}}`, and component placeholders. `{{kind}}` is `home`, `page`, `post`, `book`, `list` or `not-found`. `{{robots}}` asks search engines not to index a not-found page, and is empty on every other page. `{{basePath}}` is the path of a website [below a path](/en/book/deployment/#below-a-path), and empty otherwise. Template placeholders take precedence over components and fragments of the same name.
 
 Layout placeholders are `{{layoutMargin}}`, `{{layoutPaddingHero}}`, `{{layoutPaddingOverlay}}`, `{{layoutAlign}}`, `{{layoutAlignHero}}` and `{{layoutAlignOverlay}}`. The starter passes them through body attributes and CSS variables to `static/assets/css/main.css`. See the comments on `layout` in `blyss.config.js` for allowed values.
+
+A placeholder that its template cannot fill, such as a misspelt one, stops the build with a message that names the template. A fragment that only some languages have is empty in the others.
 
 ## Top bar and fonts
 

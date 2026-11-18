@@ -10,6 +10,8 @@
   --tint: hsla(202, 30%, 30%, .2);
   --card: #fafafa;
   --card-border: #e5e7eb;
+  --table-line: hsla(202, 30%, 30%, .25);
+  --table-shade: hsla(202, 30%, 30%, .06);
   --radius: 8px;
   --bar-height: 2.25rem;
   --column: 70ch; /* the width of the text column */
@@ -55,8 +57,14 @@ code { padding: .1em .25em; border-radius: 4px; font-family: ui-monospace, SFMon
 /* Code keeps its indentation in centered text. */
 pre { padding: .5em .75em; overflow: auto; border: 1px solid var(--card-border); border-radius: 6px; text-align: start; background: #f6f8fa; }
 pre code { padding: 0; background: none; }
-/* A table that is wider than the text scrolls sideways, as code does. */
-table { display: block; width: max-content; max-width: 100%; overflow-x: auto; }
+/* Tables look like those of GitHub: lines around the cells, a bold head and a shade on every second row; the lines
+   and the shade are translucent, so that they show on white, on a card and on the tint of the hero and of the
+   overlay. A table is as wide as its content, and one that is wider than the text scrolls sideways, as code does.
+   The cells of its head are centered and the others start at the left, also in centered text, unless the Markdown
+   aligns their column, as with |:---| or |---:|. */
+table { display: block; width: max-content; max-width: 100%; overflow-x: auto; border-collapse: collapse; text-align: start; font-variant-numeric: tabular-nums; }
+:is(th, td) { padding: .35em .8em; border: 1px solid var(--table-line); }
+tr:nth-child(even) { background: var(--table-shade); }
 time { color: var(--color202grey); }
 article > header { margin-bottom: 1rem; }
 article > header p { margin: 0; font-size: .9rem; }

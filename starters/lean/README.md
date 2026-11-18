@@ -10,7 +10,7 @@ npm run build   # generate public/
 npm start       # serve http://localhost:3000
 ```
 
-See [installation and commands](_content/en/book/installation.md) and [writing content](_content/en/book/writing/content.md). `public/` is disposable: each build recreates it.
+See [installation and commands](_content/en/book/installation.md) and [writing](_content/en/book/writing/index.md). `public/` is disposable: each build recreates it.
 
 ## Customize
 

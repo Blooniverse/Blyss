@@ -39,8 +39,9 @@ function renderPager(previous, next, labels) {
 // The docs of a language lie in _content/<language>/book/, and each of its directories is a section: its index.md is
 // the start page of the section and names it in the navigation. Like the sidebars of Docusaurus or MkDocs, the
 // navigation follows the directories, and the docs beside each other are sorted by their order, then by their titles.
-// The previous and the next doc are those before and after a doc in the navigation.
-export function arrangeBooks(projectDir, contentDirectory, records) {
+// The previous and the next doc are those before and after a doc in the navigation. drafts names the files of the
+// drafts that the build leaves out: a doc cannot be built if the start page of its section is one of them.
+export function arrangeBooks(projectDir, contentDirectory, records, drafts = []) {
   const docs = new Map();
   const sections = new Map();
   for (const record of records.filter(item => item.type === "book")) {
@@ -65,6 +66,10 @@ export function arrangeBooks(projectDir, contentDirectory, records) {
     const section = sections.get(`${record.languageKey}/${parent.join("/")}`);
     if (!section) {
       const index = join(relative(projectDir, contentDirectory), record.languageKey, "book", ...parent, "index.md");
+      if (drafts.includes(index)) {
+        throw new BlyssError(`Cannot build ${file}: ${index}, the start page of its section, is a draft.\n` +
+          "Make the doc a draft as well, or publish the start page: its title names the section in the navigation.");
+      }
       throw new BlyssError(`Cannot build ${file}: there is no ${index}, the start page of its section.\n` +
         `Add ${index}: its title names the section in the navigation.`);
     }
