@@ -12,9 +12,9 @@ Blyss is an ultra lean SSG (static site generator):
 - **Composable**: Markdown components and fragments can be used anywhere.
 - **Configurable**: Via blyss.config.js and component Markdown.
 - **Multilingual**: EN/DE default – can be extended.
-- **3 dependencies only**: `highlight.js`, `marked`, `temml` (nor any further dependencies).
-- Lightweight Javascript.
 - **AIO & SEO**: Semantic RDF graph (in JSON-LD), plus a classic sitemap.xml.
+- Lightweight Javascript.
+- **3 dependencies only**: `highlight.js`, `marked`, `temml` (nor any further dependencies).
 - **Local-first & Git-based**: For devs & authors.
 
 
