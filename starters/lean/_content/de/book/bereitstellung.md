@@ -13,13 +13,15 @@ Die Vorlagen enthalten Canonical- und `hreflang`-Links sowie Schema.org-JSON-LD 
 
 ## Statisches Hosting
 
-`npm run build` erstellt `public/` neu. Veröffentlichen Sie dessen Inhalt, ändern Sie dort aber nichts dauerhaft: Quelldateien liegen in `_content/`, `components/`, `templates/`, `static/` und `blyss.config.js`. Blyss erzeugt kein `public/index.html`. Konfigurieren Sie den Host so, dass `/` mit HTTP 302 zur Standardsprache weiterleitet und unbekannte URLs `/404.html` mit Status 404 ausgeben, wie beim lokalen Server. Komponenten liegen unter `/components/`. GitHub Pages lässt Pfade mit einem führenden Unterstrich aus, sofern `public/` keine `.nojekyll` enthält.
+`npm run build` erstellt `public/` neu. Veröffentlichen Sie dessen Inhalt, ändern Sie dort aber nichts dauerhaft: Quelldateien liegen in `_content/`, `components/`, `templates/`, `static/` und `blyss.config.js`. Blyss erzeugt kein `public/index.html`. Konfigurieren Sie den Host so, dass `/` mit HTTP 302 zur Standardsprache weiterleitet und unbekannte URLs `/404.html` mit Status 404 ausgeben, wie beim lokalen Server. Komponenten liegen unter `/components/`.
+
+Betreiben Sie die Website an der Wurzel ihrer Domain. Ihre Links und Dateien beginnen mit `/`; eine Website unterhalb eines Pfads, etwa eine GitHub-Pages-Projektseite unter `https://user.github.io/repository/`, findet sie deshalb nicht.
 
 ## Azure Static Web Apps
 
 `static/staticwebapp.config.json` richtet die Weiterleitung nach `/en/` und die 404-Antwort für [Azure Static Web Apps](https://learn.microsoft.com/azure/static-web-apps/configuration) ein. Ändern Sie das Ziel, wenn Sie `site.defaultLanguage` ändern, ebenso im folgenden Workflow.
 
-Der Azure-Builddienst stellt möglicherweise kein Node.js 25 oder neuer bereit. Erstellen Sie die Website stattdessen in GitHub Actions und laden Sie `public/` mit `skip_app_build: true` hoch. Azure verlangt beim Upload eine `index.html`; der Workflow ergänzt dafür eine Datei, die die Weiterleitung auf `/` vor Besuchenden verbirgt:
+Der Azure-Builddienst stellt möglicherweise kein Node.js 24 oder neuer bereit. Erstellen Sie die Website stattdessen in GitHub Actions und laden Sie `public/` mit `skip_app_build: true` hoch. Azure verlangt beim Upload eine `index.html`; der Workflow ergänzt dafür eine Datei, die die Weiterleitung auf `/` vor Besuchenden verbirgt:
 
 ```yaml
 name: Deploy
@@ -33,7 +35,7 @@ jobs:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
-          node-version: lts/* # Node.js 25 oder neuer erforderlich
+          node-version: lts/* # Node.js 24 oder neuer erforderlich
       - run: npm ci
       - run: npm run build
       - run: echo '<!doctype html><title>Redirecting</title><meta http-equiv="refresh" content="0; url=/en/">' > public/index.html
@@ -46,4 +48,4 @@ jobs:
           skip_app_build: true
 ```
 
-Verwenden Sie den Namen des von Azure für Ihre App angelegten Token-Secrets. `npm ci` benötigt die durch `npm install` erzeugte und eingecheckte `package-lock.json`. Stellen Sie sicher, dass die gewählte LTS-Version tatsächlich mindestens Node.js 25 ist.
+Verwenden Sie den Namen des von Azure für Ihre App angelegten Token-Secrets. `npm ci` benötigt die durch `npm install` erzeugte und eingecheckte `package-lock.json`.

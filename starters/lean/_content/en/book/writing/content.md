@@ -7,7 +7,7 @@ translationKey: book-content
 
 ## Front matter and URLs
 
-Pages, posts and docs start with front matter. The title is rendered as the page's heading, so begin the body below an H1.
+Pages, posts and docs start with front matter. The title is rendered as the page's heading, so begin the body with text or a second-level heading, not with another H1.
 
 ```markdown
 ---
@@ -20,9 +20,11 @@ tags: [Blyss, Markdown]
 ---
 ```
 
-Pages in `_content/<language>/pages/` are published at `/<language>/pages/<slug>/`, posts at `/<language>/posts/<slug>/`, and [book docs](/en/book/getting-started/) below `/<language>/book/`. `slug` defaults to the file name; use localized slugs where appropriate. `pages/index.md` is the home page at `/<language>/`, and its title and description are the heading and slogan.
+Each field stands on a line of its own as `key: value`. A value may stand in quotes, as in `title: "Blyss: an introduction"`.
 
-Give translations the same `translationKey` to connect them in the language switcher and `hreflang` links. Keep `pages/index.md`, `pages/about.md` and `book/index.md` in every language without a different slug: the starter's navigation links to them.
+Pages in `_content/<language>/pages/` are published at `/<language>/pages/<slug>/`, posts at `/<language>/posts/<slug>/`, and [book docs](/en/book/getting-started/) below `/<language>/book/`. `slug` defaults to the file name; use localized slugs where appropriate. A slug is one part of a URL, without `/`, `\`, `?` or `#`. `pages/index.md` is the home page at `/<language>/`, and its title and description are the heading and slogan.
+
+Give translations the same `translationKey` to connect them in the language switcher and `hreflang` links. Within a language, each page has a key of its own: two pages of one language with the same key stop the build. Keep `pages/index.md`, `pages/about.md` and `book/index.md` in every language without a different slug: the starter's navigation links to them.
 
 `pages/404.md` is published at `/<language>/404.html`; the default language's page is also `/404.html`. Link from it with absolute paths such as `/en/`, since a host can show it at any missing URL. It is not in the sitemap.
 

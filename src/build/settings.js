@@ -3,6 +3,20 @@ import { BlyssError } from "../errors.js";
 export const refuse = (setting, value, requirement) =>
   new BlyssError(`Cannot use ${setting} ${JSON.stringify(value)}: it must be ${requirement}.`);
 
+const isObject = value => typeof value === "object" && value !== null && !Array.isArray(value);
+const isWebAddress = value => typeof value === "string" && URL.canParse(value) && /^https?:$/.test(new URL(value).protocol);
+
+// Every page names the website, its URL and its publisher in its head and in its JSON-LD: a website without them
+// is refused.
+export function assertSite(config) {
+  const { name, baseUrl, publisher } = config.site ?? {};
+  if (typeof name !== "string" || !name.trim()) throw refuse("site.name", name, 'the name of the website, such as "My Website"');
+  if (!isWebAddress(baseUrl)) throw refuse("site.baseUrl", baseUrl, 'the URL of the website, such as "https://example.com"');
+  if (!isObject(publisher) || [publisher.type, publisher.name].some(text => typeof text !== "string" || !text.trim()) || !isWebAddress(publisher.url)) {
+    throw refuse("site.publisher", publisher, 'an object such as { type: "Organization", name: "Example Publisher", url: "https://example.com" }');
+  }
+}
+
 // Unlike em or %, these units mean the same on every element, so a top bar can span the margin it is placed in.
 const cssLength = /^(?:0|\d*\.?\d+(?:px|rem|vw|vh|vmin|vmax))$/i;
 

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { spawn, spawnSync } from "node:child_process";
 import { once } from "node:events";
-import { chmod, cp, mkdir, mkdtemp, readdir, readFile, realpath, rm, stat, writeFile } from "node:fs/promises";
+import { chmod, cp, mkdir, mkdtemp, readdir, readFile, realpath, rename, rm, stat, writeFile } from "node:fs/promises";
 import { createServer } from "node:net";
 import { tmpdir } from "node:os";
 import { dirname, join, posix, relative, sep, win32 } from "node:path";
@@ -357,7 +357,7 @@ describe("a generated starter", () => {
       assert.ok(html.includes('<link rel="stylesheet" href="/assets/temml/Temml-Local.css">'));
       assert.match(html, / in <math><mrow><msup><mi>e<\/mi>/);
       assert.match(html, /<div class="math"><math display="block" class="tml-display" style="display:block math;"><mrow><mi>x<\/mi><mo>=<\/mo><mfrac>/);
-      assert.ok(html.includes('<pre><code class="language-js"><span class="hljs-comment">//'));
+      assert.ok(html.includes('<pre tabindex="0"><code class="language-js"><span class="hljs-comment">//'));
       assert.deepEqual([...html.matchAll(/<(component-[a-z-]+) class="component"/g)].map(match => match[1]),
         ["component-mermaid", "component-flowchart", "component-vega-lite", "component-slider"]);
       assert.equal(html.match(/ id="[^"]+"/g).length, new Set(html.match(/ id="[^"]+"/g)).size);
@@ -372,9 +372,9 @@ describe("a generated starter", () => {
     // The diagrams keep their code, escaped, for the scripts that draw them, and take their texts from their language.
     assert.ok(english.includes('<component-mermaid class="component" id="componentMermaid-1" ' +
       'data-library="https://cdn.jsdelivr.net/npm/mermaid@12.3.0/dist/mermaid.esm.min.mjs" data-theme="neutral" ' +
-      'data-error="This diagram cannot be shown.">\n  <figure>\n    <pre>flowchart LR\n  write[Write Markdown] --&gt; build[blyss build]\n'));
+      'data-error="This diagram cannot be shown.">\n  <figure>\n    <pre tabindex="0">flowchart LR\n  write[Write Markdown] --&gt; build[blyss build]\n'));
     assert.ok(german.includes('data-line-width="2" data-yes="ja" data-no="nein" data-error="Dieses Flussdiagramm kann nicht angezeigt werden.">'));
-    assert.ok(german.includes("<pre>{\n  &quot;description&quot;: &quot;Beiträge pro Monat als Balken&quot;,"));
+    assert.ok(german.includes('<pre tabindex="0">{\n  &quot;description&quot;: &quot;Beiträge pro Monat als Balken&quot;,'));
   });
 
   test("ships the stylesheet and the font of the Temml version that writes the formulas", async () => {
@@ -454,6 +454,33 @@ describe("blyss serve", () => {
       assert.equal(second.stderr, `Cannot serve on port ${port}: the port is already in use.\n` +
         `Stop the program that uses it, or set the environment variable PORT to another port, such as ${Number(port) + 1}.\n`);
     });
+  });
+  test("says in the terminal and in the browser that a website has not been built yet", { timeout: 15_000 }, async () => {
+    const unbuilt = join(sandbox, "unbuilt");
+    assert.equal(run(["init", unbuilt], sandbox).status, 0);
+    const hint = "There is no public/ yet. Build the website first: npm run build\n";
+    const stderr = await whileServing(unbuilt, async base => {
+      const response = await fetch(`${base}/en/`);
+      assert.equal(response.status, 404);
+      assert.equal(await response.text(), `404 Not Found\n\n${hint}`);
+    });
+    assert.equal(stderr, hint);
+  });
+});
+
+describe("a page with quoted front matter", () => {
+  test("takes the values between the quotes, also after a byte order mark", async () => {
+    const site = join(sandbox, "quoted");
+    assert.equal(run(["init", site], sandbox).status, 0);
+    await writeFile(join(site, "_content", "en", "pages", "quoted.md"),
+      '\uFEFF---\ntitle: "Quotes: \\"double\\""\nslug: \'in-quotes\'\ndescription: \'It\'\'s single\'\ntranslationKey: "quoted"\n---\n\nText.\n');
+    await writeFile(join(site, "_content", "de", "pages", "zitiert.md"), "---\ntitle: Zitiert\ntranslationKey: quoted\n---\n\nText.\n");
+    const result = run(["build"], site);
+    assert.equal(result.status, 0, result.stderr);
+    const html = await readFile(join(site, "public", "en", "pages", "in-quotes", "index.html"), "utf8");
+    assert.ok(html.includes("<h1>Quotes: &quot;double&quot;</h1>"));
+    assert.ok(html.includes('<meta name="description" content="It&#39;s single">'));
+    assert.ok(html.includes('<li><a lang="de" hreflang="de" href="/de/pages/zitiert/">Deutsch</a></li>'));
   });
 });
 
@@ -609,7 +636,7 @@ describe("a site with several tagged posts", () => {
     const home = await main("en");
     assert.equal(home.match(/<section aria-label="Recent posts">/g).length, 1);
     assert.ok(home.includes("<p>Write <code>{{recentPosts}}</code> in a paragraph of its own:</p>"));
-    assert.ok(home.includes('<pre><code class="language-markdown">{{recentPosts}}\n</code></pre>'));
+    assert.ok(home.includes('<pre tabindex="0"><code class="language-markdown">{{recentPosts}}\n</code></pre>'));
   });
 
   test("shows the texts of heroTexts.md in the hero of the home pages and those of overlayTexts.md in the overlay of the other pages", async () => {
@@ -852,7 +879,7 @@ describe("a site with its own hero texts and fragments", () => {
     assert.ok(hero.startsWith("<h3>Nine &lt;texts&gt;</h3>"));
     assert.equal(hero.match(/<div>\n<h3>/g).length, 9);
     assert.ok(hero.includes(`<div>\n<h3>One</h3>\n<p>${long}</p>\n<h4>Part of one</h4>\n<p>More.</p>\n</div>`));
-    assert.ok(hero.includes('<div>\n<h3>Two</h3>\n<pre><code class="language-md"><span class="hljs-section">### Not a text</span>\n</code></pre>\n</div>'));
+    assert.ok(hero.includes('<div>\n<h3>Two</h3>\n<pre tabindex="0"><code class="language-md"><span class="hljs-section">### Not a text</span>\n</code></pre>\n</div>'));
   });
 
   test("gives templates each Markdown file directly in _content/<language>/ without publishing it", async () => {
@@ -1146,7 +1173,7 @@ describe("a site with a component of its own", () => {
     // Markdown keeps the component's text.
     for (const id of [2, 3]) assert.ok(html.includes(notice(id, "high &amp; &lt;dry&gt;", text, "9 &amp; 17")), id);
     assert.ok(html.includes(notice(4, "high &amp; &lt;dry&gt;", text, "1 &amp; 2")));
-    assert.ok(html.includes('<pre><code class="language-{{missing}}">text\n</code></pre>'));
+    assert.ok(html.includes('<pre tabindex="0"><code class="language-{{missing}}">text\n</code></pre>'));
     // The component of the template follows the blocks, as it is.
     assert.ok(html.includes(notice(5, "high &amp; &lt;dry&gt;", text, "9 &amp; 17")));
     assert.ok(html.indexOf('id="notice-4"') < html.indexOf("</main>") && html.indexOf("</main>") < html.indexOf('id="notice-5"'));
@@ -1235,7 +1262,7 @@ export default ({ settings, source, texts, refuse }) => {
       "here, but $5 and $10, $x$ and <code>$c$</code> stay, as <em>does <math><mrow><mi>d</mi><mo>∗</mo><mi>e</mi></mrow></math> in</em> an emphasis.</p>"));
     assert.ok(html.includes('<div class="math"><math display="block" class="tml-display" style="display:block math;"><mfrac><mn>1</mn><mn>2</mn></mfrac></math></div>'));
     // Code below a paragraph stays code, whatever it starts with, and the description of an image stays plain text.
-    assert.ok(html.includes("<p>Code below a paragraph:</p>\n<pre><code>$$\n\\frac{1\n$$\n</code></pre>\n<p>And:</p>\n<pre><code>[^b]: Not a footnote.\n</code></pre>"));
+    assert.ok(html.includes('<p>Code below a paragraph:</p>\n<pre tabindex="0"><code>$$\n\\frac{1\n$$\n</code></pre>\n<p>And:</p>\n<pre tabindex="0"><code>[^b]: Not a footnote.\n</code></pre>'));
     assert.ok(html.includes('<p><img src="/plot.png" alt="A plot of $f$ and [^a]">, <a href="/x/">a link to [^a]</a> ' +
       `and \`\`quotes&#39;&#39; before ${formula("q")}.</p>`));
     // A formula is found after every character at which marked ends a text.
@@ -1266,7 +1293,7 @@ export default ({ settings, source, texts, refuse }) => {
     // A block of the component has front matter, and the component itself shows the code of its text.
     assert.ok(html.includes(chart(3, 2, "bar", "Own &amp; &lt;title&gt;", "one\ntwo")));
     assert.ok(html.includes(chart(4, 1, "", "Default", "### a &lt;b&gt; &amp; $x$")));
-    assert.ok(html.includes('<pre><code class="language-chart">nested\n</code></pre>'));
+    assert.ok(html.includes('<pre tabindex="0"><code class="language-chart">nested\n</code></pre>'));
     // A block of a diagram sets the URL of its library, escaped like every setting.
     assert.ok(html.includes('<component-mermaid class="component" id="componentMermaid-1" data-library="/mermaid.mjs?v=1&amp;x=&quot;y&quot;" data-theme="neutral" '));
   });
@@ -1328,10 +1355,21 @@ describe("invalid content", () => {
   const doc = join("_content", "en", "book", "guides", "setup.md");
   const sectionIndex = join("_content", "en", "book", "guides", "index.md");
   const order = join("_content", "en", "book", "order.md");
+  const open = join("_content", "en", "posts", "open.md");
+  const escape = join("_content", "en", "posts", "escape.md");
+  const twin = join("_content", "en", "pages", "twin.md");
   const english = join("_content", "en", sep);
   const cases = [
     ["a page with the URL of another page", page, "---\ntitle: About\n---\n",
       `Cannot build /en/pages/about/: ${about} and ${page} have the same URL.\nRename ${about} or give it a different slug.\n`],
+    ["a page with the translationKey of another page of its language", twin, "---\ntitle: Twin\ntranslationKey: about\n---\n",
+      `Cannot build ${twin}: ${about} has the same translationKey "about" in the same language.\n` +
+      "Give the page a translationKey of its own: only its translations in the other languages share it.\n"],
+    ["a post whose front matter lacks its closing ---", open, "---\ntitle: Open\n\nText.\n",
+      `Cannot build ${open}: its front matter lacks its closing ---.\n`],
+    ["a post whose slug leads out of the output directory", escape, "---\ntitle: Escape\nslug: ../../../../escape\n---\n",
+      `Cannot build ${escape}: "../../../../escape" cannot be a part of its URL.\nA slug and the names of a file and of its ` +
+      'directories contain no "/", "\\", "?" or "#" and are neither "." nor "..": set slug to a name such as "my-page".\n'],
     ["a tag without a Latin letter or digit", post, '---\ntitle: Symbols\ntags: [Blyss, "#"]\n---\n',
       `Cannot build ${post}: the tag "#" needs a Latin letter or digit for its URL.\n`],
     ["hero texts with content before their first ### heading", hero, "Introduction.\n\n### Text\n\nText.\n",
@@ -1428,6 +1466,23 @@ describe("invalid configuration", () => {
     }
   });
 
+  test("names a missing name, URL, publisher or directory of the website instead of a stack trace", async () => {
+    for (const [search, replacement, message] of [
+      ['name: "My Website", // CHANGE BEFORE PRODUCTION', "", 'site.name undefined: it must be the name of the website, such as "My Website"'],
+      ['baseUrl: "https://example.com"', 'baseUrl: "example.com"', 'site.baseUrl "example.com": it must be the URL of the website, such as "https://example.com"'],
+      ["publisher: {", "publishers: {", "site.publisher undefined: it must be an object such as " +
+        '{ type: "Organization", name: "Example Publisher", url: "https://example.com" }'],
+      ['content: "_content",', "", 'directories.content undefined: it must be the name of a directory, such as "_content"']
+    ]) {
+      await withConfig(search, replacement, async () => {
+        const result = run(["build"], site);
+        assert.equal(result.status, 1, replacement);
+        assert.equal(result.stderr, `Cannot use ${message}.\n`);
+        assert.ok((await stat(join(site, "public", "en", "index.html"))).isFile());
+      });
+    }
+  });
+
   test("refuses language settings that the pages cannot use, in build and serve", { timeout: 30_000 }, async () => {
     for (const [search, replacement, message] of [
       ['defaultLanguage: "en"', 'defaultLanguage: "fr"', 'site.defaultLanguage "fr": it must be "en" or "de"'],
@@ -1506,6 +1561,43 @@ describe("invalid configuration", () => {
         assert.ok((await stat(join(site, "public", "en", "index.html"))).isFile());
       });
     }
+  });
+});
+
+describe("a website without a directory or a template", () => {
+  let site;
+  before(() => {
+    site = join(sandbox, "incomplete");
+    assert.equal(run(["init", site], sandbox).status, 0);
+    assert.equal(run(["build"], site).status, 0);
+  });
+
+  test("names a missing template or content directory and keeps the previous output", async () => {
+    const content = join("_content", sep);
+    for (const [path, message] of [
+      [join("templates", "document.html"), `Cannot build without ${join("templates", "document.html")}: a website needs the templates ` +
+        "document.html, page.html and post.html.\nCreate the template, or set directories.templates to their directory.\n"],
+      ["_content", `Cannot build without ${content}: it holds the content of the website, in a directory for each language such as ` +
+        `${join(content, "en", sep)}.\nCreate it, or set directories.content to the directory of the content.\n`]
+    ]) {
+      await rename(join(site, path), join(site, `${path}.away`));
+      try {
+        const result = run(["build"], site);
+        assert.equal(result.status, 1, path);
+        assert.equal(result.stderr, message);
+        assert.ok((await stat(join(site, "public", "en", "index.html"))).isFile());
+      } finally {
+        await rename(join(site, `${path}.away`), join(site, path));
+      }
+    }
+  });
+
+  test("builds without static/, which leaves no files to copy", async () => {
+    await rm(join(site, "static"), { recursive: true });
+    const result = run(["build"], site);
+    assert.equal(result.status, 0, result.stderr);
+    assert.ok((await stat(join(site, "public", "en", "index.html"))).isFile());
+    await assert.rejects(stat(join(site, "public", "assets")), { code: "ENOENT" });
   });
 });
 

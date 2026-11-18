@@ -32,7 +32,7 @@ function isLocale(value) {
 }
 
 // site.languages lists any number of languages, in the order of the language switcher and of the alternates; the key
-// of each is its directory in __content/ and the start of its URLs, such as /en/. site.defaultLanguage, the first language
+// of each is its directory in _content/ and the start of its URLs, such as /en/. site.defaultLanguage, the first language
 // unless set, is the one of / and /404.html; site.languageSwitcher, true unless set, shows the language switcher.
 // Returns these settings, checked, with the default labels added to each language.
 export function languagesOf(config) {

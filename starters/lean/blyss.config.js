@@ -16,7 +16,7 @@ export default {
   site: {
     name: "My Website", // CHANGE BEFORE PRODUCTION
     baseUrl: "https://example.com", // CHANGE BEFORE PRODUCTION: canonical, hreflang and JSON-LD URLs use it
-    defaultLanguage: "en", // the language of / and /404.html, one of the languages below (the first, if omitted); see README.md
+    defaultLanguage: "en", // the language of / and /404.html, one of the languages below (the first, if omitted); see _content/en/book/configuration.md
     languageSwitcher: true, // or false, which hides the language switcher of the top bar; the hreflang alternates remain
     // Dedicated RDF graph nodes (serialised as JSON-LD):
     publisher: {
@@ -25,7 +25,8 @@ export default {
       url: "https://example.com" // CHANGE BEFORE PRODUCTION
     },
     // The languages, in the order of the language switcher. A key such as "en" names the language's directory in _content/
-    // and starts its URLs; every language needs a label, a locale and the same labels. README.md tells how to add one.
+    // and starts its URLs; every language needs a label, a locale and the same labels. _content/en/book/configuration.md
+    // tells how to add one.
     languages: {
       en: {
         label: "English",
@@ -97,7 +98,7 @@ export default {
   layout: {
     margin: "2vmin", // the space between the frame and the content
     alignHome: "center", // or "left", which aligns all content of the home pages (only the home pages)
-    alignOther: "centerLeft", // or "center" or "centerLeft" (which centers the content, but aligns its text left nonetheless), which aligns all content of the other pages (pages, posts, docs, lists and not-found pages)
+    alignOther: "centerLeft", // or "left" or "center" ("centerLeft" centers the content but keeps its text left-aligned), which aligns all content of the other pages (pages, posts, docs, lists and not-found pages)
     paddingHero: "1rem", // the space above and below the content of the hero
     alignHero: "centerExtra", // or "left" or "center" ("centerExtra" centers everything apart from the left-aligned text boxes of heroTexts.md, including their headings), which aligns the content of the hero
     paddingOverlay: "1rem", // the space above and below the content of the opened overlay
@@ -208,7 +209,8 @@ export default {
     },
     // The diagrams show the fenced code blocks in their languages: mermaid, flowchart or flow, and vega-lite. The
     // browser draws them with the libraries below, which it loads from these URLs when a page shows such a diagram.
-    // By default they come from the content delivery network jsDelivr; README.md tells how to host them yourself.
+    // By default they come from the content delivery network jsDelivr; _content/en/book/components.md tells how to
+    // host them yourself.
     componentMermaid: {
       library: "https://cdn.jsdelivr.net/npm/mermaid@12.3.0/dist/mermaid.esm.min.mjs", // or your copy, such as "/assets/mermaid/mermaid.esm.min.mjs"
       theme: "neutral" // or "default", "dark", "forest" or "base": Mermaid's themes

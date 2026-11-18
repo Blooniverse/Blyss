@@ -9,6 +9,18 @@
   of a component. Within a text and in code it stays as it is written, so
   that a page can name it; it used to be replaced everywhere, also in code.
   Give it a line of its own between blank lines.
+- **Checked slugs**: a `slug`, or the name of a file or of one of its
+  directories, that contains `/`, `\`, `?` or `#` or is `.` or `..` stops the
+  build with a message that names the file. Such a slug used to give a broken
+  URL, and `slug: ../../page` wrote the page outside the output directory.
+- **One page of a language for each `translationKey`**: two pages of one
+  language with the same `translationKey` stop the build with a message that
+  names both. They used to appear twice in the language switcher and among
+  the `hreflang` alternates.
+- **Quoted front matter**: a value in quotes, such as
+  `title: "Blyss: an introduction"`, is now the text between the quotes, as
+  in YAML; it used to keep them. In the front matter of a block, a value such
+  as `"5"` still sets the text `5`, not the number.
 - **Directories renamed**: `_components/` and `_templates/` are now
   `components/` and `templates/`, published at `/components/<name>/`, and
   `content/` is now `_content/`. Rename them in existing websites and set
@@ -69,7 +81,7 @@
   footnotes of `static/assets/css/main.css` from the starter, and link
   `/assets/temml/Temml-Local.css` in `templates/document.html`.
 - **Dependencies**: Blyss now depends on `temml` and `highlight.js` besides
-  `marked`, of which it needs version 16.4.2 or newer; none of them has
+  `marked`, of which it needs version 18; none of them has
   dependencies of its own.
 
 ### New features
@@ -382,6 +394,21 @@
 - **Tests**: the tests of the starter read its titles, headings and layout
   from the starter, so that a change of its wording no longer fails them, and
   the workflow runs them for `main` and for pull requests to it.
+- **Node.js 24 and marked 18**: Blyss runs on Node.js 24 and newer instead
+  of 25 and newer, and is tested on the LTS versions 24 and 26. It uses
+  `marked` 18.
+- **Accessibility of the starter**: the grey of the footer, the dates and the
+  captions and the dimmed bar of the overlay have a contrast of at least
+  4.5 to 1. A code block has `tabindex="0"`, so that the keyboard can reach
+  and scroll it, as has the code of a diagram. Existing websites copy
+  `--color202grey` and the `opacity` of `.overlay` from
+  `static/assets/css/main.css`.
+- **Optional `static/`**: a website without a static directory builds; it
+  has no files to copy.
+- **Docs**: the docs name `npx @blooniverse/blyss` for `init`, since
+  `npx blyss` outside a website fetches an unrelated package of that name,
+  and say that a website is hosted at the root of its domain. The starter's
+  texts and comments name `_content/` and the docs of the book.
 
 ### Fixes
 
@@ -399,6 +426,21 @@
   table scrolls sideways like code, and a long word breaks. Existing
   websites copy the rules for `main`, `table` and `.book > main` of
   `static/assets/css/main.css`.
+- **Front matter**: a byte order mark at the start of a file no longer hides
+  its front matter, the closing `---` may end the file, and a front matter
+  without its closing `---` stops the build with the name of its file
+  instead of a stack trace.
+- **Missing settings and directories**: a website without `site.name`,
+  `site.baseUrl`, `site.publisher` or one of its `directories`, without its
+  content directory or without `document.html`, `page.html` or `post.html`
+  stops the build with a message that names what is missing, before the
+  previous output is deleted, instead of a stack trace or of pages titled
+  "undefined". Without `server.fallbackPort`, `blyss serve` uses port 3000.
+- **Build without `static/`**: the build deleted the previous output and
+  then failed.
+- **Unbuilt website**: `blyss serve` says in the terminal and in its answer
+  that there is no `public/` yet and how to build it, instead of only
+  "404 Not Found".
 - **Languages**: a language without `labels` no longer crashes the build, a
   missing `site.defaultLanguage` no longer yields `x-default` URLs ending in
   `/undefined/`, and content in a directory that is not a language, such as

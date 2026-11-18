@@ -7,7 +7,7 @@ translationKey: book-installation
 
 ## Create a website
 
-Blyss requires Node.js 25 or newer. To create a website from the bundled lean starter:
+Blyss requires Node.js 24 or newer. To create a website from the bundled lean starter:
 
 ```bash
 npx @blooniverse/blyss init my-site
@@ -23,18 +23,18 @@ Open `http://localhost:3000`. To add Blyss to an existing website instead, run `
 
 ## Commands
 
-Run these from the website root, where `blyss.config.js` lives, through the starter's npm scripts or as `npx blyss <command>`:
-
 ```bash
-blyss init [directory]  # copy the starter
-blyss build             # generate directories.public
-blyss serve             # serve it on PORT or server.fallbackPort
+npx @blooniverse/blyss init [directory]  # copy the starter
+npm run build                            # blyss build: generate directories.public
+npm start                                # blyss serve: serve it on PORT or server.fallbackPort
 ```
 
-`build` and `serve` require `blyss.config.js`. The dependency-free server redirects `/` to the configured default language and returns the default-language 404 page for missing routes.
+Run `npm run build` and `npm start` from the website root, where `blyss.config.js` lives: they call `blyss build` and `blyss serve` of the Blyss that `npm install` put into the website. For `init`, write the full name `npx @blooniverse/blyss`: outside such a website, `npx blyss` fetches an unrelated npm package named `blyss`.
+
+`build` and `serve` require `blyss.config.js`. `serve` does not build: for a website without `public/`, it says so and answers every request with "404 Not Found". The dependency-free server redirects `/` to the configured default language and returns the default-language 404 page for missing routes.
 
 ## Website structure
 
-`_content/<language>/` holds pages, posts, book docs, fragments and component texts. `components/` holds component templates and assets, `templates/` page templates, and `static/` files copied unchanged to the output. `blyss.config.js` configures the website; see [Configuration](/en/book/configuration/).
+`_content/<language>/` holds pages, posts, book docs, fragments and component texts. `components/` holds component templates and assets, `templates/` page templates, and `static/` files copied unchanged to the output; a website without `components/` or `static/` has no components or no such files. `blyss.config.js` configures the website; see [Configuration](/en/book/configuration/).
 
 `public/` is generated output, excluded from Git by the starter. Every build deletes and recreates it: edit the sources, not `public/`. Blyss refuses to build into the website root or a directory containing or inside a source directory. The bundled starter stays unchanged when `init` copies it; the new website is yours to edit.

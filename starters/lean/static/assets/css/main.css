@@ -2,7 +2,7 @@
 
 :root {
   --color202: hsla(202, 100%, 25%, 1);
-  --color202grey: hsla(202, 10%, 30%, .7);
+  --color202grey: hsla(202, 10%, 30%, .9); /* at least 4.5 to 1 on white and on the tint of the hero and the overlay */
   --color202black: hsla(202, 50%, 10%, .8);
   --color202border: hsla(202, 80%, 80%, 1);
   --color040border: hsla(40, 90%, 60%, 1);
@@ -190,7 +190,7 @@ body:has(> .overlay) { padding-bottom: calc(var(--site-margin) + 2rem); } /* lea
   border-top: 1px solid var(--card-border);
   background: var(--tint);
   box-shadow: 0 -2px 8px rgb(0 0 0 / .08);
-  opacity: .5;
+  opacity: .65; /* dimmed until it is used, but with a contrast of 4.5 to 1 for the text of its button */
   transition: opacity .28s;
 }
 .overlay:is(:hover, :focus-within) { opacity: 1; }

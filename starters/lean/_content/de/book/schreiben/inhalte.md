@@ -23,9 +23,11 @@ tags: [Blyss, Markdown]
 Ein erster Absatz.
 ```
 
-Seiten in `_content/de/pages/` erscheinen unter `/de/pages/<slug>/`, Beiträge in `_content/de/posts/` unter `/de/posts/<slug>/` und Dokumente in `_content/de/book/` unter `/de/book/`. Ohne `slug` gilt der Dateiname; lokalisierte Slugs ermöglichen lokalisierte URLs. `pages/index.md` wird zur Startseite `/de/`; `pages/404.md` ist eine besondere [Fehlerseite](#fehlerseite). Die Starter-Navigation erwartet in jeder Sprache `index.md`, `about.md` ohne abweichenden Slug und `book/index.md`.
+Jedes Feld steht als `key: value` in einer eigenen Zeile. Ein Wert darf in Anführungszeichen stehen, etwa `title: "Blyss: eine Einführung"`.
 
-Übersetzungen teilen denselben `translationKey`. Daraus entstehen Sprachwechsler und `hreflang`-Alternativen, auch wenn Dateinamen oder Verzeichnisse verschieden sind. Die Konfiguration und das Hinzufügen von Sprachen erklärt [Konfiguration](/de/book/konfiguration/).
+Seiten in `_content/de/pages/` erscheinen unter `/de/pages/<slug>/`, Beiträge in `_content/de/posts/` unter `/de/posts/<slug>/` und Dokumente in `_content/de/book/` unter `/de/book/`. Ohne `slug` gilt der Dateiname; lokalisierte Slugs ermöglichen lokalisierte URLs. Ein Slug ist ein einzelner Teil der URL, ohne `/`, `\`, `?` oder `#`. `pages/index.md` wird zur Startseite `/de/`; `pages/404.md` ist eine besondere [Fehlerseite](#fehlerseite). Die Starter-Navigation erwartet in jeder Sprache `index.md`, `about.md` ohne abweichenden Slug und `book/index.md`.
+
+Übersetzungen teilen denselben `translationKey`. Daraus entstehen Sprachwechsler und `hreflang`-Alternativen, auch wenn Dateinamen oder Verzeichnisse verschieden sind. Innerhalb einer Sprache hat jede Seite ihren eigenen Schlüssel: Zwei Seiten einer Sprache mit demselben `translationKey` stoppen den Build. Die Konfiguration und das Hinzufügen von Sprachen erklärt [Konfiguration](/de/book/konfiguration/).
 
 ## Beiträge und Listen
 

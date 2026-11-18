@@ -81,14 +81,15 @@ const math = {
   }
 };
 
-// Code in a language that highlight.js knows is highlighted: the stylesheet colours its hljs-… classes.
+// Code in a language that highlight.js knows is highlighted: the stylesheet colours its hljs-… classes. A code block
+// scrolls sideways where a line is longer than the text is wide; its tabindex lets the keyboard reach and scroll it.
 const code = {
   renderer: {
     code({ text, lang }) {
       const language = lang?.match(/^\S+/)?.[0];
       const source = text.replace(/\n$/, "");
       const highlighted = language && hljs.getLanguage(language) ? hljs.highlight(source, { language, ignoreIllegals: true }).value : escapeHtml(source);
-      return `<pre><code${language ? ` class="language-${escapeHtml(language)}"` : ""}>${highlighted}\n</code></pre>\n`;
+      return `<pre tabindex="0"><code${language ? ` class="language-${escapeHtml(language)}"` : ""}>${highlighted}\n</code></pre>\n`;
     }
   }
 };

@@ -12,4 +12,4 @@ Multilingual content lives side by side – translations are synchronised.
 
 ### Own texts
 
-These texts here come from `content/en/heroTexts.md` – their amount is unlimited.
+These texts here come from `_content/en/heroTexts.md` – their amount is unlimited.

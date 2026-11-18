@@ -11,7 +11,7 @@ Das HTML rund um den Inhalt stammt aus den Vorlagen in `templates/`: `document.h
 
 Das Aussehen stammt aus einem einzigen Stylesheet, `static/assets/css/main.css`. Die Startseiten enden mit dem Hero; auf den anderen Seiten wartet das Overlay als Leiste am unteren Fensterrand.
 
-Der Schieberegler, die Galerie und die Blume sind Komponenten. Jede hat ihre Vorlage, ihr Stylesheet und ihr Skript in einem eigenen Verzeichnis in `components/` sowie eine Variante für den Hero und eine für das Overlay, etwa `componentSliderHero` und `componentSliderOverlay`. Jede Variante hat ihre Texte in `content/de/components/` und ihre Einstellungen in `blyss.config.js`, wo sie sich auch in ihrem Bereich ein- oder ausschalten lässt. Ein Absatz, der nichts als den Namen einer Komponente oder einer Variante in doppelten geschweiften Klammern enthält, zeigt sie in einer Seite oder einem Beitrag, wie hier den Schieberegler des Heros:
+Der Schieberegler, die Galerie und die Blume sind Komponenten. Jede hat ihre Vorlage, ihr Stylesheet und ihr Skript in einem eigenen Verzeichnis in `components/` sowie eine Variante für den Hero und eine für das Overlay, etwa `componentSliderHero` und `componentSliderOverlay`. Jede Variante hat ihre Texte in `_content/de/components/` und ihre Einstellungen in `blyss.config.js`, wo sie sich auch in ihrem Bereich ein- oder ausschalten lässt. Ein Absatz, der nichts als den Namen einer Komponente oder einer Variante in doppelten geschweiften Klammern enthält, zeigt sie in einer Seite oder einem Beitrag, wie hier den Schieberegler des Heros:
 
 {{componentSliderHero}}
 
