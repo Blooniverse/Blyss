@@ -1,6 +1,6 @@
 ---
 title: Blyss (H1)
-description: Description (H2)
+description: Slogan (H2)
 translationKey: home
 ---
 
