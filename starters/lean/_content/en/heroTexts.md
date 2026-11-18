@@ -4,12 +4,12 @@ title: Why Blyss
 
 ### Markdown in, HTML out
 
-Pages and posts are Markdown files with a little front matter. Blyss turns them into a static website with clean URLs, a sitemap and Schema.org data.
+Book docs, pages and posts are Markdown files with a little front matter.
 
-### Two languages
+### Multiple languages
 
-English and German content lives side by side. Translations share a `translationKey`, so every page links to its counterpart in the other language.
+Multilingual content lives side by side. Translations share connected.
 
 ### Your own texts
 
-These texts come from `content/en/heroTexts.md`: its `title` is the heading above them, and each `###` heading starts a new text. The hero shows as many texts as you write, each in full length.
+These texts here come from `content/en/heroTexts.md`.
