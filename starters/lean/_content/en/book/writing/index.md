@@ -5,4 +5,4 @@ order: 2
 translationKey: book-writing
 ---
 
-This section is the directory `content/en/book/writing/`, and this text is its start page, `index.md`. Its docs follow below it in the navigation.
+Learn about [pages, posts and translations](/en/book/writing/content/), [book navigation](/en/book/writing/navigation/) and [Markdown extensions](/en/book/writing/formulas-and-diagrams/). This section is `_content/en/book/writing/`; this file is its `index.md`.

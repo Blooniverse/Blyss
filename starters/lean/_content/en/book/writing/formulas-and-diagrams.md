@@ -15,7 +15,9 @@ $$
 
 Blyss turns each formula into MathML during the build, which browsers show without a script. The build stops and names a formula that is not valid LaTeX.
 
-No space follows the first dollar sign of a formula and none precedes its second one, so prices such as $5 and $10 stay text. Write `\$` for any other dollar sign that starts no formula.
+No space follows the first dollar sign of a formula, none precedes its second one, and no digit follows that one, so prices such as $5 and $10 stay text. Write `\$` for any other dollar sign that starts no formula. Dollar signs in code remain text; a formula ends before a code span and is not rendered in an image description. Inline `$$…$$` is also supported. [Temml](https://temml.org/docs/en/supported.html) lists supported LaTeX.
+
+Formulas also work in component texts, fragments and region texts. The starter's local Temml assets must match the installed version; see [Templates and the lean theme](/en/book/templates/#top-bar-and-fonts).
 
 ## Footnotes
 
@@ -28,6 +30,8 @@ A footnote has a name in square brackets after a caret[^name], and its text foll
 
 Pages, posts and docs have footnotes; the texts of the components, of the hero and of the overlay have none.
 
+Names contain no spaces. An unreferenced definition is omitted; an undefined reference, or one in link text or an image description, stays as written. The `footnotes` and `backToText` labels provide screen-reader text.
+
 ## Code
 
 A fenced code block that names its language is highlighted during the build:
@@ -39,6 +43,8 @@ console.log(greet("Blyss"));
 ```
 
 A block without a language, or in one that the highlighter does not know, stays plain.
+
+The starter's `static/assets/css/main.css` colours the `hljs-…` classes; preserve a contrast of at least 4.5:1 against the code background when changing them.
 
 ## Diagrams
 

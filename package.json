@@ -12,8 +12,8 @@
     "src/",
     "starters/",
     "README.md",
-    "USAGE.md",
-    "AUTHORING.md",
+    "README_USAGE.md",
+    "README_AUTHORING.md",
     "LICENSE"
   ],
   "scripts": {

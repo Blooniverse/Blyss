@@ -15,7 +15,9 @@ $$
 
 Blyss wandelt jede Formel beim Erstellen der Website in MathML um, das Browser ohne Skript anzeigen. Ist eine Formel kein gültiges LaTeX, bricht Blyss ab und nennt sie.
 
-Auf das erste Dollarzeichen einer Formel folgt kein Leerzeichen, und vor dem zweiten steht keines; Preise wie 5 $ und 10 $ bleiben deshalb Text. Schreiben Sie `\$` für jedes andere Dollarzeichen, das keine Formel beginnt.
+Auf das erste Dollarzeichen einer Formel folgt kein Leerzeichen, vor dem zweiten steht keines, und auf das zweite folgt keine Ziffer; Preise wie 5 $ und 10 $ oder `$5 and $10` bleiben deshalb Text. Schreiben Sie `\$` für jedes andere Dollarzeichen, das keine Formel beginnt. Dollarzeichen in Code bleiben Text; eine Formel endet vor einem Codeabschnitt und wird in einer Bildbeschreibung nicht gerendert. Auch `$$…$$` innerhalb eines Textes wird unterstützt. [Temml](https://temml.org/docs/en/supported.html) listet das unterstützte LaTeX auf.
+
+Formeln funktionieren auch in Komponententexten, Fragmenten und Texten der Bereiche. Die lokalen Temml-Dateien des Starters müssen zur installierten Version passen; siehe [Gestaltung und Schriften](/de/book/vorlagen/#gestaltung-und-schriften).
 
 ## Fußnoten
 
@@ -28,6 +30,8 @@ Eine Fußnote hat einen Namen in eckigen Klammern hinter einem Zirkumflex[^name]
 
 Seiten, Beiträge und Dokumente haben Fußnoten; die Texte der Komponenten, des Heros und des Overlays haben keine.
 
+Namen enthalten keine Leerzeichen. Eine Definition ohne Verweis entfällt; ein Verweis ohne Definition sowie ein Verweis in einem Linktext oder einer Bildbeschreibung bleibt unverändert. Die Labels `footnotes` und `backToText` stellen die Beschriftungen für Screenreader bereit.
+
 ## Code
 
 Ein mit drei Backticks eingefasster Codeblock, der seine Sprache nennt, wird beim Erstellen hervorgehoben:
@@ -39,6 +43,8 @@ console.log(greet("Blyss"));
 ```
 
 Ein Block ohne Sprache oder in einer, die der Hervorheber nicht kennt, bleibt schlicht.
+
+`static/assets/css/main.css` färbt im Starter die `hljs-…`-Klassen. Erhalten Sie beim Ändern der Farben einen Kontrast von mindestens 4,5:1 zum Codehintergrund.
 
 ## Diagramme
 

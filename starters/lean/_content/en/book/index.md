@@ -4,6 +4,6 @@ description: The technical documentation of this website.
 translationKey: book
 ---
 
-This is the start page of the documentation, `content/en/book/index.md`. Every Markdown file in `content/en/book/` and its directories is a doc, published below `/en/book/`.
+This book covers installing Blyss, writing content, customizing the lean starter, deployment and engine development. Begin with [Installation and commands](/en/book/installation/) or learn [how to edit this book](/en/book/getting-started/).
 
-The navigation beside each doc lists all docs, the table of contents above its text lists its sections, and the links below it lead to the previous and the next doc. Start with [Getting started](/en/book/getting-started/).
+The navigation lists the docs, the table of contents lists the current doc's headings, and the links below lead to the previous and next doc. The source is `_content/en/book/`; replace or adapt it for your own website.
