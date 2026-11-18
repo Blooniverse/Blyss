@@ -266,6 +266,17 @@
   `{{<name>}}` block gives one diagram a title and settings of its own, such
   as Mermaid's `theme`; the build stops if the code of a Vega-Lite chart is
   not JSON.
+- **Websites below a path**: a website can be hosted below a path of its
+  domain, as a GitHub Pages project site is at
+  `https://user.github.io/repository/`. With a `site.baseUrl` that has a
+  path, the build puts that path before every `href`, `src`, `poster` and
+  `action` of a page that starts with a single `/`, so that the content, the
+  templates and the components stay as they are, and `blyss serve` serves the
+  website below the path, to which `/` redirects. `{{basePath}}` holds the
+  path in every template and in the template of a component, whose data file
+  receives it as `basePath`, for URLs elsewhere; the starter's diagrams add
+  it to their libraries in `static/`. The docs have a workflow for GitHub
+  Pages.
 
 ### Changes
 
@@ -406,9 +417,8 @@
 - **Optional `static/`**: a website without a static directory builds; it
   has no files to copy.
 - **Docs**: the docs name `npx @blooniverse/blyss` for `init`, since
-  `npx blyss` outside a website fetches an unrelated package of that name,
-  and say that a website is hosted at the root of its domain. The starter's
-  texts and comments name `_content/` and the docs of the book.
+  `npx blyss` outside a website fetches an unrelated package of that name.
+  The starter's texts and comments name `_content/` and the docs of the book.
 
 ### Fixes
 

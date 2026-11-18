@@ -9,7 +9,7 @@ translationKey: book-configuration
 
 The comments in `blyss.config.js` describe the starter's site, pagination, layout, hero, overlay, components, directories and server settings, including their values and defaults. Paths in `directories` are relative to the website root. `pagination.pageSize` must be a positive whole number. Invalid configuration stops the build before the previous output is deleted.
 
-The starter's placeholder name, public URL, publisher and language descriptions are marked `CHANGE BEFORE PRODUCTION`. `site.baseUrl` is used for canonical, alternate and JSON-LD URLs. See [Deployment](/en/book/deployment/) before publishing.
+The starter's placeholder name, public URL, publisher and language descriptions are marked `CHANGE BEFORE PRODUCTION`. `site.baseUrl` is used for canonical, alternate and JSON-LD URLs; with a path, as in `https://example.com/docs`, it places the website [below that path](/en/book/deployment/#below-a-path). See [Deployment](/en/book/deployment/) before publishing.
 
 ## Languages
 

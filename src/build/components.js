@@ -4,7 +4,7 @@ import { pathToFileURL } from "node:url";
 import { BlyssError } from "../errors.js";
 import { renderMarkdown } from "./markdown.js";
 import { applyTemplate, escapeHtml, labelValues, parseFrontMatter } from "./render.js";
-import { refuse } from "./settings.js";
+import { basePathOf, refuse } from "./settings.js";
 import { splitTexts } from "./texts.js";
 
 // Texts, numbers and truth values become placeholders; lists and objects are left to the component's data file.
@@ -59,6 +59,8 @@ const variants = { Hero: "hero", Overlay: "overlay" };
 // component under another name, with settings and a text of its own, so that the hero and the overlay can show it
 // differently. Below, <name> is the name of the component or of a variant of it. The placeholders of that template
 // are, each replacing an earlier one of its name:
+// - {{basePath}}: the path below which the website is hosted, for the URLs that the component writes outside href
+//   and src, which get that path by themselves (see withBasePath in build.js); the data file receives it as well;
 // - {{<key>Label}}: the labels of the page's language;
 // - {{<setting>}}: the component's settings, components.<name> in blyss.config.js;
 // - {{<field>}} and {{content}}: the front matter and the text of _content/<language>/components/<name>.md;
@@ -117,6 +119,7 @@ export async function loadComponents(projectDir, config, directory, texts) {
   }
 
   const settings = config.components ?? {};
+  const basePath = basePathOf(config);
   for (const name of Object.keys(settings)) {
     if (unknown(name)) throw new BlyssError(`Cannot use components.${name}: ${unknown(name)}.`);
   }
@@ -146,13 +149,14 @@ export async function loadComponents(projectDir, config, directory, texts) {
     const { data, code } = components.get(name);
     const content = code ? escapeHtml(markdown.replace(/^\n+|\s+$/g, "")) : renderMarkdown(markdown, origin);
     return {
+      basePath: escapeHtml(basePath),
       ...labelValues(config.site.languages[languageKey].labels),
       ...scalars(ownSettings),
       ...scalars(metadata),
       content,
       ...await data({
         settings: ownSettings, languageKey, content, texts: code ? [] : splitTexts(markdown, origin).texts, source: markdown,
-        frontMatter: metadata, escapeHtml,
+        frontMatter: metadata, escapeHtml, basePath,
         refuse: (setting, value, requirement) => (block === undefined
           ? refuse(`components.${name}.${setting}`, value, requirement)
           : new BlyssError(`Cannot build ${file}: its {{${name}}} block cannot use ${setting} ${JSON.stringify(value)}, ` +

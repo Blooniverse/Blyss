@@ -4,6 +4,7 @@ import nodePath, { extname, join } from "node:path";
 import { pipeline } from "node:stream";
 import { languagesOf } from "../build/languages.js";
 import { resolvePaths, within } from "../build/paths.js";
+import { assertSite, basePathOf } from "../build/settings.js";
 import { contentTypeFor } from "./mime-types.js";
 
 // The file that a request path names below public/, or undefined for a path that leaves it: one with "..", or on
@@ -34,9 +35,13 @@ async function sendFile(response, status, filePath) {
 }
 
 export function serve(projectDir, config) {
+  assertSite(config);
   const port = Number(process.env.PORT) || (config.server?.fallbackPort ?? 3000);
   const { publicDirectory } = resolvePaths(projectDir, config);
   const { defaultLanguage } = languagesOf(config);
+  // A website below a path, such as /docs for https://example.com/docs/, is served below that path, as on its host.
+  const basePath = basePathOf(config);
+  const base = decodeURIComponent(basePath);
   // A website that was never built has no output directory: the server says so, in the terminal and in the browser.
   const unbuilt = `There is no ${config.directories.public}/ yet. Build the website first: npm run build`;
   const isBuilt = () => stat(publicDirectory).then(info => info.isDirectory(), () => false);
@@ -44,13 +49,15 @@ export function serve(projectDir, config) {
     try {
       const requestUrl = new URL(request.url ?? "/", "http://localhost");
       let pathname = decodeURIComponent(requestUrl.pathname);
-      if (pathname === "/") {
+      if (pathname === "/" || pathname === base || pathname === `${base}/`) {
         response.writeHead(302, {
-          Location: `/${defaultLanguage}/`
+          Location: `${basePath}/${defaultLanguage}/`
         });
         response.end();
         return;
       }
+      if (!pathname.startsWith(`${base}/`)) throw new Error("Requested path is outside the path of the website.");
+      pathname = pathname.slice(base.length);
       if (pathname.endsWith("/")) pathname += "index.html";
       const filePath = fileFor(publicDirectory, pathname);
       if (!filePath) throw new Error("Requested path is outside public/.");

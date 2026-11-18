@@ -17,6 +17,10 @@ export function assertSite(config) {
   }
 }
 
+// The path below which the website is hosted: that of site.baseUrl without its final slash, such as /docs for
+// https://example.com/docs/, and nothing for a website at the root of its domain.
+export const basePathOf = config => new URL(config.site.baseUrl).pathname.replace(/\/+$/, "");
+
 // Unlike em or %, these units mean the same on every element, so a top bar can span the margin it is placed in.
 const cssLength = /^(?:0|\d*\.?\d+(?:px|rem|vw|vh|vmin|vmax))$/i;
 

@@ -39,7 +39,7 @@ Blocks must stand alone: within a list or quotation they remain code. Use a long
 
 ## Component templates and data
 
-Template placeholders are resolved in this order, with later values replacing earlier values of the same name: language labels `{{<key>Label}}`; scalar settings `{{<setting>}}`; front-matter fields and `{{content}}`; values returned by the data file; and `{{id}}`, unique per occurrence, such as `componentSliderHero-1`. Labels, settings and front matter are HTML-escaped; data-file values are inserted as returned.
+Template placeholders are resolved in this order, with later values replacing earlier values of the same name: `{{basePath}}`, the path of a website [below a path](/en/book/deployment/#below-a-path); language labels `{{<key>Label}}`; scalar settings `{{<setting>}}`; front-matter fields and `{{content}}`; values returned by the data file; and `{{id}}`, unique per occurrence, such as `componentSliderHero-1`. Labels, settings and front matter are HTML-escaped; data-file values are inserted as returned.
 
 The optional data file exports a function, called for each language and block before the previous output is deleted:
 
@@ -51,7 +51,7 @@ export default function ({ settings, languageKey, content, texts, source, frontM
 }
 ```
 
-`content` is rendered HTML, `source` is the original text, `frontMatter` its fields and `texts` the HTML texts started by `###` headings. `refuse` creates a setting error naming the component. The data file receives block overrides in the same way as ordinary settings and text.
+`content` is rendered HTML, `source` is the original text, `frontMatter` its fields and `texts` the HTML texts started by `###` headings. `basePath` is the path of a website below a path, for a URL that the data file writes. `refuse` creates a setting error naming the component. The data file receives block overrides in the same way as ordinary settings and text.
 
 ## Diagrams and code blocks
 
@@ -73,4 +73,4 @@ By default the libraries come from jsDelivr, exposing the visitor's IP address t
 | `componentVegaLite.libraryVega` | npm `vega@6.4.0`: `build/vega.min.js` |
 | `componentVegaLite.libraryVegaLite` | npm `vega-lite@6.5.0`: `build/vega-lite.min.js` |
 
-`npm pack mermaid@12.3.0` downloads an archive without installing it. Keep the paired Vega/Vega-Lite and Raphaël/flowchart.js versions compatible when updating. Library URLs must start with `https://` or `/`.
+`npm pack mermaid@12.3.0` downloads an archive without installing it. Keep the paired Vega/Vega-Lite and Raphaël/flowchart.js versions compatible when updating. Library URLs must start with `https://` or `/`. On a website below a path, the components put that path before a URL that starts with `/`.
