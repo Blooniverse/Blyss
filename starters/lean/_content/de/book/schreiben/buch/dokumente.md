@@ -16,10 +16,11 @@ Dokumente haben das [Front Matter der Seiten](/de/book/schreiben/seiten-und-beit
 - `title` nennt das Dokument in seiner Überschrift, in der Navigation und in den Links zum vorherigen und zum nächsten Dokument.
 - `order` ordnet es unter den Dokumenten neben ihm ein: niedrigere Zahlen zuerst, Dokumente ohne `order` zuletzt; Dokumente mit derselben Zahl ordnet Blyss nach ihrem Titel.
 - `translationKey` verknüpft seine Übersetzungen, wie auf jeder Seite.
+- `draft: true` lässt das Dokument beim Build aus, wie eine Seite oder einen Beitrag; siehe [Entwürfe](/de/book/schreiben/seiten-und-beitraege/#entwürfe).
 
 ## Einen Abschnitt hinzufügen
 
-Ein Verzeichnis wie `_content/de/book/schreiben/` ist ein Abschnitt der Dokumentation. Seine `index.md` ist die Startseite des Abschnitts, und ihr Titel benennt den Abschnitt in der Navigation; das Feld `order` dieser Datei ordnet den Abschnitt ein. Ein Abschnitt kann weitere Abschnitte enthalten: Dieses Dokument liegt in `_content/de/book/schreiben/buch/`. Blyss bricht mit einer Fehlermeldung ab, wenn einem Verzeichnis mit Dokumenten seine `index.md` fehlt.
+Ein Verzeichnis wie `_content/de/book/schreiben/` ist ein Abschnitt der Dokumentation. Seine `index.md` ist die Startseite des Abschnitts, und ihr Titel benennt den Abschnitt in der Navigation; das Feld `order` dieser Datei ordnet den Abschnitt ein. Ein Abschnitt kann weitere Abschnitte enthalten: Dieses Dokument liegt in `_content/de/book/schreiben/buch/`. Blyss bricht mit einer Fehlermeldung ab, wenn einem Verzeichnis mit Dokumenten seine `index.md` fehlt oder wenn diese Startseite ein Entwurf ist, ein Dokument ihres Abschnitts aber nicht.
 
 ## Dokumente übersetzen
 

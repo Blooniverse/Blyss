@@ -57,7 +57,19 @@ function assertDates(file, metadata) {
   }
 }
 
-async function discoverContent(projectDir, config, contentDirectory, locate) {
+// draft: true makes a page, a post or a doc a draft: the build leaves it out, as if its file did not exist, unless
+// it builds the drafts as well, as blyss build --drafts does. A value other than true or false would publish a page
+// that its author takes for a draft, so it stops the build.
+function isDraft(file, metadata) {
+  const { draft = "" } = metadata;
+  if (draft === "true") return true;
+  if (draft === "" || draft === "false") return false;
+  throw new BlyssError(`Cannot build ${file}: its draft ${JSON.stringify(draft)} is neither true nor false.\n` +
+    "Set draft to true to leave the page out of the build, or remove the field to publish it.");
+}
+
+// drafts tells whether the build includes the drafts. One that it leaves out is returned with the type "draft".
+async function discoverContent(projectDir, config, contentDirectory, locate, drafts) {
   const found = await findMarkdownFiles(contentDirectory).catch(error => {
     if (error.code !== "ENOENT") throw error;
     const directory = join(relative(projectDir, contentDirectory), sep);
@@ -110,11 +122,14 @@ async function discoverContent(projectDir, config, contentDirectory, locate) {
     }
     const type = sections[section];
     const nested = parts.slice(2, -1);
+    const draft = isDraft(file, metadata);
+    // Nothing else of a draft that is left out is checked: it may lack what a page needs.
+    if (draft && !drafts) return { sourceFile, type: 'draft' };
     assertDates(file, metadata);
     const tags = type === 'post' ? parseTags(metadata.tags, languageKey, file) : [];
     // pages/404.md becomes /<language>/404.html, the file name static hosts expect for "not found" pages.
     if (type === 'page' && !nested.length && filename === '404') {
-      return { sourceFile, languageKey, languageConfig, type, metadata, markdown, tags, notFound: true, ...locate([languageKey], '404.html') };
+      return { sourceFile, languageKey, languageConfig, type, metadata, markdown, tags, draft, notFound: true, ...locate([languageKey], '404.html') };
     }
     const slug = metadata.slug || filename;
     // Each of these names is one part of the URL and one directory of the output: with a "/" or as "..", it would
@@ -131,7 +146,7 @@ async function discoverContent(projectDir, config, contentDirectory, locate) {
     const urlParts = [languageKey, section, ...nested, slug];
     if (type !== 'post' && filename === 'index') urlParts.pop();
     if (type === 'page' && !nested.length && filename === 'index') urlParts.pop();
-    return { sourceFile, languageKey, languageConfig, type, metadata, markdown, tags, ...locate(urlParts) };
+    return { sourceFile, languageKey, languageConfig, type, metadata, markdown, tags, draft, ...locate(urlParts) };
   }));
 }
 
@@ -176,7 +191,8 @@ function withBasePath(html, basePath) {
   return html.replace(/(\s(?:href|src|poster|action)=["'])\/(?!\/)/g, (match, start) => `${start}${path}/`);
 }
 
-export async function build(projectDir, configPath = './blyss.config.js') {
+// With drafts, the build includes the pages, posts and docs that draft: true leaves out of every other build.
+export async function build(projectDir, configPath = './blyss.config.js', { drafts = false } = {}) {
   const loaded = await loadConfig(projectDir, configPath);
   assertSite(loaded);
   // The whole build uses the checked languages, which have every label and a default language.
@@ -200,7 +216,7 @@ export async function build(projectDir, configPath = './blyss.config.js') {
   // home.html and book.html are optional: without them, home pages and docs use page.html. So are hero.html and
   // overlay.html: without them, the website has no hero or no overlay.
   const [discovered, document, page, post, home, book, hero, overlay] = await Promise.all([
-    discoverContent(projectDir, config, contentDirectory, locate),
+    discoverContent(projectDir, config, contentDirectory, locate, drafts),
     readTemplate('document.html'),
     readTemplate('page.html'),
     readTemplate('post.html'),
@@ -210,11 +226,13 @@ export async function build(projectDir, configPath = './blyss.config.js') {
     readOptionalTemplate('overlay.html')
   ]);
   const content = discovered.filter(record => ['page', 'post', 'book'].includes(record.type));
+  // The files of the drafts that this build leaves out.
+  const leftOut = discovered.filter(record => record.type === 'draft').map(record => relative(projectDir, record.sourceFile));
   const fragmentRecords = discovered.filter(record => record.type === 'fragment');
   const fragments = renderFragments(projectDir, fragmentRecords, Object.keys(config.site.languages));
   const components = await loadComponents(projectDir, config, componentsDirectory, discovered.filter(record => record.type === 'component'));
   const regions = arrangeRegions(projectDir, config, { hero, overlay }, fragmentRecords, components.unknown);
-  const books = arrangeBooks(projectDir, contentDirectory, content);
+  const books = arrangeBooks(projectDir, contentDirectory, content, leftOut);
   const records = [...content, ...createListRecords(config, content, locate)];
   assertUniqueUrls(projectDir, records);
   assertUniqueTranslations(projectDir, records);
@@ -252,7 +270,7 @@ export async function build(projectDir, configPath = './blyss.config.js') {
   for (const { record, html } of pages) {
     await mkdir(join(record.outputFile, '..'), { recursive: true });
     await writeFile(record.outputFile, html, 'utf8');
-    console.log(`Built ${record.url}`);
+    console.log(`Built ${record.url}${record.draft ? ' (draft)' : ''}`);
     // Hosts look for a single /404.html, so the default language's 404 page is published there as well.
     if (record.notFound && record.languageKey === config.site.defaultLanguage) {
       await writeFile(join(publicDirectory, '404.html'), html, 'utf8');
@@ -262,6 +280,8 @@ export async function build(projectDir, configPath = './blyss.config.js') {
   const sitemapRecords = records.filter(record => !record.notFound);
   await writeFile(join(publicDirectory, 'sitemap.xml'), renderSitemap(sitemapRecords, translationIndex, config.site.defaultLanguage), 'utf8');
   console.log('Built /sitemap.xml');
+  for (const file of leftOut) console.log(`Left out the draft ${file}`);
 
-  console.log(`Blyss built ${records.length} localized page(s).`);
+  const built = records.filter(record => record.draft).length;
+  console.log(`Blyss built ${records.length} localized page(s)${built ? `, including ${built} draft(s)` : ''}.`);
 }

@@ -30,6 +30,23 @@ Pages in `_content/<language>/pages/` are published at `/<language>/pages/<slug>
 
 Images and other files of a page lie in `static/`, as in `static/assets/img/`, and a page links to them from the root of the website, as in `![The harbour](/assets/img/harbour.jpg)`. Blyss publishes only the Markdown files of `_content/`, not the other files beside them.
 
+## Drafts
+
+`draft: true` in its front matter makes a page, a post or a doc a draft:
+
+```markdown
+---
+title: Not yet
+draft: true
+---
+```
+
+The build leaves a draft out, as if its file did not exist: it has no page of its own and appears in no list of posts, on no tag page, in no navigation, not among the translations of another page and not in `sitemap.xml`. Blyss does not check a draft that it leaves out: an error in its front matter, such as a date that is not one yet, shows only once the draft is built.
+
+`npm run build:drafts` builds the website with its drafts, for a look at them with `npm start`. The build marks each draft that it builds and names each one that it leaves out. Run `npm run build` again before you publish `public/`.
+
+To publish a draft, remove the field or set it to `false`. Any other value stops the build, so that no page is published that its author takes for a draft. Only pages, posts and docs can be drafts, not fragments or the texts of components.
+
 ## Posts and lists
 
 Posts may have tags as `tags: [Blyss, Markdown]`, a comma-separated value or a YAML block list. Blyss generates `/<language>/posts/`, `/<language>/tags/` and `/<language>/tags/<tag>/`; do not create content at those URLs. Tag URLs use ASCII slugs, and matching slugs link across languages. The newest post determines a tag's displayed spelling.

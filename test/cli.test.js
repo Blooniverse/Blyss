@@ -1014,6 +1014,93 @@ describe("a site with technical documentation", () => {
   });
 });
 
+describe("a site with drafts", () => {
+  let site;
+  const page = path => readFile(join(site, "public", path), "utf8");
+  const drafts = { post: join("_content", "en", "posts", "zeppelin.md"), page: join("_content", "en", "pages", "quokka.md"),
+    doc: join("_content", "en", "book", "yucca.md") };
+  // The pages of the output, and its sitemap, that name a draft or link to one.
+  const traces = async () => {
+    const files = (await listFiles(join(site, "public"))).filter(file => /\.(?:html|xml)$/.test(file));
+    const texts = await Promise.all(files.map(page));
+    return files.filter((file, index) => /zeppelin|quokka|yucca|xylophone/i.test(texts[index]));
+  };
+
+  before(async () => {
+    site = join(sandbox, "drafts");
+    assert.equal(run(["init", site], sandbox).status, 0);
+    // A draft of each kind: the newest post, with a tag of its own and a German translation that is published, a
+    // page whose date is not one yet, and the first doc of the documentation.
+    await writeFile(join(site, drafts.post),
+      "---\ntitle: Zeppelin\ndatePublished: 2026-12-24\ntranslationKey: zeppelin\ntags: [Xylophone]\ndraft: true\n---\n\nText.\n");
+    await writeFile(join(site, "_content", "de", "posts", "luftschiff.md"),
+      "---\ntitle: Luftschiff\ndatePublished: 2026-12-24\ntranslationKey: zeppelin\n---\n\nText.\n");
+    await writeFile(join(site, drafts.page), "---\ntitle: Quokka\ndatePublished: soon\ndraft: true\n---\n\nText.\n");
+    await writeFile(join(site, drafts.doc), "---\ntitle: Yucca\norder: 0\ndraft: true\n---\n\nText.\n");
+  });
+
+  test("leaves a draft out of the pages, the lists, the navigation, the translations and the sitemap, unchecked, and names it", async () => {
+    const result = run(["build"], site);
+    assert.equal(result.status, 0, result.stderr);
+    assert.deepEqual(await traces(), []);
+    // The German post is published without its English translation.
+    assert.doesNotMatch(await page("de/posts/luftschiff/index.html"), /hreflang="(?:en|x-default)"/);
+    for (const file of Object.values(drafts)) assert.ok(result.stdout.includes(`Left out the draft ${file}\n`), file);
+    assert.doesNotMatch(result.stdout, /\(draft\)|draft\(s\)/);
+  });
+
+  test("builds the drafts for --drafts, checked like every page and marked in the output of the build", async () => {
+    // Only now does the date of the draft page matter.
+    const unchecked = run(["build", "--drafts"], site);
+    assert.equal(unchecked.status, 1);
+    assert.equal(unchecked.stderr, `Cannot build ${drafts.page}: its datePublished "soon" is not a date.\n` +
+      "Write a date as 2026-11-10, or with its time as 2026-11-10T09:30:00+01:00.\n");
+    await writeFile(join(site, drafts.page), "---\ntitle: Quokka\ndraft: true\n---\n\nText.\n");
+    const result = run(["build", "--drafts"], site);
+    assert.equal(result.status, 0, result.stderr);
+    for (const url of ["/en/posts/zeppelin/", "/en/pages/quokka/", "/en/book/yucca/"]) {
+      assert.ok(result.stdout.includes(`Built ${url} (draft)\n`), url);
+    }
+    assert.match(result.stdout, /\nBlyss built \d+ localized page\(s\), including 3 draft\(s\)\.\n$/);
+    assert.doesNotMatch(result.stdout, /Left out/);
+    // The draft post leads the archive, has the page of its tag and is the translation of the German post; the draft
+    // doc is the first of the navigation.
+    const archive = await page("en/posts/index.html");
+    assert.ok(archive.slice(archive.indexOf("<main>")).includes(
+      '<ul>\n  <li><time datetime="2026-12-24">2026-12-24</time> <a href="/en/posts/zeppelin/">Zeppelin</a></li>'));
+    assert.ok((await page("en/tags/xylophone/index.html")).includes('<a href="/en/posts/zeppelin/">Zeppelin</a>'));
+    assert.ok((await page("de/posts/luftschiff/index.html"))
+      .includes('<link rel="alternate" hreflang="en" href="https://example.com/en/posts/zeppelin/">'));
+    assert.match(await page("en/book/index.html"),
+      /<nav aria-label="Documentation">\n<ul>\n {2}<li><a href="\/en\/book\/"[^>]*>[^<]+<\/a><\/li>\n {2}<li><a href="\/en\/book\/yucca\/">Yucca<\/a><\/li>/);
+    assert.ok((await page("en/pages/quokka/index.html")).includes("<h1>Quokka</h1>"));
+    assert.ok((await page("sitemap.xml")).includes("<loc>https://example.com/en/book/yucca/</loc>"));
+  });
+
+  test("refuses a doc whose section has a draft as its start page and a draft that is neither true nor false", async () => {
+    const index = join("_content", "en", "book", "guides", "index.md");
+    const doc = join("_content", "en", "book", "guides", "setup.md");
+    await mkdir(join(site, dirname(index)));
+    await writeFile(join(site, index), "---\ntitle: Guides\ndraft: true\n---\n");
+    for (const [frontMatter, message] of [
+      ["title: Setup", `Cannot build ${doc}: ${index}, the start page of its section, is a draft.\n` +
+        "Make the doc a draft as well, or publish the start page: its title names the section in the navigation.\n"],
+      ["title: Setup\ndraft: yes", `Cannot build ${doc}: its draft "yes" is neither true nor false.\n` +
+        "Set draft to true to leave the page out of the build, or remove the field to publish it.\n"]
+    ]) {
+      await writeFile(join(site, doc), `---\n${frontMatter}\n---\n`);
+      const result = run(["build"], site);
+      assert.equal(result.status, 1, frontMatter);
+      assert.equal(result.stderr, message);
+    }
+    // A section of drafts alone is left out as a whole.
+    await writeFile(join(site, doc), "---\ntitle: Setup\ndraft: true\n---\n");
+    const result = run(["build"], site);
+    assert.equal(result.status, 0, result.stderr);
+    await assert.rejects(stat(join(site, "public", "en", "book", "guides")), { code: "ENOENT" });
+  });
+});
+
 describe("a site with its own hero texts and fragments", () => {
   let site;
   const page = path => readFile(join(site, "public", path), "utf8");

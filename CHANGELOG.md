@@ -4,6 +4,10 @@
 
 ### Breaking changes
 
+- **Drafts are left out**: a page, a post or a doc with `draft: true` in its
+  front matter is no longer built, and a `draft` other than `true` or `false`
+  stops the build with a message that names the file. The field used to be
+  ignored, and such a page was published.
 - **Checked dates**: a `datePublished` or a `dateModified` that is not a date
   such as `2026-11-10`, or one with its time such as
   `2026-11-10T09:30:00+01:00`, stops the build with a message that names the
@@ -19,9 +23,10 @@
   `sitemap.xml`, is its translation in the default language; a page without
   such a translation has none. It used to be the home page of the default
   language on every page.
-- **Arguments of `build` and `serve`**: `blyss build` and `blyss serve` take
-  no arguments and end with a message for one, as `blyss init` does for an
-  option; they used to ignore arguments such as `--port 4000`.
+- **Arguments of `build` and `serve`**: `blyss build` takes no argument but
+  `--drafts` and `blyss serve` none at all; they end with a message for any
+  other, as `blyss init` does for an option. They used to ignore arguments
+  such as `--port 4000`.
 - **Front matter on single lines**: a field whose value is `>` or `|`, with
   which YAML starts a text of several lines, stops the build with a message
   that names the file; the page used to show the sign and lose the text.
@@ -308,6 +313,16 @@
   `document.html` is `<meta name="robots" content="noindex">` on the
   not-found pages and empty on every other page. Existing websites add the
   placeholder to the head of their `templates/document.html`.
+- **Drafts**: `draft: true` in the front matter of a page, a post or a doc
+  leaves it out of the build, as if its file did not exist: it has no page of
+  its own and appears in no list, on no tag page, in no navigation, not among
+  the translations of another page and not in `sitemap.xml`, and the rest of
+  its front matter is not checked. `blyss build --drafts` builds the drafts
+  as well, for a look at them; the starter has the script
+  `npm run build:drafts` for it, which existing websites copy from its
+  `package.json`. The build marks each draft that it builds and names each
+  one that it leaves out. A doc cannot be built if the start page of its
+  section is a draft.
 
 ### Changes
 

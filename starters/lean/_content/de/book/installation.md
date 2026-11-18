@@ -24,16 +24,17 @@ npm start
 ```bash
 npx @blooniverse/blyss init [verzeichnis]  # den Starter kopieren
 npm run build                              # blyss build: directories.public erzeugen
+npm run build:drafts                       # blyss build --drafts: mit den Entwürfen erzeugen
 npm start                                  # blyss serve: auf PORT oder server.fallbackPort ausliefern
 ```
 
-Führen Sie `npm run build` und `npm start` im Wurzelverzeichnis der Website aus, in dem `blyss.config.js` liegt: Sie rufen `blyss build` und `blyss serve` des Blyss auf, das `npm install` in die Website gelegt hat. Schreiben Sie für `init` den vollen Namen `npx @blooniverse/blyss`: Außerhalb einer solchen Website lädt `npx blyss` ein fremdes npm-Paket namens `blyss`.
+Führen Sie `npm run build`, `npm run build:drafts` und `npm start` im Wurzelverzeichnis der Website aus, in dem `blyss.config.js` liegt: Sie rufen `blyss build` und `blyss serve` des Blyss auf, das `npm install` in die Website gelegt hat. Schreiben Sie für `init` den vollen Namen `npx @blooniverse/blyss`: Außerhalb einer solchen Website lädt `npx blyss` ein fremdes npm-Paket namens `blyss`.
 
-`blyss --help` listet die Befehle auf, und `blyss --version` zeigt die Version von Blyss. `build` und `serve` nehmen keine Argumente entgegen, `init` nur sein Verzeichnis: Jedes andere Argument beendet den Befehl mit einer Meldung.
+`blyss build --drafts` erstellt auch die [Entwürfe](/de/book/schreiben/seiten-und-beitraege/#entwürfe), die jeder andere Build auslässt. `blyss --help` listet die Befehle auf, und `blyss --version` zeigt die Version von Blyss. `build` nimmt nur `--drafts` entgegen, `init` nur sein Verzeichnis und `serve` kein Argument: Jedes andere Argument beendet den Befehl mit einer Meldung.
 
 Ohne Verzeichnis verwendet `init` das aktuelle Verzeichnis. Ein fehlendes Verzeichnis wird angelegt, ein vorhandenes muss leer sein; ein Verzeichnis, das nur `.git` enthält, gilt als leer, sodass `git init` vorausgehen darf. `init` überschreibt nie vorhandene Dateien und bietet kein `--force`; bei einem Kopierfehler entfernt es nur selbst angelegte Dateien und Verzeichnisse. Es installiert keine Pakete, initialisiert kein Git, erstellt oder startet die Website nicht und verwendet selbst kein Netzwerk. `npx` und `npm install` können hingegen Pakete herunterladen.
 
-Die erzeugte `package.json` trägt den Namen des Verzeichnisses, hängt von der ausgeführten Blyss-Version ab und bietet `npm run build` und `npm start`. Ohne `blyss.config.js` brechen `build` und `serve` ab und empfehlen `init`. `serve` erstellt die Website nicht: Fehlt `public/`, meldet der Server das und beantwortet jede Anfrage mit „404 Not Found“.
+Die erzeugte `package.json` trägt den Namen des Verzeichnisses, hängt von der ausgeführten Blyss-Version ab und bietet `npm run build`, `npm run build:drafts` und `npm start`. Ohne `blyss.config.js` brechen `build` und `serve` ab und empfehlen `init`. `serve` erstellt die Website nicht: Fehlt `public/`, meldet der Server das und beantwortet jede Anfrage mit „404 Not Found“.
 
 ## Aufbau
 

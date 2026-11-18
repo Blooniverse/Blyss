@@ -31,6 +31,23 @@ Seiten in `_content/de/pages/` erscheinen unter `/de/pages/<slug>/`, Beiträge i
 
 Bilder und andere Dateien einer Seite liegen in `static/`, etwa in `static/assets/img/`, und eine Seite verlinkt sie von der Wurzel der Website aus, etwa mit `![Der Hafen](/assets/img/hafen.jpg)`. Blyss veröffentlicht nur die Markdown-Dateien aus `_content/`, nicht die anderen Dateien daneben.
 
+## Entwürfe
+
+`draft: true` im Front Matter macht eine Seite, einen Beitrag oder ein Dokument zu einem Entwurf:
+
+```markdown
+---
+title: Noch nicht
+draft: true
+---
+```
+
+Der Build lässt einen Entwurf aus, als gäbe es seine Datei nicht: Er hat keine eigene Seite und erscheint in keiner Liste von Beiträgen, auf keiner Schlagwortseite, in keiner Navigation, nicht unter den Übersetzungen einer anderen Seite und nicht in `sitemap.xml`. Einen Entwurf, den Blyss auslässt, prüft es auch nicht: Ein Fehler in seinem Front Matter, etwa ein Datum, das noch keines ist, zeigt sich erst, wenn der Entwurf erstellt wird.
+
+`npm run build:drafts` erstellt die Website mit ihren Entwürfen, zum Ansehen mit `npm start`. Der Build kennzeichnet jeden Entwurf, den er erstellt, und nennt jeden, den er auslässt. Führen Sie vor dem Veröffentlichen von `public/` wieder `npm run build` aus.
+
+Um einen Entwurf zu veröffentlichen, entfernen Sie das Feld oder setzen es auf `false`. Jeder andere Wert stoppt den Build, damit keine Seite erscheint, die ihre Autorin oder ihr Autor für einen Entwurf hält. Nur Seiten, Beiträge und Dokumente können Entwürfe sein, nicht Fragmente oder die Texte der Komponenten.
+
 ## Beiträge und Listen
 
 Beiträge können Tags als `tags: [Blyss, Markdown]`, `tags: Blyss, Markdown` oder YAML-Liste erhalten. Blyss erzeugt pro Sprache das Archiv `/de/posts/`, den Index `/de/tags/` und Seiten wie `/de/tags/markdown/`. Belegen Sie diese URLs nicht mit eigenen Inhalten: Kollisionen mit anderen Dateien oder generierten Seiten stoppen den Build.
