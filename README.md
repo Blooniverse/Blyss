@@ -7,7 +7,8 @@ Blyss is an ultra lean SSG (static site generator):
     - **Diagrams**: Extensive charting via Flowchart.js, Mermaid & even Vega-Lite.
     - **Footnotes**: [^footnote]
     - **Compatibility**: [Marktext.me](https://marktext.me) as well as [Obsidian.md](https://obsidian.md)
-- **3 content types**: book, page, post.
+- **Author with 3 content types**: book doc, page, post.
+    - ´draft: true´ in Frontmatter.
 - **Themeable**: Blyss comes with a lean starter.
 - **Composable**: Markdown components and fragments can be used anywhere.
 - **Configurable**: Via blyss.config.js and component Markdown.
