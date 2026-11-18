@@ -9,6 +9,8 @@ translationKey: book-components
 
 A component is a directory `components/<name>/`, named with Latin letters and digits starting with a letter. Its only required file is `<name>.html`; it can link to its own `<name>.css` and `<name>.js`. Other files in that directory are published under `/components/<name>/`. Optional `<name>.data.js` checks settings and prepares template values.
 
+A name that starts with `.` or `_` is left out: such a file or directory of a component is not published, wherever it lies in the component's directory, and such a directory in `components/` is no component. Use these names for what the browser does not need: a module that a data file imports, as `_helpers.js` beside it or in `components/_shared/` for several components, or notes such as `_README.md`.
+
 `_content/<language>/components/<name>.md` supplies localized front matter and Markdown, and `components.<name>` in `blyss.config.js` supplies settings. A template can use `{{<name>}}`. A paragraph containing only that placeholder in a page, post or doc displays the component; a block gives one occurrence its own values. Components can appear several times on one page.
 
 The starter includes slider, gallery and flower components. Their localized text files are `_content/<language>/components/componentSliderHero.md` and `componentSliderOverlay.md`, and similarly for `componentGallery` and `componentFlower`; `blyss.config.js` explains their settings. Gallery images are in `static/assets/img/gallery/`. Each occurrence of these components is an independent custom element.

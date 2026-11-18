@@ -1366,13 +1366,21 @@ describe("a site with a component of its own", () => {
     site = join(sandbox, "component");
     assert.equal(run(["init", site], sandbox).status, 0);
     const component = join(site, "components", "notice");
-    await mkdir(component);
+    await mkdir(join(component, "img"), { recursive: true });
     await writeFile(join(component, "notice.html"),
       '<aside id="{{id}}" data-level="{{level}}"><h2>{{title}}</h2><small>{{hint}} {{closeLabel}}</small>{{content}}{{hours}}</aside>\n');
     await writeFile(join(component, "notice.css"), "aside { color: red; }\n");
-    await writeFile(join(component, "notice.data.js"), `export default ({ settings, languageKey, escapeHtml, refuse }) => {
+    await writeFile(join(component, "img", "icon.svg"), '<svg xmlns="http://www.w3.org/2000/svg"/>\n');
+    // What the browser does not need has a name that starts with a dot or an underscore: notes, the file of an editor
+    // and, in a directory that is no component, a module that the data file imports.
+    await writeFile(join(component, "_notes.md"), "Notes.\n");
+    await writeFile(join(component, "img", ".DS_Store"), "");
+    await mkdir(join(site, "components", "_shared"));
+    await writeFile(join(site, "components", "_shared", "list.js"), 'export const list = items => items.join(" & ");\n');
+    await writeFile(join(component, "notice.data.js"), `import { list } from "../_shared/list.js";
+export default ({ settings, languageKey, escapeHtml, refuse }) => {
   if (!Array.isArray(settings.hours)) throw refuse("hours", settings.hours, "a list of hours");
-  return { hours: \`<p>\${escapeHtml(settings.hours.join(" & "))} (\${languageKey})</p>\` };
+  return { hours: \`<p>\${escapeHtml(list(settings.hours))} (\${languageKey})</p>\` };
 };
 `);
     configFile = join(site, "blyss.config.js");
@@ -1407,8 +1415,10 @@ describe("a site with a component of its own", () => {
     assert.ok((await page("de/pages/about/index.html")).includes(notice(1, "<h2></h2><small> Schließen</small>", "de")));
   });
 
-  test("publishes its files but its template and its data file", async () => {
-    assert.deepEqual(await listFiles(join(site, "public", "components", "notice")), ["notice.css"]);
+  test("publishes its files but its template, its data file and what has a name that starts with a dot or an underscore", async () => {
+    // Beside the components of the starter, whose names start with "component".
+    assert.deepEqual((await listFiles(join(site, "public", "components"))).filter(file => !file.startsWith("component")),
+      ["notice/img/icon.svg", "notice/notice.css"]);
   });
 
   test("gives a fenced code block that names it a text and settings of its own", async () => {

@@ -4,6 +4,14 @@
 
 ### Breaking changes
 
+- **Component files that stay unpublished**: a file or a directory of a
+  component whose name starts with `.` or `_` is no longer published at
+  `/components/<name>/`, wherever it lies in the directory of the component.
+  Everything but the template and the data file used to be published, also a
+  module that the data file imports, notes and the files of an editor. Rename
+  a file that the browser needs. A directory in `components/` with such a
+  name is no component and no longer stops the build: it can hold what the
+  data files of several components import.
 - **Drafts are left out**: a page, a post or a doc with `draft: true` in its
   front matter is no longer built, and a `draft` other than `true` or `false`
   stops the build with a message that names the file. The field used to be
