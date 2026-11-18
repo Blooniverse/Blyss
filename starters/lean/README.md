@@ -22,8 +22,82 @@ npm start       # serve public/ on http://localhost:3000
 | `components/` | The [components](#components) `componentSlider/`, `componentGallery/` and `componentFlower/`, and the [diagrams](#diagrams) `componentMermaid/`, `componentFlowchart/` and `componentVegaLite/`, each with its template, stylesheet and script |
 | `templates/` | HTML templates: `document.html`, `home.html`, `page.html`, `post.html`, `book.html`, `hero.html`, `overlay.html` |
 | `static/` | Static files such as `static/assets/css/main.css`, `static/assets/img/logo.svg`, the gallery's images in `static/assets/img/gallery/`, the stylesheet and the font of the [formulas](#formulas) in `static/assets/temml/`, `static/robots.txt` and `static/staticwebapp.config.json`, copied unchanged into `public/` |
-| `blyss.config.js` | Site, language, pagination, layout, hero, overlay, component and directory configuration, in this order |
+| `blyss.config.js` | Commented site, language, pagination, layout, hero, overlay, component, directory and server configuration |
 | `public/` | Generated website — do not edit |
+
+## Code
+
+A fenced code block that names its language, such as `js`, is highlighted during the build, in any language that [highlight.js](https://highlightjs.org/demo) knows; other code stays plain. The highlighted parts have classes such as `hljs-keyword` and `hljs-string`, which `static/assets/css/main.css` colours in its block for highlighted code. Each of these colours has a contrast of at least 4.5 to 1 on the background of code; keep that if you change them.
+
+## Formulas
+
+A formula is LaTeX between dollar signs. Blyss turns it into MathML during the build, which browsers show without a script.
+
+- `$e^{i\pi} + 1 = 0$` is a formula within a text. No space follows its first dollar sign or precedes its second, and no digit follows that one, so that prices such as `$5 and $10` stay text.
+- `$$…$$` on lines of its own is a formula between the paragraphs, on one line or several.
+- `\$` is a dollar sign that starts no formula; within code, dollar signs need nothing.
+- The build stops and names the file if a formula is not valid LaTeX; [Temml](https://temml.org/docs/en/supported.html), which Blyss uses, lists what it supports.
+- `templates/document.html` loads Temml's stylesheet, `static/assets/temml/Temml-Local.css`, which lays the formulas out with the font beside it; `LICENSE.txt` there is Temml's licence. Both belong to the version of Temml that your version of Blyss uses: after an update of Blyss, replace them with `Temml-Local.css` and `Temml.woff2` from `node_modules/temml/dist/` if the changelog says so. [Fonts](#fonts) tells which fonts the formulas use.
+- `.math` in `static/assets/css/main.css` sets the space around a formula on lines of its own and lets a wide one scroll sideways.
+
+## Diagrams
+
+Three components show the fenced code blocks of their languages as diagrams. The code is written as their libraries expect it, so that other Markdown tools show the same diagrams:
+
+| Language of the code block | Component | Shows |
+| --- | --- | --- |
+| `mermaid` | `componentMermaid` | A [Mermaid](https://mermaid.js.org/) diagram: a flowchart, a sequence, a Gantt chart and many more |
+| `flowchart` or `flow` | `componentFlowchart` | A [flowchart.js](https://flowchart.js.org/) flowchart |
+| `vega-lite` | `componentVegaLite` | A [Vega-Lite](https://vega.github.io/vega-lite/) chart from its specification in JSON |
+
+````markdown
+```mermaid
+flowchart LR
+  Markdown --> Blyss --> HTML
+```
+````
+
+- The browser draws a diagram once it comes near the window, or once an overlay that holds it opens, and loads its library only then; pages without diagrams load none. Until a diagram is drawn, and without JavaScript, its code is shown. If the library cannot be loaded or cannot read the code, the code stays below a message, the `error` of the component's text.
+- A code block shows the diagram as it is. A [block](#blocks) with the component's name in double curly braces as its language gives one diagram a `title`, shown below it, and settings of its own in its front matter, followed by the code:
+
+  ````markdown
+  ```{{componentMermaid}}
+  ---
+  title: From Markdown to HTML
+  theme: forest
+  ---
+
+  flowchart LR
+    Markdown --> Blyss --> HTML
+  ```
+  ````
+
+- `_content/<language>/components/componentMermaid.md`, `componentFlowchart.md` and `componentVegaLite.md` hold the texts of the diagrams in each language: `error`, the message above code that cannot be drawn, and for the flowcharts `yes` and `no`, the texts at the two ways out of a condition.
+- The diagram settings and their defaults are explained in `blyss.config.js`. Diagrams inherit the surrounding font; flowchart colour is set in `components/componentFlowchart/componentFlowchart.css`. A Vega-Lite chart has no background unless its specification sets one; `"width": "container"` makes it as wide as the text. The build stops if its code is not JSON.
+- Like every component, each has a variant for the hero and one for the overlay, such as `componentMermaidHero` with its code in `_content/<language>/components/componentMermaidHero.md`, below the front matter.
+- Each URL starts with `https://` or, for a file in `static/`, with `/`. To show the code blocks of another language, name it in `languages` in the component's data file, such as `components/componentMermaid/componentMermaid.data.js`.
+
+### Hosting the libraries yourself
+
+By default, the browser loads the libraries from [jsDelivr](https://www.jsdelivr.com/), a content delivery network: a visit to a page with a diagram sends the visitor's IP address there, as [the font](#fonts) sends it to Google. To avoid that, copy the libraries into `static/` and set their URLs in `blyss.config.js`:
+
+| Setting | Files | Source | Example of the setting |
+| --- | --- | --- | --- |
+| `componentMermaid.library` | `dist/mermaid.esm.min.mjs` and, beside it, the `.mjs` files of `dist/chunks/mermaid.esm.min/` in `chunks/mermaid.esm.min/` | npm package `mermaid@12.3.0` | `"/assets/mermaid/mermaid.esm.min.mjs"` |
+| `componentFlowchart.libraryRaphael` | `raphael.min.js` | npm package `raphael@2.3.0` | `"/assets/flowchart/raphael.min.js"` |
+| `componentFlowchart.libraryFlowchart` | `release/flowchart.min.js` | [flowchart.js on GitHub](https://github.com/adrai/flowchart.js/tree/v1.18.1/release), tag `v1.18.1` | `"/assets/flowchart/flowchart.min.js"` |
+| `componentVegaLite.libraryVega` | `build/vega.min.js` | npm package `vega@6.4.0` | `"/assets/vega/vega.min.js"` |
+| `componentVegaLite.libraryVegaLite` | `build/vega-lite.min.js` | npm package `vega-lite@6.5.0` | `"/assets/vega/vega-lite.min.js"` |
+
+`npm pack mermaid@12.3.0` downloads a package as a `.tgz` archive without installing it; unpack it and copy the files. Mermaid loads only the parts that a diagram needs from its `chunks/` directory, about 5 MB in all. Keep the versions of Vega and Vega-Lite, and those of Raphaël and flowchart.js, in step when you update them.
+
+## Footnotes
+
+`[^name]` refers to a footnote, and `[^name]: Text` on a line of its own defines it, anywhere in the file. A further line or paragraph of a footnote is indented by four spaces.
+
+- Blyss numbers the footnotes in the order of their first references and lists them below the text, each with a link back to each reference. A footnote that nothing refers to is left out.
+- Pages, posts and docs have footnotes; the texts of the components, of the hero and of the overlay have none.
+- The labels `footnotes` and `backToText` in `blyss.config.js` name the list and the links back for screen readers, and `.footnotes` and `.footnote-ref` in `static/assets/css/main.css` style them.
 
 ## Content
 
@@ -67,57 +141,9 @@ tags: [Blyss, Markdown]
 - The labels `book`, `onThisPage`, `previous` and `next` in `blyss.config.js` name the navigation, the table of contents and the links to the previous and the next doc.
 - Docs are described as `TechArticle` in their JSON-LD and listed in `sitemap.xml`, but neither in the archive nor on the tag pages.
 
-## Formulas
-
-A formula is LaTeX between dollar signs. Blyss turns it into MathML during the build, which browsers show without a script.
-
-- `$e^{i\pi} + 1 = 0$` is a formula within a text. No space follows its first dollar sign or precedes its second, and no digit follows that one, so that prices such as `$5 and $10` stay text.
-- `$$…$$` on lines of its own is a formula between the paragraphs, on one line or several.
-- `\$` is a dollar sign that starts no formula; within code, dollar signs need nothing.
-- The build stops and names the file if a formula is not valid LaTeX; [Temml](https://temml.org/docs/en/supported.html), which Blyss uses, lists what it supports.
-- `templates/document.html` loads Temml's stylesheet, `static/assets/temml/Temml-Local.css`, which lays the formulas out with the font beside it; `LICENSE.txt` there is Temml's licence. Both belong to the version of Temml that your version of Blyss uses: after an update of Blyss, replace them with `Temml-Local.css` and `Temml.woff2` from `node_modules/temml/dist/` if the changelog says so. [Fonts](#fonts) tells which fonts the formulas use.
-- `.math` in `static/assets/css/main.css` sets the space around a formula on lines of its own and lets a wide one scroll sideways.
-
-## Footnotes
-
-`[^name]` refers to a footnote, and `[^name]: Text` on a line of its own defines it, anywhere in the file. A further line or paragraph of a footnote is indented by four spaces.
-
-- Blyss numbers the footnotes in the order of their first references and lists them below the text, each with a link back to each reference. A footnote that nothing refers to is left out.
-- Pages, posts and docs have footnotes; the texts of the components, of the hero and of the overlay have none.
-- The labels `footnotes` and `backToText` in `blyss.config.js` name the list and the links back for screen readers, and `.footnotes` and `.footnote-ref` in `static/assets/css/main.css` style them.
-
-## Code
-
-A fenced code block that names its language, such as `js`, is highlighted during the build, in any language that [highlight.js](https://highlightjs.org/demo) knows; other code stays plain. The highlighted parts have classes such as `hljs-keyword` and `hljs-string`, which `static/assets/css/main.css` colours in its block for highlighted code. Each of these colours has a contrast of at least 4.5 to 1 on the background of code; keep that if you change them.
-
-## Languages
-
-`site` in `blyss.config.js` configures the languages, English and German in the starter:
-
-- `languages` lists them in the order of the language switcher and of the `hreflang` alternates. The key of a language, such as `en`, names its directory in `_content/` and starts its URLs; it may contain only lower-case Latin letters, digits and hyphens. Each language has a `label`, its name in the language switcher, a `locale`, a language tag such as `"en"` or `"en-GB"`, a `description` for pages without one of their own, and `labels`, the texts of the templates. Every language needs the same labels: the build stops and names any label that a language lacks.
-- `defaultLanguage` is the language that `/` redirects to and whose “not found” page is `/404.html`: `"en"`, or the first language if you remove the setting. If you change it, also change the `/en/` redirect in `static/staticwebapp.config.json` and in your deployment workflow (see [Deployment](#deployment)).
-- `languageSwitcher: false` hides the language switcher in the top bar. The `hreflang` alternates in each page's head and in `sitemap.xml` remain, so search engines still find the translations.
-
-### Adding a language
-
-To add French, for example:
-
-1. Add `fr` to `site.languages` in `blyss.config.js`: its `label`, `"Français"`, its `locale`, `"fr"`, its `description` and every label of the other languages, translated.
-2. Add a French `description` to each step of `components.componentSliderHero.steps` and of `components.componentSliderOverlay.steps`.
-3. Create `_content/fr/` like `_content/en/`: `pages/index.md`, `pages/about.md`, `pages/404.md`, `heroTexts.md`, `overlayTexts.md`, the components' texts in `components/`, `book/index.md` with any docs, and any posts. Give each translation the `translationKey` of its original.
-4. Run `npm run build`. The language switcher and the `hreflang` alternates now link the French pages to their translations.
-
-To remove a language, delete its directory in `_content/`, its entry in `site.languages` and its descriptions of the slider's steps; if it was the default language, change `defaultLanguage` too. With a single language left, `languageSwitcher: false` hides the language switcher, which would link only to the current page.
-
 ## Layout
 
-`layout` in `blyss.config.js` sets the space around the content and its alignment, separately for the home pages and for all other pages: pages, posts, docs, lists and not-found pages. It does the same for the [hero](#hero) and for the [overlay](#overlay).
-
-- `margin` is the space between the coloured frame and the content on every side: a CSS length in `px`, `rem`, `vw`, `vh`, `vmin` or `vmax`, such as `"2vmin"` (the default) or `"2rem"`. The top bar spans the side margins.
-- `alignHome` aligns the title, slogan and text of the home pages and their footer: `"center"` (the default) or `"left"`.
-- `alignOther` aligns the content of all other pages and their footer: `"left"` (the default), `"center"`, or `"centerLeft"`, which centers the text column but keeps its text left-aligned; the footer lines up with the column.
-- `paddingHero` and `paddingOverlay` are the space above and below the content of the hero and of the opened overlay: CSS lengths like `margin`, `"1rem"` by default.
-- `alignHero` and `alignOverlay` align the hero and the overlay: `"centerExtra"` (the default) centers everything but their texts, those of `heroTexts.md` and of `overlayTexts.md`, which stay left-aligned with their headings, `"center"` centers everything and `"left"` nothing, not even the slider.
+`layout` in `blyss.config.js` explains the spacing and alignment settings for home pages, other pages, the [hero](#hero) and the [overlay](#overlay). The top bar spans the side margins; the footer lines up with the content.
 
 Centered lists keep their markers next to their items, and code blocks stay left-aligned. `templates/document.html` passes the margin, the paddings and the alignments to `static/assets/css/main.css` through `<body data-align="…" data-align-hero="…" data-align-overlay="…" style="--site-margin: …; --hero-padding: …; --overlay-padding: …">`.
 
@@ -132,10 +158,10 @@ Centered lists keep their markers next to their items, and code blocks stay left
 
 ## Hero
 
-The home pages end with the hero: `{{hero}}` in `templates/document.html` shows `templates/hero.html` below the page, which starts with the site's title and slogan. `hero` in `blyss.config.js` switches each part of the hero on (`true`) or off (`false`):
+The home pages end with the hero: `{{hero}}` in `templates/document.html` shows `templates/hero.html` below the page, which starts with the site's title and slogan. The commented `hero` settings in `blyss.config.js` switch its parts on or off and set their order.
 
-- `components` lists the hero's [variants](#variants) of the [components](#components) in their order: `componentSliderHero`, `componentGalleryHero` and `componentFlowerHero`, of which the starter switches on only the slider. Set a variant to `true` to show it or to `false` to drop it, move its line to change the order, or add a component of your own by the name of its variant, `<name>Hero`.
-- `texts` shows or hides all texts of `_content/<language>/heroTexts.md` at once. The `title` of that file is their heading, and each `###` heading starts a text that runs up to the next one. The hero shows as many texts as the file has, each in full length, side by side in as many columns as fit. Blyss refuses any content before the first `###` heading, except comments. The starter has three texts in each language.
+- Add a component of your own by the name of its [variant](#variants), `<name>Hero`.
+- The `title` of `_content/<language>/heroTexts.md` is the texts' heading; each `###` heading starts a text that runs up to the next one. They appear in full, side by side in as many columns as fit. Blyss refuses content before the first `###` heading, except comments.
 - A hero without a part that is switched on is not shown at all, and neither is a hero whose only part, its texts, has no file in the page's language. Without `templates/hero.html`, the website has no hero.
 - On screens of at least 1024×640 pixels, the page stops below the top bar, or once its end is in view if it is taller than the window, while the hero slides up over it and fades it out. A hero that is shorter than the window then stops below the top bar, and the footer follows it into the window. Keyboard focus in the page turns this effect off, so that the hero never covers the focused element. With reduced motion, on smaller screens and in browsers without scroll-driven animations, the hero is a static block below the page.
 - The hero is as tall as its content. `layout.paddingHero` sets the space above and below that content and `layout.alignHero` its alignment (see [Layout](#layout)).
@@ -143,10 +169,10 @@ The home pages end with the hero: `{{hero}}` in `templates/document.html` shows 
 
 ## Overlay
 
-The overlay is a bar at the bottom of the window: `{{overlay}}` in `templates/document.html` shows `templates/overlay.html`. Its button opens the overlay as a panel; the Close button, the Escape key or a click outside closes it again. The browser's [Popover API](https://developer.mozilla.org/docs/Web/API/Popover_API) does this without JavaScript. `overlay` in `blyss.config.js` configures it, independently of the hero:
+The overlay is a bar at the bottom of the window: `{{overlay}}` in `templates/document.html` shows `templates/overlay.html`. Its button opens the overlay as a panel; the Close button, the Escape key or a click outside closes it again. The browser's [Popover API](https://developer.mozilla.org/docs/Web/API/Popover_API) does this without JavaScript. The commented `overlay` settings in `blyss.config.js` configure it independently of the hero:
 
-- `showOn` switches the overlay on or off for each kind of page, but not for a single page or post. The kinds are the three content types, `page` for the pages in `_content/<language>/pages/`, `post` for the posts and `book` for the docs, and `home` for the home pages, `list` for the archive and the tag pages and `"not-found"` for the “not found” pages. A kind that `showOn` does not name has the overlay. The starter switches it off on the home pages, which have the hero.
-- `components` and `texts` work like those of the hero: `components` lists the overlay's own variants, `componentSliderOverlay`, `componentGalleryOverlay` and `componentFlowerOverlay`, in their order, and `texts` shows or hides all texts of `_content/<language>/overlayTexts.md`, a file like `heroTexts.md`. In the starter, the overlay shows only the slider.
+- `showOn` applies to kinds of pages, not to an individual page or post. A kind that it does not name has the overlay.
+- `components` and `texts` work like those of the hero, using the overlay's variants and `_content/<language>/overlayTexts.md`, a file like `heroTexts.md`.
 - An overlay without a part that is switched on is not shown, and neither is its bar. Without `templates/overlay.html`, the website has no overlay.
 - `layout.paddingOverlay` sets the space above and below the content of the opened overlay and `layout.alignOverlay` its alignment (see [Layout](#layout)).
 - The labels `overlay` and `close` in `blyss.config.js` hold the texts of the overlay's buttons. Templates can use every label as `{{<key>Label}}`, such as `{{overlayLabel}}`.
@@ -155,7 +181,13 @@ The overlay is a bar at the bottom of the window: `{{overlay}}` in `templates/do
 
 ### Synchronising the hero and the overlay
 
-`synchroniseHeroOverlay: true` in `blyss.config.js` makes the overlay a copy of the hero, which is the origin: the overlay then shows the hero's variants of `hero.components`, with their settings and texts, and, if `hero.texts` is `true`, the texts of `heroTexts.md`. This overrides `overlay.components` and `overlay.texts`, whatever they say, and `overlayTexts.md` is not used. `overlay.showOn` still decides which kinds of pages have the overlay, and `layout.paddingOverlay` and `layout.alignOverlay` how it looks. The setting is `false` in the starter and by default.
+See `synchroniseHeroOverlay` in `blyss.config.js`. `overlay.showOn` still decides which kinds of pages have the overlay, and `layout.paddingOverlay` and `layout.alignOverlay` how it looks.
+
+## Fonts
+
+`templates/document.html` loads the font Titillium Web from Google Fonts. Each visit then sends the visitor's IP address to Google, which a German court held to violate the GDPR without consent (Landgericht München I, 3 O 17493/20, 20 January 2022). To host the font yourself, download it from [Google Fonts](https://fonts.google.com/specimen/Titillium+Web), put the `.woff2` files into `static/assets/fonts/`, declare them with `@font-face` in `static/assets/css/main.css` and remove the three Google Fonts `<link>` elements.
+
+[Formulas](#formulas) load nothing from other servers. `static/assets/temml/Temml-Local.css` asks for a mathematical font of the visitor's system: Cambria Math, which Windows has, STIX Two Math, which Apple's systems have, or Noto Sans Math, and otherwise the browser's own choice, so formulas look plainer on a system without such a font. `Temml.woff2` beside it only holds the script capitals and the primes. For the same look everywhere, Temml's `dist/` directory has further stylesheets, such as `Temml-Latin-Modern.css` for the font Latin Modern Math; its [installation guide](https://temml.org/docs/en/administration.html) tells where to get that font.
 
 ## Components
 
@@ -175,7 +207,7 @@ A component is a part of a page that brings what it needs. Each has a directory 
 - A [block](#blocks) shows it in a page or post with a text and settings of its own, as that post shows a second slider.
 - A component can appear several times on a page. Each is a custom element, `<component-slider>`, `<component-gallery>` or `<component-flower>`, which its script sets up wherever it appears, so that every slider, every gallery and every flower works on its own.
 - Their class `component` lets `static/assets/css/main.css` place them: centered where the text around them is centered.
-- For a component of your own, create `components/<name>/<name>.html`; every other file is optional, and its variants come with it. The [Blyss usage guide](https://github.com/Blooniverse/Blyss/blob/main/USAGE.md#components) lists the placeholders of a component's template.
+- For a component of your own, create `components/<name>/<name>.html`; every other file is optional, and its variants come with it. The [Blyss usage guide](https://github.com/Blooniverse/Blyss/blob/main/README_USAGE.md#components) lists the placeholders of a component's template.
 
 ### Variants
 
@@ -224,64 +256,31 @@ See
 - `componentFlowerHero.md` and `componentFlowerOverlay.md`.
 - `blyss.config.js`.
 
-### Diagrams
+## Configuration
 
-Three components show the fenced code blocks of their languages as diagrams. The code is written as their libraries expect it, so that other Markdown tools show the same diagrams:
+The comments in `blyss.config.js` describe the starter's site-wide settings and component variants. For settings and text specific to one occurrence of a component, use a [block](#blocks).
 
-| Language of the code block | Component | Shows |
-| --- | --- | --- |
-| `mermaid` | `componentMermaid` | A [Mermaid](https://mermaid.js.org/) diagram: a flowchart, a sequence, a Gantt chart and many more |
-| `flowchart` or `flow` | `componentFlowchart` | A [flowchart.js](https://flowchart.js.org/) flowchart |
-| `vega-lite` | `componentVegaLite` | A [Vega-Lite](https://vega.github.io/vega-lite/) chart from its specification in JSON |
+## Languages
 
-````markdown
-```mermaid
-flowchart LR
-  Markdown --> Blyss --> HTML
-```
-````
+`site` in `blyss.config.js` configures the languages, English and German in the starter. Its comments explain their settings:
 
-- The browser draws a diagram once it comes near the window, or once an overlay that holds it opens, and loads its library only then; pages without diagrams load none. Until a diagram is drawn, and without JavaScript, its code is shown. If the library cannot be loaded or cannot read the code, the code stays below a message, the `error` of the component's text.
-- A code block shows the diagram as it is. A [block](#blocks) with the component's name in double curly braces as its language gives one diagram a `title`, shown below it, and settings of its own in its front matter, followed by the code:
+- Language keys may contain only lower-case Latin letters, digits and hyphens. Each locale is a language tag such as `"en"` or `"en-GB"`; the description is used for pages without one of their own. The build stops and names any label that a language lacks.
+- If you change `defaultLanguage`, also change the `/en/` redirect in `static/staticwebapp.config.json` and in your deployment workflow (see [Deployment](#deployment)).
 
-  ````markdown
-  ```{{componentMermaid}}
-  ---
-  title: From Markdown to HTML
-  theme: forest
-  ---
+### Adding a language
 
-  flowchart LR
-    Markdown --> Blyss --> HTML
-  ```
-  ````
+To add French, for example:
 
-- `_content/<language>/components/componentMermaid.md`, `componentFlowchart.md` and `componentVegaLite.md` hold the texts of the diagrams in each language: `error`, the message above code that cannot be drawn, and for the flowcharts `yes` and `no`, the texts at the two ways out of a condition.
-- `components.componentMermaid` in `blyss.config.js` sets `library`, the URL of Mermaid, and `theme`, one of Mermaid's themes: `"neutral"` (the default), `"default"`, `"dark"`, `"forest"` or `"base"`. A diagram has the font of the text around it.
-- `components.componentFlowchart` sets `libraryRaphael` and `libraryFlowchart`, the URLs of Raphaël and of flowchart.js, which draws with it, and `lineWidth`, the width of the lines from above `0` to `10`, `2` by default. A flowchart has the colour that `components/componentFlowchart/componentFlowchart.css` gives the component and the font of the text around it.
-- `components.componentVegaLite` sets `libraryVega` and `libraryVegaLite`, the URLs of Vega and of Vega-Lite, which draws with it, and `renderer`, `"svg"` (the default) or `"canvas"`. A chart has the font of the text around it and no background, unless its specification sets them; `"width": "container"` makes it as wide as the text. The build stops if the code is not JSON.
-- Like every component, each has a variant for the hero and one for the overlay, such as `componentMermaidHero` with its code in `_content/<language>/components/componentMermaidHero.md`, below the front matter.
-- Each URL starts with `https://` or, for a file in `static/`, with `/`. To show the code blocks of another language, name it in `languages` in the component's data file, such as `components/componentMermaid/componentMermaid.data.js`.
+1. Add `fr` to `site.languages` in `blyss.config.js`: its `label`, `"Français"`, its `locale`, `"fr"`, its `description` and every label of the other languages, translated.
+2. Add a French `description` to each step of `components.componentSliderHero.steps` and of `components.componentSliderOverlay.steps`.
+3. Create `_content/fr/` like `_content/en/`: `pages/index.md`, `pages/about.md`, `pages/404.md`, `heroTexts.md`, `overlayTexts.md`, the components' texts in `components/`, `book/index.md` with any docs, and any posts. Give each translation the `translationKey` of its original.
+4. Run `npm run build`. The language switcher and the `hreflang` alternates now link the French pages to their translations.
 
-#### Hosting the libraries yourself
+To remove a language, delete its directory in `_content/`, its entry in `site.languages` and its descriptions of the slider's steps; if it was the default language, change `defaultLanguage` too. With a single language left, `languageSwitcher: false` hides the language switcher, which would link only to the current page.
 
-By default, the browser loads the libraries from [jsDelivr](https://www.jsdelivr.com/), a content delivery network: a visit to a page with a diagram sends the visitor's IP address there, as [the font](#fonts) sends it to Google. To avoid that, copy the libraries into `static/` and set their URLs in `blyss.config.js`:
+## AIO and SEO
 
-| Setting | Files | Source | Example of the setting |
-| --- | --- | --- | --- |
-| `componentMermaid.library` | `dist/mermaid.esm.min.mjs` and, beside it, the `.mjs` files of `dist/chunks/mermaid.esm.min/` in `chunks/mermaid.esm.min/` | npm package `mermaid@12.3.0` | `"/assets/mermaid/mermaid.esm.min.mjs"` |
-| `componentFlowchart.libraryRaphael` | `raphael.min.js` | npm package `raphael@2.3.0` | `"/assets/flowchart/raphael.min.js"` |
-| `componentFlowchart.libraryFlowchart` | `release/flowchart.min.js` | [flowchart.js on GitHub](https://github.com/adrai/flowchart.js/tree/v1.18.1/release), tag `v1.18.1` | `"/assets/flowchart/flowchart.min.js"` |
-| `componentVegaLite.libraryVega` | `build/vega.min.js` | npm package `vega@6.4.0` | `"/assets/vega/vega.min.js"` |
-| `componentVegaLite.libraryVegaLite` | `build/vega-lite.min.js` | npm package `vega-lite@6.5.0` | `"/assets/vega/vega-lite.min.js"` |
-
-`npm pack mermaid@12.3.0` downloads a package as a `.tgz` archive without installing it; unpack it and copy the files. Mermaid loads only the parts that a diagram needs from its `chunks/` directory, about 5 MB in all. Keep the versions of Vega and Vega-Lite, and those of Raphaël and flowchart.js, in step when you update them.
-
-## Fonts
-
-`templates/document.html` loads the font Titillium Web from Google Fonts. Each visit then sends the visitor's IP address to Google, which a German court held to violate the GDPR without consent (Landgericht München I, 3 O 17493/20, 20 January 2022). To host the font yourself, download it from [Google Fonts](https://fonts.google.com/specimen/Titillium+Web), put the `.woff2` files into `static/assets/fonts/`, declare them with `@font-face` in `static/assets/css/main.css` and remove the three Google Fonts `<link>` elements.
-
-[Formulas](#formulas) load nothing from other servers. `static/assets/temml/Temml-Local.css` asks for a mathematical font of the visitor's system: Cambria Math, which Windows has, STIX Two Math, which Apple's systems have, or Noto Sans Math, and otherwise the browser's own choice, so formulas look plainer on a system without such a font. `Temml.woff2` beside it only holds the script capitals and the primes. For the same look everywhere, Temml's `dist/` directory has further stylesheets, such as `Temml-Latin-Modern.css` for the font Latin Modern Math; its [installation guide](https://temml.org/docs/en/administration.html) tells where to get that font.
+The templates include canonical and `hreflang` links and a Schema.org JSON-LD `@graph`; `site.baseUrl` in `blyss.config.js` sets their public URL. The generated `sitemap.xml` lists pages and their translation links, but not the “not found” pages.
 
 ## Generated output
 
@@ -289,14 +288,7 @@ By default, the browser loads the libraries from [jsDelivr](https://www.jsdelivr
 
 ## Before production
 
-Replace the values marked `CHANGE BEFORE PRODUCTION` in `blyss.config.js`:
-
-- `site.name`
-- `site.baseUrl` — the public URL used for canonical, `hreflang` and JSON-LD links
-- `site.publisher` — `type`, `name` and `url`
-- `site.languages.en.description` and `site.languages.de.description`
-
-Also replace the `Sitemap:` URL in `static/robots.txt`, which is marked the same way, the placeholder logo `static/assets/img/logo.svg` (see [Top bar](#top-bar)) and the gallery's placeholder images in `static/assets/img/gallery/` with their descriptions in `_content/<language>/components/componentGalleryHero.md` and `componentGalleryOverlay.md` (see [Gallery](#gallery)).
+Replace the values marked `CHANGE BEFORE PRODUCTION` in `blyss.config.js` and the `Sitemap:` URL in `static/robots.txt`. Also replace the placeholder logo `static/assets/img/logo.svg` (see [Top bar](#top-bar)) and the gallery's placeholder images in `static/assets/img/gallery/` with their descriptions in `_content/<language>/components/componentGalleryHero.md` and `componentGalleryOverlay.md` (see [Gallery](#gallery-component)).
 
 Decide whether your visitors' browsers may load the font from Google (see [Fonts](#fonts)) and the libraries of the diagrams from jsDelivr, or host them yourself (see [Hosting the libraries yourself](#hosting-the-libraries-yourself)).
 
