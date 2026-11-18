@@ -41,14 +41,14 @@ Website       │
 
 ## Features
 
-- **Multilingual:** English, German and any further languages in `site.languages`; clean localized URLs (`/en/`, `/de/`); `/` redirects to the configurable default language; front matter, localized `slug`s and `translationKey` links between translations; a language switcher (hidden with `site.languageSwitcher`) and `hreflang` alternates.
-- **Content:** pages, posts and books. Posts have `{{recentPosts}}` (the three newest in the current language), a paginated archive and generated tag pages. Books, such as a technical documentation, live in `_content/<language>/book/`: sections by directory, navigation ordered by `order`, a table of contents, heading anchors and previous/next links.
-- **Writing:** formulas in LaTeX between `$…$` and `$$…$$`, turned into MathML during the build; footnotes with `[^name]`; fenced code highlighted during the build; code blocks in `mermaid`, `flowchart` and `vega-lite` shown as diagrams and charts by the starter's components, which draw them in the browser.
-- **Templates:** optional templates for the home pages and the docs; `{{kind}}` for page-specific styles; `{{<key>Label}}` for every configured label; fragments, the Markdown files directly in `_content/<language>/`, such as `heroTexts.md`; `layout` settings for the site's margin, the paddings of hero and overlay, and the alignments of the home pages, other pages, hero and overlay.
-- **Hero and overlay:** a hero for the home pages and an overlay for the kinds of pages you choose, each with its own template, components and texts, switched on or off in `blyss.config.js`.
-- **Components:** a directory per component with its template, stylesheet and script, its texts in every language and its settings. Each has a variant for the hero and one for the overlay, with texts and settings of their own. `{{<name>}}` shows one in templates and Markdown; a block gives it a text and settings of its own, and a component can show the code blocks of a language.
-- **SEO and output:** localized “not found” pages (served by `blyss serve` for missing URLs), `sitemap.xml` with `lastmod` and `hreflang` alternates, Schema.org JSON-LD using `@graph`, and static asset copying.
-- **Getting started:** `blyss init` scaffolds a bilingual starter with a slider, an image gallery, a flower and three kinds of diagrams, ready for Azure Static Web Apps; `blyss serve` is a dependency-free Node.js static server.
+- **Writing:** Use `$…$` and `$$…$$` for formulas and `[^name]` for footnotes. Starter components render `mermaid`, `flowchart` and `vega-lite` code blocks in the browser.
+- **Content:** `{{recentPosts}}` lists up to three recent posts in the current language; posts also have a paginated archive and tag pages. Books offer ordered navigation, a table of contents, heading anchors and previous/next links.
+- **Themes:** Optional home and docs templates, Markdown fragments, a home-page hero and an overlay for selected page kinds.
+- **Components:** Each has a template and optional stylesheet and script. Embed them in templates or Markdown; blocks provide per-instance text and settings.
+- **Configuration:** Adjust margins, padding and alignment, and choose the hero's and overlay's content and visibility in `blyss.config.js`.
+- **Multilingual:** `site.languages` sets language order. Localized slugs, `translationKey`, an optional language switcher and `hreflang` alternates support translations; `/` redirects to the configured default.
+- **Server:** `blyss serve` is a Node.js static server; it serves the default language's 404 page for missing URLs, when available.
+- **Output:** Builds copy static assets, generate `sitemap.xml` with `lastmod`, and add Schema.org JSON-LD using `@graph`.
 
 ## Quick start
 
