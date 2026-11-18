@@ -1,17 +1,21 @@
 # Blyss SSG 1.0.1
 
-Blyss is a lean SSG (static site generator). Essence:
-- **Markdown based**: Ideal for Obsidian & other knowledge management systems.
-- **Formulae, diagrams, highlighted code, footnotes** (Mermaid, Flowchart.js, Vega-Lite), written as in Obsidian or Marktext.
-- **Local-first & Git-based**: For devs & authors.
-- **Multilingual**: EN/DE default can be extended.
+Blyss is a lean SSG (static site generator):
+- **Markdown**: AI & KMS ready for the knowledge management era.
+    - **Code highlighting**: Supports nearly 200 languages via [Highlight.js](https://highlightjs.org/).
+    - **Formulae**: HTML output in MathML via [Temml.org](https://temml.org/).
+    - **Diagrams**: Extensive charting via Flowchart.js, Mermaid & even Vega-Lite.
+    - **Footnotes** 
+    - **Obsidian & Marktext comptatible**
 - **3 content types**: book, page, post.
-- **Themeable**.
-- **Composable**: Markdown components.
-- **Configurable**: blyss.config.js.
-- **3 dependencies**: `marked`, `temml` and `highlight.js` (none with dependencies of their own).
+- **Themeable**: Blyss comes with a lean starter.
+- **Composable**: Markdown components can be used anywhere.
+- **Configurable**: Via blyss.config.js and component Markdown.
+- **Multilingual**: EN/DE default – can be extended.
+- **3 dependencie onlys**: `highlight.js`, `marked`, `temml` (none with dependencies of their own).
 - Lightweight Javascript.
 - Semantic (RDF graph via JSON-LD).
+- **Local-first & Git-based**: For devs & authors.
 
 Option for in-browser content editing:
 [Decap CMS](https://decapcms.org/) or
