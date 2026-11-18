@@ -45,10 +45,11 @@ npx @blooniverse/blyss init my-site   # copy the bundled starter into my-site/
 cd my-site
 npm install                           # install Blyss into the new website
 npm run build                         # generate public/
-npm start                             # serve public/ on http://localhost:3000 (dependency-free Node.js static server)
+npm start                             # serve public/ on localhost:3000
 ```
 
 `blyss init` only copies files. Installing dependencies, building and serving are separate steps.
+The Node.js static server is dependency free!
 
 
 ## Installation
