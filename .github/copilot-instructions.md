@@ -1,6 +1,6 @@
 # Blyss Development Instructions
 
-Blyss is a lean bilingual Markdown transformer and static-site server.
+Blyss is a lean multilingual (bilingual per default) SSG (static site generator), in essence a Markdown transformer and static-site server.
 
 ## Principles
 
