@@ -1,9 +1,9 @@
 ---
-title: Blyss
-description: Blyss-Slogan
+title: Blyss (H1)
+description: Slogan (H2)
 translationKey: home
 ---
 
-### Über Blyss oder Beschreibung
+### Intro (H3)
 
-Blyss erzeugt diese Website aus Markdown-Dateien. Diese Seite liegt in `content/de/pages/index.md`: Ihr Titel und ihre Beschreibung erscheinen oben als Überschrift und Slogan.
+Blyss erzeugt diese Website aus Markdown-Dateien. Diese Seite liegt in `content/de/pages/index.md`.
