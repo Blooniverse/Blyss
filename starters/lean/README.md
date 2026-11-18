@@ -208,48 +208,21 @@ heightOverall: 12rem
 - The build stops and names the page if a setting of a block is not what its component needs, as it does for the settings of `blyss.config.js`.
 - A block stands on its own, like the paragraph of a component: within a list or a quotation, it stays a code block. A block whose text contains a fenced code block needs a longer fence around it, such as four backticks.
 
-### Slider
+### Slider component
+See
+- `componentSliderHero.md` and `componentSliderOverlay.md`.
+- `blyss.config.js`.
 
-The slider follows its heading, with its value above it and its steps and its text below it.
+### Gallery component
+See
+- `componentGalleryHero.md` and `componentGalleryOverlay.md`.
+- `blyss.config.js`.
+- The images live in `static/assets/img/gallery/`.
 
-- The `title` and the text of `_content/<language>/components/componentSliderHero.md` are the heading and the text of the hero's slider, those of `componentSliderOverlay.md` the overlay's.
-- `components.componentSliderHero` and `components.componentSliderOverlay` in `blyss.config.js` each set the whole-number `start` and `end` of their slider, 0 and 100 without them, and its `steps`: each step has a `value` from `start` to `end` and a `description` in every language, and both appear below the slider at that value. The starter defines five steps for each; change, add or remove them as you like. The slider starts halfway between `start` and `end`.
-- Its script shows the slider's value above it and highlights the last step it has reached. Without JavaScript, the slider moves all the same.
-
-### Gallery
-
-The gallery shows any number of images side by side in a strip that visitors move sideways. The strip stops with an image in its centre, which grows without a frame.
-
-- `_content/<language>/components/componentGalleryHero.md` lists the images of the hero's gallery and `componentGalleryOverlay.md` those of the overlay's: each item of its Markdown list is an image with its description in that language, such as `- ![A sun rising over blue hills](/assets/img/gallery/sunrise.svg)`. Its `title` is the gallery's heading, and `previous` and `next` name the two arrows for screen readers.
-- The images live in `static/assets/img/gallery/`, in any format that browsers show, such as SVG, PNG, JPEG, WebP, AVIF or GIF, and in any proportions. Blyss copies them unchanged. The starter's seven images are placeholders.
-- The gallery starts with its middle image in the centre, so that the images before and after it fill the strip.
-- Visitors move through the images with the arrows at both ends of the strip, with the arrow keys once the gallery has the focus, and by swiping or scrolling sideways. The first and the last image reach the centre too.
-- A click or a touch on the image in the centre, or the Enter or the space key, expands that image above the page: to 70% of the height of the screen, or less on a screen that is too narrow for an image of that height, so that it never outgrows the screen. Another click, touch or key, or the Escape key, shrinks it again.
-- `components.componentGalleryHero` and `components.componentGalleryOverlay` in `blyss.config.js` each set:
-  - `heightOverall`: the height of the images, a CSS length in `px`, `rem`, `vw`, `vh`, `vmin` or `vmax`, `"8rem"` by default. Each image is as wide as its proportions make it.
-  - `heightCenter`: the height of the image in the centre, a percentage of `heightOverall` from `100%` up; the default `"130%"` enlarges it by 30%.
-  - `heightExpanded`: the height of the image in the centre after a click or a touch, a percentage of the height of the screen up to `100%`, `"70%"` by default.
-  - `animationSpeedScrolling`: the time an arrow or an arrow key takes to bring the next image to the centre, in `ms` or `s`, `"400ms"` by default.
-  - `animationSpeedImgEnlargement`: the time the image in the centre takes to grow, to expand and to shrink, in `ms` or `s`, `"300ms"` by default.
-- The gaps between the images keep an enlarged image of up to three by two clear of its neighbours; a wider one covers part of them.
-- The browser loads an image only when the gallery is shown and the image comes near, so many images do not slow a page down. With reduced motion, the images change without animation. Without JavaScript, the gallery is a strip with a scrollbar, without arrows, without the enlarged image and without its expansion.
-
-### Flower
-
-The flower stands on a short stem above the ground, the bottom of the component. A click or a touch plucks a petal, as do the Enter and the space key: the petal twirls around its own axis, a little askew, and falls to the ground. There it fades, but never completely, while its text comes down like a falling leaf.
-
-- `_content/<language>/components/componentFlowerHero.md` holds the texts of the petals of the hero's flower and `componentFlowerOverlay.md` those of the overlay's. As in `heroTexts.md`, each `###` heading starts a text that runs up to the next one. The first text belongs to the first petal, the one at the top, the second text to the second petal, the next one clockwise, and so on. A petal without a text falls all the same, and texts beyond the last petal are not shown. The `title` of the file is the flower's heading, and `petal` names the petals for screen readers, as in “Petal 3”; without it, they are called “Petal”.
-- `components.componentFlowerHero` and `components.componentFlowerOverlay` in `blyss.config.js` each set:
-  - `petals`: the number of petals, a whole number from `3` to `24`, `8` by default.
-  - `colourBaseHue`: the hue of the petals, an angle on the HSL colour wheel from `0` to `360`; the default `202` is the blue of `static/assets/css/main.css`.
-  - `colourSystem`: how the other colours follow from that hue. `"triadic"` (the default) gives the centre and the stem the hues a third and two thirds of the wheel further on, pink and green for 202; `"complementary"` gives the centre the opposite hue, orange for 202, and the stem a dark shade of the petals' hue.
-  - `animationSpeedFalling`: the time a petal takes from the click or the touch to the ground, twirl included, in `ms` or `s`, `"3s"` by default.
-  - `animationSpeedText`: the time the text of a fallen petal takes to appear, `"3s"` by default.
-  - `animationSpeedFading`: the time a fallen petal takes to fade, `"4s"` by default.
-  - `opacityFallen`: what remains visible of a fallen petal, a percentage from `1%` to `100%`, `"30%"` by default.
-  - `fontSizeText`: the size of the texts of the petals, a percentage of the default text size, `"60%"` by default.
-- The flower has no background, so it takes that of its surroundings. `--size` in `components/componentFlower/componentFlower.css` sets the diameter of the bloom, and the texts take the room they need below the flower from the start, so that nothing moves when a text appears.
-- With reduced motion, a plucked petal lies on the ground and its text appears at once. Without JavaScript, the flower shows all its texts, and its petals cannot be plucked.
+### Flower component
+See
+- `componentFlowerHero.md` and `componentFlowerOverlay.md`.
+- `blyss.config.js`.
 
 ### Diagrams
 
