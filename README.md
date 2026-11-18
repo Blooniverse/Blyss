@@ -1,6 +1,6 @@
 # Blyss SSG 1.0.1
 
-Blyss is a lean SSG (static site generator):
+Blyss is an ultra lean SSG (static site generator):
 - **Markdown**: AI & KMS ready for the knowledge management era.
     - **Code highlighting**: Supports nearly 200 languages via [Highlight.js](https://highlightjs.org/).
     - **Formulae**: HTML output in MathML via [Temml.org](https://temml.org/).
