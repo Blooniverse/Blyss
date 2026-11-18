@@ -642,11 +642,10 @@ describe("a site with a third language and German as its default", () => {
       .replace('language: "Language"', 'language: "Langue"');
     await writeFile(configFile, config.replace('defaultLanguage: "en"', 'defaultLanguage: "de"')
       .replace("      de: {", `${french}      de: {`).replaceAll(', de: "', ', fr: "Étape", de: "'));
-    // The French content copies the English one but for the title and the slug of the first post.
+    // The French content copies the English one but for the title of the first post, which gets a slug of its own.
     await cp(join(site, "_content", "en"), join(site, "_content", "fr"), { recursive: true });
     const post = join(site, "_content", "fr", "posts", "hello-world.md");
-    await writeFile(post, (await readFile(post, "utf8")).replace("title: Hello World", "title: Bonjour le monde")
-      .replace("slug: hello-world", "slug: bonjour-le-monde"));
+    await writeFile(post, (await readFile(post, "utf8")).replace("title: Hello World", "title: Bonjour le monde\nslug: bonjour-le-monde"));
     const result = run(["build"], site);
     assert.equal(result.status, 0, result.stderr);
   });

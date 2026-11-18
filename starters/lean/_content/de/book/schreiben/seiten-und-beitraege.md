@@ -12,7 +12,6 @@ Eine Markdown-Datei beginnt mit Front Matter; der Text darunter beginnt unterhal
 ```markdown
 ---
 title: Hallo Welt
-slug: hallo-welt
 description: Der erste Beitrag dieser Website.
 datePublished: 2026-11-10
 dateModified: 2026-11-12
@@ -25,7 +24,7 @@ Ein erster Absatz.
 
 Jedes Feld steht als `key: value` in einer eigenen Zeile, und sein Wert in dieser Zeile: Ein Text über mehrere Zeilen, den YAML mit `>` oder `|` beginnt, stoppt den Build. Ein Wert darf in Anführungszeichen stehen, etwa `title: "Blyss: eine Einführung"`. `datePublished` und `dateModified` sind Daten wie `2026-11-10`, auch mit Uhrzeit wie `2026-11-10T09:30:00+01:00`; jeder andere Wert stoppt den Build.
 
-Seiten in `_content/de/pages/` erscheinen unter `/de/pages/<slug>/`, Beiträge in `_content/de/posts/` unter `/de/posts/<slug>/` und [Dokumente](/de/book/schreiben/buch/dokumente/) in `_content/de/book/` unter `/de/book/`. Ohne `slug` gilt der Dateiname; lokalisierte Slugs ermöglichen lokalisierte URLs. Ein Slug ist ein einzelner Teil der URL, ohne `/`, `\`, `?` oder `#`. `pages/index.md` wird zur Startseite `/de/`; `pages/404.md` ist eine besondere [Fehlerseite](#fehlerseite).
+Seiten in `_content/de/pages/` erscheinen unter `/de/pages/<slug>/`, Beiträge in `_content/de/posts/` unter `/de/posts/<slug>/` und [Dokumente](/de/book/schreiben/buch/dokumente/) in `_content/de/book/` unter `/de/book/`. Der Slug ist der Name der Datei ohne `.md`: `posts/hallo-welt.md` erscheint unter `/de/posts/hallo-welt/`; benennen Sie die Dateien jeder Sprache deshalb in dieser Sprache. Das Front Matter braucht einen `slug` nur für einen anderen, etwa `slug: mein-erster-beitrag`. Ein Slug ist ein einzelner Teil der URL, ohne `/`, `\`, `?` oder `#`. `pages/index.md` wird zur Startseite `/de/`; `pages/404.md` ist eine besondere [Fehlerseite](#fehlerseite).
 
 `translationKey` verknüpft eine Seite mit ihren [Übersetzungen](/de/book/schreiben/uebersetzungen/) in den anderen Sprachen.
 

@@ -12,7 +12,6 @@ Pages, posts and docs start with front matter. The title is rendered as the page
 ```markdown
 ---
 title: Hello World
-slug: hello-world
 description: The first post of this website.
 datePublished: 2026-11-10
 translationKey: hello-world
@@ -22,7 +21,7 @@ tags: [Blyss, Markdown]
 
 Each field stands on a line of its own as `key: value`, and its value on that line: a text of several lines, which YAML starts with `>` or `|`, stops the build. A value may stand in quotes, as in `title: "Blyss: an introduction"`. `datePublished` and `dateModified` are dates such as `2026-11-10`, or with their time as in `2026-11-10T09:30:00+01:00`; any other value stops the build.
 
-Pages in `_content/<language>/pages/` are published at `/<language>/pages/<slug>/`, posts at `/<language>/posts/<slug>/`, and [docs](/en/book/writing/book/docs/) below `/<language>/book/`. `slug` defaults to the file name; use localized slugs where appropriate. A slug is one part of a URL, without `/`, `\`, `?` or `#`. `pages/index.md` is the home page at `/<language>/`, and its title and description are the heading and slogan.
+Pages in `_content/<language>/pages/` are published at `/<language>/pages/<slug>/`, posts at `/<language>/posts/<slug>/`, and [docs](/en/book/writing/book/docs/) below `/<language>/book/`. The slug is the name of the file without `.md`: `posts/hello-world.md` is published at `/<language>/posts/hello-world/`, so name the files of each language in that language. The front matter needs a `slug` only for another one, as in `slug: my-first-post`. A slug is one part of a URL, without `/`, `\`, `?` or `#`. `pages/index.md` is the home page at `/<language>/`, and its title and description are the heading and slogan.
 
 `translationKey` links a page to its [translations](/en/book/writing/translations/) in the other languages.
 

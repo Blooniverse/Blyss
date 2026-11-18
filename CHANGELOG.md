@@ -342,6 +342,10 @@
   the website.
 - **Starter home pages**: their title, their slogan and their heading no
   longer end with "(H1)", "(H2)" and "(H3)".
+- **Starter posts without `slug`**: the six posts of the starter take their
+  URLs from the names of their files, as every page does without a `slug`;
+  their `slug` lines, which repeated those names, are gone. The docs describe
+  `slug` as the exception, for a URL that differs from the name of the file.
 - **Underscored building blocks**: the starter keeps its components and
   templates in `_components/` and `_templates/`: the leading underscore sets
   these building blocks apart from content and static files.
