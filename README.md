@@ -5,7 +5,7 @@ Blyss is an ultra lean SSG (static site generator):
     - **Code highlighting**: Supports nearly 200 languages via [Highlight.js](https://highlightjs.org/).
     - **Formulae**: HTML output in MathML via [Temml.org](https://temml.org/).
     - **Diagrams**: Extensive charting via Flowchart.js, Mermaid & even Vega-Lite.
-    - **Footnotes** 
+    - **Footnotes**: ^footnote
     - **Compatibility**: [Obsidian.md](https://obsidian.md) & [Marktext.me](https://marktext.me)
 - **3 content types**: book, page, post.
 - **Themeable**: Blyss comes with a lean starter.
