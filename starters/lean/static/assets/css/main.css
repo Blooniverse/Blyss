@@ -44,7 +44,7 @@ h2 { font-size: 1.5rem; letter-spacing: .04em; line-height: 1.1; margin-bottom: 
 h3 { display: inline-block; margin: 3vh 0 .3em; padding: 0 .3em; color: #fff; background-color: var(--color202black); }
 article h2 { margin-top: 1em; }
 
-main { max-width: var(--column); }
+main { max-width: var(--column); overflow-wrap: break-word; } /* a long word, such as a path in code, breaks rather than widen the page */
 :is(p, ul, ol, pre, blockquote, table) { margin-bottom: .6em; }
 :is(ul, ol) { padding-left: 1.2em; }
 blockquote { padding-left: 1em; border-left: 3px solid var(--color202border); }
@@ -55,6 +55,8 @@ code { padding: .1em .25em; border-radius: 4px; font-family: ui-monospace, SFMon
 /* Code keeps its indentation in centered text. */
 pre { padding: .5em .75em; overflow: auto; border: 1px solid var(--card-border); border-radius: 6px; text-align: start; background: #f6f8fa; }
 pre code { padding: 0; background: none; }
+/* A table that is wider than the text scrolls sideways, as code does. */
+table { display: block; width: max-content; max-width: 100%; overflow-x: auto; }
 time { color: var(--color202grey); }
 article > header { margin-bottom: 1rem; }
 article > header p { margin: 0; font-size: .9rem; }
@@ -130,6 +132,9 @@ footer { margin-top: 4vh; font-size: .9rem; color: var(--color202grey); letter-s
 .book main > nav li:has([rel="next"]) { margin-left: auto; }
 @media (min-width: 48rem) and (orientation: landscape) {
   .book { display: grid; grid-template-columns: minmax(8rem, 14rem) minmax(0, 1fr); gap: 2rem; align-items: start; }
+  /* As wide as its column: with the auto margins of a centered layout, a grid item is otherwise as wide as its
+     content, and a long line of code or a wide table would push the doc beyond the window. */
+  .book > main { width: 100%; }
   /* The navigation stays beside the doc, between the top bar and the overlay's bar, and scrolls if it is longer. */
   .book > nav {
     position: sticky;

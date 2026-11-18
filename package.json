@@ -1,11 +1,31 @@
 {
   "name": "@blooniverse/blyss",
   "version": "1.0.1",
-  "description": "A lean bilingual Markdown transformer and static-site server.",
-  "license": "MIT",
+  "description": "A lean multilingual Markdown transformer and static-site server.",
+  "keywords": [
+    "static-site-generator",
+    "ssg",
+    "markdown",
+    "multilingual",
+    "i18n",
+    "json-ld",
+    "sitemap",
+    "mathml",
+    "documentation",
+    "blog"
+  ],
+  "homepage": "https://github.com/Blooniverse/Blyss#readme",
+  "bugs": {
+    "url": "https://github.com/Blooniverse/Blyss/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Blooniverse/Blyss.git"
+  },
+  "license": "GPL-3.0-only",
   "type": "module",
   "bin": {
-    "blyss": "./bin/blyss.js"
+    "blyss": "bin/blyss.js"
   },
   "files": [
     "bin/",
@@ -28,5 +48,8 @@
   },
   "engines": {
     "node": ">=25.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

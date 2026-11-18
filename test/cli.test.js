@@ -4,15 +4,19 @@ import { once } from "node:events";
 import { chmod, cp, mkdir, mkdtemp, readdir, readFile, realpath, rm, stat, writeFile } from "node:fs/promises";
 import { createServer } from "node:net";
 import { tmpdir } from "node:os";
-import { dirname, join, relative, sep } from "node:path";
+import { dirname, join, posix, relative, sep, win32 } from "node:path";
 import { after, before, describe, test } from "node:test";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { escapeHtml } from "../src/build/html.js";
+import { fileFor } from "../src/server/server.js";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 const cli = join(root, "bin", "blyss.js");
 const starter = join(root, "starters", "lean");
 const blyss = JSON.parse(await readFile(join(root, "package.json"), "utf8"));
 const validPackageName = /^(?:@[a-z0-9][a-z0-9._-]*\/)?[a-z0-9][a-z0-9._-]*$/;
+// chmod cannot make a file unreadable on Windows or for the superuser.
+const cannotRestrict = process.platform === "win32" || process.getuid?.() === 0;
 
 let sandbox;
 before(async () => { sandbox = await realpath(await mkdtemp(join(tmpdir(), "blyss-test-"))); });
@@ -31,6 +35,15 @@ async function listFiles(directory) {
 
 async function starterFiles() {
   return (await listFiles(starter)).map(file => file === "gitignore" ? ".gitignore" : file).sort();
+}
+
+// The title, the description and the ### headings of a text of the starter, as its pages show them: the tests of
+// the starter follow its wording, which changes more often than the engine.
+async function starterText(language, ...file) {
+  const source = await readFile(join(starter, "_content", language, ...file), "utf8");
+  const field = name => escapeHtml(source.match(new RegExp(`^${name}: (.*)$`, "m"))?.[1] ?? "");
+  return { title: field("title"), description: field("description"),
+    headings: [...source.matchAll(/^### (.+)$/gm)].map(match => escapeHtml(match[1])) };
 }
 
 async function emptyDirectory(name) {
@@ -171,8 +184,7 @@ describe("blyss init", () => {
     }
   });
 
-  const unreadableSkip = process.platform === "win32" || process.getuid?.() === 0
-    ? "an unreadable starter file requires POSIX permissions and a non-root user" : false;
+  const unreadableSkip = cannotRestrict ? "an unreadable starter file requires POSIX permissions and a non-root user" : false;
   test("removes only what it created when copying fails", { skip: unreadableSkip }, async () => {
     const copy = await emptyDirectory("unreadable-package");
     for (const path of ["package.json", "src", "starters"]) {
@@ -248,18 +260,21 @@ describe("a generated starter", () => {
   });
 
   test("renders the home pages with home.html: title and slogan in the header, then the article, the hero and the footer", async () => {
-    assert.match(await readFile(join(site, "public", "en", "index.html"), "utf8"), new RegExp("</div>\\s*<div class=\"page\">\\s*" +
-      "<header>\\s*<h1>Blyss</h1>\\s*<h2>Blyss slogan</h2>\\s*</header>\\s*<main>\\s*<article>\\s*<h3>Blyss about or description</h3>" +
-      "[\\s\\S]*</main>\\s*</div>\\s*<aside class=\"hero\" aria-label=\"Highlights\">[\\s\\S]*</aside>\\s*<footer>"));
+    const { title, description } = await starterText("en", "pages", "index.md");
+    const english = (await readFile(join(site, "public", "en", "index.html"), "utf8")).replace(/>\s+</g, "><");
+    assert.ok(english.includes(`</div><div class="page"><header><h1>${title}</h1><h2>${description}</h2></header><main><article>`));
+    assert.match(english, /<\/article><\/main><\/div><aside class="hero" aria-label="Highlights">.*<\/aside><footer>/s);
     const german = await readFile(join(site, "public", "de", "index.html"), "utf8");
-    for (const label of ['<h3><label for="componentSliderHero-1-input">Schieberegler</label></h3>', "<h3>Warum Blyss</h3>",
+    const [slider, heroTexts] = await Promise.all([starterText("de", "components", "componentSliderHero.md"), starterText("de", "heroTexts.md")]);
+    for (const label of [`<h3><label for="componentSliderHero-1-input">${slider.title}</label></h3>`, `<h3>${heroTexts.title}</h3>`,
       '<input type="search" aria-label="Suchen" placeholder="Suchen">']) {
       assert.ok(german.includes(label), label);
     }
     assert.doesNotMatch(german, /<component-(?:gallery|flower)/);
     const switchedOn = await readFile(join(full, "public", "de", "index.html"), "utf8");
-    for (const label of ['<h3 id="componentGalleryHero-1-title">Galerie</h3>', '<h3 id="componentFlowerHero-1-title">Blume</h3>']) {
-      assert.ok(switchedOn.includes(label), label);
+    for (const name of ["componentGalleryHero", "componentFlowerHero"]) {
+      const { title: heading } = await starterText("de", "components", `${name}.md`);
+      assert.ok(switchedOn.includes(`<h3 id="${name}-1-title">${heading}</h3>`), name);
     }
   });
 
@@ -315,14 +330,16 @@ describe("a generated starter", () => {
   });
 
   test("marks every page with its kind and the layout of blyss.config.js", async () => {
+    const { default: { layout } } = await import(pathToFileURL(join(site, "blyss.config.js")).href);
     const kinds = { "en/index.html": "home", "de/pages/about/index.html": "page", "en/posts/hello-world/index.html": "post",
       "de/posts/index.html": "list", "en/tags/blyss/index.html": "list", "en/book/index.html": "book",
       "de/book/schreiben/navigation/index.html": "book", "de/404.html": "not-found" };
     for (const [path, kind] of Object.entries(kinds)) {
       const html = await readFile(join(site, "public", path), "utf8");
-      const align = kind === "home" ? "center" : "left";
-      assert.ok(html.includes(`<body data-kind="${kind}" data-align="${align}" data-align-hero="centerExtra" data-align-overlay="centerExtra" ` +
-        'style="--site-margin: 2vmin; --hero-padding: 1rem; --overlay-padding: 1rem">'), path);
+      const align = kind === "home" ? layout.alignHome : layout.alignOther;
+      assert.ok(html.includes(`<body data-kind="${kind}" data-align="${align}" data-align-hero="${layout.alignHero}" ` +
+        `data-align-overlay="${layout.alignOverlay}" style="--site-margin: ${layout.margin}; --hero-padding: ${layout.paddingHero}; ` +
+        `--overlay-padding: ${layout.paddingOverlay}">`), path);
     }
   });
 
@@ -395,6 +412,48 @@ describe("a generated starter", () => {
       assert.equal(await plain.text(), "404 Not Found");
     });
     assert.equal(stderr, "");
+  });
+});
+
+describe("blyss serve", () => {
+  let site;
+  before(() => {
+    site = join(sandbox, "served");
+    assert.equal(run(["init", site], sandbox).status, 0);
+    assert.equal(run(["build"], site).status, 0);
+  });
+
+  test("names no file outside public/, not even on another drive of Windows", () => {
+    assert.equal(fileFor("/site/public", "/en/index.html", posix), "/site/public/en/index.html");
+    assert.equal(fileFor("/site/public", "/../blyss.config.js", posix), undefined);
+    assert.equal(fileFor("C:\\site\\public", "/en/index.html", win32), "C:\\site\\public\\en\\index.html");
+    for (const pathname of ["/../blyss.config.js", "/en/..\\..\\blyss.config.js", "/D:/notes.txt", "/d:\\notes.txt", "\\\\D:\\notes.txt"]) {
+      assert.equal(fileFor("C:\\site\\public", pathname, win32), undefined, pathname);
+    }
+  });
+
+  test("answers 404 for a file that it cannot read and keeps serving", { skip: cannotRestrict && "an unreadable file requires POSIX permissions and a non-root user", timeout: 15_000 }, async () => {
+    const file = join(site, "public", "unreadable.txt");
+    await writeFile(file, "Text.");
+    await chmod(file, 0o000);
+    const stderr = await whileServing(site, async base => {
+      for (const [path, status] of [["/unreadable.txt", 404], ["/en/", 200]]) {
+        const response = await fetch(base + path);
+        await response.text();
+        assert.equal(response.status, status, path);
+      }
+    });
+    assert.equal(stderr, "");
+  });
+
+  test("names a port that is in use without a stack trace", { timeout: 15_000 }, async () => {
+    await whileServing(site, async base => {
+      const { port } = new URL(base);
+      const second = spawnSync(process.execPath, [cli, "serve"], { cwd: site, encoding: "utf8", env: { ...process.env, PORT: port } });
+      assert.equal(second.status, 1);
+      assert.equal(second.stderr, `Cannot serve on port ${port}: the port is already in use.\n` +
+        `Stop the program that uses it, or set the environment variable PORT to another port, such as ${Number(port) + 1}.\n`);
+    });
   });
 });
 
@@ -516,7 +575,9 @@ describe("a site with several tagged posts", () => {
     await writeFile(configFile, config.replace("pageSize: 10", "pageSize: 2"));
     for (const language of ["en", "de"]) {
       const home = join(site, "_content", language, "pages", "index.md");
-      await writeFile(home, `${await readFile(home, "utf8")}\n{{recentPosts}}\n`);
+      // The English home page also names the placeholder in code, where it stays as it is written.
+      const code = language === "en" ? "\nWrite `{{recentPosts}}` in a paragraph of its own:\n\n```markdown\n{{recentPosts}}\n```\n" : "";
+      await writeFile(home, `${await readFile(home, "utf8")}\n{{recentPosts}}\n${code}`);
     }
     const posts = {
       oldest: ["title: Oldest\ndatePublished: 2026-01-01\ntags: Blyss", "Text."],
@@ -544,6 +605,13 @@ describe("a site with several tagged posts", () => {
     assert.doesNotMatch(home, /{{recentPosts}}/);
   });
 
+  test("lists the newest posts for a paragraph of {{recentPosts}} alone, not for the placeholder in code", async () => {
+    const home = await main("en");
+    assert.equal(home.match(/<section aria-label="Recent posts">/g).length, 1);
+    assert.ok(home.includes("<p>Write <code>{{recentPosts}}</code> in a paragraph of its own:</p>"));
+    assert.ok(home.includes('<pre><code class="language-markdown">{{recentPosts}}\n</code></pre>'));
+  });
+
   test("shows the texts of heroTexts.md in the hero of the home pages and those of overlayTexts.md in the overlay of the other pages", async () => {
     const region = async (path, start) => {
       const html = await readFile(join(site, "public", path), "utf8");
@@ -552,19 +620,21 @@ describe("a site with several tagged posts", () => {
     const hero = path => region(path, '<aside class="hero"');
     const overlay = path => region(path, '<div id="overlay"');
     const texts = html => [...html.matchAll(/<div>\n<h3>([^<]+)<\/h3>/g)].map(match => match[1]);
+    const [heroEnglish, heroGerman, overlayEnglish, overlayGerman] = await Promise.all([["en", "heroTexts.md"], ["de", "heroTexts.md"],
+      ["en", "overlayTexts.md"], ["de", "overlayTexts.md"]].map(([language, file]) => starterText(language, file)));
     const home = await hero("en/index.html");
-    assert.ok(home.includes("<h3>Why Blyss</h3>"));
-    assert.deepEqual(texts(home), ["Markdown in, HTML out", "Two languages", "Your own texts"]);
-    assert.deepEqual(texts(await hero("de/index.html")), ["Markdown rein, HTML raus", "Zwei Sprachen", "Ihre eigenen Texte"]);
+    assert.ok(home.includes(`<h3>${heroEnglish.title}</h3>`));
+    assert.deepEqual(texts(home), heroEnglish.headings);
+    assert.deepEqual(texts(await hero("de/index.html")), heroGerman.headings);
     assert.equal(await overlay("en/index.html"), "");
     const about = await overlay("en/pages/about/index.html");
     for (const path of ["en/posts/older/index.html", "en/tags/index.html", "en/book/index.html", "en/404.html"]) {
       assert.equal(await overlay(path), about, path);
       assert.equal(await hero(path), "", path);
     }
-    assert.ok(about.includes("<h3>Good to know</h3>"));
-    assert.deepEqual(texts(about), ["On the pages you choose", "Its own content", "Or a copy of the hero"]);
-    assert.deepEqual(texts(await overlay("de/posts/index.html")), ["Auf den Seiten Ihrer Wahl", "Eigene Inhalte", "Oder eine Kopie des Heros"]);
+    assert.ok(about.includes(`<h3>${overlayEnglish.title}</h3>`));
+    assert.deepEqual(texts(about), overlayEnglish.headings);
+    assert.deepEqual(texts(await overlay("de/posts/index.html")), overlayGerman.headings);
   });
 
   test("archives all posts newest first, pageSize posts per page", async () => {
@@ -651,7 +721,8 @@ describe("a site without templates/home.html", () => {
     assert.equal(result.status, 0, result.stderr);
     const html = await readFile(join(site, "public", "en", "index.html"), "utf8");
     assert.ok(html.includes('<body data-kind="home" '));
-    assert.match(html, /<main>\s*<article>\s*<header>\s*<h1>Blyss<\/h1>\s*<\/header>\s*<h3>Blyss about or description<\/h3>/);
+    const { title } = await starterText("en", "pages", "index.md");
+    assert.ok(html.replace(/>\s+</g, "><").includes(`<main><article><header><h1>${title}</h1></header>`));
   });
 });
 
@@ -913,12 +984,20 @@ describe("a site with its own hero and overlay", () => {
   // The hero or the overlay of a page, or nothing, and the components of such a region in their order.
   const region = async (path, name) => (await page(path)).match(new RegExp(`<aside class="${name}"[\\s\\S]*?</aside>`))?.[0] ?? "";
   const components = html => [...html.matchAll(/<(component-[a-z]+) /g)].map(match => match[1]);
+  // The headings of the starter's texts of the hero and of the overlay, by region and language: their title first.
+  const headings = { hero: {}, overlay: {} };
 
   before(async () => {
     site = join(sandbox, "regions");
     assert.equal(run(["init", site], sandbox).status, 0);
     configFile = join(site, "blyss.config.js");
     config = await readFile(configFile, "utf8");
+    for (const name of ["hero", "overlay"]) {
+      for (const language of ["en", "de"]) {
+        const { title, headings: texts } = await starterText(language, `${name}Texts.md`);
+        headings[name][language] = [title, ...texts].map(text => `<h3>${text}</h3>`);
+      }
+    }
   });
 
   // Builds the site with other settings for the hero, the overlay and their synchronisation.
@@ -936,10 +1015,10 @@ describe("a site with its own hero and overlay", () => {
     const hero = await region("en/index.html", "hero");
     assert.deepEqual(components(hero), ["component-flower", "component-gallery"]);
     assert.ok(hero.includes("<h3></h3>"));
-    assert.doesNotMatch(hero, /Why Blyss|Markdown in, HTML out/);
+    for (const heading of headings.hero.en) assert.ok(!hero.includes(heading), heading);
     const overlay = await region("en/index.html", "overlay");
     assert.deepEqual(components(overlay), ["component-gallery"]);
-    assert.ok(overlay.includes("<h3>Good to know</h3>") && overlay.includes("<h3>Its own content</h3>"));
+    for (const heading of headings.overlay.en) assert.ok(overlay.includes(heading), heading);
     const home = await page("en/index.html");
     assert.equal(home.match(/ id="[^"]+"/g).length, new Set(home.match(/ id="[^"]+"/g)).size);
     for (const [path, shown] of [["en/book/index.html", false], ["de/book/schreiben/navigation/index.html", false],
@@ -953,7 +1032,8 @@ describe("a site with its own hero and overlay", () => {
     await buildWith("  hero: { components: { componentSliderHero: false, componentFlowerHero: false }, texts: false },\n  overlay: { texts: false },");
     for (const path of ["en/index.html", "de/index.html", "en/pages/about/index.html", "de/posts/index.html"]) {
       const html = await page(path);
-      assert.doesNotMatch(html, /<aside|<component-|Why Blyss|Good to know/, path);
+      assert.doesNotMatch(html, /<aside|<component-/, path);
+      for (const name of ["hero", "overlay"]) assert.ok(!html.includes(headings[name][path.slice(0, 2)][0]), path);
       assert.doesNotMatch(html, /{{\w+}}/, path);
       assert.match(html, /<\/div>\s*<footer>/, path);
     }
@@ -963,11 +1043,11 @@ describe("a site with its own hero and overlay", () => {
     await buildWith("");
     const hero = await region("de/index.html", "hero");
     assert.deepEqual(components(hero), []);
-    assert.ok(hero.includes("<h3>Warum Blyss</h3>") && hero.includes("<h3>Zwei Sprachen</h3>"));
+    for (const heading of headings.hero.de) assert.ok(hero.includes(heading), heading);
     for (const path of ["de/index.html", "en/pages/about/index.html", "en/book/index.html", "en/404.html"]) {
       const overlay = await region(path, "overlay");
       assert.deepEqual(components(overlay), [], path);
-      assert.ok(overlay.includes(path.startsWith("de") ? "<h3>Gut zu wissen</h3>" : "<h3>Good to know</h3>"), path);
+      assert.ok(overlay.includes(headings.overlay[path.slice(0, 2)][0]), path);
     }
   });
 
@@ -982,8 +1062,8 @@ describe("a site with its own hero and overlay", () => {
       const overlay = await region(path, "overlay");
       assert.deepEqual(components(overlay), ["component-flower"], path);
       assert.ok(overlay.includes('aria-labelledby="componentFlowerHero-'), path);
-      assert.ok(overlay.includes("<h3>Why Blyss</h3>") && overlay.includes("<h3>Your own texts</h3>"), path);
-      assert.doesNotMatch(overlay, /Good to know/, path);
+      for (const heading of headings.hero.en) assert.ok(overlay.includes(heading), path);
+      assert.ok(!overlay.includes(headings.overlay.en[0]), path);
     }
     assert.equal(parts(await region("en/pages/about/index.html", "overlay")), parts(hero));
     assert.equal(await region("en/posts/hello-world/index.html", "overlay"), "");
