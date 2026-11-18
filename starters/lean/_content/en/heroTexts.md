@@ -8,8 +8,8 @@ Book docs, pages and posts are Markdown files with a little front matter.
 
 ### Multiple languages
 
-Multilingual content lives side by side. Translations share connected.
+Multilingual content lives side by side – translations are synchronised.
 
-### Your own texts
+### Own texts
 
-These texts here come from `content/en/heroTexts.md`.
+These texts here come from `content/en/heroTexts.md` – their amount is unlimited.
