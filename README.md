@@ -63,5 +63,5 @@ npm install @blooniverse/blyss
 ---
 ## Documentation
 
-- [USAGE](README_USAGE.md): CLI, site structure, configuration, templates, regions, components, fragments, hosting, developing.
-- [AUTHORING](README_AUTHORING.md): how to write content.
+- [Documentation book](starters/lean/_content/en/book/index.md) ([Deutsch](starters/lean/_content/de/book/index.md)): installation, authoring, configuration, customization and deployment. In a built starter, visit `/en/book/` or `/de/book/`.
+- [Usage](README_USAGE.md) and [Authoring](README_AUTHORING.md): topic indexes for the book.

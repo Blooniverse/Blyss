@@ -211,8 +211,8 @@ describe("a generated starter", () => {
   test("builds with the local Blyss package", async () => {
     const result = run(["build"], site);
     assert.equal(result.status, 0, result.stderr);
-    const pages = [["en", ["hello-world", "templates", "translations"], ["getting-started", "writing", "writing/formulas-and-diagrams", "writing/navigation"]],
-      ["de", ["hallo-welt", "uebersetzungen", "vorlagen"], ["erste-schritte", "schreiben", "schreiben/formeln-und-diagramme", "schreiben/navigation"]]]
+    const pages = [["en", ["hello-world", "templates", "translations"], ["getting-started", "installation", "configuration", "templates", "components", "deployment", "development", "writing", "writing/content", "writing/formulas-and-diagrams", "writing/navigation"]],
+      ["de", ["hallo-welt", "uebersetzungen", "vorlagen"], ["erste-schritte", "installation", "konfiguration", "vorlagen", "komponenten", "bereitstellung", "entwicklung", "schreiben", "schreiben/inhalte", "schreiben/formeln-und-diagramme", "schreiben/navigation"]]]
       .flatMap(([language, posts, docs]) => ["", "pages/about/", "posts/", ...posts.map(post => `posts/${post}/`), "tags/", "tags/blyss/",
         "tags/markdown/", "book/", ...docs.map(doc => `book/${doc}/`)].map(path => `${language}/${path}index.html`));
     const notFoundPages = ["404.html", "en/404.html", "de/404.html"];
@@ -224,7 +224,7 @@ describe("a generated starter", () => {
       ...componentFiles.map(file => `components/${file}`), "sitemap.xml", ...pages, ...notFoundPages].sort());
     for (const page of [...pages, ...notFoundPages]) {
       const html = await readFile(join(site, "public", page), "utf8");
-      assert.doesNotMatch(html, /{{\w+}}/, page);
+      assert.doesNotMatch(html.replace(/<code\b[^>]*>[\s\S]*?<\/code>/g, ""), /{{\w+}}/, page);
       const jsonLd = JSON.parse(html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)[1]);
       assert.ok(Array.isArray(jsonLd["@graph"]), page);
     }
@@ -232,6 +232,19 @@ describe("a generated starter", () => {
     assert.match(post, /<a lang="de" hreflang="de" href="\/de\/posts\/hallo-welt\/">Deutsch<\/a>/);
     assert.equal(await readFile(join(site, "public", "404.html"), "utf8"), await readFile(join(site, "public", "en", "404.html"), "utf8"));
     assert.match(await readFile(join(site, "public", "de", "404.html"), "utf8"), /<h1>Seite nicht gefunden<\/h1>/);
+  });
+
+  test("links each new documentation page to its translation", async () => {
+    for (const [english, german] of [
+      ["installation", "installation"], ["configuration", "konfiguration"], ["templates", "vorlagen"],
+      ["components", "komponenten"], ["deployment", "bereitstellung"], ["development", "entwicklung"],
+      ["writing/content", "schreiben/inhalte"]
+    ]) {
+      const en = await readFile(join(site, "public", "en", "book", english, "index.html"), "utf8");
+      const de = await readFile(join(site, "public", "de", "book", german, "index.html"), "utf8");
+      assert.ok(en.includes(`hreflang="de" href="https://example.com/de/book/${german}/"`), english);
+      assert.ok(de.includes(`hreflang="en" href="https://example.com/en/book/${english}/"`), german);
+    }
   });
 
   test("renders the home pages with home.html: title and slogan in the header, then the article, the hero and the footer", async () => {

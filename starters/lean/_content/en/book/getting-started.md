@@ -7,7 +7,7 @@ translationKey: book-getting-started
 
 ## Adding a doc
 
-Create a Markdown file in `content/en/book/`, such as `install.md`. Blyss publishes it at `/en/book/install/`, or at the URL of its `slug`, and adds it to the navigation.
+Create a Markdown file in `_content/en/book/`, such as `install.md`. Blyss publishes it at `/en/book/install/`, or at the URL of its `slug`, and adds it to the navigation.
 
 ### Front matter
 
@@ -19,7 +19,7 @@ Docs have the front matter of pages, and `order`:
 
 ## Adding a section
 
-A directory, such as `content/en/book/writing/`, is a section of the documentation. Its `index.md` is the start page of the section, and its title names the section in the navigation; the `order` of this file places the section. Blyss stops with an error if a directory with docs lacks its `index.md`.
+A directory, such as `_content/en/book/writing/`, is a section of the documentation. Its `index.md` is the start page of the section, and its title names the section in the navigation; the `order` of this file places the section. Blyss stops with an error if a directory with docs lacks its `index.md`.
 
 ## Translating docs
 
