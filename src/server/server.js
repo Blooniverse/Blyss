@@ -7,6 +7,8 @@ import { resolvePaths, within } from "../build/paths.js";
 import { assertSite, basePathOf } from "../build/settings.js";
 import { contentTypeFor } from "./mime-types.js";
 
+const isFile = path => stat(path).then(info => info.isFile(), () => false);
+
 // The file that a request path names below public/, or undefined for a path that leaves it: one with "..", or on
 // Windows one that names another drive, such as /D:/notes.txt. path is node:path, or its flavour of another platform.
 export function fileFor(publicDirectory, pathname, path = nodePath) {
@@ -46,6 +48,12 @@ export function serve(projectDir, config) {
   const unbuilt = `There is no ${config.directories.public}/ yet. Build the website first: npm run build`;
   const isBuilt = () => stat(publicDirectory).then(info => info.isDirectory(), () => false);
   const server = createServer(async (request, response) => {
+    // The server reads files and changes nothing, so it answers only the requests that read.
+    if (request.method !== "GET" && request.method !== "HEAD") {
+      response.writeHead(405, { Allow: "GET, HEAD" });
+      response.end();
+      return;
+    }
     try {
       const requestUrl = new URL(request.url ?? "/", "http://localhost");
       let pathname = decodeURIComponent(requestUrl.pathname);
@@ -58,9 +66,18 @@ export function serve(projectDir, config) {
       }
       if (!pathname.startsWith(`${base}/`)) throw new Error("Requested path is outside the path of the website.");
       pathname = pathname.slice(base.length);
-      if (pathname.endsWith("/")) pathname += "index.html";
-      const filePath = fileFor(publicDirectory, pathname);
+      const filePath = fileFor(publicDirectory, pathname.endsWith("/") ? `${pathname}index.html` : pathname);
       if (!filePath) throw new Error("Requested path is outside public/.");
+      // Like static hosts, the server leads a directory that is requested without its final slash, such as /en, to
+      // its page. The redirect names the requested path, which starts with a single slash: with two, it would lead
+      // to another host.
+      if (!pathname.endsWith("/") && await isFile(join(filePath, "index.html"))) {
+        response.writeHead(302, {
+          Location: `${requestUrl.pathname.replace(/^\/+/, "/")}/${requestUrl.search}`
+        });
+        response.end();
+        return;
+      }
       await sendFile(response, 200, filePath);
     } catch {
       // Like static hosts, answer every missing file with the generated 404.html, if there is one.

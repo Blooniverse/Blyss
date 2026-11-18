@@ -1,7 +1,7 @@
 ---
 title: Blyss entwickeln
 description: Engine, Starter und Tests im Blyss-Repository bearbeiten.
-order: 8
+order: 7
 translationKey: book-development
 ---
 

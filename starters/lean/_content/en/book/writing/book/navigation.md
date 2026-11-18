@@ -1,13 +1,13 @@
 ---
-title: Navigation and headings
+title: Navigation
 description: How Blyss links the docs and their headings.
-order: 1
+order: 2
 translationKey: book-navigation
 ---
 
 ## Navigation
 
-The navigation lists the start page of the documentation first, then its docs and sections, each section with its docs, sorted by `order` and title. It highlights the current doc. The links below each doc lead to the previous and the next doc in the navigation.
+The navigation lists the start page of the documentation first, then its docs and sections, each section with its own docs and sections, sorted by `order` and title. It highlights the current doc. The links below each doc lead to the previous and the next doc in the navigation.
 
 ## Headings
 

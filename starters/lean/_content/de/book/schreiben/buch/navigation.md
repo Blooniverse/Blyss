@@ -1,13 +1,13 @@
 ---
-title: Navigation und Überschriften
+title: Navigation
 description: Wie Blyss die Dokumente und ihre Überschriften verlinkt.
-order: 1
+order: 2
 translationKey: book-navigation
 ---
 
 ## Navigation
 
-Die Navigation listet zuerst die Startseite der Dokumentation auf, dann ihre Dokumente und Abschnitte, jeden Abschnitt mit seinen Dokumenten, geordnet nach `order` und Titel. Sie hebt das aktuelle Dokument hervor. Die Links unter jedem Dokument führen zum vorherigen und zum nächsten Dokument der Navigation.
+Die Navigation listet zuerst die Startseite der Dokumentation auf, dann ihre Dokumente und Abschnitte, jeden Abschnitt mit seinen eigenen Dokumenten und Abschnitten, geordnet nach `order` und Titel. Sie hebt das aktuelle Dokument hervor. Die Links unter jedem Dokument führen zum vorherigen und zum nächsten Dokument der Navigation.
 
 ## Überschriften
 

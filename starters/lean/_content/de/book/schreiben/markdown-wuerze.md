@@ -1,9 +1,11 @@
 ---
-title: Formeln, Fußnoten, Code und Diagramme
+title: Markdown-Würze
 description: Wie Sie Formeln, Fußnoten, hervorgehobenen Code, Diagramme und Grafiken in Markdown schreiben.
-order: 2
-translationKey: book-formulas-and-diagrams
+order: 4
+translationKey: book-markdown-spice
 ---
+
+Über reines Markdown hinaus rendert Blyss Formeln, Fußnoten, hervorgehobenen Code und Diagramme. Dieses Dokument zeigt sie alle am Werk.
 
 ## Formeln
 

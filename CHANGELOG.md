@@ -4,6 +4,29 @@
 
 ### Breaking changes
 
+- **Checked dates**: a `datePublished` or a `dateModified` that is not a date
+  such as `2026-11-10`, or one with its time such as
+  `2026-11-10T09:30:00+01:00`, stops the build with a message that names the
+  file. Such a value used to be shown as it was written, ordered the posts as
+  a text and was left out of `sitemap.xml`.
+- **Checked placeholders**: a placeholder that a template of the website
+  cannot fill, such as a misspelt `{{pageTitel}}` in `document.html` or a
+  label in `page.html`, stops the build with a message that names the
+  template; it used to leave a gap in every page. A fragment that only some
+  languages have is still empty in the others, and so is a placeholder
+  without a value in the template of a component.
+- **`x-default`**: the `x-default` alternate of a page, in its head and in
+  `sitemap.xml`, is its translation in the default language; a page without
+  such a translation has none. It used to be the home page of the default
+  language on every page.
+- **Arguments of `build` and `serve`**: `blyss build` and `blyss serve` take
+  no arguments and end with a message for one, as `blyss init` does for an
+  option; they used to ignore arguments such as `--port 4000`.
+- **Front matter on single lines**: a field whose value is `>` or `|`, with
+  which YAML starts a text of several lines, stops the build with a message
+  that names the file; the page used to show the sign and lose the text.
+- **Requests other than `GET` and `HEAD`**: `blyss serve` answers them with
+  405 instead of the page.
 - **Recent posts in a paragraph of their own**: `{{recentPosts}}` lists the
   newest posts only where it is a paragraph of its own, like the placeholder
   of a component. Within a text and in code it stays as it is written, so
@@ -277,9 +300,33 @@
   receives it as `basePath`, for URLs elsewhere; the starter's diagrams add
   it to their libraries in `static/`. The docs have a workflow for GitHub
   Pages.
+- **Help and version**: `blyss --help` lists the commands, and
+  `blyss --version` shows the version of Blyss.
+- **`blyss init` after `git init`**: a directory that holds nothing but
+  `.git` counts as empty, so that a new repository can take the starter.
+- **Not-found pages kept out of search engines**: `{{robots}}` in
+  `document.html` is `<meta name="robots" content="noindex">` on the
+  not-found pages and empty on every other page. Existing websites add the
+  placeholder to the head of their `templates/document.html`.
 
 ### Changes
 
+- **Order of the starter's book**: the docs follow the way of a new website:
+  installation, configuration, templates, components, writing, deployment
+  and development. "Writing" holds the section "Book" with the docs "Docs",
+  the former "Getting started", and "Navigation", then "Pages and posts",
+  the new doc "Translations" and "Markdown spice", the former "Formulas,
+  footnotes, code and diagrams". The start page lists the chapters and tells
+  about the documentation itself.
+- **Tables in the starter**: `static/assets/css/main.css` formats tables as
+  GitHub does, with lines around the cells, a bold head and a shade on every
+  second row. Existing websites copy the rules for `table`, `th`, `td` and
+  `tr` and the two `--table-…` colours.
+- **Articles in JSON-LD**: the `BlogPosting` of a post and the `TechArticle`
+  of a doc have a `headline`, the title, and an `author`, the publisher of
+  the website.
+- **Starter home pages**: their title, their slogan and their heading no
+  longer end with "(H1)", "(H2)" and "(H3)".
 - **Underscored building blocks**: the starter keeps its components and
   templates in `_components/` and `_templates/`: the leading underscore sets
   these building blocks apart from content and static files.
@@ -422,6 +469,9 @@
 
 ### Fixes
 
+- **Directories without their final slash**: `blyss serve` answered a
+  request such as `/en` with 404. Like static hosts, it now leads to `/en/`
+  with a redirect, which keeps the query and never names another host.
 - **Files outside `public/` on Windows**: for a request path that names
   another drive, such as `/D:/notes.txt`, `blyss serve` served that file. It
   now answers every path that leaves `public/` with the "not found" page.

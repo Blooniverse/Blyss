@@ -1,3 +1,4 @@
+import { BlyssError } from "../errors.js";
 import { escapeHtml } from "./html.js";
 import { createJsonLd, renderJsonLd } from "./json-ld.js";
 import { lexDocument, renderInlineTokens, renderTokens } from "./markdown.js";
@@ -45,10 +46,17 @@ export function parseFrontMatter(source) {
   return { metadata, written, markdown: normalized.slice(end.index + end[0].length) };
 }
 
-// A value can be a function, which is called for each of its placeholders.
-export function applyTemplate(template, values) {
-  return template.replace(/{{([a-zA-Z][a-zA-Z0-9]*)}}/g, (_, key) => {
-    const value = Object.hasOwn(values, key) ? values[key] : undefined;
+// A value can be a function, which is called for each of its placeholders. file names a template of the website:
+// one of its placeholders that has no value, as a misspelt one, stops the build instead of leaving a gap in the
+// pages. Without file, as for the template of a component, whose values depend on its texts, such a placeholder is
+// empty.
+export function applyTemplate(template, values, file) {
+  return template.replace(/{{([a-zA-Z][a-zA-Z0-9]*)}}/g, (placeholder, key) => {
+    if (!Object.hasOwn(values, key)) {
+      if (!file) return "";
+      throw new BlyssError(`Cannot build with ${file}: there is no placeholder ${placeholder}.\nCorrect its name or remove it.`);
+    }
+    const value = values[key];
     return (typeof value === "function" ? value() : value) ?? "";
   });
 }
@@ -156,13 +164,14 @@ function renderTags(record) {
   return `    <p>${escapeHtml(record.languageConfig.labels.tags)}: ${links.join(", ")}</p>`;
 }
 
-// file names the record's Markdown file in errors; components holds a function for each component of the website,
-// which renders it in the language of the record, and resolves to it for a block of the record's Markdown; languages
+// file names the record's Markdown file in errors, and templateFile the file of a template, such as
+// templates/document.html for "document"; components holds a function for each component of the website, which
+// renders it in the language of the record, and resolves to it for a block of the record's Markdown; languages
 // names the component that shows the code blocks of a language; regions tells which of the hero and the overlay the
 // page shows (see regions.js); book holds the navigation and the pager of a doc (see book.js); basePath is the path
 // below which the website is hosted, {{basePath}} in every template.
-export async function renderRecord({ record, file, templates, translationIndex, site, records = [], layout, fragments = {}, components = {},
-  languages = new Map(), regions = { of: () => ({}) }, book = {}, basePath = "" }) {
+export async function renderRecord({ record, file, templates, templateFile = name => `${name}.html`, translationIndex, site, records = [],
+  layout, fragments = {}, components = {}, languages = new Map(), regions = { of: () => ({}) }, book = {}, basePath = "" }) {
   const metadata = record.metadata;
   const title = metadata.title || site.name;
   const description = metadata.description || record.languageConfig.description;
@@ -172,7 +181,8 @@ export async function renderRecord({ record, file, templates, translationIndex, 
   const dateBlock = metadata.datePublished
     ? `    <p><time datetime="${escapeHtml(metadata.datePublished)}">${escapeHtml(metadata.datePublished)}</time></p>` : "";
   // Without a home.html or a book.html template, home pages and docs use page.html.
-  const innerTemplate = (record.type === "post" && templates.post) || (isBook && templates.book) || (home && templates.home) || templates.page;
+  const inner = (record.type === "post" && templates.post && "post") || (isBook && templates.book && "book") || (home && templates.home && "home") || "page";
+  const innerTemplate = templates[inner];
   const shown = regions.of(kind, record.languageKey);
   const regionTemplates = Object.values(shown).map(region => region?.template ?? "").join("");
   const takenIds = isBook ? new Set(idsOf(templates.document + innerTemplate + regionTemplates)) : undefined;
@@ -184,7 +194,7 @@ export async function renderRecord({ record, file, templates, translationIndex, 
     title: escapeHtml(title), description: escapeHtml(description), dateBlock, tags: renderTags(record),
     basePath: escapeHtml(basePath),
     content: body.html
-  });
+  }, templateFile(inner));
   const pageTitle = title === site.name ? title : `${title} | ${site.name}`;
 
   // The components and the fragments of the language, such as {{heroTextsTitle}}, cannot replace the labels or the
@@ -196,8 +206,10 @@ export async function renderRecord({ record, file, templates, translationIndex, 
     locale: escapeHtml(record.languageConfig.locale),
     pageTitle: escapeHtml(pageTitle),
     description: escapeHtml(description),
+    // Hosts show a not-found page at any missing URL, with the status 404; under its own URL, search engines leave it out.
+    robots: record.notFound ? '  <meta name="robots" content="noindex">' : "",
     canonicalUrl: escapeHtml(record.canonicalUrl),
-    alternateLinks: renderAlternateLinks(record, translationIndex),
+    alternateLinks: renderAlternateLinks(record, translationIndex, site.defaultLanguage),
     jsonLd: renderJsonLd(createJsonLd({ site, record })),
     languageKey: escapeHtml(record.languageKey),
     kind,
@@ -218,6 +230,6 @@ export async function renderRecord({ record, file, templates, translationIndex, 
     components: () => region.components.map(component => components[component]()).join(""),
     textsTitle: region.textsTitle,
     texts: region.texts
-  }) : ""]);
-  return applyTemplate(templates.document, { ...values, ...Object.fromEntries(regionValues) });
+  }, templateFile(name)) : ""]);
+  return applyTemplate(templates.document, { ...values, ...Object.fromEntries(regionValues) }, templateFile("document"));
 }

@@ -1,19 +1,19 @@
 # Authoring content
 
-The starter's documentation covers [pages, posts and translations](starters/lean/_content/en/book/writing/content.md), [book navigation](starters/lean/_content/en/book/writing/navigation.md) and [components](starters/lean/_content/en/book/components.md). It is also available in [German](starters/lean/_content/de/book/schreiben/).
+The starter's documentation covers the [book](starters/lean/_content/en/book/writing/book/index.md), [pages and posts](starters/lean/_content/en/book/writing/pages-and-posts.md), [translations](starters/lean/_content/en/book/writing/translations.md) and [components](starters/lean/_content/en/book/components.md). It is also available in [German](starters/lean/_content/de/book/schreiben/).
 
 ## Formulas
 
-See [formulas](starters/lean/_content/en/book/writing/formulas-and-diagrams.md#formulas).
+See [formulas](starters/lean/_content/en/book/writing/markdown-spice.md#formulas).
 
 ## Footnotes
 
-See [footnotes](starters/lean/_content/en/book/writing/formulas-and-diagrams.md#footnotes).
+See [footnotes](starters/lean/_content/en/book/writing/markdown-spice.md#footnotes).
 
 ## Code
 
-See [code](starters/lean/_content/en/book/writing/formulas-and-diagrams.md#code).
+See [code](starters/lean/_content/en/book/writing/markdown-spice.md#code).
 
 ## Diagrams
 
-See [diagrams](starters/lean/_content/en/book/writing/formulas-and-diagrams.md#diagrams).
+See [diagrams](starters/lean/_content/en/book/writing/markdown-spice.md#diagrams).

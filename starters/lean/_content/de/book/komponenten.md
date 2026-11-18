@@ -1,7 +1,7 @@
 ---
 title: Komponenten
 description: Komponenten entwickeln, Varianten und individuelle Blöcke verwenden sowie Diagrammbibliotheken selbst hosten.
-order: 6
+order: 4
 translationKey: book-components
 ---
 
@@ -11,7 +11,7 @@ Eine Komponente liegt in `components/<name>/`; ihr Name beginnt mit einem latein
 
 Ein Absatz, der nur den Namen der Komponente in doppelten geschweiften Klammern enthält, fügt sie in eine Seite, einen Beitrag oder ein Dokument ein. In Vorlagen funktioniert derselbe Platzhalter; in Code bleibt er Text. Eine Komponente kann mehrfach vorkommen. Für eine einzelne Verwendung mit eigenen Texten und Einstellungen verwenden Sie einen Block.
 
-Die Vorlage erhält `{{basePath}}`, den Pfad einer Website [unterhalb eines Pfads](/de/book/bereitstellung/#unterhalb-eines-pfads), Sprachlabels als `{{<key>Label}}`, einfache Einstellungen, Front-Matter-Felder wie `{{title}}`, `{{content}}` für den gerenderten Text und Werte der Datendatei. Bei gleichen Namen ersetzen spätere Werte frühere in dieser Reihenfolge; `{{id}}` hat zuletzt Vorrang und ist pro Seite eindeutig, etwa `componentFlower-1`. Labels, Einstellungen und Front Matter werden HTML-escaped; Rückgabewerte der Datendatei werden unverändert eingesetzt und müssen bei Bedarf selbst escaped werden.
+Die Vorlage erhält `{{basePath}}`, den Pfad einer Website [unterhalb eines Pfads](/de/book/bereitstellung/#unterhalb-eines-pfads), Sprachlabels als `{{<key>Label}}`, einfache Einstellungen, Front-Matter-Felder wie `{{title}}`, `{{content}}` für den gerenderten Text und Werte der Datendatei. Bei gleichen Namen ersetzen spätere Werte frühere in dieser Reihenfolge; `{{id}}` hat zuletzt Vorrang und ist pro Seite eindeutig, etwa `componentFlower-1`. Labels, Einstellungen und Front Matter werden HTML-escaped; Rückgabewerte der Datendatei werden unverändert eingesetzt und müssen bei Bedarf selbst escaped werden. Ein Platzhalter ohne Wert ist leer, etwa für ein Feld, das einem Text fehlt.
 
 ```js
 export default function ({ settings, languageKey, escapeHtml, refuse }) {
@@ -49,7 +49,7 @@ Das optionale Front Matter ergänzt die Felder der Textdatei und ersetzt gleichn
 
 ## Diagramme und eigenes Hosting
 
-Die Starterkomponenten `componentMermaid`, `componentFlowchart` und `componentVegaLite` zeigen freistehende Codeblöcke der Sprachen `mermaid`, `flowchart` oder `flow` und `vega-lite`. Beispiele stehen unter [Formeln und Diagramme](/de/book/schreiben/formeln-und-diagramme/). Ein Komponentenblock kann für ein Diagramm `title` und Einstellungen im Front Matter und danach den Diagrammcode enthalten. Vega-Lite-Code muss gültiges JSON sein. Ein Komponenten-Datenskript kann solche Sprachen mit `export const languages = ["mermaid"];` anmelden; jede Sprache darf nur einer Komponente gehören. Für diese Komponenten sind `source` und `content` Code statt Markdown, und `texts` ist leer.
+Die Starterkomponenten `componentMermaid`, `componentFlowchart` und `componentVegaLite` zeigen freistehende Codeblöcke der Sprachen `mermaid`, `flowchart` oder `flow` und `vega-lite`. Beispiele stehen unter [Markdown-Würze](/de/book/schreiben/markdown-wuerze/#diagramme). Ein Komponentenblock kann für ein Diagramm `title` und Einstellungen im Front Matter und danach den Diagrammcode enthalten. Vega-Lite-Code muss gültiges JSON sein. Ein Komponenten-Datenskript kann solche Sprachen mit `export const languages = ["mermaid"];` anmelden; jede Sprache darf nur einer Komponente gehören. Für diese Komponenten sind `source` und `content` Code statt Markdown, und `texts` ist leer.
 
 Der Browser lädt die Bibliothek erst, wenn das Diagramm nahe am Fenster ist oder sein Overlay geöffnet wird. Bis dahin, ohne JavaScript oder bei einem Fehler bleibt der Code sichtbar; die Fehlermeldung und bei Flussdiagrammen `yes` und `no` stehen in den jeweiligen Komponententexten. Die Standardbibliotheken kommen von jsDelivr und übermitteln dabei die IP-Adresse der Besuchenden. Um dies zu vermeiden, kopieren Sie die Dateien nach `static/assets/` und setzen die URLs in `blyss.config.js` auf lokale Pfade:
 

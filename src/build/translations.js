@@ -18,16 +18,18 @@ export function indexTranslations(records, languages) {
   return index;
 }
 
-// Shared by the HTML head and sitemap.xml so that both declare the same alternates.
-export function alternatesFor(record, translationIndex) {
+// Shared by the HTML head and sitemap.xml so that both declare the same alternates: the translations of the page
+// and, as x-default for the visitors of any other language, its translation in the default language, if it has one.
+export function alternatesFor(record, translationIndex, defaultLanguage) {
   const translations = translationIndex.get(record.metadata.translationKey) || [record];
+  const fallback = translations.find(item => item.languageKey === defaultLanguage);
   return translations
     .map(item => ({ hreflang: item.languageConfig.locale, href: item.canonicalUrl }))
-    .concat({ hreflang: "x-default", href: record.siteUrl });
+    .concat(fallback ? { hreflang: "x-default", href: fallback.canonicalUrl } : []);
 }
 
-export function renderAlternateLinks(record, translationIndex) {
-  return alternatesFor(record, translationIndex)
+export function renderAlternateLinks(record, translationIndex, defaultLanguage) {
+  return alternatesFor(record, translationIndex, defaultLanguage)
     .map(({ hreflang, href }) => `  <link rel="alternate" hreflang="${escapeHtml(hreflang)}" href="${escapeHtml(href)}">`)
     .join("\n");
 }

@@ -53,6 +53,8 @@ async function readStarter() {
     .sort((left, right) => left.target.split(sep).length - right.target.split(sep).length);
 }
 
+// A directory that holds nothing but .git, as after git init or after cloning an empty repository, counts as empty:
+// the starter has no file of that name.
 async function destinationExists(destination) {
   let info;
   try {
@@ -62,7 +64,7 @@ async function destinationExists(destination) {
     throw error;
   }
   const problem = !info.isDirectory() ? "it is not a directory"
-    : (await readdir(destination)).length > 0 ? "the directory is not empty" : "";
+    : (await readdir(destination)).some(name => name !== ".git") ? "the directory is not empty" : "";
   if (problem) {
     throw new BlyssError(`Cannot initialize ${destination}: ${problem}.\n` +
       "Blyss never overwrites existing files. Choose a new or empty directory:\n  blyss init <directory>");
