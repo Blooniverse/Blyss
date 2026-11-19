@@ -66,7 +66,7 @@ npm install @blooniverse/blyss
 ## Documentation
 
 - [Documentation book](starters/lean/_content/en/book/index.md) ([Deutsch](starters/lean/_content/de/book/index.md)): setup, authoring & deployment.
-> [!IMPORTANT]
+> [!TIP]
 > In a built starter, visit `/en/book/` or `/de/book/`.
 
 ## License
