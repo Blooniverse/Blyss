@@ -1,17 +1,17 @@
 ---
 title: Labels and numbers
-description: How to label the elements of a text, and how Blyss numbers its figures, formulae and footnotes.
+description: How to label the elements of a text, how Blyss numbers its figures, formulae and footnotes, and how to refer to them.
 order: 5
 translationKey: book-labels-and-numbers
 ---
 
-A label names an element of a page, a post or a doc, so that a link leads to it. Blyss numbers the figures and the formulae that have a label, as well as the footnotes: each kind on its own, in the order in which the page shows it, and from 1 on every page.
+A label names an element of a page, a post or a doc. Blyss numbers the figures and the formulae that have a label, as well as the footnotes: each kind on its own, in the order in which the page shows it, and from 1 on every page. A reference to a label then shows the number or the name of its element.
 
 
 
 ## Labels
 
-A label becomes the `id` of its element. An element gets its label in one of these ways:
+A label becomes the `id` of its element, to which a link or a [reference](#references) leads. An element gets its label in one of these ways:
 
 - **Option**: `label`, or `name`, of a callout, an `{image}`, a `{figure}` or a `{math}` [directive](/en/book/writing/markdown-spice/#directives).
 - **Line above**: a line `(label)=` above a heading or above any other block, such as a paragraph, a list or a diagram.
@@ -133,22 +133,44 @@ Blyss numbers the footnotes of a page in the order of their first references, wh
 
 
 
-## Links
+(references)=
+## References
 
-A link to a label leads to its element:
+A reference is a link without a text to a label of its page. As in [MyST](https://mystmd.org/guide/cross-references), Blyss fills in what the label names, and keeps it right when the order of the page changes:
 
-- `[Figure 1](#fig-rings)` gives [Figure 1](#fig-rings), and `[formula (1)](#eq-area)` gives [formula (1)](#eq-area).
-- `[the mountains](#fig-views-b)` gives [the mountains](#fig-views-b), the second image of its figure.
-- From another page, the URL of the page precedes the label, as in `/en/book/writing/labels-and-numbers/#fig-rings`.
+- `[](#fig-rings)` gives [](#fig-rings), and `[](#fig-views-b)` gives [](#fig-views-b), the second image of its figure.
+- `[](#eq-area)` gives [](#eq-area).
+- `[](#references)` gives [](#references), as this heading has a label.
 
-Blyss does not fill in the text of such a link, as MyST does for `[](#eq-area)`: write the number yourself, and correct it when the order of the page changes. A link to a part of a page without a text stops the build.
+What a reference shows depends on its element:
+
+- **Numbered figure**: the label `figure` of the language and its number, as in "Figure 1". An image of it adds its letter, as in "Figure 2b".
+- **Numbered formula**: its number in brackets, as in "(1)", or its `\tag{…}`.
+- **Name**: the text of a heading, the title of a callout and, for a figure without a number, the first paragraph of its caption.
+- **Anything else**, such as a paragraph, a list or an `{image}`, has neither a number nor a name. A link to it needs a text: `[this remark](#remark)` gives [this remark](#remark).
+
+A link with a text keeps it. In that text, `{number}` stands for the number of its element and `{name}` for its name, but not within code:
+
+- `[Fig. {number}](#fig-rings)` gives [Fig. {number}](#fig-rings), and `[formula {number}](#eq-area)` gives [formula {number}](#eq-area).
+- `[the section "{name}"](#references)` gives [the section "{name}"](#references).
+
+Three roles of MyST write a reference as well, each before the label in backticks, or before a text and the label in angle brackets:
+
+- `` {ref}`fig-rings` `` gives {ref}`fig-rings`, and `` {eq}`eq-area` `` gives {eq}`eq-area`.
+- `` {numref}`Fig. %s <fig-rings>` `` gives {numref}`Fig. %s <fig-rings>`: `%s` stands for the number, like `{number}`.
+
+Blyss is stricter than MyST here:
+
+- **Missing label**: the build stops at a reference to a label that its page lacks. Label the element, or give the link a text.
+- **Missing number or name**: the build stops at a reference that asks for a number or a name that its element lacks. MyST shows "??" or the label then.
+- **Other links**: only a reference shows a text without having one. Any other link without a text stops the build, also one to a label of another page, as in `[](/en/book/writing/labels-and-numbers/#fig-rings)`. Write the text of such a link yourself, as numbers start anew on every page.
 
 
 
 ## Other texts
 
-Only pages, posts and docs have labels and numbers. Any other text, such as that of a component, of the hero or of the overlay, can stand on a page more than once, which an `id` must not. In such a text:
+Only pages, posts and docs have labels, numbers and references. Any other text, such as that of a component, of the hero or of the overlay, can stand on a page more than once, which an `id` must not. In such a text:
 
 - A label or the option `enumerated` stops the build.
-- A line `(label)=` stays text.
+- A line `(label)=` and a role such as `{ref}` stay text, and a link without a text stays empty.
 - An environment of LaTeX shows no numbers.

@@ -82,8 +82,11 @@ function blocksOf(lexer, markdown) {
   return tokens;
 }
 
+// The token of a text that Blyss writes itself, such as the title of an alert or the number of a figure.
+const words = (text, escaped = false) => ({ type: "text", raw: text, text, escaped });
+
 // A callout: the text after its name is its title, the first of its blocks. As in MyST, a callout without lines of
-// its own takes that text as its text, and one without a title takes it from its first block (see the renderer
+// its own takes that text as its text, and one without a title takes it from its first block (see titleOf
 // below). {admonition} is a callout without a kind of its own: it has the title that it is given, or none, and
 // the colour of the kind that one of its classes names. The class dropdown makes a callout one that opens at a
 // click, and so does the option open, which tells whether it is open from the start.
@@ -120,7 +123,7 @@ function alertOf(match, labels, lexer) {
     classes: ["admonition", kind],
     open: false,
     title,
-    tokens: [{ type: "admonitionTitle", raw: "", tokens: [{ type: "text", raw: title, text: title, escaped: false }] }, ...blocksOf(lexer, text)]
+    tokens: [{ type: "admonitionTitle", raw: "", tokens: [words(title)] }, ...blocksOf(lexer, text)]
   };
 }
 
@@ -223,22 +226,29 @@ const titled = html => `<p class="admonition-title">${html}</p>\n`;
 const idOf = label => (label === undefined ? "" : ` id="${escapeHtml(label)}"`);
 const classOf = classes => (classes.length ? ` class="${classes.join(" ")}"` : "");
 
+// The title of a callout, the tokens of a text, and the blocks below it. The title is its first block, the text
+// after its name. As in MyST, a callout of a kind without one takes it from its first block, if that is a heading
+// or a paragraph that is bold as a whole, and is otherwise titled by the label of its kind.
+function titleOf({ ownKind, tokens }) {
+  const [first, ...rest] = tokens;
+  const bold = first?.type === "paragraph" && first.tokens.length === 1 && first.tokens[0].type === "strong";
+  const own = first?.type === "admonitionTitle" || (ownKind && first?.type === "heading") ? first.tokens
+    : ownKind && bold ? first.tokens[0].tokens : undefined;
+  return { own, blocks: own ? rest : tokens };
+}
+
 const renderers = {
-  // The title of a callout is its first block, the text after its name. As in MyST, a callout of a kind without
-  // one takes it from its first block, if that is a heading or a paragraph that is bold as a whole, and is otherwise
-  // titled by the label of its kind. A dropdown is a <details>, which opens at a click without a script.
-  admonition({ ownKind, classes, open, label, title, tokens }) {
-    const [first, ...rest] = tokens;
-    const bold = first?.type === "paragraph" && first.tokens.length === 1 && first.tokens[0].type === "strong";
-    const own = first?.type === "admonitionTitle" || (ownKind && first?.type === "heading") ? first.tokens
-      : ownKind && bold ? first.tokens[0].tokens : undefined;
+  // A dropdown is a <details>, which opens at a click without a script.
+  admonition(token) {
+    const { classes, open, label, title } = token;
+    const { own, blocks } = titleOf(token);
     const heading = own ? this.parser.parseInline(own) : title === undefined ? undefined : escapeHtml(title);
-    const blocks = this.parser.parse(own ? rest : tokens);
+    const text = this.parser.parse(blocks);
     if (classes.includes("dropdown")) {
       const summary = heading === undefined ? "" : `<summary class="admonition-title">${heading}</summary>\n`;
-      return `<details${classOf(classes)}${idOf(label)}${open ? " open" : ""}>\n${summary}${blocks}</details>\n`;
+      return `<details${classOf(classes)}${idOf(label)}${open ? " open" : ""}>\n${summary}${text}</details>\n`;
     }
-    return `<div${classOf(classes)} role="note"${idOf(label)}>\n${heading === undefined ? "" : titled(heading)}${blocks}</div>\n`;
+    return `<div${classOf(classes)} role="note"${idOf(label)}>\n${heading === undefined ? "" : titled(heading)}${text}</div>\n`;
   },
   // The stylesheet of the website places an image or a figure by its class, such as align-center. A numbered figure
   // starts its caption with its number, and the images of one without a URL are figures within it, each with a
@@ -280,20 +290,20 @@ const targetLine = new RegExp(`^${target}`);
 // footnotes, in the order in which the page shows them. (label)= on a line of its own names the block below it; a
 // formula can also name itself by \label{…}. A figure with a label is numbered in that order, and a formula with
 // one is to be (see numberFormulas in markdown.js), unless their option enumerated says otherwise. Returns the
-// labels, each of which is the id of one element. A link to a part of the page needs a text: unlike MyST, Blyss
-// does not fill in the text of a reference.
+// element of each label, which has the label as its id: a token or, for an image of a figure, its letter and its
+// description.
 export function labelDocument(texts, file) {
-  const labels = new Set();
+  const targets = new Map();
   let figures = 0;
-  const claim = label => {
+  const claim = (label, target) => {
     if (typeof label !== "string" || !labelName.test(label)) {
       throw new BlyssError(`Cannot build ${file}: its label ${JSON.stringify(label)} must be a name of letters, digits, hyphens, ` +
         'underscores, full stops and colons, such as "fig-harbour".');
     }
-    if (labels.has(label)) {
+    if (targets.has(label)) {
       throw new BlyssError(`Cannot build ${file}: it has the label "${label}" twice, but a label names one element of a page.`);
     }
-    labels.add(label);
+    targets.set(label, target);
   };
   const visit = level => {
     for (const [index, token] of level.entries()) {
@@ -307,25 +317,24 @@ export function labelDocument(texts, file) {
         if (labelling.includes(block.type)) {
           block.label = token.label;
         } else {
-          claim(token.label);
+          claim(token.label, block);
           level.splice(below, 1, html(`<div${idOf(token.label)}>\n`), block, html("</div>\n"));
         }
         continue;
-      }
-      if (token.type === "link" && !token.tokens?.length && token.href.startsWith("#")) {
-        throw new BlyssError(`Cannot build ${file}: its link to ${token.href} has no text.\n` +
-          `Blyss does not fill in the text of a reference: write it, as in [Figure 1](${token.href}).`);
       }
       if (token.type === "blockMath" && token.label === undefined) {
         const [command, label] = /\\label\{([^{}]*)\}/.exec(token.latex) ?? [];
         if (command) Object.assign(token, { label, latex: token.latex.replace(command, "") });
       }
       const hasLabel = labelling.includes(token.type) && token.label !== undefined;
-      if (hasLabel) claim(token.label);
+      if (hasLabel) claim(token.label, token);
       if (token.type === "blockMath" && hasLabel) token.enumerated ??= true;
       if (token.type === "figure" && token.name === "figure" && (token.enumerated ?? hasLabel)) token.number = ++figures;
       if (token.type === "figure" && hasLabel) {
-        picturesOf(token).images.forEach((image, at) => claim(`${token.label}-${String.fromCharCode(97 + at)}`));
+        picturesOf(token).images.forEach(({ text }, at) => {
+          const letter = String.fromCharCode(97 + at);
+          claim(`${token.label}-${letter}`, { type: "part", figure: token, letter, text });
+        });
       }
       for (const part of [token, ...token.items ?? [], ...token.header ?? [], ...(token.rows ?? []).flat()]) {
         if (Array.isArray(part.tokens)) visit(part.tokens);
@@ -333,8 +342,105 @@ export function labelDocument(texts, file) {
     }
   };
   texts.forEach(visit);
-  return labels;
+  return targets;
 }
+
+// What a reference shows of the element with a label: its number, if it has one, its name, the tokens of a text,
+// and the text of a reference that has none of its own. As in MyST, a numbered figure is "Figure 1", after the
+// label figure of its language, an image of it "Figure 1a" and a numbered formula "(1)". Anything else is its
+// name: the text of a heading, the title of a callout, the first paragraph of the caption of a figure and the
+// description of one of its images. A paragraph, a list or an image has neither a number nor a name.
+function shownOf(target) {
+  if (target.type === "blockMath") {
+    const { tag } = target; // as the formula shows it, such as "(1)"
+    return tag === undefined ? {} : { number: words(tag.replace(/^\((.*)\)$/, "$1"), true), text: [words(tag, true)] };
+  }
+  const figure = target.type === "part" ? target.figure : target;
+  if (figure.type === "figure" && figure.name === "figure") {
+    const [caption] = picturesOf(figure).caption;
+    const name = target === figure ? (caption?.type === "paragraph" ? caption.tokens : undefined) : target.text ? [words(target.text)] : undefined;
+    if (figure.number === undefined) return { name, text: name };
+    const number = `${figure.number}${target.letter ?? ""}`;
+    return { number: words(number), name, text: [words(`${figure.word} ${number}`)] };
+  }
+  const name = target.type === "heading" ? target.tokens
+    : target.type === "admonition" ? titleOf(target).own ?? (target.title === undefined ? undefined : [words(target.title)]) : undefined;
+  return { name, text: name };
+}
+
+// The tokens of a name within a link, which holds neither a link nor the reference of a footnote.
+const plain = tokens => tokens.flatMap(token => (token.type === "link" ? plain(token.tokens) : token.type === "footnoteRef" ? []
+  : Array.isArray(token.tokens) ? [{ ...token, tokens: plain(token.tokens) }] : [token]));
+
+// {number} and {name} in the text of a reference stand for the number and the name of its target, but not in code;
+// %s is the {number} of Sphinx.
+const fill = (tokens, values) => tokens.flatMap(token => {
+  if (Array.isArray(token.tokens)) return [{ ...token, tokens: fill(token.tokens, values) }];
+  if (token.type !== "text") return [token];
+  return token.text.split(/(\{number\}|\{name\}|%s)/).flatMap(part => (part === "{name}" ? values.name(part)
+    : part === "{number}" || part === "%s" ? [values.number(part)] : part ? [{ ...token, raw: part, text: part }] : []));
+});
+
+// Fills in the references of the text of a page, of a post or of a doc, once its labels and its numbers are known.
+// As in MyST, a reference is a link to a label of the page, as in [](#fig-harbour): without a text, it shows what
+// its label names, and with one, the number and the name of that for {number} and {name}. The build stops at a
+// reference that names no label, and at one that asks for a number or a name that its element lacks: MyST shows
+// "??", the label or the kind of the element then. A link with a text to another part of the page, such as a heading
+// of a doc, stays as it is, and any other link without a text stops the build, as it would show nothing.
+export function referDocument(texts, targets, file) {
+  const naming = new Set();
+  const refer = token => {
+    const label = token.href.slice(1);
+    const target = targets.get(label);
+    const refuse = reason => new BlyssError(`Cannot build ${file}: its reference to #${label} ${reason}`);
+    if (!target) {
+      if (token.tokens?.length && !token.reference) return;
+      throw refuse(`names no label of its page.\nLabel the element that it means, as with (${label})= on the line above it` +
+        `${token.reference ? "" : ", or give the link a text"}.`);
+    }
+    const shown = shownOf(target);
+    // The name of an element can hold references itself, which are filled in first.
+    if (shown.name && !naming.has(target)) {
+      naming.add(target);
+      visit(shown.name);
+      naming.delete(target);
+    }
+    const lacks = (what, written) => {
+      throw refuse(`asks for ${written}, but the element with that label has no ${what}.\nWrite \\${written} to show these characters themselves.`);
+    };
+    const values = {
+      number: written => shown.number ?? lacks("number", written),
+      name: written => (shown.name ? plain(shown.name) : lacks("name", written))
+    };
+    if (token.tokens?.length) {
+      token.tokens = fill(token.tokens, values);
+    } else if (shown.text) {
+      token.tokens = plain(shown.text);
+    } else {
+      throw refuse("has nothing to show: the element with that label has neither a number nor a name.\n" +
+        `Write the text of the reference, as in [this part](#${label}).`);
+    }
+  };
+  const visit = level => {
+    for (const token of level) {
+      if (token.type === "footnote") continue; // one of the texts, if the page shows it
+      if (token.type === "link" && token.href.startsWith("#")) {
+        refer(token);
+      } else if (token.type === "link" && !token.tokens?.length) {
+        throw new BlyssError(`Cannot build ${file}: its link to ${token.href} has no text.\n` +
+          "Only a reference needs none: a link to a label of its own page, such as [](#fig-harbour).");
+      }
+      for (const part of [token, ...token.items ?? [], ...token.header ?? [], ...(token.rows ?? []).flat()]) {
+        if (Array.isArray(part.tokens)) visit(part.tokens);
+      }
+    }
+  };
+  texts.forEach(visit);
+}
+
+// As in MyST, {ref}, {numref} and {eq} before a code span write a reference as well: {ref}`fig-harbour` is
+// [](#fig-harbour), and {numref}`Fig. %s <fig-harbour>` is [Fig. %s](#fig-harbour).
+const role = /^\{[ \t]*(?:ref|numref|eq)[ \t]*\}(`+)(?!`)([\s\S]+?)(?<!`)\1(?!`)/;
 
 // The extension of marked that reads the directives. reading holds the file of the text that is being read, which
 // the errors name, the labels of its language, and whether it is the text of a page, of a post or of a doc;
@@ -376,6 +482,17 @@ export function directives(reading, interrupts) {
       tokenizer(src) {
         const match = reading.document && targetLine.exec(src);
         if (match) return { type: "target", raw: match[0], label: match[1] };
+      }
+    }, {
+      name: "reference",
+      level: "inline",
+      start: src => src.search(/\{[ \t]*(?:ref|numref|eq)[ \t]*\}`/),
+      // The code span holds the label, or a text and the label in angle brackets. The text of a link holds no link.
+      tokenizer(src) {
+        const match = reading.document && !this.lexer.state.inLink && role.exec(src);
+        if (!match) return undefined;
+        const [, text = "", label = match[2].trim()] = /^([\s\S]*?)\s*<([^<>\s]+)>$/.exec(match[2].trim()) ?? [];
+        return { type: "link", raw: match[0], href: `#${label}`, title: null, text, reference: true, tokens: text ? [words(text)] : [] };
       }
     }, ...Object.entries(renderers).map(([name, renderer]) => ({ name, renderer }))],
     // A heading with a label has it as its id.
