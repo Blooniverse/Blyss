@@ -232,7 +232,7 @@ Callouts, `{image}`, `{figure}` and `{math}` are directives of [MyST](https://my
 - **Fences**: a directive stands between two lines of at least three backticks or of at least three colons, which mean the same. Colons suit a body of Markdown, such as that of a callout: another tool, such as GitHub, then shows the body as text rather than as code. Backticks suit a formula.
 - **Nesting**: the closing fence is at least as long as the opening one. A directive therefore holds a directive or a code block with a shorter fence, or with the other kind of fence.
 - **Options**: they follow the opening fence at once, as lines of `:key: value` or, as in the block of a component, as lines of `key: value` between two lines of `---`. A line of text that starts like an option follows an empty line.
-- **Strictness**: an option that Blyss does not know, such as a `label` or a `class` of MyST, stops the build with a message that names the file. So do an image without a URL and a `width` or an `align` that is not valid.
+- **Strictness**: an option that Blyss does not know, such as the `icon` of a callout in MyST, stops the build with a message that names the file. So do an image without a URL and a `width` or an `align` that is not valid.
 - **Other names**: a fence with any other name in braces stays what it is in Markdown, a code block between backticks and text between colons.
 
 Directives work in every Markdown text, also within a list, a quotation or another directive. Within a directive, as within a list, a diagram or the [block of a component](/en/book/components/#blocks), which double braces name, remains code.

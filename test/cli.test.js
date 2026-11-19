@@ -1642,6 +1642,40 @@ describe("a site with the callouts, the figures and the formulas of MyST", () =>
     `${fence}{{componentMermaid}}\ngraph TD\n${fence}`,
     `::::{note}\n${fence}mermaid\ngraph LR\n${fence}\n::::`
   ].join("\n\n")}\n`;
+  // Labels and numbers, the images of a figure, callouts that open, a callout without a kind of its own, and the
+  // alerts of GitHub.
+  const labelled = join("_content", "en", "pages", "labels.md");
+  const labels = `---\ntitle: Labels\n---\n\n${[
+    // A footnote follows the text, and so do the numbers of its formula and of its figure.
+    "A text with a footnote[^last].\n\n[^last]: Shown last.\n\n    $$ z $$ (eq-note)\n\n    :::{figure} /assets/img/logo.svg\n    :label: fig-note\n    :::",
+    "[^unused]: $$ u $$ (eq-unused)",
+    "(intro)=\n## Introduction",
+    "(par)=\nA paragraph with a label.",
+    ":::{figure} /assets/img/logo.svg\n:label: fig-logo\nThe logo.\n:::",
+    ":::{figure} /assets/img/logo.svg\nNot numbered.\n:::",
+    ":::{figure} /assets/img/logo.svg\n:enumerated:\n:::",
+    `${fence}{image} /assets/img/logo.svg\n:name: img-logo\n${fence}`,
+    `${fence}{math}\n:label: eq-half\n\\frac{1}{2}\n${fence}`,
+    "$$\n\\frac{3}{4}\n$$ (eq:dollar)",
+    "$$\n\\label{eq-latex} \\frac{5}{6}\n$$",
+    `${fence}{math}\n:label: eq-off\n:enumerated: false\n\\frac{7}{8}\n${fence}`,
+    // Environments of LaTeX that number their lines, a tag of LaTeX and a number for all lines of an environment.
+    "$$\n\\begin{align} a &= b \\\\ c &= d \\nonumber \\\\ e &= f \\end{align}\n$$",
+    "$$ g \\tag{*} $$ (eq-own)",
+    `${fence}{math}\n:enumerated: false\n\\begin{equation} h \\end{equation}\n${fence}`,
+    `${fence}{math}\n:enumerated:\n\\begin{aligned} i &= j \\\\ k &= l \\end{aligned} % as a whole\n${fence}`,
+    ":::{figure}\n:label: pair\n:align: center\n\n![The logo](/assets/img/logo.svg)\n![](/assets/img/logo.svg)\n\nTwo **logos**.\n:::",
+    ":::{note} Click me\n:class: dropdown\n:label: more\nHidden.\n:::",
+    ":::{warning}\n:open:\nShown.\n:::",
+    ":::{admonition} A *title* of its own\n:class: tip wide\nAdvice.\n:::",
+    ":::{admonition}\nNo title.\n:::",
+    "> [!NOTE]\n> Useful *information*.",
+    "> [!caution] On the line.\n>\n> **Bold stays text.**",
+    "> [!FOO]\n> A quotation.",
+    // The label of a block of a component, which stays one.
+    `(flow)=\n${fence}mermaid\ngraph TD\n${fence}`,
+    "[The figure](#fig-logo), [the formula](#eq:dollar) and [the heading](#intro)."
+  ].join("\n\n")}\n`;
 
   before(async () => {
     site = join(sandbox, "directives");
@@ -1649,9 +1683,15 @@ describe("a site with the callouts, the figures and the formulas of MyST", () =>
     await writeFile(join(site, file), source);
     await writeFile(join(site, "_content", "de", "pages", "directives.md"),
       `---\ntitle: Direktiven\ntranslationKey: directives\n---\n\n:::{note}\nText.\n:::\n\n${fence}{seealso}\nMehr.\n${fence}\n`);
-    // A text of the hero is no page, but its callout is titled in its language as well.
+    // A text of the hero is no page, but its callout is titled in its language as well; its formula has no number.
     const heroTexts = join(site, "_content", "de", "heroTexts.md");
-    await writeFile(heroTexts, `${await readFile(heroTexts, "utf8")}\n### Hinweisbox\n\n:::{tip}\nIm Hero.\n:::\n`);
+    await writeFile(heroTexts, `${await readFile(heroTexts, "utf8")}\n### Hinweisbox\n\n:::{tip}\nIm Hero.\n:::\n\n` +
+      "### Formel\n\n$$\n\\begin{equation} E \\end{equation}\n$$\n");
+    await writeFile(join(site, labelled), labels);
+    await writeFile(join(site, "_content", "de", "pages", "labels.md"),
+      "---\ntitle: Labels\n---\n\n:::{figure} /assets/img/logo.svg\n:label: logo\nDas Logo.\n:::\n\n> [!TIP]\n> Ein Rat.\n");
+    // In a doc, a heading with a label has it as its id, which the heading below it leaves alone.
+    await writeFile(join(site, "_content", "en", "book", "labelled.md"), "---\ntitle: Labelled\norder: 9\n---\n\n(setup)=\n## Setup\n\n## Setup\n");
     const result = run(["build"], site);
     assert.equal(result.status, 0, result.stderr);
   });
@@ -1707,12 +1747,107 @@ describe("a site with the callouts, the figures and the formulas of MyST", () =>
     assert.ok(html.includes(callout("note", "Note", '<pre tabindex="0"><code class="language-mermaid">graph LR\n</code></pre>\n')));
   });
 
+  test("gives an element with a label its id, and a number to a figure and a formula with a label or with enumerated", async () => {
+    const html = await page("en/pages/labels/index.html");
+    const image = '<img src="/assets/img/logo.svg" alt="">';
+    const numbered = (number, text = "") => `<span class="caption-number">Figure ${number}${text && ":"}</span>${text && ` ${text}`}`;
+    assert.ok(html.includes('<h2 id="intro">Introduction</h2>\n<div id="par">\n<p>A paragraph with a label.</p>\n</div>\n' +
+      `<figure id="fig-logo">\n${image}\n<figcaption>\n<p>${numbered(1, "The logo.")}</p>\n</figcaption>\n</figure>\n` +
+      `<figure>\n${image}\n<figcaption>\n<p>Not numbered.</p>\n</figcaption>\n</figure>\n` +
+      `<figure>\n${image}\n<figcaption>\n<p>${numbered(2)}</p>\n</figcaption>\n</figure>\n` +
+      '<p><img id="img-logo" src="/assets/img/logo.svg" alt=""></p>'));
+    // A label is an option, follows $$ in brackets or is the \label of LaTeX; a number stands beside its formula.
+    for (const [id, numerator, number] of [["eq-half", 1, 1], ["eq:dollar", 3, 2], ["eq-latex", 5, 3]]) {
+      assert.match(html, new RegExp(`<div class="math" id="${id}"><math [^>]+><mtable [^\\n]+<mfrac><mn>${numerator}</mn>[^\\n]+<mtext class="tml-tag">\\(${number}\\)</mtext>`));
+    }
+    assert.ok(html.includes('<div class="math" id="eq-off"><math display="block" class="tml-display" style="display:block math;"><mfrac><mn>7</mn><mn>8</mn></mfrac></math></div>'));
+    assert.ok(html.includes('<p><a href="#fig-logo">The figure</a>, <a href="#eq:dollar">the formula</a> and <a href="#intro">the heading</a>.</p>'));
+    assert.match(html, /<div id="flow">\n(?:<(?:link|script) [^\n]+\n)*<component-mermaid class="component" id="componentMermaid-1" /);
+    assert.equal(html.match(/ id="[^"]+"/g).length, new Set(html.match(/ id="[^"]+"/g)).size);
+    assert.ok((await page("de/pages/labels/index.html")).includes('<p><span class="caption-number">Abbildung 1:</span> Das Logo.</p>'));
+    const doc = await page("en/book/labelled/index.html");
+    assert.ok(doc.includes('<h2 id="setup">Setup</h2>\n<h2 id="setup-1">Setup</h2>'));
+    assert.ok(doc.includes('<li><a href="#setup">Setup</a></li>\n  <li><a href="#setup-1">Setup</a></li>'));
+  });
+
+  test("numbers the formulas and the figures of a page in the order in which it shows them, with the lines that an environment of LaTeX numbers", async () => {
+    const html = await page("en/pages/labels/index.html");
+    // The tag of a formula is no number, and neither a line with \nonumber nor a formula whose enumerated is off has one.
+    assert.deepEqual(html.match(/<mtext class="tml-tag">[^<]+<\/mtext>/g).map(tag => tag.replace(/<[^>]+>/g, "")),
+      ["(1)", "(2)", "(3)", "(4)", "(5)", "(*)", "(6)", "(7)"]);
+    assert.match(html, /<mtd[^>]*><mrow><mo>=<\/mo><mi>b<\/mi><\/mrow><\/mtd><mtd[^>]*><mtext class="tml-tag">\(4\)<\/mtext><\/mtd><\/mtr>.+<mi>d<\/mi><\/mrow><\/mtd><mtd[^>]*><mtext><\/mtext><\/mtd><\/mtr>.+<mtext class="tml-tag">\(5\)<\/mtext>/);
+    assert.match(html, /<mi>h<\/mi><\/mtd><mtd[^>]*><mtext><\/mtext><\/mtd><\/mtr><\/mtable><\/math><\/div>/);
+    assert.ok(!html.includes("tml-eqn"));
+    // Any other text has no numbers, so that none stands twice on a page.
+    assert.match(await page("de/index.html"), /<h3>Formel<\/h3>\n<div class="math"><math [^\n]+<mi>E<\/mi><\/mtd><mtd[^>]*><mtext><\/mtext><\/mtd><\/mtr><\/mtable><\/math><\/div>/);
+    // The footnote, which the text defines first, is shown last; one without a reference is not shown.
+    assert.match(html, /<li id="fn:1">\n<p>Shown last\.<\/p>\n<div class="math" id="eq-note"><math [^\n]+<mtext class="tml-tag">\(7\)<\/mtext>[^\n]+\n<figure id="fig-note">\n[^\n]+\n<figcaption>\n<p><span class="caption-number">Figure 4<\/span><\/p>/);
+    assert.ok(!html.includes("eq-unused"));
+  });
+
+  test("shows the images of a figure without a URL as figures within it, each with a letter and its description", async () => {
+    const part = (letter, description) => `<figure id="pair-${letter}">\n<img src="/assets/img/logo.svg" alt="${description}">\n` +
+      `<figcaption><span class="caption-number">(${letter})</span>${description && ` ${description}`}</figcaption>\n</figure>\n`;
+    assert.ok((await page("en/pages/labels/index.html")).includes(`<figure id="pair" class="subfigures align-center">\n${part("a", "The logo")}${part("b", "")}` +
+      '<figcaption>\n<p><span class="caption-number">Figure 3:</span> Two <strong>logos</strong>.</p>\n</figcaption>\n</figure>'));
+  });
+
+  test("makes a callout one that opens at a click, and {admonition} one with the title and the classes that it is given", async () => {
+    const html = await page("en/pages/labels/index.html");
+    assert.ok(html.includes('<details class="admonition note dropdown" id="more">\n<summary class="admonition-title">Click me</summary>\n<p>Hidden.</p>\n</details>\n' +
+      '<details class="admonition warning dropdown" open>\n<summary class="admonition-title">Warning</summary>\n<p>Shown.</p>\n</details>\n' +
+      '<div class="admonition tip wide" role="note">\n<p class="admonition-title">A <em>title</em> of its own</p>\n<p>Advice.</p>\n</div>\n' +
+      '<div class="admonition" role="note">\n<p>No title.</p>\n</div>'));
+  });
+
+  test("reads a quotation that starts with one of the alerts of GitHub as a callout of that kind", async () => {
+    const html = await page("en/pages/labels/index.html");
+    assert.ok(html.includes(callout("note", "Note", "<p>Useful <em>information</em>.</p>\n") +
+      callout("caution", "Caution", "<p>On the line.</p>\n<p><strong>Bold stays text.</strong></p>\n") +
+      "<blockquote>\n<p>[!FOO]\nA quotation.</p>\n</blockquote>"));
+    assert.ok((await page("de/pages/labels/index.html")).includes(callout("tip", "Tipp", "<p>Ein Rat.</p>\n")));
+  });
+
+  test("refuses a label that is no name, stands twice, names nothing or belongs to no page, a link without a text and a figure without an image", async () => {
+    const heroTexts = join("_content", "en", "heroTexts.md");
+    const hero = await readFile(join(site, heroTexts), "utf8");
+    for (const [file, original, search, replacement, message] of [
+      [labelled, labels, ":label: fig-logo", ":label: fig logo", 'its label "fig logo" must be a name of letters, digits, hyphens, underscores, full stops and colons, such as "fig-harbour"\\.\\n$'],
+      [labelled, labels, ":label: fig-logo", ":label: intro", 'it has the label "intro" twice, but a label names one element of a page\\.\\n$'],
+      [labelled, labels, ":label: fig-logo", ":label: pair-b", 'it has the label "pair-b" twice, but a label names one element of a page\\.\\n$'],
+      [labelled, labels, ":label: fig-logo", ":label: overlay", 'its label "overlay" is the id of an element of its templates, so it needs another name\\.\\n$'],
+      [labelled, labels, ":label: fig-logo", ":label: fn:1", 'its label "fn:1" is the id of a footnote, so it needs another name\\.\\n$'],
+      [labelled, labels, "(par)=\nA paragraph", "(par)=\n\n(par2)=\nA paragraph", "its label \\(par\\)= must stand above a block that has no other label\\.\\n$"],
+      [labelled, labels, "[The figure](#fig-logo)", "[](#fig-logo)", "its link to #fig-logo has no text\\.\\n" +
+        "Blyss does not fill in the text of a reference: write it, as in \\[Figure 1\\]\\(#fig-logo\\)\\.\\n$"],
+      [labelled, labels, "![The logo](/assets/img/logo.svg)\n![](/assets/img/logo.svg)\n\n", "", "its \\{figure\\} directive lacks its image: the URL of one follows its name, " +
+        "as in \\{figure\\} /assets/img/harbour\\.jpg, or its body holds images, each as !\\[description\\]\\(URL\\)\\.\\n$"],
+      [labelled, labels, ":class: dropdown", ":class: drop.down", 'its \\{note\\} directive cannot use class "drop\\.down", which must be the names of classes, ' +
+        'each of letters, digits, hyphens and underscores, such as "dropdown"\\.\\n$'],
+      [labelled, labels, ":open:", ":open: maybe", 'its \\{warning\\} directive cannot use open "maybe", which must be true or false\\.\\n$'],
+      [heroTexts, hero, hero, `${hero}\n### Figure\n\n:::{figure} /assets/img/logo.svg\n:label: hero\n:::\n`, "its \\{figure\\} directive has a label or a number, " +
+        "but only the text of a page, of a post or of a doc has labels and numbers\\.\\n$"]
+    ]) {
+      assert.ok(original.includes(search), search);
+      await writeFile(join(site, file), original.replace(search, replacement));
+      try {
+        const result = run(["build"], site);
+        assert.equal(result.status, 1, replacement);
+        assert.match(result.stderr, new RegExp(`^Cannot build ${file.replaceAll("\\", "\\\\")}: ${message}`));
+        assert.ok((await stat(join(site, "public", "en", "pages", "labels", "index.html"))).isFile());
+      } finally {
+        await writeFile(join(site, file), original);
+      }
+    }
+  });
+
   test("refuses an option that it does not know, a value that an option cannot have and a directive that lacks its image or its formula, and keeps the previous output", async () => {
     const options = "; a line of text that starts like an option follows an empty line\\.\\n$";
     for (const [search, replacement, message] of [
-      ["A note.", ":class: dropdown\nA note.", `its \\{note\\} directive has the option "class", which Blyss does not know\\.\\nA \\{note\\} directive has no options${options}`],
-      [":alt: A & B", ":label: logo", 'its \\{image\\} directive has the option "label", which Blyss does not know\\.\\n' +
-        `A \\{image\\} directive can have "alt", "align" and "width"${options}`],
+      ["A note.", ":icon: false\nA note.", 'its \\{note\\} directive has the option "icon", which Blyss does not know\\.\\n' +
+        `A \\{note\\} directive can have "class", "open", "label" and "name"${options}`],
+      [":alt: A & B", ":height: 2em", 'its \\{image\\} directive has the option "height", which Blyss does not know\\.\\n' +
+        `A \\{image\\} directive can have "alt", "align", "width", "label" and "name"${options}`],
       ["{image} /assets/img/my logo.svg", "{image}", "its \\{image\\} directive lacks the URL of its image, which follows its name, as in \\{image\\} /assets/img/harbour\\.jpg\\.\\n$"],
       [":align: right", ":align: right\n\nA text.", "its \\{image\\} directive has a text, which an image does not show\\.\\n" +
         "Write the description of the image as :alt:, or its caption in a \\{figure\\} directive\\.\\n$"],

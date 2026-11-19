@@ -52,6 +52,7 @@ export default {
           next: "Next",
           footnotes: "Footnotes",
           backToText: "Back to the text",
+          figure: "Figure", // before the number of a figure, as in "Figure 1"
           attention: "Attention", // the titles of the callouts, such as ```{note}, by their kinds, down to warning
           caution: "Caution",
           danger: "Danger",
@@ -92,6 +93,7 @@ export default {
           next: "Weiter",
           footnotes: "Fußnoten",
           backToText: "Zurück zum Text",
+          figure: "Abbildung",
           attention: "Achtung",
           caution: "Vorsicht",
           danger: "Gefahr",

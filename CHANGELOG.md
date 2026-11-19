@@ -5,12 +5,23 @@
 ### Breaking changes
 
 - **Directives in braces**: a fenced code block whose language is the kind of
-  a callout, `image`, `figure` or `math` in braces, such as ` ```{note} `, is
-  no longer shown as code but as that directive, and lines between `:::`
-  with such a name are no longer text; `{math}` before a code span makes it a
-  formula. A longer fence around such a block, as in ` ````markdown `, still
-  shows it as code. Any other name in braces, such as `{r}`, and the block of
-  a component, `{{<name>}}`, stay as they are.
+  a callout, `admonition`, `image`, `figure` or `math` in braces, such as
+  ` ```{note} `, is no longer shown as code but as that directive, and lines
+  between `:::` with such a name are no longer text; `{math}` before a code
+  span makes it a formula. A longer fence around such a block, as in
+  ` ````markdown `, still shows it as code. Any other name in braces, such as
+  `{r}`, and the block of a component, `{{<name>}}`, stay as they are.
+- **Alerts, labels and links without a text**: a quotation that starts with
+  `[!NOTE]`, `[!TIP]`, `[!IMPORTANT]`, `[!WARNING]` or `[!CAUTION]` is a
+  callout, a line `(label)=` above a block and a label in brackets after
+  `$$` name that block and are no longer text, and a link to a part of a
+  page without a text, such as `[](#part)`, stops the build.
+- **Numbers of LaTeX environments**: Blyss itself numbers the lines of an
+  environment of LaTeX that numbers them, such as `align`, in a formula on
+  lines of its own of a page, of a post or of a doc, from 1 on every page.
+  Any other formula, such as one in the text of a component, shows no such
+  numbers. The stylesheet of Temml used to count these lines through the
+  whole page.
 - **Component files that stay unpublished**: a file or a directory of a
   component whose name starts with `.` or `_` is no longer published at
   `/components/<name>/`, wherever it lies in the directory of the component.
@@ -369,6 +380,34 @@
   names the file. Directives work in every Markdown text, also in a list, in
   a quotation and within each other; the block of a component and a diagram
   remain code within a directive, as within a list.
+- **Callouts that open, `{admonition}` and alerts**: the class `dropdown`
+  makes a callout a `<details>` that opens at a click on its title, and the
+  option `open` shows it open from the start. `{admonition}` is a callout
+  without a kind of its own, with the title that it is given and the colour
+  of the kind that one of its classes names; further classes of the option
+  `class` are for the stylesheet of the website. As on GitHub, a quotation
+  that starts with `[!NOTE]`, `[!TIP]`, `[!IMPORTANT]`, `[!WARNING]` or
+  `[!CAUTION]` is a callout of that kind. Existing websites copy the rules
+  for `details.admonition`.
+- **Images side by side**: a `{figure}` without a URL shows the images of
+  its body side by side, each with a letter and its description below it,
+  and the rest of its body as the caption of them all. Existing websites
+  copy the rules for `.subfigures` and `.caption-number`.
+- **Labels and numbers**: the option `label`, or `name`, of a directive, a
+  line `(label)=` above a heading or any other block, and a label in
+  brackets after `$$` or as `\label{…}` within it give an element its `id`,
+  to which a link such as `[Figure 1](#fig-harbour)` leads. A figure and a
+  formula with a label are numbered, each in the order in which their page
+  shows them: the figure before its caption, after the label `figure` of its
+  language, and the formula at the end of its line, in one sequence with
+  the lines that an environment of LaTeX numbers, such as `align`. The
+  option `enumerated`, or `numbered`, numbers one without a label or leaves
+  one with a label without a number. Only pages, posts and docs have labels
+  and numbers. Blyss does not fill in the text of a reference, as MyST does
+  for `[](#label)`. The label `figure` has an English default, and the
+  starter translates it into German: existing websites translate it in
+  `site.languages` and copy the rule for `mtd:has(> .tml-tag)`. The doc
+  "Labels and numbers" of the starter describes them.
 
 ### Changes
 
