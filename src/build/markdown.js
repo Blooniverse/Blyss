@@ -2,21 +2,26 @@ import hljs from "highlight.js";
 import { Marked } from "marked";
 import temml from "temml";
 import { BlyssError } from "../errors.js";
+import { directives } from "./directives.js";
 import { escapeHtml } from "./html.js";
 
 // Every Markdown text of a website is read here, so that formulas and code look the same everywhere.
 
-let origin; // the file whose Markdown is being read, which the errors of its formulas name
+// The text that is being read: its file, which the errors of its formulas and of its directives name, and the labels
+// of its language, which title its callouts.
+const reading = { file: undefined, labels: undefined };
 
 // Formulas are LaTeX, which Temml turns into MathML. As in Pandoc, $…$ is a formula within a text: no space follows
 // its first $ or precedes its second, and no digit follows that one, so that "$5 and $10" stays a text; it ends
 // before a code span, whose ` it cannot contain. $$…$$ is a formula on lines of its own, or one within a text that is
-// shown like it.
+// shown like it. As in MyST, {math}`…` is a formula within a text as well: like the code of a code span, its LaTeX
+// stands between two runs of backticks of the same length, so that it can hold dollar signs.
 const displayed = /\$\$((?:\\[\s\S]|[^\\$]|\$(?!\$))+?)\$\$/.source;
 const withinText = /\$(?![\s$])((?:\\[\s\S]|[^\\$`])+?)(?<!\s)\$(?!\d)/.source;
+const role = /\{[ \t]*math[ \t]*\}(?<run>`+)(?!`)(?<role>[\s\S]+?)(?<!`)\k<run>(?!`)/.source;
 const onOwnLines = ` {0,3}${displayed}[ \\t]*(?:\\n+|$)`;
 const blockMath = new RegExp(`^${onOwnLines}`);
-const inlineMath = new RegExp(`^(?:${displayed}|${withinText})`);
+const inlineMath = new RegExp(`^(?:${displayed}|${withinText}|${role})`);
 const anyMath = new RegExp(`${displayed}|${withinText}`, "g");
 
 // The MathML of a formula, which is checked only where it is shown.
@@ -25,8 +30,8 @@ function toMathMl({ raw, latex, display, file }) {
     return temml.renderToString(latex, { displayMode: display, throwOnError: true });
   } catch (error) {
     const [written, reason] = [raw, error.message].map(text => text.trim().replace(/\s+/g, " "));
-    throw new BlyssError(`Cannot build ${file}: its formula ${written} is not valid LaTeX.\n${reason}\n` +
-      "Write \\$ for a dollar sign that starts no formula.", { cause: error });
+    throw new BlyssError(`Cannot build ${file}: its formula ${written} is not valid LaTeX.\n${reason}` +
+      (written.startsWith("$") ? "\nWrite \\$ for a dollar sign that starts no formula." : ""), { cause: error });
   }
 }
 
@@ -49,22 +54,26 @@ const math = {
     start: interrupts(onOwnLines),
     tokenizer(src) {
       const match = blockMath.exec(src);
-      if (match) return { type: "blockMath", raw: match[0], latex: match[1], display: true, file: origin };
+      if (match) return { type: "blockMath", raw: match[0], latex: match[1], display: true, file: reading.file };
     },
     renderer: token => `<div class="math">${toMathMl(token)}</div>\n`
   }, {
     name: "inlineMath",
     level: "inline",
-    // The next $ that the text of marked would run over. That text stops by itself before each of the other
-    // characters below; only a run of ` or ~ at its start belongs to it.
+    // The next formula that the text of marked would run over: a $, or the braces of {math} before a backtick. That
+    // text stops by itself before each of the other characters below; only a run of ` or ~ at its start belongs
+    // to it.
     start(src) {
       const run = /^[`~]*/.exec(src)[0].length;
       const next = src.slice(run).search(/[$\\<![`*~_]/);
-      return next >= 0 && src[run + next] === "$" ? run + next : -1;
+      if (next < 0) return -1;
+      if (src[run + next] === "$") return run + next;
+      return src[run + next] === "`" ? src.slice(0, run + next).search(/\{[ \t]*math[ \t]*\}$/) : -1;
     },
     tokenizer(src) {
       const match = inlineMath.exec(src);
-      if (match) return { type: "inlineMath", raw: match[0], latex: match[1] ?? match[2], display: match[1] !== undefined, file: origin };
+      if (!match) return undefined;
+      return { type: "inlineMath", raw: match[0], latex: match[1] ?? match[2] ?? match.groups.role, display: match[1] !== undefined, file: reading.file };
     },
     renderer: toMathMl
   }],
@@ -124,19 +133,21 @@ const footnotes = {
   }]
 };
 
-const texts = new Marked(math, code);
-const documents = new Marked(math, code, footnotes);
+const myst = directives(reading, interrupts);
+const texts = new Marked(math, code, myst);
+const documents = new Marked(math, code, myst, footnotes);
 
-function read(file, lex) {
-  origin = file;
+function read(file, labels, lex) {
+  Object.assign(reading, { file, labels });
   return lex();
 }
 
-// The tokens of a Markdown text, and the HTML of such tokens or of the whole text. file names the text in errors.
-export const lexMarkdown = (markdown, file) => read(file, () => texts.lexer(markdown));
+// The tokens of a Markdown text, and the HTML of such tokens or of the whole text. file names the text in errors,
+// and labels are those of its language.
+export const lexMarkdown = (markdown, file, labels) => read(file, labels, () => texts.lexer(markdown));
 export const renderTokens = tokens => documents.parser(tokens);
 export const renderInlineTokens = tokens => documents.Parser.parseInline(tokens, documents.defaults);
-export const renderMarkdown = (markdown, file) => renderTokens(lexMarkdown(markdown, file));
+export const renderMarkdown = (markdown, file, labels) => renderTokens(lexMarkdown(markdown, file, labels));
 
 // Calls visit for every token of a text but those within a footnote, which count only once the footnote is shown.
 // Unlike marked's walkTokens, it takes no longer for each further token of a long text.
@@ -153,7 +164,7 @@ function walk(tokens, visit) {
 // their first references and follow the text as a list, each with links back to its references. Their ids, fn:1 and
 // fnref:1, differ from those of headings, which have no colon. labels are those of the text's language.
 export function lexDocument(markdown, file, labels) {
-  const tokens = read(file, () => documents.lexer(markdown));
+  const tokens = read(file, labels, () => documents.lexer(markdown));
   const defined = new Map();
   walk(tokens, token => {
     if (token.type === "footnote" && !defined.has(token.label)) defined.set(token.label, token);

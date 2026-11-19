@@ -17,7 +17,18 @@ const defaultLabels = {
   previous: "Previous",
   next: "Next",
   footnotes: "Footnotes",
-  backToText: "Back to the text"
+  backToText: "Back to the text",
+  // The titles of the callouts, by their kinds (see directives.js).
+  attention: "Attention",
+  caution: "Caution",
+  danger: "Danger",
+  error: "Error",
+  hint: "Hint",
+  important: "Important",
+  note: "Note",
+  seealso: "See also",
+  tip: "Tip",
+  warning: "Warning"
 };
 
 const isObject = value => typeof value === "object" && value !== null && !Array.isArray(value);

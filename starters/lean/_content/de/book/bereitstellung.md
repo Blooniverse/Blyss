@@ -7,13 +7,28 @@ translationKey: book-deployment
 
 ## Vor der Veröffentlichung
 
-Setzen Sie `site.baseUrl`, Publisher-Daten und Sprachbeschreibungen in `blyss.config.js` auf die tatsächlichen Werte; ersetzen Sie auch die `Sitemap:`-URL in `static/robots.txt`. Tauschen Sie das Platzhalterlogo und die Galeriebilder samt Beschreibungen in den sprachabhängigen Galerietexten aus. Prüfen Sie, ob externe Abrufe von Google Fonts und jsDelivr für Ihre Website zulässig sind, oder hosten Sie [Schriften](/de/book/vorlagen/) und [Diagrammbibliotheken](/de/book/komponenten/) selbst.
+Vor der Veröffentlichung:
 
-Die Vorlagen enthalten Canonical- und `hreflang`-Links sowie Schema.org-JSON-LD mit einem `@graph`; Beiträge haben darin den Typ `BlogPosting` und Dokumente den Typ `TechArticle`, jeweils mit ihrer Überschrift, ihren Daten und dem Publisher der Website als Autor. Die Alternative `x-default` einer Seite ist ihre Übersetzung in der Standardsprache. `sitemap.xml` enthält die erzeugten Seiten mit Übersetzungslinks und `lastmod` aus `dateModified` oder `datePublished`, aber keine 404-Seiten. Kontrollieren Sie URLs und strukturierte Daten nach dem Build.
+- Setzen Sie `site.baseUrl`, Publisher-Daten und Sprachbeschreibungen in `blyss.config.js` auf die tatsächlichen Werte; ersetzen Sie auch die `Sitemap:`-URL in `static/robots.txt`.
+- Tauschen Sie das Platzhalterlogo und die Galeriebilder samt Beschreibungen in den sprachabhängigen Galerietexten aus.
+- Prüfen Sie, ob externe Abrufe von Google Fonts und jsDelivr für Ihre Website zulässig sind, oder hosten Sie [Schriften](/de/book/vorlagen/) und [Diagrammbibliotheken](/de/book/komponenten/) selbst.
+
+Für Suchmaschinen enthält die Website:
+
+- Canonical- und `hreflang`-Links in den Vorlagen. Die Alternative `x-default` einer Seite ist ihre Übersetzung in der Standardsprache.
+- Schema.org-JSON-LD mit einem `@graph` in den Vorlagen. Beiträge haben darin den Typ `BlogPosting` und Dokumente den Typ `TechArticle`, jeweils mit ihrer Überschrift, ihren Daten und dem Publisher der Website als Autor.
+- `sitemap.xml` mit den erzeugten Seiten, ihren Übersetzungslinks und `lastmod` aus `dateModified` oder `datePublished`, aber ohne 404-Seiten.
+
+Kontrollieren Sie URLs und strukturierte Daten nach dem Build.
 
 ## Statisches Hosting
 
-`npm run build` erstellt `public/` neu. Veröffentlichen Sie dessen Inhalt, ändern Sie dort aber nichts dauerhaft: Quelldateien liegen in `_content/`, `components/`, `templates/`, `static/` und `blyss.config.js`. Blyss erzeugt kein `public/index.html`. Konfigurieren Sie den Host so, dass `/` mit HTTP 302 zur Standardsprache weiterleitet und unbekannte URLs `/404.html` mit Status 404 ausgeben, wie beim lokalen Server. Komponenten liegen unter `/components/`.
+`npm run build` erstellt `public/` neu. Veröffentlichen Sie dessen Inhalt, ändern Sie dort aber nichts dauerhaft: Quelldateien liegen in `_content/`, `components/`, `templates/`, `static/` und `blyss.config.js`. Blyss erzeugt kein `public/index.html`. Konfigurieren Sie den Host deshalb wie den lokalen Server:
+
+- `/` leitet mit HTTP 302 zur Standardsprache weiter.
+- Unbekannte URLs geben `/404.html` mit Status 404 aus.
+
+Komponenten liegen unter `/components/`.
 
 ## Unterhalb eines Pfads
 
@@ -23,9 +38,13 @@ Eine Website kann unterhalb eines Pfads ihrer Domain liegen, wie eine GitHub-Pag
 baseUrl: "https://user.github.io/repository",
 ```
 
-Inhalte, Vorlagen und Komponenten bleiben, wie sie sind: Schreiben Sie Links und Dateien von der Wurzel der Website aus, etwa `/de/posts/` und `/assets/css/main.css`. Der Build setzt den Pfad vor jedes `href`, `src`, `poster` und `action`, das mit einem einzelnen `/` beginnt, und `blyss serve` liefert die Website unterhalb des Pfads aus, unter `http://localhost:3000/repository/`.
+Inhalte, Vorlagen und Komponenten bleiben, wie sie sind: Schreiben Sie Links und Dateien von der Wurzel der Website aus, etwa `/de/posts/` und `/assets/css/main.css`.
 
-Steht eine URL an anderer Stelle, etwa in einem Inline-Skript oder einem `data-`-Attribut, schreiben Sie in einer Vorlage oder in der Vorlage einer Komponente `{{basePath}}` davor: Das ist der Pfad, hier `/repository`, und leer bei einer Website an der Wurzel ihrer Domain. Ein Stylesheet verweist mit relativen URLs auf seine Dateien, etwa `url(../img/logo.svg)`. Die Diagramme des Starters ergänzen den Pfad ihrer Bibliotheken in `static/` selbst.
+- Der Build setzt den Pfad vor jedes `href`, `src`, `poster` und `action`, das mit einem einzelnen `/` beginnt.
+- `blyss serve` liefert die Website unterhalb des Pfads aus, unter `http://localhost:3000/repository/`.
+- Steht eine URL an anderer Stelle, etwa in einem Inline-Skript oder einem `data-`-Attribut, schreiben Sie in einer Vorlage oder in der Vorlage einer Komponente `{{basePath}}` davor: Das ist der Pfad, hier `/repository`, und leer bei einer Website an der Wurzel ihrer Domain.
+- Ein Stylesheet verweist mit relativen URLs auf seine Dateien, etwa `url(../img/logo.svg)`.
+- Die Diagramme des Starters ergänzen den Pfad ihrer Bibliotheken in `static/` selbst.
 
 ## GitHub Pages
 

@@ -24,9 +24,12 @@ Within a language, each page has a key of its own: two pages of one language wit
 
 ## What every language needs
 
-The starter's navigation links to the home page, to the about page and to the start page of the documentation. Keep `pages/index.md`, `pages/about.md` and `book/index.md` in every language, without a different slug.
+Every language needs its own:
 
-Each language also has its own not-found page, `pages/404.md`, its own texts of the [hero and the overlay](/en/book/templates/#hero-and-overlay) and of the [components](/en/book/components/), and its own labels in `blyss.config.js`.
+- `pages/index.md`, `pages/about.md` and `book/index.md`, without a different slug: the starter's navigation links to the home page, to the about page and to the start page of the documentation.
+- Not-found page, `pages/404.md`.
+- Texts of the [hero and the overlay](/en/book/templates/#hero-and-overlay) and of the [components](/en/book/components/).
+- Labels in `blyss.config.js`.
 
 ## Generated pages
 

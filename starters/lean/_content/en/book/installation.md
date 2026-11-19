@@ -19,7 +19,13 @@ npm start
 
 Open `http://localhost:3000`. To add Blyss to an existing website instead, run `npm install @blooniverse/blyss`.
 
-`blyss init [directory]` copies the starter into a new or empty directory, or the current directory if omitted. A directory that holds nothing but `.git` counts as empty, so `git init` may come first. It refuses any other non-empty directory and never overwrites existing files. If copying fails, it removes only what it created. It names the package after the directory and depends on the running Blyss version; it does not install dependencies, initialize Git, build, serve or use the network.
+`blyss init [directory]` copies the starter into a new or empty directory, or the current directory if omitted:
+
+- A directory that holds nothing but `.git` counts as empty, so `git init` may come first.
+- It refuses any other non-empty directory and never overwrites existing files.
+- If copying fails, it removes only what it created.
+- It names the package after the directory and depends on the running Blyss version.
+- It does not install dependencies, initialize Git, build, serve or use the network.
 
 ## Commands
 
@@ -32,12 +38,29 @@ npm start                                # blyss serve: serve it on PORT or serv
 
 Run `npm run build`, `npm run build:drafts` and `npm start` from the website root, where `blyss.config.js` lives: they call `blyss build` and `blyss serve` of the Blyss that `npm install` put into the website. For `init`, write the full name `npx @blooniverse/blyss`: outside such a website, `npx blyss` fetches an unrelated npm package named `blyss`.
 
-`blyss build --drafts` builds the [drafts](/en/book/writing/pages-and-posts/#drafts) as well, which every other build leaves out. `blyss --help` lists the commands and `blyss --version` shows the version of Blyss. `build` takes no argument but `--drafts`, `init` none but its directory and `serve` none at all: any other argument ends the command with a message.
+The commands take these arguments:
 
-`build` and `serve` require `blyss.config.js`. `serve` does not build: for a website without `public/`, it says so and answers every request with "404 Not Found". The dependency-free server answers `GET` and `HEAD` requests: it redirects `/` to the configured default language, leads a directory that is requested without its final slash, such as `/en`, to `/en/`, and returns the default-language 404 page for missing routes.
+- `blyss build --drafts` builds the [drafts](/en/book/writing/pages-and-posts/#drafts) as well, which every other build leaves out.
+- `blyss --help` lists the commands and `blyss --version` shows the version of Blyss.
+- `build` takes no argument but `--drafts`, `init` none but its directory and `serve` none at all: any other argument ends the command with a message.
+
+`build` and `serve` require `blyss.config.js`. `serve` does not build: for a website without `public/`, it says so and answers every request with "404 Not Found". The dependency-free server answers `GET` and `HEAD` requests:
+
+- It redirects `/` to the configured default language.
+- It leads a directory that is requested without its final slash, such as `/en`, to `/en/`.
+- It returns the default-language 404 page for missing routes.
 
 ## Website structure
 
-`_content/<language>/` holds pages, posts, book docs, fragments and component texts. `components/` holds component templates and assets, `templates/` page templates, and `static/` files copied unchanged to the output; a website without `components/` or `static/` has no components or no such files. `blyss.config.js` configures the website; see [Configuration](/en/book/configuration/).
+A website consists of:
 
-`public/` is generated output, excluded from Git by the starter. Every build deletes and recreates it: edit the sources, not `public/`. Blyss refuses to build into the website root or a directory containing or inside a source directory. The bundled starter stays unchanged when `init` copies it; the new website is yours to edit.
+- `_content/<language>/`: pages, posts, book docs, fragments and component texts.
+- `components/`: component templates and assets.
+- `templates/`: page templates.
+- `static/`: files copied unchanged to the output.
+- `blyss.config.js`: the configuration of the website; see [Configuration](/en/book/configuration/).
+- `public/`: the generated output, excluded from Git by the starter.
+
+A website without `components/` or `static/` has no components or no such files.
+
+Every build deletes and recreates `public/`: edit the sources, not `public/`. Blyss refuses to build into the website root or a directory containing or inside a source directory. The bundled starter stays unchanged when `init` copies it; the new website is yours to edit.

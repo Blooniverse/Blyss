@@ -419,6 +419,17 @@ describe("a generated starter", () => {
     assert.ok(german.includes('<pre tabindex="0">{\n  &quot;description&quot;: &quot;Beiträge pro Monat als Balken&quot;,'));
   });
 
+  test("shows a task list, callouts titled in the language of the page, a figure and a formula of MyST in the doc that describes them", async () => {
+    for (const [language, doc, note, gives] of [["en", "writing/markdown-spice", "Note", "gives"], ["de", "schreiben/markdown-wuerze", "Anmerkung", "ergibt"]]) {
+      const html = await readFile(join(site, "public", language, "book", doc, "index.html"), "utf8");
+      assert.match(html, /<ul>\n<li><input checked="" disabled="" type="checkbox"> [^<]+<\/li>\n<li><input disabled="" type="checkbox"> /);
+      assert.ok(html.includes(`<div class="admonition note" role="note">\n<p class="admonition-title">${note}</p>\n`));
+      assert.match(html, /<div class="admonition warning" role="note">\n<p class="admonition-title"><code>public\/<\/code> [^<]+<\/p>\n<p>[^<]+<\/p>\n<pre /);
+      assert.match(html, /<figure class="align-center">\n<img src="\/assets\/img\/gallery\/lighthouse\.svg" alt="[^"]+" style="width: 30%">\n<figcaption>\n<p>/);
+      assert.ok(html.includes(` ${gives} <math><mrow><msup><mi>a</mi><mn>2</mn></msup>`));
+    }
+  });
+
   test("ships the stylesheet and the font of the Temml version that writes the formulas", async () => {
     for (const file of ["Temml-Local.css", "Temml.woff2"]) {
       const shipped = await readFile(join(starter, "static", "assets", "temml", file));
@@ -601,10 +612,12 @@ describe("a website below a path", () => {
       '<script type="module" src="/docs/components/componentSlider/componentSlider.js"></script>', '<body data-base="/docs" ']) {
       assert.ok(home.includes(expected), expected);
     }
-    // A link of the Markdown, and the URL of a library in static/, which its component writes into a data attribute.
+    // A link of the Markdown, the image of a figure, and the URL of a library in static/, which its component writes
+    // into a data attribute.
     assert.ok((await page("en", "book", "index.html")).includes('<a href="/docs/en/book/installation/">'));
-    assert.ok((await page("en", "book", "writing", "markdown-spice", "index.html"))
-      .includes('data-library="/docs/assets/mermaid/mermaid.esm.min.mjs"'));
+    const spice = await page("en", "book", "writing", "markdown-spice", "index.html");
+    assert.ok(spice.includes('<img src="/docs/assets/img/gallery/lighthouse.svg" '));
+    assert.ok(spice.includes('data-library="/docs/assets/mermaid/mermaid.esm.min.mjs"'));
     assert.ok((await page("sitemap.xml")).includes("<loc>https://example.com/docs/en/</loc>"));
   });
 
@@ -1588,6 +1601,142 @@ export default ({ settings, source, texts, refuse }) => {
       }
     }
     await rm(join(site, graph), { recursive: true });
+  });
+});
+
+describe("a site with the callouts, the figures and the formulas of MyST", () => {
+  let site;
+  const page = path => readFile(join(site, "public", path), "utf8");
+  const file = join("_content", "en", "pages", "directives.md");
+  const kinds = { attention: "Attention", caution: "Caution", danger: "Danger", error: "Error", hint: "Hint", important: "Important",
+    note: "Note", seealso: "See also", tip: "Tip", warning: "Warning" };
+  const callout = (kind, title, body) => `<div class="admonition ${kind}" role="note">\n<p class="admonition-title">${title}</p>\n${body}</div>\n`;
+  const fence = "```";
+  const source = `---\ntitle: Directives\ntranslationKey: directives\n---\n\n${[
+    // A callout of each kind between backticks, without a title of its own.
+    ...Object.keys(kinds).map(kind => `${fence}{${kind}}\nA ${kind}.\n${fence}`),
+    // The titles of a callout: the text after its kind, or its first block if that is bold or a heading; a callout
+    // of nothing but that text.
+    ":::{tip} A *title* with `code`[^t]\nBody[^b].\n:::",
+    "[^b]: Body note.\n[^t]: Title note.",
+    ":::{note}\n**Bold title**\n\nBelow bold.\n:::",
+    ":::{note}\n## Heading title\n\nBelow a heading.\n:::",
+    ":::{warning} Only this text\n:::",
+    // Directives around a directive and around code, below a line of a paragraph, in a list and in a quotation.
+    `::::{important} Outer\n:::{note}\nInner.\n:::\n\n${fence}js\ncode();\n${fence}\n::::`,
+    `${fence}\`{caution}\n${fence}{note}\nShorter fence.\n${fence}\n${fence}\``,
+    "A paragraph.\n:::{hint}\nBelow a paragraph.\n:::",
+    "- Item\n\n  :::{tip}\n  In a list.\n  :::",
+    "> :::{tip}\n> Quoted.\n> :::",
+    // An image and figures, with options of both forms and without any.
+    `${fence}{image} /assets/img/my logo.svg\n:alt: A & B\n:width: 300\n:align: right\n${fence}`,
+    ':::{figure} /assets/img/logo.svg\n---\nalt: "The logo"\nwidth: 50%\nalign: center\n---\nThe **caption**.\n\nIts second paragraph.\n:::',
+    `${fence}{figure} /assets/img/logo.svg\n${fence}`,
+    // Formulas within a text and on lines of their own.
+    "A role {math}`a*b*c`, one with a dollar sign {math}`\\$5` and a longer run {math}``x``, but \\{math}`f` and {abc}`g` stay.",
+    `${fence}{math}\n\\frac{1}{2}\n${fence}`,
+    ":::{math}\n\\frac{3}{4}\n:::",
+    // Other names in braces, and what a component shows, alone and within a directive.
+    `${fence}{r}\nplot(x)\n${fence}`,
+    ":::{tab-set}\nTabs.\n:::",
+    `${fence}{{componentMermaid}}\ngraph TD\n${fence}`,
+    `::::{note}\n${fence}mermaid\ngraph LR\n${fence}\n::::`
+  ].join("\n\n")}\n`;
+
+  before(async () => {
+    site = join(sandbox, "directives");
+    assert.equal(run(["init", site], sandbox).status, 0);
+    await writeFile(join(site, file), source);
+    await writeFile(join(site, "_content", "de", "pages", "directives.md"),
+      `---\ntitle: Direktiven\ntranslationKey: directives\n---\n\n:::{note}\nText.\n:::\n\n${fence}{seealso}\nMehr.\n${fence}\n`);
+    // A text of the hero is no page, but its callout is titled in its language as well.
+    const heroTexts = join(site, "_content", "de", "heroTexts.md");
+    await writeFile(heroTexts, `${await readFile(heroTexts, "utf8")}\n### Hinweisbox\n\n:::{tip}\nIm Hero.\n:::\n`);
+    const result = run(["build"], site);
+    assert.equal(result.status, 0, result.stderr);
+  });
+
+  test("shows a callout of each kind, titled by the text after its kind, by its first block or by the label of its language", async () => {
+    const html = await page("en/pages/directives/index.html");
+    for (const [kind, label] of Object.entries(kinds)) assert.ok(html.includes(callout(kind, label, `<p>A ${kind}.</p>\n`)), kind);
+    // The footnote of a title precedes that of the text below it.
+    const reference = number => `<sup class="footnote-ref"><a href="#fn:${number}" id="fnref:${number}" role="doc-noteref">${number}</a></sup>`;
+    assert.ok(html.includes(callout("tip", `A <em>title</em> with <code>code</code>${reference(1)}`, `<p>Body${reference(2)}.</p>\n`)));
+    assert.ok(html.includes(callout("note", "Bold title", "<p>Below bold.</p>\n")));
+    assert.ok(html.includes(callout("note", "Heading title", "<p>Below a heading.</p>\n")));
+    assert.ok(html.includes(callout("warning", "Warning", "<p>Only this text</p>\n")));
+    assert.ok((await page("de/pages/directives/index.html"))
+      .includes(callout("note", "Anmerkung", "<p>Text.</p>\n") + callout("seealso", "Siehe auch", "<p>Mehr.</p>\n")));
+    assert.ok((await page("de/index.html")).includes(`<div>\n<h3>Hinweisbox</h3>\n${callout("tip", "Tipp", "<p>Im Hero.</p>\n")}</div>`));
+  });
+
+  test("holds a directive and code within a directive, and a directive below a paragraph, in a list and in a quotation", async () => {
+    const html = await page("en/pages/directives/index.html");
+    const code = '<pre tabindex="0"><code class="language-js"><span class="hljs-title function_">code</span>();\n</code></pre>\n';
+    assert.ok(html.includes(callout("important", "Outer", callout("note", "Note", "<p>Inner.</p>\n") + code)));
+    assert.ok(html.includes(callout("caution", "Caution", callout("note", "Note", "<p>Shorter fence.</p>\n"))));
+    assert.ok(html.includes(`<p>A paragraph.</p>\n${callout("hint", "Hint", "<p>Below a paragraph.</p>\n")}`));
+    assert.ok(html.includes(`<li><p>Item</p>\n${callout("tip", "Tip", "<p>In a list.</p>\n")}</li>`));
+    assert.ok(html.includes(`<blockquote>\n${callout("tip", "Tip", "<p>Quoted.</p>\n")}</blockquote>`));
+  });
+
+  test("shows an image and a figure with their description, width and alignment, and the body of a figure as its caption", async () => {
+    const html = await page("en/pages/directives/index.html");
+    assert.ok(html.includes('<p class="align-right"><img src="/assets/img/my%20logo.svg" alt="A &amp; B" style="width: 300px"></p>'));
+    assert.ok(html.includes('<figure class="align-center">\n<img src="/assets/img/logo.svg" alt="The logo" style="width: 50%">\n' +
+      "<figcaption>\n<p>The <strong>caption</strong>.</p>\n<p>Its second paragraph.</p>\n</figcaption>\n</figure>"));
+    assert.ok(html.includes('<figure>\n<img src="/assets/img/logo.svg" alt="">\n</figure>'));
+  });
+
+  test("turns {math} into MathML, within a text and as a directive", async () => {
+    const html = await page("en/pages/directives/index.html");
+    const formula = body => `<math>${body}</math>`;
+    assert.ok(html.includes(`<p>A role ${formula("<mrow><mi>a</mi><mo>∗</mo><mi>b</mi><mo>∗</mo><mi>c</mi></mrow>")}, one with a dollar sign ` +
+      `${formula("<mrow><mi>$</mi><mn>5</mn></mrow>")} and a longer run ${formula("<mi>x</mi>")}, but {math}<code>f</code> and {abc}<code>g</code> stay.</p>`));
+    for (const [numerator, denominator] of [[1, 2], [3, 4]]) {
+      assert.ok(html.includes('<div class="math"><math display="block" class="tml-display" style="display:block math;">' +
+        `<mfrac><mn>${numerator}</mn><mn>${denominator}</mn></mfrac></math></div>`));
+    }
+  });
+
+  test("leaves a fence with another name what it is in Markdown, and shows the block of a component alone but not within a directive", async () => {
+    const html = await page("en/pages/directives/index.html");
+    assert.ok(html.includes('<pre tabindex="0"><code class="language-{r}">plot(x)\n</code></pre>'));
+    assert.ok(html.includes("<p>:::{tab-set}\nTabs.\n:::</p>"));
+    assert.ok(html.includes('<component-mermaid class="component" id="componentMermaid-1" '));
+    assert.ok(html.includes(callout("note", "Note", '<pre tabindex="0"><code class="language-mermaid">graph LR\n</code></pre>\n')));
+  });
+
+  test("refuses an option that it does not know, a value that an option cannot have and a directive that lacks its image or its formula, and keeps the previous output", async () => {
+    const options = "; a line of text that starts like an option follows an empty line\\.\\n$";
+    for (const [search, replacement, message] of [
+      ["A note.", ":class: dropdown\nA note.", `its \\{note\\} directive has the option "class", which Blyss does not know\\.\\nA \\{note\\} directive has no options${options}`],
+      [":alt: A & B", ":label: logo", 'its \\{image\\} directive has the option "label", which Blyss does not know\\.\\n' +
+        `A \\{image\\} directive can have "alt", "align" and "width"${options}`],
+      ["{image} /assets/img/my logo.svg", "{image}", "its \\{image\\} directive lacks the URL of its image, which follows its name, as in \\{image\\} /assets/img/harbour\\.jpg\\.\\n$"],
+      [":align: right", ":align: right\n\nA text.", "its \\{image\\} directive has a text, which an image does not show\\.\\n" +
+        "Write the description of the image as :alt:, or its caption in a \\{figure\\} directive\\.\\n$"],
+      [":align: right", ":align: middle", 'its \\{image\\} directive cannot use align "middle", which must be "left", "center" or "right"\\.\\n$'],
+      ["width: 50%", "width: half", 'its \\{figure\\} directive cannot use width "half", which must be a number, alone or with a unit of CSS, ' +
+        'such as "50%", "300px" or "300"\\.\\n$'],
+      ["align: center\n---", "align: center", "the options of its \\{figure\\} directive lack their closing ---\\.\\n$"],
+      ["{math}\n\\frac{1}{2}", "{math} x\n\\frac{1}{2}", 'its \\{math\\} directive has "x" after its name, but its formula stands on the lines below it\\.\\n$'],
+      ["{math}\n\\frac{1}{2}\n", "{math}\n", "its \\{math\\} directive has no formula\\.\\n$"],
+      // A formula without dollar signs is refused without the advice on dollar signs.
+      ["\\frac{3}{4}", "\\frac{3", "its formula :::\\{math\\} \\\\frac\\{3 ::: is not valid LaTeX\\.\\n.+\\n$"],
+      ["{math}`a*b*c`", "{math}`\\frac{`", "its formula \\{math\\}`\\\\frac\\{` is not valid LaTeX\\.\\n.+\\n$"]
+    ]) {
+      assert.ok(source.includes(search), search);
+      await writeFile(join(site, file), source.replace(search, replacement));
+      try {
+        const result = run(["build"], site);
+        assert.equal(result.status, 1, replacement);
+        assert.match(result.stderr, new RegExp(`^Cannot build ${file.replaceAll("\\", "\\\\")}: ${message}`));
+        assert.ok((await stat(join(site, "public", "en", "pages", "directives", "index.html"))).isFile());
+      } finally {
+        await writeFile(join(site, file), source);
+      }
+    }
   });
 });
 

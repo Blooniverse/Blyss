@@ -32,12 +32,13 @@ function partsOf(name, settings = {}, unknownComponent) {
 }
 
 // The texts of the regions by region and language: the title of <region>Texts.md and its texts, each a <div>.
-function readTexts(projectDir, fragments, names) {
+// languages are those of site.languages.
+function readTexts(projectDir, fragments, names, languages) {
   const texts = new Map();
   for (const { sourceFile, languageKey, name, metadata, markdown } of fragments) {
     const region = names.find(region => name === `${region}Texts`);
     if (!region) continue;
-    const { texts: parts, before } = splitTexts(markdown, relative(projectDir, sourceFile));
+    const { texts: parts, before } = splitTexts(markdown, relative(projectDir, sourceFile), languages[languageKey].labels);
     if (!before.every(isBlank)) {
       throw new BlyssError(`Cannot build ${relative(projectDir, sourceFile)}: each of its texts starts with a ### heading, ` +
         "but there is content before the first one.");
@@ -70,7 +71,7 @@ export function arrangeRegions(projectDir, config, templates, fragments, unknown
     hero: { source: "hero", showOn: { home: true } },
     overlay: { source: synchroniseHeroOverlay ? "hero" : "overlay", showOn: { ...Object.fromEntries(kinds.map(kind => [kind, true])), ...showOn } }
   };
-  const texts = readTexts(projectDir, fragments, Object.keys(regions));
+  const texts = readTexts(projectDir, fragments, Object.keys(regions), config.site.languages);
 
   return {
     // The regions of a page of a kind in a language, by name: undefined unless the region has a template, belongs to

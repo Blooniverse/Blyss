@@ -7,13 +7,26 @@ translationKey: book-deployment
 
 ## Before production
 
-Replace the values marked `CHANGE BEFORE PRODUCTION` in `blyss.config.js` and the `Sitemap:` URL in `static/robots.txt`. Replace the placeholder logo and gallery images and their localized descriptions. Decide whether to [host fonts](/en/book/templates/#top-bar-and-fonts) and [diagram libraries](/en/book/components/#host-diagram-libraries-yourself) locally instead of exposing visitors' IP addresses to external providers.
+Before you publish a website:
 
-Blyss generates canonical and `hreflang` links, Schema.org JSON-LD using `@graph`, and `sitemap.xml`, which lists generated pages and their translations except 404 pages. In the JSON-LD, a post is a `BlogPosting` and a doc a `TechArticle`, each with its headline, its dates and the publisher of the website as its author. The `x-default` alternate of a page is its translation in the default language. Set `site.baseUrl` to the public URL.
+- Replace the values marked `CHANGE BEFORE PRODUCTION` in `blyss.config.js` and the `Sitemap:` URL in `static/robots.txt`. Set `site.baseUrl` to the public URL.
+- Replace the placeholder logo and gallery images and their localized descriptions.
+- Decide whether to [host fonts](/en/book/templates/#top-bar-and-fonts) and [diagram libraries](/en/book/components/#host-diagram-libraries-yourself) locally instead of exposing visitors' IP addresses to external providers.
+
+For search engines, Blyss generates:
+
+- Canonical and `hreflang` links. The `x-default` alternate of a page is its translation in the default language.
+- Schema.org JSON-LD using `@graph`. In it, a post is a `BlogPosting` and a doc a `TechArticle`, each with its headline, its dates and the publisher of the website as its author.
+- `sitemap.xml`, which lists generated pages and their translations except 404 pages.
 
 ## Hosting
 
-Deploy `public/`, not the source directories. Blyss does not generate `public/index.html`: configure the host to redirect `/` to the configured default language with HTTP 302 and serve `/404.html` with HTTP 404 for missing routes. `blyss serve` already does this. Component files are published below `/components/`.
+Deploy `public/`, not the source directories. Blyss does not generate `public/index.html`, so configure the host as `blyss serve` already does:
+
+- Redirect `/` to the configured default language with HTTP 302.
+- Serve `/404.html` with HTTP 404 for missing routes.
+
+Component files are published below `/components/`.
 
 ### Below a path
 
@@ -23,9 +36,13 @@ A website can lie below a path of its domain, as a GitHub Pages project site doe
 baseUrl: "https://user.github.io/repository",
 ```
 
-The content, the templates and the components stay as they are: write links and files from the root of the website, as in `/en/posts/` and `/assets/css/main.css`. The build puts the path before every `href`, `src`, `poster` and `action` that starts with a single `/`, and `blyss serve` serves the website below the path, at `http://localhost:3000/repository/`.
+The content, the templates and the components stay as they are: write links and files from the root of the website, as in `/en/posts/` and `/assets/css/main.css`.
 
-Where a URL stands elsewhere, as in an inline script or a `data-` attribute, write `{{basePath}}` before it, in a template or in the template of a component: it is the path, here `/repository`, and empty for a website at the root of its domain. A stylesheet refers to its files with relative URLs, such as `url(../img/logo.svg)`. The starter's diagrams add the path to their libraries in `static/` themselves.
+- The build puts the path before every `href`, `src`, `poster` and `action` that starts with a single `/`.
+- `blyss serve` serves the website below the path, at `http://localhost:3000/repository/`.
+- Where a URL stands elsewhere, as in an inline script or a `data-` attribute, write `{{basePath}}` before it, in a template or in the template of a component: it is the path, here `/repository`, and empty for a website at the root of its domain.
+- A stylesheet refers to its files with relative URLs, such as `url(../img/logo.svg)`.
+- The starter's diagrams add the path to their libraries in `static/` themselves.
 
 ### GitHub Pages
 

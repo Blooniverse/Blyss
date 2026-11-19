@@ -7,15 +7,28 @@ translationKey: book-configuration
 
 ## Configuration
 
-The comments in `blyss.config.js` describe the starter's site, pagination, layout, hero, overlay, components, directories and server settings, including their values and defaults. Paths in `directories` are relative to the website root. `pagination.pageSize` must be a positive whole number. Invalid configuration stops the build before the previous output is deleted.
+The comments in `blyss.config.js` describe the starter's site, pagination, layout, hero, overlay, components, directories and server settings, including their values and defaults. Beyond them:
+
+- Paths in `directories` are relative to the website root.
+- `pagination.pageSize` must be a positive whole number.
+- Invalid configuration stops the build before the previous output is deleted.
 
 The starter's placeholder name, public URL, publisher and language descriptions are marked `CHANGE BEFORE PRODUCTION`. `site.baseUrl` is used for canonical, alternate and JSON-LD URLs; with a path, as in `https://example.com/docs`, it places the website [below that path](/en/book/deployment/#below-a-path). See [Deployment](/en/book/deployment/) before publishing.
 
 ## Languages
 
-`site.languages` defines any number of languages in the order of the language switcher and `hreflang` alternates. A language key, such as `en` or `pt-br`, names its directory in `_content/` and begins its URLs; use only lower-case Latin letters, digits and hyphens. Each language needs a `label`, a locale such as `en` or `en-GB`, a fallback description and the same template labels as the others. Generated labels have English defaults; missing required labels stop the build.
+`site.languages` defines any number of languages in the order of the language switcher and `hreflang` alternates. Each language needs:
 
-`site.defaultLanguage` selects the `/` redirect and `/404.html`; if omitted it is the first configured language. `site.languageSwitcher: false` hides the switcher but keeps `hreflang` alternates. If you change the default, update the redirect in `static/staticwebapp.config.json` and your deployment workflow too.
+- A key, such as `en` or `pt-br`, which names its directory in `_content/` and begins its URLs; use only lower-case Latin letters, digits and hyphens.
+- A `label`.
+- A locale, such as `en` or `en-GB`.
+- A fallback description.
+- The same template labels as the others. Generated labels have English defaults, among them the titles of the [callouts](/en/book/writing/markdown-spice/#callouts), such as `note` and `warning`; missing required labels stop the build.
+
+Two further settings concern the languages:
+
+- `site.defaultLanguage` selects the `/` redirect and `/404.html`; if omitted it is the first configured language. If you change the default, update the redirect in `static/staticwebapp.config.json` and your deployment workflow too.
+- `site.languageSwitcher: false` hides the switcher but keeps `hreflang` alternates.
 
 ### Add or remove a language
 
