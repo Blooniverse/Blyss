@@ -8,14 +8,17 @@
   a callout, `admonition`, `image`, `figure` or `math` in braces, such as
   ` ```{note} `, is no longer shown as code but as that directive, and lines
   between `:::` with such a name are no longer text; `{math}` before a code
-  span makes it a formula. A longer fence around such a block, as in
-  ` ````markdown `, still shows it as code. Any other name in braces, such as
-  `{r}`, and the block of a component, `{{<name>}}`, stay as they are.
+  span makes it a formula, and `{ref}`, `{numref}` or `{eq}` a reference. A
+  longer fence around such a block, as in ` ````markdown `, still shows it as
+  code. Any other name in braces, such as `{r}`, and the block of a
+  component, `{{<name>}}`, stay as they are.
 - **Alerts, labels and links without a text**: a quotation that starts with
   `[!NOTE]`, `[!TIP]`, `[!IMPORTANT]`, `[!WARNING]` or `[!CAUTION]` is a
-  callout, a line `(label)=` above a block and a label in brackets after
-  `$$` name that block and are no longer text, and a link to a part of a
-  page without a text, such as `[](#part)`, stops the build.
+  callout, and a line `(label)=` above a block and a label in brackets after
+  `$$` name that block and are no longer text. In a page, a post or a doc,
+  a link without a text stops the build, where it used to show nothing,
+  unless it is a reference: a link to a label of its page whose element has
+  a number or a name to show, such as `[](#fig-harbour)`.
 - **Numbers of LaTeX environments**: Blyss itself numbers the lines of an
   environment of LaTeX that numbers them, such as `align`, in a formula on
   lines of its own of a page, of a post or of a doc, from 1 on every page.
@@ -403,11 +406,24 @@
   the lines that an environment of LaTeX numbers, such as `align`. The
   option `enumerated`, or `numbered`, numbers one without a label or leaves
   one with a label without a number. Only pages, posts and docs have labels
-  and numbers. Blyss does not fill in the text of a reference, as MyST does
-  for `[](#label)`. The label `figure` has an English default, and the
-  starter translates it into German: existing websites translate it in
+  and numbers. The label `figure` has an English default, and the starter
+  translates it into German: existing websites translate it in
   `site.languages` and copy the rule for `mtd:has(> .tml-tag)`. The doc
   "Labels and numbers" of the starter describes them.
+- **References**: as in MyST, a link without a text to a label of its page,
+  such as `[](#fig-harbour)`, shows what the label names: "Figure 1" for a
+  numbered figure, after the label `figure` of its language, "Figure 1a"
+  for one of its images, "(1)" for a numbered formula, the text of a
+  heading, the title of a callout and the caption of a figure without a
+  number. In the text of a link to a label, `{number}` and `{name}` stand
+  for the number and the name of its element, and `%s` for the number as
+  well, as in `[Fig. {number}](#fig-harbour)`. The roles `{ref}`, `{numref}`
+  and `{eq}` write a reference too, as in `` {ref}`fig-harbour` `` and
+  `` {numref}`Fig. %s <fig-harbour>` ``. The build stops at a reference to
+  a label that its page lacks, and at one that asks for a number or a name
+  that its element lacks, where MyST shows "??" or the label. A reference
+  names a label of its own page: a link to a label of another page needs a
+  text.
 
 ### Changes
 

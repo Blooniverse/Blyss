@@ -1,17 +1,17 @@
 ---
 title: Labels und Nummern
-description: Wie Sie die Elemente eines Textes benennen und wie Blyss dessen Abbildungen, Formeln und Fußnoten nummeriert.
+description: Wie Sie die Elemente eines Textes benennen, wie Blyss dessen Abbildungen, Formeln und Fußnoten nummeriert und wie Sie auf sie verweisen.
 order: 5
 translationKey: book-labels-and-numbers
 ---
 
-Ein Label benennt ein Element einer Seite, eines Beitrags oder eines Dokuments, sodass ein Link zu ihm führt. Blyss nummeriert die Abbildungen und die Formeln, die ein Label haben, sowie die Fußnoten: jede Art für sich, in der Reihenfolge, in der die Seite sie zeigt, und auf jeder Seite ab 1.
+Ein Label benennt ein Element einer Seite, eines Beitrags oder eines Dokuments. Blyss nummeriert die Abbildungen und die Formeln, die ein Label haben, sowie die Fußnoten: jede Art für sich, in der Reihenfolge, in der die Seite sie zeigt, und auf jeder Seite ab 1. Ein Verweis auf ein Label zeigt dann die Nummer oder den Namen seines Elements.
 
 
 
 ## Labels
 
-Ein Label wird zur `id` seines Elements. Ein Element erhält sein Label auf einem dieser Wege:
+Ein Label wird zur `id` seines Elements, zu der ein Link oder ein [Verweis](#verweise) führt. Ein Element erhält sein Label auf einem dieser Wege:
 
 - **Option**: `label` oder `name` einer Hinweisbox, eines `{image}`, eines `{figure}` oder einer `{math}`-[Direktive](/de/book/schreiben/markdown-wuerze/#direktiven).
 - **Zeile darüber**: eine Zeile `(label)=` über einer Überschrift oder über jedem anderen Block, etwa einem Absatz, einer Liste oder einem Diagramm.
@@ -133,22 +133,44 @@ Blyss nummeriert die Fußnoten einer Seite in der Reihenfolge ihrer ersten Verwe
 
 
 
-## Links
+(verweise)=
+## Verweise
 
-Ein Link zu einem Label führt zu dessen Element:
+Ein Verweis ist ein Link ohne Text zu einem Label seiner Seite. Wie in [MyST](https://mystmd.org/guide/cross-references) füllt Blyss aus, was das Label benennt, und hält es aktuell, wenn sich die Reihenfolge der Seite ändert:
 
-- `[Abbildung 1](#abb-ringe)` ergibt [Abbildung 1](#abb-ringe), und `[Formel (1)](#gl-flaeche)` ergibt [Formel (1)](#gl-flaeche).
-- `[die Berge](#abb-ansichten-b)` ergibt [die Berge](#abb-ansichten-b), das zweite Bild seiner Abbildung.
-- Von einer anderen Seite aus steht die URL der Seite vor dem Label, wie in `/de/book/schreiben/labels-und-nummern/#abb-ringe`.
+- `[](#abb-ringe)` ergibt [](#abb-ringe), und `[](#abb-ansichten-b)` ergibt [](#abb-ansichten-b), das zweite Bild seiner Abbildung.
+- `[](#gl-flaeche)` ergibt [](#gl-flaeche).
+- `[](#verweise)` ergibt [](#verweise), denn diese Überschrift hat ein Label.
 
-Blyss füllt den Text eines solchen Links nicht aus, wie es MyST bei `[](#gl-flaeche)` tut: Schreiben Sie die Nummer selbst, und berichtigen Sie sie, wenn sich die Reihenfolge der Seite ändert. Ein Link zu einem Teil einer Seite ohne Text stoppt den Build.
+Was ein Verweis zeigt, hängt von seinem Element ab:
+
+- **Nummerierte Abbildung**: das Label `figure` der Sprache und ihre Nummer, wie in „Abbildung 1“. Ein Bild von ihr ergänzt seinen Buchstaben, wie in „Abbildung 2b“.
+- **Nummerierte Formel**: ihre Nummer in Klammern, wie in „(1)“, oder ihr `\tag{…}`.
+- **Name**: der Text einer Überschrift, der Titel einer Hinweisbox und, bei einer Abbildung ohne Nummer, der erste Absatz ihrer Bildunterschrift.
+- **Alles andere**, etwa ein Absatz, eine Liste oder ein `{image}`, hat weder Nummer noch Namen. Ein Link dorthin braucht einen Text: `[diese Anmerkung](#anmerkung)` ergibt [diese Anmerkung](#anmerkung).
+
+Ein Link mit Text behält ihn. In diesem Text steht `{number}` für die Nummer seines Elements und `{name}` für dessen Namen, außer in Code:
+
+- `[Abb. {number}](#abb-ringe)` ergibt [Abb. {number}](#abb-ringe), und `[Formel {number}](#gl-flaeche)` ergibt [Formel {number}](#gl-flaeche).
+- `[der Abschnitt „{name}“](#verweise)` ergibt [der Abschnitt „{name}“](#verweise).
+
+Auch drei Rollen von MyST schreiben einen Verweis, jeweils vor dem Label in Backticks oder vor einem Text und dem Label in spitzen Klammern:
+
+- `` {ref}`abb-ringe` `` ergibt {ref}`abb-ringe`, und `` {eq}`gl-flaeche` `` ergibt {eq}`gl-flaeche`.
+- `` {numref}`Abb. %s <abb-ringe>` `` ergibt {numref}`Abb. %s <abb-ringe>`: `%s` steht für die Nummer, wie `{number}`.
+
+Blyss ist hier strenger als MyST:
+
+- **Fehlendes Label**: Der Build stoppt bei einem Verweis auf ein Label, das seine Seite nicht hat. Geben Sie dem Element ein Label oder dem Link einen Text.
+- **Fehlende Nummer oder fehlender Name**: Der Build stoppt bei einem Verweis, der eine Nummer oder einen Namen verlangt, die sein Element nicht hat. MyST zeigt dann „??“ oder das Label.
+- **Andere Links**: Nur ein Verweis zeigt einen Text, ohne einen zu haben. Jeder andere Link ohne Text stoppt den Build, auch einer zu einem Label einer anderen Seite, wie in `[](/de/book/schreiben/labels-und-nummern/#abb-ringe)`. Schreiben Sie den Text eines solchen Links selbst, denn die Nummern beginnen auf jeder Seite neu.
 
 
 
 ## Andere Texte
 
-Nur Seiten, Beiträge und Dokumente haben Labels und Nummern. Jeder andere Text, etwa der einer Komponente, des Heros oder des Overlays, kann auf einer Seite mehrmals stehen, eine `id` aber nicht. In einem solchen Text gilt:
+Nur Seiten, Beiträge und Dokumente haben Labels, Nummern und Verweise. Jeder andere Text, etwa der einer Komponente, des Heros oder des Overlays, kann auf einer Seite mehrmals stehen, eine `id` aber nicht. In einem solchen Text gilt:
 
 - Ein Label oder die Option `enumerated` stoppt den Build.
-- Eine Zeile `(label)=` bleibt Text.
+- Eine Zeile `(label)=` und eine Rolle wie `{ref}` bleiben Text, und ein Link ohne Text bleibt leer.
 - Eine LaTeX-Umgebung zeigt keine Nummern.

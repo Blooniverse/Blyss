@@ -2,7 +2,7 @@ import hljs from "highlight.js";
 import { Marked } from "marked";
 import temml from "temml";
 import { BlyssError } from "../errors.js";
-import { directives, labelDocument } from "./directives.js";
+import { directives, labelDocument, referDocument } from "./directives.js";
 import { escapeHtml } from "./html.js";
 
 // Every Markdown text of a website is read here, so that formulas and code look the same everywhere.
@@ -178,7 +178,7 @@ function walk(tokens, visit) {
 // in which the page shows them: texts are its text and those of its footnotes. A formula that is to be numbered (see
 // labelDocument in directives.js) shows its number beside it, as \tag does, unless it has a tag of its own. The
 // lines that an environment of LaTeX numbers take their numbers from that sequence as well, written like a tag,
-// unless the option enumerated of the formula is off.
+// unless the option enumerated of the formula is off. A reference to a formula shows its first tag, such as "(1)".
 function numberFormulas(texts) {
   let count = 0;
   const tag = () => `<mtext class="tml-tag">(${++count})</mtext>`;
@@ -188,14 +188,15 @@ function numberFormulas(texts) {
     if (mathml.includes(counted)) token.mathml = mathml.replaceAll(counted, token.enumerated === false ? "<mtext></mtext>" : tag);
     else if (token.enumerated && !/<\w+ class="tml-tag"/.test(mathml)) token.mathml = writeMathMl({ ...token, latex: `${token.latex}\n\\tag{${++count}}` });
     else token.mathml = mathml;
+    [, token.tag] = /<mtext class="tml-tag">([^<]*)<\/mtext>/.exec(token.mathml) ?? [];
   };
   for (const text of texts) walk(text, number);
 }
 
-// The tokens of the text of a page, a post or a doc, which alone has footnotes, labels and numbers, and the ids of
-// its labelled elements. The footnotes are numbered in the order of their first references and follow the text as a
-// list, each with links back to its references. Their ids, fn:1 and fnref:1, differ from those of headings, which
-// have no colon, and no label can be one of them. labels are those of the text's language.
+// The tokens of the text of a page, a post or a doc, which alone has footnotes, labels, numbers and references, and
+// the ids of its labelled elements. The footnotes are numbered in the order of their first references and follow
+// the text as a list, each with links back to its references. Their ids, fn:1 and fnref:1, differ from those of
+// headings, which have no colon, and no label can be one of them. labels are those of the text's language.
 export function lexDocument(markdown, file, labels) {
   const tokens = read(file, labels, () => documents.lexer(markdown), true);
   const defined = new Map();
@@ -214,10 +215,12 @@ export function lexDocument(markdown, file, labels) {
   walk(tokens, refer);
   for (const note of notes) walk(note.tokens, refer); // a footnote can refer to further ones
   const shown = [tokens, ...notes.map(note => note.tokens)];
-  const ids = labelDocument(shown, file);
-  const taken = notes.flatMap(note => [`fn:${note.number}`, ...note.references.map(({ id }) => id)]).find(id => ids.has(id));
+  const targets = labelDocument(shown, file);
+  const taken = notes.flatMap(note => [`fn:${note.number}`, ...note.references.map(({ id }) => id)]).find(id => targets.has(id));
   if (taken) throw new BlyssError(`Cannot build ${file}: its label "${taken}" is the id of a footnote, so it needs another name.`);
   numberFormulas(shown);
+  referDocument(shown, targets, file);
+  const ids = [...targets.keys()];
   if (!notes.length) return { tokens, ids };
   const items = notes.map(({ number, references, tokens: text }) => {
     const back = references.map(({ id }, count) =>

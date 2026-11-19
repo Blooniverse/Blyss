@@ -435,13 +435,17 @@ describe("a generated starter", () => {
     }
   });
 
-  test("labels and numbers the figures and the formulas of the doc that describes them, in the language of the page", async () => {
+  test("labels, numbers and refers to the figures and the formulas of the doc that describes them, in the language of the page", async () => {
     for (const [language, doc, figure] of [["en", "writing/labels-and-numbers", "Figure"], ["de", "schreiben/labels-und-nummern", "Abbildung"]]) {
       const html = await readFile(join(site, "public", language, "book", doc, "index.html"), "utf8");
       assert.match(html, new RegExp(`<figure id="[a-z-]+" class="align-center">\\n<img [^>]+>\\n<figcaption>\\n<p><span class="caption-number">${figure} 1:</span> `));
       assert.match(html, new RegExp(`<figure id="([a-z-]+)" class="subfigures">\\n<figure id="\\1-a">\\n[^]+?<figcaption>\\n<p><span class="caption-number">${figure} 2:</span> `));
       // The formula with a label and the two lines of the environment of LaTeX share one sequence.
       assert.deepEqual(html.match(/<mtext class="tml-tag">[^<]+<\/mtext>/g).map(tag => tag.replace(/<[^>]+>/g, "")), ["(1)", "(2)", "(3)"]);
+      // A reference shows the number of a figure after the label of the language, that of a formula and the text of a heading.
+      assert.match(html, new RegExp(`<code>\\[\\]\\(#([a-z-]+)\\)</code> \\S+ <a href="#\\1">${figure} 1</a>, [^\\n]+ <a href="#[a-z-]+">${figure} 2b</a>`));
+      assert.match(html, /<code>\{eq\}`([a-z-]+)`<\/code> \S+ <a href="#\1">\(1\)<\/a>/);
+      assert.match(html, /<code>\[\]\(#([a-z]+)\)<\/code> \S+ <a href="#\1">(?:References|Verweise)<\/a>/);
       // Each link to a part of the page leads to one of its elements.
       const ids = new Set(html.match(/ id="[^"]+"/g).map(id => id.slice(5, -1)));
       for (const href of html.match(/ href="#[^"]+"/g)) assert.ok(ids.has(decodeURIComponent(href.slice(8, -1))), href);
@@ -1665,8 +1669,12 @@ describe("a site with the callouts, the figures and the formulas of MyST", () =>
   const labelled = join("_content", "en", "pages", "labels.md");
   const labels = `---\ntitle: Labels\n---\n\n${[
     // A footnote follows the text, and so do the numbers of its formula and of its figure.
-    "A text with a footnote[^last].\n\n[^last]: Shown last.\n\n    $$ z $$ (eq-note)\n\n    :::{figure} /assets/img/logo.svg\n    :label: fig-note\n    :::",
+    "A text with a footnote[^last].\n\n[^last]: Shown last, with [](#fig-note).\n\n    $$ z $$ (eq-note)\n\n    :::{figure} /assets/img/logo.svg\n    :label: fig-note\n    :::",
     "[^unused]: $$ u $$ (eq-unused)",
+    // References, above the elements that they name: without a text, with {number} and {name}, and as roles.
+    "See [](#fig-logo), [](#pair-b), [](#eq:dollar), [](#eq-own), [](#intro), [](#more) and [](#plain).",
+    "[Fig. {number}](#fig-logo), [formula %s](#eq-half), [*{name}*, {number}](#pair-a), [`{number}`](#fig-logo), [\\{number}](#fig-logo) and [the paragraph](#par).",
+    "{ref}`fig-logo`, {numref}`Fig. %s <fig-logo>`, {eq}`eq-latex` and {ref}`the start <intro>`.",
     "(intro)=\n## Introduction",
     "(par)=\nA paragraph with a label.",
     ":::{figure} /assets/img/logo.svg\n:label: fig-logo\nThe logo.\n:::",
@@ -1692,6 +1700,8 @@ describe("a site with the callouts, the figures and the formulas of MyST", () =>
     "> [!FOO]\n> A quotation.",
     // The label of a block of a component, which stays one.
     `(flow)=\n${fence}mermaid\ngraph TD\n${fence}`,
+    // A figure without a number, which a reference names by its caption.
+    ":::{figure} /assets/img/logo.svg\n:label: plain\n:enumerated: false\nA **plain** caption.\n\nIts second paragraph.\n:::",
     "[The figure](#fig-logo), [the formula](#eq:dollar) and [the heading](#intro)."
   ].join("\n\n")}\n`;
 
@@ -1701,13 +1711,14 @@ describe("a site with the callouts, the figures and the formulas of MyST", () =>
     await writeFile(join(site, file), source);
     await writeFile(join(site, "_content", "de", "pages", "directives.md"),
       `---\ntitle: Direktiven\ntranslationKey: directives\n---\n\n:::{note}\nText.\n:::\n\n${fence}{seealso}\nMehr.\n${fence}\n`);
-    // A text of the hero is no page, but its callout is titled in its language as well; its formula has no number.
+    // A text of the hero is no page, but its callout is titled in its language as well; its formula has no number,
+    // and its {ref} is no reference.
     const heroTexts = join(site, "_content", "de", "heroTexts.md");
     await writeFile(heroTexts, `${await readFile(heroTexts, "utf8")}\n### Hinweisbox\n\n:::{tip}\nIm Hero.\n:::\n\n` +
-      "### Formel\n\n$$\n\\begin{equation} E \\end{equation}\n$$\n");
+      "### Formel\n\n$$\n\\begin{equation} E \\end{equation}\n$$\n\nKein Verweis: {ref}`formel`.\n");
     await writeFile(join(site, labelled), labels);
     await writeFile(join(site, "_content", "de", "pages", "labels.md"),
-      "---\ntitle: Labels\n---\n\n:::{figure} /assets/img/logo.svg\n:label: logo\nDas Logo.\n:::\n\n> [!TIP]\n> Ein Rat.\n");
+      "---\ntitle: Labels\n---\n\n:::{figure} /assets/img/logo.svg\n:label: logo\nDas Logo.\n:::\n\n> [!TIP]\n> Ein Rat.\n\nSiehe [](#logo).\n");
     // In a doc, a heading with a label has it as its id, which the heading below it leaves alone.
     await writeFile(join(site, "_content", "en", "book", "labelled.md"), "---\ntitle: Labelled\norder: 9\n---\n\n(setup)=\n## Setup\n\n## Setup\n");
     const result = run(["build"], site);
@@ -1799,8 +1810,23 @@ describe("a site with the callouts, the figures and the formulas of MyST", () =>
     // Any other text has no numbers, so that none stands twice on a page.
     assert.match(await page("de/index.html"), /<h3>Formel<\/h3>\n<div class="math"><math [^\n]+<mi>E<\/mi><\/mtd><mtd[^>]*><mtext><\/mtext><\/mtd><\/mtr><\/mtable><\/math><\/div>/);
     // The footnote, which the text defines first, is shown last; one without a reference is not shown.
-    assert.match(html, /<li id="fn:1">\n<p>Shown last\.<\/p>\n<div class="math" id="eq-note"><math [^\n]+<mtext class="tml-tag">\(7\)<\/mtext>[^\n]+\n<figure id="fig-note">\n[^\n]+\n<figcaption>\n<p><span class="caption-number">Figure 4<\/span><\/p>/);
+    assert.match(html, /<li id="fn:1">\n<p>Shown last, with <a href="#fig-note">Figure 4<\/a>\.<\/p>\n<div class="math" id="eq-note"><math [^\n]+<mtext class="tml-tag">\(7\)<\/mtext>[^\n]+\n<figure id="fig-note">\n[^\n]+\n<figcaption>\n<p><span class="caption-number">Figure 4<\/span><\/p>/);
     assert.ok(!html.includes("eq-unused"));
+  });
+
+  test("fills in a reference with the number or the name of its element, also for {number} and {name} in its text and for a role of MyST", async () => {
+    const html = await page("en/pages/labels/index.html");
+    const link = (label, text) => `<a href="#${label}">${text}</a>`;
+    // A numbered figure and one of its images, formulas with a number and with a tag, a heading, a callout and a caption.
+    assert.ok(html.includes(`<p>See ${link("fig-logo", "Figure 1")}, ${link("pair-b", "Figure 3b")}, ${link("eq:dollar", "(2)")}, ${link("eq-own", "(*)")}, ` +
+      `${link("intro", "Introduction")}, ${link("more", "Click me")} and ${link("plain", "A <strong>plain</strong> caption.")}.</p>`));
+    // Code and a backslash keep {number}, and a link with a text of its own stays as it is.
+    assert.ok(html.includes(`<p>${link("fig-logo", "Fig. 1")}, ${link("eq-half", "formula 1")}, ${link("pair-a", "<em>The logo</em>, 3a")}, ` +
+      `${link("fig-logo", "<code>{number}</code>")}, ${link("fig-logo", "{number}")} and ${link("par", "the paragraph")}.</p>`));
+    assert.ok(html.includes(`<p>${link("fig-logo", "Figure 1")}, ${link("fig-logo", "Fig. 1")}, ${link("eq-latex", "(3)")} and ${link("intro", "the start")}.</p>`));
+    assert.ok((await page("de/pages/labels/index.html")).includes('<p>Siehe <a href="#logo">Abbildung 1</a>.</p>'));
+    // Any other text has no labels, so that its {ref} stays as it is written.
+    assert.ok((await page("de/index.html")).includes("<p>Kein Verweis: {ref}<code>formel</code>.</p>"));
   });
 
   test("shows the images of a figure without a URL as figures within it, each with a letter and its description", async () => {
@@ -1826,18 +1852,31 @@ describe("a site with the callouts, the figures and the formulas of MyST", () =>
     assert.ok((await page("de/pages/labels/index.html")).includes(callout("tip", "Tipp", "<p>Ein Rat.</p>\n")));
   });
 
-  test("refuses a label that is no name, stands twice, names nothing or belongs to no page, a link without a text and a figure without an image", async () => {
+  test("refuses a label that is no name, stands twice, names nothing or belongs to no page, a link without a text that is no reference to an element with something to show, and a figure without an image", async () => {
     const heroTexts = join("_content", "en", "heroTexts.md");
     const hero = await readFile(join(site, heroTexts), "utf8");
+    const link = "[The figure](#fig-logo)";
     for (const [file, original, search, replacement, message] of [
       [labelled, labels, ":label: fig-logo", ":label: fig logo", 'its label "fig logo" must be a name of letters, digits, hyphens, underscores, full stops and colons, such as "fig-harbour"\\.\\n$'],
       [labelled, labels, ":label: fig-logo", ":label: intro", 'it has the label "intro" twice, but a label names one element of a page\\.\\n$'],
       [labelled, labels, ":label: fig-logo", ":label: pair-b", 'it has the label "pair-b" twice, but a label names one element of a page\\.\\n$'],
-      [labelled, labels, ":label: fig-logo", ":label: overlay", 'its label "overlay" is the id of an element of its templates, so it needs another name\\.\\n$'],
-      [labelled, labels, ":label: fig-logo", ":label: fn:1", 'its label "fn:1" is the id of a footnote, so it needs another name\\.\\n$'],
+      [labelled, labels, ":name: img-logo", ":name: overlay", 'its label "overlay" is the id of an element of its templates, so it needs another name\\.\\n$'],
+      [labelled, labels, ":name: img-logo", ":name: fn:1", 'its label "fn:1" is the id of a footnote, so it needs another name\\.\\n$'],
       [labelled, labels, "(par)=\nA paragraph", "(par)=\n\n(par2)=\nA paragraph", "its label \\(par\\)= must stand above a block that has no other label\\.\\n$"],
-      [labelled, labels, "[The figure](#fig-logo)", "[](#fig-logo)", "its link to #fig-logo has no text\\.\\n" +
-        "Blyss does not fill in the text of a reference: write it, as in \\[Figure 1\\]\\(#fig-logo\\)\\.\\n$"],
+      [labelled, labels, link, "[](#figure-logo)", "its reference to #figure-logo names no label of its page\\.\\n" +
+        "Label the element that it means, as with \\(figure-logo\\)= on the line above it, or give the link a text\\.\\n$"],
+      [labelled, labels, link, "{ref}`the logo <figure-logo>`", "its reference to #figure-logo names no label of its page\\.\\n" +
+        "Label the element that it means, as with \\(figure-logo\\)= on the line above it\\.\\n$"],
+      [labelled, labels, link, "[](#par)", "its reference to #par has nothing to show: the element with that label has neither a number nor a name\\.\\n" +
+        "Write the text of the reference, as in \\[this part\\]\\(#par\\)\\.\\n$"],
+      [labelled, labels, link, "[Section {number}](#intro)", "its reference to #intro asks for \\{number\\}, but the element with that label has no number\\.\\n" +
+        "Write \\\\\\{number\\} to show these characters themselves\\.\\n$"],
+      [labelled, labels, link, "[%s](#par)", "its reference to #par asks for %s, but the element with that label has no number\\.\\n" +
+        "Write \\\\%s to show these characters themselves\\.\\n$"],
+      [labelled, labels, link, "[{name}](#eq-half)", "its reference to #eq-half asks for \\{name\\}, but the element with that label has no name\\.\\n" +
+        "Write \\\\\\{name\\} to show these characters themselves\\.\\n$"],
+      [labelled, labels, link, "[](/en/pages/about/#team)", "its link to /en/pages/about/#team has no text\\.\\n" +
+        "Only a reference needs none: a link to a label of its own page, such as \\[\\]\\(#fig-harbour\\)\\.\\n$"],
       [labelled, labels, "![The logo](/assets/img/logo.svg)\n![](/assets/img/logo.svg)\n\n", "", "its \\{figure\\} directive lacks its image: the URL of one follows its name, " +
         "as in \\{figure\\} /assets/img/harbour\\.jpg, or its body holds images, each as !\\[description\\]\\(URL\\)\\.\\n$"],
       [labelled, labels, ":class: dropdown", ":class: drop.down", 'its \\{note\\} directive cannot use class "drop\\.down", which must be the names of classes, ' +

@@ -6,7 +6,7 @@ Blyss is an ultra lean SSG (static site generator) for Markdown:
     - **Formulae**: HTML output in MathML via [Temml.org](https://temml.org/).
     - **Diagrams**: Extensive charting via Flowchart.js, Mermaid & even Vega-Lite.
     - **Callouts & figures**: Admonitions, images and figures as [MyST](https://mystmd.org/) directives, plus GitHub alerts.
-    - **Labels & numbers**: Labelled and numbered figures and formulae.
+    - **Labels, numbers & references**: Numbered figures and formulae, and references that fill in their own text.
     - **Task lists**: `- [x]` and `- [ ]` as checkboxes.
     - **Footnotes**: [^footnote]
     - **Compatibility**: [Marktext.me](https://marktext.me) as well as [Obsidian.md](https://obsidian.md)
