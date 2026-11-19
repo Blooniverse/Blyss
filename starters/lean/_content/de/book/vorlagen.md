@@ -7,28 +7,108 @@ translationKey: book-templates
 
 ## Vorlagen
 
-Blyss liefert keine eingebauten Standardvorlagen; bearbeiten Sie die Kopien in `templates/`. Zuerst wird der Inhalt in `home.html`, `page.html`, `post.html` oder `book.html` gerendert, anschließend das Ergebnis in `document.html`. Ohne `home.html` beziehungsweise `book.html` dient `page.html` als Ersatz.
+Blyss liefert keine eingebauten Standardvorlagen; bearbeiten Sie die Kopien in `templates/`. Zuerst wird der Inhalt einer Seite in einer Inhaltsvorlage gerendert, anschließend das Ergebnis in `document.html`. Der Starter enthält:
 
-Die Inhaltsvorlagen kennen `{{title}}`, `{{description}}`, `{{dateBlock}}`, `{{tags}}`, `{{content}}`, `{{basePath}}` und die Platzhalter der Komponenten. `book.html` ergänzt `{{bookNavigation}}`, `{{bookToc}}` und `{{bookPager}}`: Navigation, Inhaltsverzeichnis sowie vorheriges und nächstes Dokument. Mehr dazu unter [Navigation](/de/book/schreiben/buch/navigation/).
+- `document.html`: das Dokument um jede Seite.
+- `home.html`: die Inhaltsvorlage der Startseiten.
+- `page.html`: die der Seiten und jedes anderen Seitentyps ohne eigene Vorlage.
+- `post.html`: die der Beiträge.
+- `book.html`: die der Dokumente.
+- `hero.html` und `overlay.html`: die Vorlagen der beiden Bereiche.
 
-`document.html` kennt `{{content}}`, `{{hero}}`, `{{overlay}}`, `{{pageTitle}}`, `{{description}}`, `{{robots}}`, `{{locale}}`, `{{languageKey}}`, `{{canonicalUrl}}`, `{{alternateLinks}}`, `{{jsonLd}}`, `{{languageSwitcher}}`, `{{kind}}` und `{{basePath}}`, dazu die Layout-Platzhalter `{{layoutMargin}}`, `{{layoutPaddingHero}}`, `{{layoutPaddingOverlay}}`, `{{layoutAlign}}`, `{{layoutAlignHero}}` und `{{layoutAlignOverlay}}`. Sprachlabels stehen als `{{<key>Label}}` bereit, etwa `{{postsLabel}}`; Fragmente als `{{<name>Title}}` und `{{<name>Content}}`. Komponenten lassen sich ebenfalls über ihren Namen in doppelten geschweiften Klammern einfügen. `{{robots}}` bittet Suchmaschinen, eine Fehlerseite nicht zu indexieren, und ist auf allen anderen Seiten leer. `{{basePath}}` ist der Pfad einer Website [unterhalb eines Pfads](/de/book/bereitstellung/#unterhalb-eines-pfads) und sonst leer. Vorlageneigene Platzhalter haben Vorrang vor gleichnamigen Komponenten oder Fragmenten.
+Ohne `home.html` beziehungsweise `book.html` dient `page.html` als Ersatz; ohne die Vorlage eines Bereichs entfällt dieser.
 
-`{{kind}}` unterscheidet `home`, `page`, `post`, `book`, `list` und `not-found`. Die Startervorlage übergibt diesen Wert und die Layout-Einstellungen über `data-*`-Attribute und CSS-Variablen an `static/assets/css/main.css`. Die Kommentare zu `layout` in `blyss.config.js` nennen die möglichen Abstände und Ausrichtungen.
+Die Inhaltsvorlagen kennen diese Platzhalter:
+
+- `{{title}}` und `{{description}}`: Titel und Beschreibung der Seite.
+- `{{dateBlock}}`: ihr `datePublished`, falls vorhanden.
+- `{{tags}}`: die Schlagwörter eines Beitrags.
+- `{{content}}`: ihr Text.
+- `{{basePath}}`: der Pfad einer Website [unterhalb eines Pfads](/de/book/bereitstellung/#unterhalb-eines-pfads), sonst leer.
+- Die Platzhalter der [Komponenten](/de/book/komponenten/).
+- In `book.html` zusätzlich `{{bookNavigation}}`, `{{bookToc}}` und `{{bookPager}}`: Navigation, Inhaltsverzeichnis sowie vorheriges und nächstes Dokument. Außerhalb von Dokumenten sind sie leer. Mehr dazu unter [Navigation](/de/book/schreiben/buch/navigation/).
+
+`document.html` kennt diese Platzhalter:
+
+- `{{content}}`: die ausgefüllte Inhaltsvorlage.
+- `{{hero}}` und `{{overlay}}`: die beiden Bereiche.
+- `{{pageTitle}}` und `{{description}}`: der Titel der Seite, gefolgt vom Namen der Website, und ihre Beschreibung.
+- `{{robots}}`: bittet Suchmaschinen, eine Fehlerseite nicht zu indexieren, und ist auf allen anderen Seiten leer.
+- `{{locale}}` und `{{languageKey}}`: Locale und Schlüssel der Sprache der Seite.
+- `{{canonicalUrl}}`, `{{alternateLinks}}` und `{{jsonLd}}`: die kanonische URL der Seite, die Links zu ihren Übersetzungen und ihr JSON-LD.
+- `{{languageSwitcher}}`: der Sprachwechsler, sofern `site.languageSwitcher` ihn nicht ausblendet.
+- `{{kind}}`: `home`, `page`, `post`, `book`, `list` oder `not-found`.
+- `{{basePath}}`: wie in den Inhaltsvorlagen.
+- Die Layout-Platzhalter unten.
+- Die Sprachlabels als `{{<key>Label}}`, etwa `{{postsLabel}}`, Fragmente als `{{<name>Title}}` und `{{<name>Content}}` sowie die Platzhalter der Komponenten, also ihre Namen in doppelten geschweiften Klammern.
+
+Vorlageneigene Platzhalter haben Vorrang vor gleichnamigen Komponenten oder Fragmenten.
+
+Die Layout-Platzhalter enthalten die `layout`-Einstellungen aus `blyss.config.js`, deren Kommentare die möglichen Abstände und Ausrichtungen nennen:
+
+- `{{layoutMargin}}`, `{{layoutPaddingHero}}` und `{{layoutPaddingOverlay}}`: `margin`, `paddingHero` und `paddingOverlay`.
+- `{{layoutAlign}}`: `alignHome` auf den Startseiten und `alignOther` auf allen anderen Seiten.
+- `{{layoutAlignHero}}` und `{{layoutAlignOverlay}}`: `alignHero` und `alignOverlay`.
+
+Die Startervorlage übergibt sie, wie `{{kind}}`, über `data-*`-Attribute und CSS-Variablen an `static/assets/css/main.css`.
 
 Ein Platzhalter, den seine Vorlage nicht füllen kann, etwa ein falsch geschriebener, stoppt den Build mit einer Meldung, die die Vorlage nennt. Ein Fragment, das nur manche Sprachen haben, ist in den anderen leer.
 
 ## Hero und Overlay
 
-Der Hero begleitet die Startseiten, das Overlay die in `overlay.showOn` gewählten Seitentypen. `hero.html` und `overlay.html` werden über `{{hero}}` und `{{overlay}}` in `document.html` eingefügt. Die Vorlagen der Bereiche kennen die Platzhalter von `document.html` außer diesen beiden und zusätzlich `{{components}}`, `{{textsTitle}}` und `{{texts}}`. `hero.components` und `overlay.components` wählen Komponenten in ihrer Reihenfolge; `texts` schaltet die jeweiligen Texte ein oder aus. Ein nicht aufgeführter Seitentyp hat ein Overlay. Die Schalter gelten für Typen, nicht für einzelne Seiten.
+`{{hero}}` und `{{overlay}}` fügen `hero.html` und `overlay.html`, die Vorlagen der beiden Bereiche, in `document.html` ein:
 
-Die Texte stehen in `_content/<Sprache>/heroTexts.md` und `overlayTexts.md`: `title` ist ihre Überschrift, jede `###`-Überschrift beginnt einen Text bis zur nächsten. Vor der ersten `###`-Überschrift sind nur Leerraum und HTML-Kommentare erlaubt. Ohne Vorlage oder eingeschalteten Inhalt entfällt der jeweilige Bereich. Mit `synchroniseHeroOverlay: true` übernimmt das Overlay Komponenten, Einstellungen und Texte des Heros; `overlay.showOn` und das Overlay-Layout gelten weiterhin.
+- Der Hero begleitet die Startseiten.
+- Das Overlay begleitet die in `overlay.showOn` gewählten Seitentypen. Im Starter öffnet ein Knopf das Overlay als Panel; Schließen, Escape oder ein Klick außerhalb schließen es über die Popover-API.
 
-Im Starter öffnet ein Knopf das Overlay als Panel; Schließen, Escape oder ein Klick außerhalb schließen es über die Popover-API. Auf großen Bildschirmen gleitet der Hero beim Scrollen über die Seite; bei Tastaturfokus, reduzierter Bewegung, kleinen Bildschirmen oder ohne passende Browserunterstützung bleibt er statisch. Die `hero`-, `overlay`- und `close`-Labels unterstützen Beschriftung und Bedienung.
+Die Schalter in `blyss.config.js` bestimmen ihren Inhalt:
+
+- `hero.components` und `overlay.components` wählen Komponenten in ihrer Reihenfolge.
+- `texts` schaltet die jeweiligen Texte ein oder aus.
+- `overlay.showOn` gilt für Seitentypen, nicht für einzelne Seiten; ein nicht aufgeführter Seitentyp hat ein Overlay.
+- Mit `synchroniseHeroOverlay: true` übernimmt das Overlay Komponenten, Einstellungen und Texte des Heros; `overlay.showOn` und das Overlay-Layout gelten weiterhin.
+- Ohne Vorlage oder eingeschalteten Inhalt entfällt der jeweilige Bereich.
+
+Die Vorlagen der Bereiche kennen diese Platzhalter:
+
+- `{{components}}`: die eingeschalteten Komponenten des Bereichs.
+- `{{textsTitle}}` und `{{texts}}`: Überschrift und Texte des Bereichs.
+- Die Platzhalter von `document.html` außer `{{hero}}` und `{{overlay}}`.
+
+Die Texte der Bereiche stehen in `_content/<Sprache>/heroTexts.md` und `overlayTexts.md`:
+
+- `title` ist ihre Überschrift.
+- Jede `###`-Überschrift beginnt einen Text bis zur nächsten.
+- Vor der ersten `###`-Überschrift sind nur Leerraum und HTML-Kommentare erlaubt.
+
+Auf großen Bildschirmen gleitet der Hero beim Scrollen über die Seite. Er bleibt statisch:
+
+- bei Tastaturfokus;
+- bei reduzierter Bewegung;
+- auf kleinen Bildschirmen;
+- ohne passende Browserunterstützung.
+
+Die `hero`-, `overlay`- und `close`-Labels unterstützen Beschriftung und Bedienung.
 
 ## Gestaltung und Schriften
 
-Ersetzen Sie `static/assets/img/logo.svg` und passen Sie `alt`, `width` und `height` in `templates/document.html` an. Das Suchfeld in der Starter-Kopfleiste ist noch ohne Funktion und sendet nichts. Farben für hervorgehobenen Code stehen in `static/assets/css/main.css`; erhalten Sie mindestens 4,5:1 Kontrast zum Codehintergrund.
+Die Kopfleiste und die Farben des Starters passen Sie so an:
 
-Der Starter lädt Titillium Web von Google Fonts; dabei wird die IP-Adresse der Besuchenden an Google übermittelt. Für lokales Hosting laden Sie die Schrift von [Google Fonts](https://fonts.google.com/specimen/Titillium+Web), legen die `.woff2`-Dateien unter `static/assets/fonts/` ab, deklarieren sie per `@font-face` in `static/assets/css/main.css` und entfernen die drei Google-Fonts-`link`-Elemente aus `document.html`. Prüfen Sie die Datenschutzanforderungen Ihrer Website; das Landgericht München I entschied am 20. Januar 2022 (3 O 17493/20) zu einer Einbindung ohne Einwilligung.
+- Logo: Ersetzen Sie `static/assets/img/logo.svg` und passen Sie `alt`, `width` und `height` in `templates/document.html` an.
+- Suchfeld: Es ist in der Starter-Kopfleiste noch ohne Funktion und sendet nichts.
+- Farben für hervorgehobenen Code: Sie stehen in `static/assets/css/main.css`; erhalten Sie mindestens 4,5:1 Kontrast zum Codehintergrund.
 
-Formeln benötigen keinen externen Abruf: `static/assets/temml/Temml-Local.css` und `Temml.woff2` gehören zur von Blyss verwendeten Temml-Version. Das Stylesheet bevorzugt mathematische Systemschriften; die WOFF2-Datei enthält nur bestimmte Sonderzeichen. Für ein einheitliches Erscheinungsbild gibt es weitere Temml-Stylesheets und Schriften; siehe die [Temml-Installationsanleitung](https://temml.org/docs/en/administration.html). Nach einem Blyss-Update ersetzen Sie CSS und Font aus `node_modules/temml/dist/`, falls das Changelog es verlangt.
+Der Starter lädt Titillium Web von Google Fonts; dabei wird die IP-Adresse der Besuchenden an Google übermittelt. Für lokales Hosting:
+
+1. Laden Sie die Schrift von [Google Fonts](https://fonts.google.com/specimen/Titillium+Web).
+2. Legen Sie die `.woff2`-Dateien unter `static/assets/fonts/` ab.
+3. Deklarieren Sie sie per `@font-face` in `static/assets/css/main.css`.
+4. Entfernen Sie die drei Google-Fonts-`link`-Elemente aus `document.html`.
+
+Prüfen Sie die Datenschutzanforderungen Ihrer Website; das Landgericht München I entschied am 20. Januar 2022 (3 O 17493/20) zu einer Einbindung ohne Einwilligung.
+
+Formeln benötigen keinen externen Abruf: `static/assets/temml/Temml-Local.css` und `Temml.woff2` gehören zur von Blyss verwendeten Temml-Version.
+
+- Das Stylesheet bevorzugt mathematische Systemschriften; die WOFF2-Datei enthält nur bestimmte Sonderzeichen.
+- Für ein einheitliches Erscheinungsbild gibt es weitere Temml-Stylesheets und Schriften; siehe die [Temml-Installationsanleitung](https://temml.org/docs/en/administration.html).
+- Nach einem Blyss-Update ersetzen Sie CSS und Font aus `node_modules/temml/dist/`, falls das Changelog es verlangt.

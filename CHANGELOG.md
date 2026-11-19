@@ -372,6 +372,9 @@
 
 ### Changes
 
+- **Lists in the starter's book**: the docs list what they enumerate, such as
+  the placeholders of the templates, the options of a block and the steps of
+  hosting a font, instead of naming it in running text.
 - **Task lists in the starter**: a list item that starts with `[ ]` or `[x]`
   shows its checkbox in place of its marker, as large as the text. Existing
   websites copy the rules for `input[type="checkbox"]` and the `--list-indent`
