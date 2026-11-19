@@ -5,9 +5,9 @@ Blyss is an ultra lean SSG (static site generator) for Markdown:
     - **Code highlighting**: Supports nearly 200 languages via [Highlight.js](https://highlightjs.org/).
     - **Formulae**: HTML output in MathML via [Temml.org](https://temml.org/).
     - **Diagrams**: Extensive charting via Flowchart.js, Mermaid & even Vega-Lite.
-    - **Footnotes**: [^footnote]
     - **Callouts & figures**: Admonitions, images and figures as [MyST](https://mystmd.org/) directives.
     - **Task lists**: `- [x]` and `- [ ]` as checkboxes.
+    - **Footnotes**: [^footnote]
     - **Compatibility**: [Marktext.me](https://marktext.me) as well as [Obsidian.md](https://obsidian.md)
 - **Authoring with 3 content types**: book doc, page, post.
     - `draft: true` in Frontmatter.
@@ -64,8 +64,7 @@ npm install @blooniverse/blyss
 ---
 ## Documentation
 
-- [Documentation book](starters/lean/_content/en/book/index.md) ([Deutsch](starters/lean/_content/de/book/index.md)): installation, authoring, configuration, customization and deployment. In a built starter, visit `/en/book/` or `/de/book/`.
-- [Usage](README_USAGE.md) and [Authoring](README_AUTHORING.md): topic indexes for the book.
+- [Documentation book](starters/lean/_content/en/book/index.md) ([Deutsch](starters/lean/_content/de/book/index.md)): setup, authoring & deployment. In a built starter, visit `/en/book/` or `/de/book/`.
 
 ## License
 
