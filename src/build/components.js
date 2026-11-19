@@ -2,8 +2,9 @@ import { cp, readdir, readFile } from "node:fs/promises";
 import { basename, join, relative } from "node:path";
 import { pathToFileURL } from "node:url";
 import { BlyssError } from "../errors.js";
+import { parseFrontMatter } from "./front-matter.js";
 import { renderMarkdown } from "./markdown.js";
-import { applyTemplate, escapeHtml, labelValues, parseFrontMatter } from "./render.js";
+import { applyTemplate, escapeHtml, labelValues } from "./render.js";
 import { basePathOf, refuse } from "./settings.js";
 import { splitTexts } from "./texts.js";
 
@@ -155,15 +156,16 @@ export async function loadComponents(projectDir, config, directory, texts) {
     const [markdown, origin] = own.markdown.trim() ? [own.markdown, file] : [text?.markdown ?? "", text && relative(projectDir, text.sourceFile)];
     const ownSettings = { ...settings[name], ...settingsOf(own) };
     const { data, code } = components.get(name);
-    const content = code ? escapeHtml(markdown.replace(/^\n+|\s+$/g, "")) : renderMarkdown(markdown, origin);
+    const { labels } = config.site.languages[languageKey];
+    const content = code ? escapeHtml(markdown.replace(/^\n+|\s+$/g, "")) : renderMarkdown(markdown, origin, labels);
     return {
       basePath: escapeHtml(basePath),
-      ...labelValues(config.site.languages[languageKey].labels),
+      ...labelValues(labels),
       ...scalars(ownSettings),
       ...scalars(metadata),
       content,
       ...await data({
-        settings: ownSettings, languageKey, content, texts: code ? [] : splitTexts(markdown, origin).texts, source: markdown,
+        settings: ownSettings, languageKey, content, texts: code ? [] : splitTexts(markdown, origin, labels).texts, source: markdown,
         frontMatter: metadata, escapeHtml, basePath,
         refuse: (setting, value, requirement) => (block === undefined
           ? refuse(`components.${name}.${setting}`, value, requirement)

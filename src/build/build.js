@@ -6,9 +6,10 @@ import { loadComponents } from "./components.js";
 import { escapeHtml } from "./html.js";
 import { createListRecords, parseTags } from "./lists.js";
 import { renderFragments } from "./fragments.js";
+import { parseFrontMatter } from "./front-matter.js";
 import { languagesOf } from "./languages.js";
 import { resolvePaths } from "./paths.js";
-import { parseFrontMatter, renderRecord } from "./render.js";
+import { renderRecord } from "./render.js";
 import { assertSite, basePathOf, layoutOf } from "./settings.js";
 import { arrangeRegions } from "./regions.js";
 import { renderSitemap } from "./sitemap.js";
@@ -229,7 +230,7 @@ export async function build(projectDir, configPath = './blyss.config.js', { draf
   // The files of the drafts that this build leaves out.
   const leftOut = discovered.filter(record => record.type === 'draft').map(record => relative(projectDir, record.sourceFile));
   const fragmentRecords = discovered.filter(record => record.type === 'fragment');
-  const fragments = renderFragments(projectDir, fragmentRecords, Object.keys(config.site.languages));
+  const fragments = renderFragments(projectDir, fragmentRecords, config.site.languages);
   const components = await loadComponents(projectDir, config, componentsDirectory, discovered.filter(record => record.type === 'component'));
   const regions = arrangeRegions(projectDir, config, { hero, overlay }, fragmentRecords, components.unknown);
   const books = arrangeBooks(projectDir, contentDirectory, content, leftOut);

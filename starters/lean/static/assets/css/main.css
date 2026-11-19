@@ -47,8 +47,19 @@ h3 { display: inline-block; margin: 3vh 0 .3em; padding: 0 .3em; color: #fff; ba
 article h2 { margin-top: 1em; }
 
 main { max-width: var(--column); overflow-wrap: break-word; } /* a long word, such as a path in code, breaks rather than widen the page */
-:is(p, ul, ol, pre, blockquote, table) { margin-bottom: .6em; }
-:is(ul, ol) { padding-left: 1.2em; }
+:is(p, ul, ol, pre, blockquote, table, figure, .admonition) { margin-bottom: .6em; }
+:is(ul, ol) { --list-indent: 1.2em; padding-left: var(--list-indent); }
+/* Task lists, as on GitHub: an item that starts with a checkbox shows it in place of its marker, as large as the
+   text and as far from it as the marker of another item. */
+li:has(> input[type="checkbox"]:first-child, > p:first-child > input[type="checkbox"]:first-child) { list-style: none; }
+:is(li, li > p:first-child) > input[type="checkbox"]:first-child {
+  width: .8em;
+  height: .8em;
+  margin: 0 .15em 0 calc(-1 * var(--list-indent));
+  font: inherit; /* a checkbox has the size of small controls otherwise */
+  vertical-align: -.05em;
+  accent-color: var(--color202);
+}
 blockquote { padding-left: 1em; border-left: 3px solid var(--color202border); }
 a { color: inherit; text-decoration: underline var(--color202) dotted; }
 :focus-visible { outline: 2px solid var(--color202); outline-offset: 2px; }
@@ -72,6 +83,33 @@ article > header p { margin: 0; font-size: .9rem; }
 /* Formulas are MathML, laid out by Temml's stylesheet, static/assets/temml/Temml-Local.css. A formula on lines of
    its own scrolls sideways where it is wider than the text. */
 .math { margin-bottom: .6em; padding-block: .2em; overflow-x: auto; }
+
+/* Callouts, such as ```{note}: a card with the colour of its kind at its side and in its title, each clear enough
+   on the card (a contrast of at least 4.5 to 1). As in MyST, the kinds share four colours: blue informs, green
+   advises, amber cautions and red warns of danger. A callout keeps its text at the start, also in centered text. */
+.admonition {
+  --kind: var(--color202);
+  padding: .5em .75em;
+  border: 1px solid var(--card-border);
+  border-left: .3em solid var(--kind);
+  border-radius: var(--radius);
+  text-align: start;
+  background: var(--card);
+}
+.admonition:is(.hint, .seealso, .tip) { --kind: hsl(150 70% 22%); }
+.admonition:is(.attention, .caution, .warning) { --kind: hsl(30 90% 30%); }
+.admonition:is(.danger, .error) { --kind: hsl(0 65% 38%); }
+.admonition-title { margin-bottom: .3em; font-weight: 700; color: var(--kind); }
+.admonition > :last-child { margin-bottom: 0; }
+
+/* Images and figures, ```{image} and ```{figure}: their align sets one of these classes, without which they stand
+   like the text around them. A figure shows its caption below its image, in smaller type. */
+.align-left { text-align: left; }
+.align-center { text-align: center; }
+.align-right { text-align: right; }
+figure > img { vertical-align: bottom; }
+figcaption { margin-top: .3em; font-size: .85rem; color: var(--color202grey); }
+figcaption > :last-child { margin-bottom: 0; }
 
 /* Highlighted code: the classes of highlight.js in the colours of this stylesheet, each clear enough on the
    background of code for small text (a contrast of at least 4.5 to 1). */
@@ -247,7 +285,7 @@ body:has(> .overlay) { padding-bottom: calc(var(--site-margin) + 2rem); } /* lea
 /* In centered text, lists keep their markers next to their items, and tables are centered too. */
 :is([data-align="center"] .page, [data-align-hero="center"] .hero-panel, [data-align-overlay="center"] #overlay,
   [data-align-hero="centerExtra"] .hero-panel .component, [data-align-overlay="centerExtra"] #overlay .component) :is(ul, ol) {
-  padding-left: 0;
+  --list-indent: 0em;
   list-style-position: inside;
 }
 :is([data-align="center"] .page, [data-align-hero="center"] .hero-panel, [data-align-overlay="center"] #overlay,

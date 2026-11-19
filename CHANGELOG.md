@@ -4,6 +4,13 @@
 
 ### Breaking changes
 
+- **Directives in braces**: a fenced code block whose language is the kind of
+  a callout, `image`, `figure` or `math` in braces, such as ` ```{note} `, is
+  no longer shown as code but as that directive, and lines between `:::`
+  with such a name are no longer text; `{math}` before a code span makes it a
+  formula. A longer fence around such a block, as in ` ````markdown `, still
+  shows it as code. Any other name in braces, such as `{r}`, and the block of
+  a component, `{{<name>}}`, stay as they are.
 - **Component files that stay unpublished**: a file or a directory of a
   component whose name starts with `.` or `_` is no longer published at
   `/components/<name>/`, wherever it lies in the directory of the component.
@@ -331,9 +338,44 @@
   `package.json`. The build marks each draft that it builds and names each
   one that it leaves out. A doc cannot be built if the start page of its
   section is a draft.
+- **Callouts**: as in [MyST](https://mystmd.org/guide/admonitions), a block
+  between two fences that names a kind in braces, such as ` ```{note} `, is a
+  callout, a note or a warning that stands apart from the text. Its ten kinds
+  are `attention`, `caution`, `danger`, `error`, `hint`, `important`, `note`,
+  `seealso`, `tip` and `warning`. Its title is the text after its kind, or
+  its first block if that is a heading or a paragraph in bold, or else the
+  label of its kind in the language of the page: the labels `attention` to
+  `warning` have English defaults, and the starter translates them into
+  German. Existing websites translate them in `site.languages` and copy the
+  rules for `.admonition` and `.admonition-title` from the starter's
+  `static/assets/css/main.css`.
+- **Images and figures**: as in MyST, the directives `{image}` and `{figure}`
+  show an image on lines of its own, whose URL follows their name. Their
+  options are `alt`, its description, `width`, such as `50%` or `300px`, and
+  `align`, which is `left`, `center` or `right`; the body of a figure is its
+  caption. Existing websites copy the rules for `.align-left`,
+  `.align-center`, `.align-right`, `figure` and `figcaption`.
+- **Formulas without dollar signs**: as in MyST, `` {math}`e = mc^2` `` is a
+  formula within a text and the body of a `{math}` directive one on lines of
+  its own, like the formulas between dollar signs.
+- **Fences of colons and options**: a directive stands between two lines of
+  at least three backticks or of at least three colons, as in `:::{note}`
+  and `:::`. The closing fence is at least as long as the opening one, so
+  that a longer fence, or one of the other kind, holds a directive or a code
+  block. Options follow the opening fence as lines of `:key: value`, or as
+  lines of `key: value` between two lines of `---`. An option that Blyss does
+  not know, a value that an option cannot have, an image without a URL and a
+  `{math}` directive without a formula stop the build with a message that
+  names the file. Directives work in every Markdown text, also in a list, in
+  a quotation and within each other; the block of a component and a diagram
+  remain code within a directive, as within a list.
 
 ### Changes
 
+- **Task lists in the starter**: a list item that starts with `[ ]` or `[x]`
+  shows its checkbox in place of its marker, as large as the text. Existing
+  websites copy the rules for `input[type="checkbox"]` and the `--list-indent`
+  of the lists from `static/assets/css/main.css`.
 - **Order of the starter's book**: the docs follow the way of a new website:
   installation, configuration, templates, components, writing, deployment
   and development. "Writing" holds the section "Book" with the docs "Docs",
