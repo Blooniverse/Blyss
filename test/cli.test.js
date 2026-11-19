@@ -261,8 +261,8 @@ describe("a generated starter", () => {
   test("builds with the local Blyss package", async () => {
     const result = run(["build"], site);
     assert.equal(result.status, 0, result.stderr);
-    const pages = [["en", ["hello-world", "templates", "translations"], ["installation", "configuration", "templates", "components", "deployment", "development", "writing", "writing/book", "writing/book/docs", "writing/book/navigation", "writing/pages-and-posts", "writing/translations", "writing/markdown-spice"]],
-      ["de", ["hallo-welt", "uebersetzungen", "vorlagen"], ["installation", "konfiguration", "vorlagen", "komponenten", "bereitstellung", "entwicklung", "schreiben", "schreiben/buch", "schreiben/buch/dokumente", "schreiben/buch/navigation", "schreiben/seiten-und-beitraege", "schreiben/uebersetzungen", "schreiben/markdown-wuerze"]]]
+    const pages = [["en", ["hello-world", "templates", "translations"], ["installation", "configuration", "templates", "components", "deployment", "development", "writing", "writing/book", "writing/book/docs", "writing/book/navigation", "writing/pages-and-posts", "writing/translations", "writing/markdown-spice", "writing/labels-and-numbers"]],
+      ["de", ["hallo-welt", "uebersetzungen", "vorlagen"], ["installation", "konfiguration", "vorlagen", "komponenten", "bereitstellung", "entwicklung", "schreiben", "schreiben/buch", "schreiben/buch/dokumente", "schreiben/buch/navigation", "schreiben/seiten-und-beitraege", "schreiben/uebersetzungen", "schreiben/markdown-wuerze", "schreiben/labels-und-nummern"]]]
       .flatMap(([language, posts, docs]) => ["", "pages/about/", "posts/", ...posts.map(post => `posts/${post}/`), "tags/", "tags/blyss/",
         "tags/markdown/", "book/", ...docs.map(doc => `book/${doc}/`)].map(path => `${language}/${path}index.html`));
     const notFoundPages = ["404.html", "en/404.html", "de/404.html"];
@@ -292,7 +292,8 @@ describe("a generated starter", () => {
       ["components", "komponenten"], ["deployment", "bereitstellung"], ["development", "entwicklung"],
       ["writing", "schreiben"], ["writing/book", "schreiben/buch"], ["writing/book/docs", "schreiben/buch/dokumente"],
       ["writing/book/navigation", "schreiben/buch/navigation"], ["writing/pages-and-posts", "schreiben/seiten-und-beitraege"],
-      ["writing/translations", "schreiben/uebersetzungen"], ["writing/markdown-spice", "schreiben/markdown-wuerze"]
+      ["writing/translations", "schreiben/uebersetzungen"], ["writing/markdown-spice", "schreiben/markdown-wuerze"],
+      ["writing/labels-and-numbers", "schreiben/labels-und-nummern"]
     ]) {
       const en = await readFile(join(site, "public", "en", "book", english, "index.html"), "utf8");
       const de = await readFile(join(site, "public", "de", "book", german, "index.html"), "utf8");
@@ -419,7 +420,7 @@ describe("a generated starter", () => {
     assert.ok(german.includes('<pre tabindex="0">{\n  &quot;description&quot;: &quot;Beiträge pro Monat als Balken&quot;,'));
   });
 
-  test("shows a task list, callouts titled in the language of the page, a figure and a formula of MyST in the doc that describes them", async () => {
+  test("shows a task list, callouts titled in the language of the page, figures and a formula of MyST in the doc that describes them", async () => {
     for (const [language, doc, note, gives] of [["en", "writing/markdown-spice", "Note", "gives"], ["de", "schreiben/markdown-wuerze", "Anmerkung", "ergibt"]]) {
       const html = await readFile(join(site, "public", language, "book", doc, "index.html"), "utf8");
       assert.match(html, /<ul>\n<li><input checked="" disabled="" type="checkbox"> [^<]+<\/li>\n<li><input disabled="" type="checkbox"> /);
@@ -427,6 +428,23 @@ describe("a generated starter", () => {
       assert.match(html, /<div class="admonition warning" role="note">\n<p class="admonition-title"><code>public\/<\/code> [^<]+<\/p>\n<p>[^<]+<\/p>\n<pre /);
       assert.match(html, /<figure class="align-center">\n<img src="\/assets\/img\/gallery\/lighthouse\.svg" alt="[^"]+" style="width: 30%">\n<figcaption>\n<p>/);
       assert.ok(html.includes(` ${gives} <math><mrow><msup><mi>a</mi><mn>2</mn></msup>`));
+      // A callout that opens, an alert of GitHub and the images of a figure.
+      assert.match(html, /<details class="admonition dropdown tip">\n<summary class="admonition-title">[^\n]+<\/summary>\n<p>/);
+      assert.match(html, /<div class="admonition important" role="note">\n<p class="admonition-title">(?:Important|Wichtig)<\/p>\n<p>/);
+      assert.match(html, /<figure class="subfigures">\n<figure>\n<img src="\/assets\/img\/gallery\/sunrise\.svg" alt="[^"]+">\n<figcaption><span class="caption-number">\(a\)<\/span> /);
+    }
+  });
+
+  test("labels and numbers the figures and the formulas of the doc that describes them, in the language of the page", async () => {
+    for (const [language, doc, figure] of [["en", "writing/labels-and-numbers", "Figure"], ["de", "schreiben/labels-und-nummern", "Abbildung"]]) {
+      const html = await readFile(join(site, "public", language, "book", doc, "index.html"), "utf8");
+      assert.match(html, new RegExp(`<figure id="[a-z-]+" class="align-center">\\n<img [^>]+>\\n<figcaption>\\n<p><span class="caption-number">${figure} 1:</span> `));
+      assert.match(html, new RegExp(`<figure id="([a-z-]+)" class="subfigures">\\n<figure id="\\1-a">\\n[^]+?<figcaption>\\n<p><span class="caption-number">${figure} 2:</span> `));
+      // The formula with a label and the two lines of the environment of LaTeX share one sequence.
+      assert.deepEqual(html.match(/<mtext class="tml-tag">[^<]+<\/mtext>/g).map(tag => tag.replace(/<[^>]+>/g, "")), ["(1)", "(2)", "(3)"]);
+      // Each link to a part of the page leads to one of its elements.
+      const ids = new Set(html.match(/ id="[^"]+"/g).map(id => id.slice(5, -1)));
+      for (const href of html.match(/ href="#[^"]+"/g)) assert.ok(ids.has(decodeURIComponent(href.slice(8, -1))), href);
     }
   });
 

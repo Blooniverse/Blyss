@@ -52,6 +52,8 @@ As in [MyST](https://mystmd.org/guide/math), a formula needs no dollar signs, wh
 \int_0^1 x^2 \, dx = \frac{1}{3}
 ```
 
+A formula on lines of its own can have a label and a number; see [Labels and numbers](/en/book/writing/labels-and-numbers/#formulae).
+
 Formulas also work in component texts, fragments and region texts. The starter's local Temml assets must match the installed version; see [Templates and the lean theme](/en/book/templates/#top-bar-and-fonts).
 
 
@@ -167,7 +169,31 @@ npm run build
 ```
 :::
 
-A callout is a `div` with the classes `admonition` and its kind, and its title a paragraph with the class `admonition-title`; the starter's `static/assets/css/main.css` styles them.
+A callout has three further forms:
+
+- **Dropdown**: the class `dropdown` makes a callout one that opens at a click on its title. The option `open` shows it open from the start.
+- **`{admonition}`**: a callout without a kind of its own. It has the title that it is given, or none, and the colour of the kind that one of its classes names.
+- **Alerts**: as on GitHub, a quotation that starts with `[!NOTE]`, `[!TIP]`, `[!IMPORTANT]`, `[!WARNING]` or `[!CAUTION]` is a callout of that kind. Each of its lines starts with `>`.
+
+````markdown
+:::{admonition} Why is `public/` not in Git?
+:class: dropdown tip
+It is generated output: every build recreates it.
+:::
+
+> [!IMPORTANT]
+> Replace the placeholder values before you publish.
+````
+
+:::{admonition} Why is `public/` not in Git?
+:class: dropdown tip
+It is generated output: every build recreates it.
+:::
+
+> [!IMPORTANT]
+> Replace the placeholder values before you publish.
+
+A callout is a `div` with the classes `admonition` and its kind, and its title a paragraph with the class `admonition-title`; a dropdown is a `details` with its title as its `summary`. The starter's `static/assets/css/main.css` styles them, and any further class of the option `class` is yours to style. The option `label` names a callout; see [Labels and numbers](/en/book/writing/labels-and-numbers/#labels).
 
 
 
@@ -219,8 +245,27 @@ Both have these options:
 - `alt`: the description of the image for readers who cannot see it.
 - `width`: a number with a unit of CSS, such as `30%` of the width of the text or `300px`; a number alone counts in pixels. The starter's stylesheet keeps an image within the width of the text.
 - `align`: `left`, `center` or `right`. Without it, the image stands like the text around it.
+- `label`, and `enumerated` for a figure: they name and number it; see [Labels and numbers](/en/book/writing/labels-and-numbers/#figures).
 
 An aligned image has the class `align-left`, `align-center` or `align-right` on its paragraph or on its `figure`, by which the stylesheet places it.
+
+A figure without a URL shows the images of its body side by side, each with a letter and its description below it. The rest of its body is the caption of them all:
+
+````markdown
+:::{figure}
+![A sun rising over blue hills](/assets/img/gallery/sunrise.svg)
+![Waves in three shades of blue](/assets/img/gallery/waves.svg)
+
+Two images of the gallery.
+:::
+````
+
+:::{figure}
+![A sun rising over blue hills](/assets/img/gallery/sunrise.svg)
+![Waves in three shades of blue](/assets/img/gallery/waves.svg)
+
+Two images of the gallery.
+:::
 
 
 
