@@ -81,8 +81,10 @@ article > header { margin-bottom: 1rem; }
 article > header p { margin: 0; font-size: .9rem; }
 
 /* Formulas are MathML, laid out by Temml's stylesheet, static/assets/temml/Temml-Local.css. A formula on lines of
-   its own scrolls sideways where it is wider than the text. */
+   its own scrolls sideways where it is wider than the text, and its number stands at the end of its line, where
+   Chromium places it by -webkit-right. */
 .math { margin-bottom: .6em; padding-block: .2em; overflow-x: auto; }
+mtd:has(> .tml-tag) { text-align: right; text-align: -webkit-right; }
 
 /* Callouts, such as ```{note}: a card with the colour of its kind at its side and in its title, each clear enough
    on the card (a contrast of at least 4.5 to 1). As in MyST, the kinds share four colours: blue informs, green
@@ -101,6 +103,9 @@ article > header p { margin: 0; font-size: .9rem; }
 .admonition:is(.danger, .error) { --kind: hsl(0 65% 38%); }
 .admonition-title { margin-bottom: .3em; font-weight: 700; color: var(--kind); }
 .admonition > :last-child { margin-bottom: 0; }
+/* A callout with the class dropdown is a <details>, which opens at a click on its title. */
+details.admonition > summary { cursor: pointer; }
+details.admonition:not([open]) > summary { margin-bottom: 0; }
 
 /* Images and figures, ```{image} and ```{figure}: their align sets one of these classes, without which they stand
    like the text around them. A figure shows its caption below its image, in smaller type. */
@@ -110,6 +115,13 @@ article > header p { margin: 0; font-size: .9rem; }
 figure > img { vertical-align: bottom; }
 figcaption { margin-top: .3em; font-size: .85rem; color: var(--color202grey); }
 figcaption > :last-child { margin-bottom: 0; }
+.caption-number { font-weight: 700; } /* the number of a figure, as in "Figure 1:", and the letter of one of its images */
+/* The images of a figure without a URL stand side by side, as many as fit, each with its letter below it and the
+   caption of them all below the last. */
+.subfigures { display: flex; flex-wrap: wrap; gap: .6em 1rem; }
+.subfigures > figure { flex: 1 1 8rem; margin: 0; }
+.subfigures > figure > img { width: 100%; }
+.subfigures > figcaption { flex-basis: 100%; margin-top: 0; }
 
 /* Highlighted code: the classes of highlight.js in the colours of this stylesheet, each clear enough on the
    background of code for small text (a contrast of at least 4.5 to 1). */

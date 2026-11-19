@@ -18,6 +18,7 @@ const defaultLabels = {
   next: "Next",
   footnotes: "Footnotes",
   backToText: "Back to the text",
+  figure: "Figure", // before the number of a figure, as in "Figure 1"
   // The titles of the callouts, by their kinds (see directives.js).
   attention: "Attention",
   caution: "Caution",

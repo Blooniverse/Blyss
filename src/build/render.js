@@ -50,8 +50,9 @@ export function renderRecentPosts(record, records) {
 const idsOf = html => [...html.matchAll(/\sid="([^"{}]+)"/g)].map(match => match[1]);
 
 // Like GitHub, gives each heading an id from its text, such as "getting-started", "getting-started-1" for the next of
-// that text and "section" for one without letters or digits. The ids of the templates, such as "overlay", are taken,
-// and so are those of the HTML blocks and components in the text.
+// that text and "section" for one without letters or digits; a heading with a label has that as its id. The ids of
+// the templates, such as "overlay", are taken, and so are the labels of the text and the ids of its HTML blocks
+// and components.
 function identifyHeadings(tokens, takenIds) {
   for (const token of tokens) if (token.type === "html") idsOf(token.text).forEach(id => takenIds.add(id));
   const headings = [];
@@ -61,8 +62,8 @@ function identifyHeadings(tokens, takenIds) {
     // The numbers of footnotes are not part of the text of a heading.
     const text = html.replace(/<sup class="footnote-ref">.*?<\/sup>|<[^>]*>/g, "").trim();
     const slug = text.replace(/&#?\w+;/g, "").toLowerCase().replace(/[^\p{L}\p{M}\p{N}\p{Pc} -]/gu, "").replaceAll(" ", "-") || "section";
-    let id = slug;
-    for (let number = 1; takenIds.has(id); number++) id = `${slug}-${number}`;
+    let id = token.label ?? slug;
+    for (let number = 1; token.label === undefined && takenIds.has(id); number++) id = `${slug}-${number}`;
     takenIds.add(id);
     tokens[index] = { type: "html", block: true, raw: token.raw, text: `<h${token.depth} id="${id}">${html}</h${token.depth}>\n` };
     headings.push({ depth: token.depth, id, text });
@@ -88,11 +89,17 @@ function renderToc(headings, label) {
 // consists of {{<name>}} alone shows the component of that name; a fenced code block with {{<name>}} as its language
 // shows the component with the text and the settings that the block holds (see components.js). Other code and
 // running text keep a placeholder as it is written. A fenced code block in a language of a component, such as
-// mermaid, shows that component with the code as its text. With takenIds, the headings get ids (see
-// identifyHeadings), which are returned with the headings.
-async function renderBody(record, file, records, components, languages, takenIds) {
+// mermaid, shows that component with the code as its text. takenIds are the ids of the templates, which no label of
+// the text can be. In a doc, the headings get ids (see identifyHeadings), which are returned with the headings.
+async function renderBody(record, file, records, components, languages, takenIds, isBook) {
   if (record.type === "list") return { html: record.html, headings: [] };
-  const tokens = lexDocument(record.markdown, file, record.languageConfig.labels);
+  const { tokens, ids } = lexDocument(record.markdown, file, record.languageConfig.labels);
+  for (const id of ids) {
+    if (takenIds.has(id)) {
+      throw new BlyssError(`Cannot build ${file}: its label "${id}" is the id of an element of its templates, so it needs another name.`);
+    }
+    takenIds.add(id);
+  }
   for (const [index, token] of tokens.entries()) {
     const block = token.type === "code" ? token.text : undefined;
     const language = block === undefined ? "" : token.lang ?? "";
@@ -105,7 +112,7 @@ async function renderBody(record, file, records, components, languages, takenIds
       tokens[index] = { type: "html", block: true, raw: token.raw, text: await components[name](block, Boolean(shown)) };
     }
   }
-  const headings = takenIds ? identifyHeadings(tokens, takenIds) : [];
+  const headings = isBook ? identifyHeadings(tokens, takenIds) : [];
   return { html: renderTokens(tokens), headings };
 }
 
@@ -145,8 +152,8 @@ export async function renderRecord({ record, file, templates, templateFile = nam
   const innerTemplate = templates[inner];
   const shown = regions.of(kind, record.languageKey);
   const regionTemplates = Object.values(shown).map(region => region?.template ?? "").join("");
-  const takenIds = isBook ? new Set(idsOf(templates.document + innerTemplate + regionTemplates)) : undefined;
-  const body = await renderBody(record, file, records, components, languages, takenIds);
+  const takenIds = new Set(idsOf(templates.document + innerTemplate + regionTemplates));
+  const body = await renderBody(record, file, records, components, languages, takenIds, isBook);
   const content = applyTemplate(innerTemplate, {
     ...components,
     ...book,
