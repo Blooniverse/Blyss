@@ -1,13 +1,31 @@
 ---
 title: Markdown spice
-description: How to write formulas, footnotes, highlighted code, task lists, callouts, figures, diagrams and charts in Markdown.
+description: How to author highlighted code, formulae, diagrams, callouts and figures as well as footnotes in Markdown.
 order: 4
 translationKey: book-markdown-spice
 ---
 
-Beyond plain Markdown, Blyss renders formulas, footnotes, highlighted code, task lists, callouts, figures and diagrams. This doc shows each of them at work.
+Beyond plain Markdown, Blyss renders highlighted code, formulae, diagrams, callouts and figures as well as footnotes.
 
-## Formulas
+
+
+## Code
+
+A fenced code block that names its language is highlighted during the build:
+
+```js
+// Greets by name.
+const greet = name => `Hello, ${name}!`;
+console.log(greet("Blyss"));
+```
+
+A block without a language, or in one that the highlighter does not know, stays plain.
+
+The starter's `static/assets/css/main.css` colours the `hljs-…` classes; preserve a contrast of at least 4.5:1 against the code background when changing them.
+
+
+
+## Formulae
 
 A formula is LaTeX between dollar signs. Within a text, one dollar sign stands on each side, as in $e^{i\pi} + 1 = 0$. A formula on lines of its own stands between two dollar signs on each side:
 
@@ -36,147 +54,12 @@ As in [MyST](https://mystmd.org/guide/math), a formula needs no dollar signs, wh
 
 Formulas also work in component texts, fragments and region texts. The starter's local Temml assets must match the installed version; see [Templates and the lean theme](/en/book/templates/#top-bar-and-fonts).
 
-## Footnotes
 
-A footnote has a name in square brackets after a caret[^name], and its text follows that name and a colon on a line of its own, anywhere in the file. Blyss numbers the footnotes in the order of their first references[^order] and lists them below the text, each with a link back.
-
-[^name]: This footnote is written as `[^name]: This footnote …`. Its name can be a word or a number.
-[^order]: The names do not matter for the numbers, and a footnote can be referred to several times.
-
-    A further paragraph of a footnote is indented by four spaces.
-
-Pages, posts and docs have footnotes; the texts of the components, of the hero and of the overlay have none.
-
-Names contain no spaces. An unreferenced definition is omitted; an undefined reference, or one in link text or an image description, stays as written. The `footnotes` and `backToText` labels provide screen-reader text.
-
-## Code
-
-A fenced code block that names its language is highlighted during the build:
-
-```js
-// Greets by name.
-const greet = name => `Hello, ${name}!`;
-console.log(greet("Blyss"));
-```
-
-A block without a language, or in one that the highlighter does not know, stays plain.
-
-The starter's `static/assets/css/main.css` colours the `hljs-…` classes; preserve a contrast of at least 4.5:1 against the code background when changing them.
-
-## Task lists
-
-A list item that starts with `[ ]` or `[x]` shows a checkbox, as on GitHub and in editors such as MarkText:
-
-```markdown
-- [x] Write the text
-- [ ] Add a figure
-- [ ] Publish
-```
-
-- [x] Write the text
-- [ ] Add a figure
-- [ ] Publish
-
-A checkbox shows what the Markdown says; a reader cannot tick it.
-
-## Callouts
-
-A callout sets a note or a warning apart from the text around it. As in [MyST](https://mystmd.org/guide/admonitions), it is a [directive](#directives) with the name of its kind:
-
-````markdown
-```{note}
-Build the website before you serve it.
-```
-````
-
-```{note}
-Build the website before you serve it.
-```
-
-The ten kinds share four colours:
-
-- `note` and `important` inform.
-- `hint`, `seealso` and `tip` advise.
-- `attention`, `caution` and `warning` caution.
-- `danger` and `error` warn of harm.
-
-A callout takes its title from the first of these that it has:
-
-1. The text after its kind, which can hold Markdown.
-2. Its first block, if that is a heading or a paragraph that is bold as a whole.
-3. The label of its kind in the language of the page, such as `note: "Note"` in `blyss.config.js`.
-
-A callout without lines of its own shows the text after its kind as its text. Between colons, a callout holds a code block without a longer fence:
-
-````markdown
-:::{warning} `public/` is rebuilt
-Every build deletes and recreates this directory:
-
-```bash
-npm run build
-```
-:::
-````
-
-:::{warning} `public/` is rebuilt
-Every build deletes and recreates this directory:
-
-```bash
-npm run build
-```
-:::
-
-A callout is a `div` with the classes `admonition` and its kind, and its title a paragraph with the class `admonition-title`; the starter's `static/assets/css/main.css` styles them.
-
-## Images and figures
-
-`![description](url)` shows an image within a text. As in [MyST](https://mystmd.org/guide/figures), two [directives](#directives) show an image on lines of its own, each with the URL of the image after its name:
-
-- `{image}` shows the image alone.
-- `{figure}` shows it with a caption, the body of the directive.
-
-````markdown
-```{figure} /assets/img/gallery/lighthouse.svg
-:alt: A lighthouse in front of an orange sky
-:width: 30%
-:align: center
-
-A lighthouse from the **gallery** of the starter.
-```
-````
-
-```{figure} /assets/img/gallery/lighthouse.svg
-:alt: A lighthouse in front of an orange sky
-:width: 30%
-:align: center
-
-A lighthouse from the **gallery** of the starter.
-```
-
-Both have these options:
-
-- `alt`: the description of the image for readers who cannot see it.
-- `width`: a number with a unit of CSS, such as `30%` of the width of the text or `300px`; a number alone counts in pixels. The starter's stylesheet keeps an image within the width of the text.
-- `align`: `left`, `center` or `right`. Without it, the image stands like the text around it.
-
-An aligned image has the class `align-left`, `align-center` or `align-right` on its paragraph or on its `figure`, by which the stylesheet places it.
-
-## Directives
-
-Callouts, `{image}`, `{figure}` and `{math}` are directives of [MyST](https://mystmd.org/guide/syntax-overview), and the only ones that Blyss reads. They share one form:
-
-- **Name**: the opening fence names the directive in braces. The text after the name is its argument, such as a title or a URL.
-- **Fences**: a directive stands between two lines of at least three backticks or of at least three colons, which mean the same. Colons suit a body of Markdown, such as that of a callout: another tool, such as GitHub, then shows the body as text rather than as code. Backticks suit a formula.
-- **Nesting**: the closing fence is at least as long as the opening one. A directive therefore holds a directive or a code block with a shorter fence, or with the other kind of fence.
-- **Options**: they follow the opening fence at once, as lines of `:key: value` or, as in the block of a component, as lines of `key: value` between two lines of `---`. A line of text that starts like an option follows an empty line.
-- **Strictness**: an option that Blyss does not know, such as a `label` or a `class` of MyST, stops the build with a message that names the file. So do an image without a URL and a `width` or an `align` that is not valid.
-- **Other names**: a fence with any other name in braces stays what it is in Markdown, a code block between backticks and text between colons.
-
-Directives work in every Markdown text, also within a list, a quotation or another directive. Within a directive, as within a list, a diagram or the [block of a component](/en/book/components/#blocks), which double braces name, remains code.
 
 ## Diagrams
 
 A fenced code block in the language of a diagram component shows that diagram instead of its code. The browser draws it once it comes near the window, with a library that it loads then; until that moment, and without JavaScript, the code is shown.
+
 
 ### Mermaid
 
@@ -234,3 +117,137 @@ The language `vega-lite` shows a [Vega-Lite](https://vega.github.io/vega-lite/) 
 ### Settings
 
 `components.componentMermaid`, `components.componentFlowchart` and `components.componentVegaLite` in `blyss.config.js` hold the settings of the diagrams, among them the URLs of their libraries. A block of the component gives a single diagram a title and settings of its own: its front matter holds them, and the code follows it.
+
+
+
+## Callouts
+
+A callout sets a note or a warning apart from the text around it. As in [MyST](https://mystmd.org/guide/admonitions), it is a [directive](#directives) with the name of its kind:
+
+````markdown
+```{note}
+Build the website before you serve it.
+```
+````
+
+```{note}
+Build the website before you serve it.
+```
+
+The ten kinds share four colours:
+
+- `note` and `important` inform.
+- `hint`, `seealso` and `tip` advise.
+- `attention`, `caution` and `warning` caution.
+- `danger` and `error` warn of harm.
+
+A callout takes its title from the first of these that it has:
+
+1. The text after its kind, which can hold Markdown.
+2. Its first block, if that is a heading or a paragraph that is bold as a whole.
+3. The label of its kind in the language of the page, such as `note: "Note"` in `blyss.config.js`.
+
+A callout without lines of its own shows the text after its kind as its text. Between colons, a callout holds a code block without a longer fence:
+
+````markdown
+:::{warning} `public/` is rebuilt
+Every build deletes and recreates this directory:
+
+```bash
+npm run build
+```
+:::
+````
+
+:::{warning} `public/` is rebuilt
+Every build deletes and recreates this directory:
+
+```bash
+npm run build
+```
+:::
+
+A callout is a `div` with the classes `admonition` and its kind, and its title a paragraph with the class `admonition-title`; the starter's `static/assets/css/main.css` styles them.
+
+
+
+## Task lists
+
+A list item that starts with `[ ]` or `[x]` shows a checkbox, as on GitHub and in editors such as MarkText:
+
+```markdown
+- [x] Write the text
+- [ ] Add a figure
+- [ ] Publish
+```
+
+- [x] Write the text
+- [ ] Add a figure
+- [ ] Publish
+
+A checkbox shows what the Markdown says; a reader cannot tick it.
+
+
+
+## Images and figures
+
+`![description](url)` shows an image within a text. As in [MyST](https://mystmd.org/guide/figures), two [directives](#directives) show an image on lines of its own, each with the URL of the image after its name:
+
+- `{image}` shows the image alone.
+- `{figure}` shows it with a caption, the body of the directive.
+
+````markdown
+```{figure} /assets/img/gallery/lighthouse.svg
+:alt: A lighthouse in front of an orange sky
+:width: 30%
+:align: center
+
+A lighthouse from the **gallery** of the starter.
+```
+````
+
+```{figure} /assets/img/gallery/lighthouse.svg
+:alt: A lighthouse in front of an orange sky
+:width: 30%
+:align: center
+
+A lighthouse from the **gallery** of the starter.
+```
+
+Both have these options:
+
+- `alt`: the description of the image for readers who cannot see it.
+- `width`: a number with a unit of CSS, such as `30%` of the width of the text or `300px`; a number alone counts in pixels. The starter's stylesheet keeps an image within the width of the text.
+- `align`: `left`, `center` or `right`. Without it, the image stands like the text around it.
+
+An aligned image has the class `align-left`, `align-center` or `align-right` on its paragraph or on its `figure`, by which the stylesheet places it.
+
+
+
+## Directives
+
+Callouts, `{image}`, `{figure}` and `{math}` are directives of [MyST](https://mystmd.org/guide/syntax-overview), and the only ones that Blyss reads. They share one form:
+
+- **Name**: the opening fence names the directive in braces. The text after the name is its argument, such as a title or a URL.
+- **Fences**: a directive stands between two lines of at least three backticks or of at least three colons, which mean the same. Colons suit a body of Markdown, such as that of a callout: another tool, such as GitHub, then shows the body as text rather than as code. Backticks suit a formula.
+- **Nesting**: the closing fence is at least as long as the opening one. A directive therefore holds a directive or a code block with a shorter fence, or with the other kind of fence.
+- **Options**: they follow the opening fence at once, as lines of `:key: value` or, as in the block of a component, as lines of `key: value` between two lines of `---`. A line of text that starts like an option follows an empty line.
+- **Strictness**: an option that Blyss does not know, such as a `label` or a `class` of MyST, stops the build with a message that names the file. So do an image without a URL and a `width` or an `align` that is not valid.
+- **Other names**: a fence with any other name in braces stays what it is in Markdown, a code block between backticks and text between colons.
+
+Directives work in every Markdown text, also within a list, a quotation or another directive. Within a directive, as within a list, a diagram or the [block of a component](/en/book/components/#blocks), which double braces name, remains code.
+
+
+
+## Footnotes
+
+A footnote has a name in square brackets after a caret[^name], and its text follows that name and a colon on a line of its own, anywhere in the file. Blyss numbers the footnotes in the order of their first references[^order] and lists them below the text, each with a link back.
+
+[^name]: This footnote is written as `[^name]: This footnote …`. Its name can be a word or a number.
+[^order]: The names do not matter for the numbers, and a footnote can be referred to several times.
+
+    A further paragraph of a footnote is indented by four spaces.
+
+Pages, posts and docs have footnotes; the texts of the components, of the hero and of the overlay have none.
+
+Names contain no spaces. An unreferenced definition is omitted; an undefined reference, or one in link text or an image description, stays as written. The `footnotes` and `backToText` labels provide screen-reader text.
