@@ -1,8 +1,8 @@
 ---
-title: Labels und Nummern
+title: Labels, Nummern, Referenzen
 description: Wie Sie die Elemente eines Textes benennen, wie Blyss dessen Abbildungen, Formeln und Fußnoten nummeriert und wie Sie auf sie verweisen.
 order: 5
-translationKey: book-labels-and-numbers
+translationKey: book-labels-nbrs-refs
 ---
 
 Ein Label benennt ein Element einer Seite, eines Beitrags oder eines Dokuments. Blyss nummeriert die Abbildungen und die Formeln, die ein Label haben, sowie die Fußnoten: jede Art für sich, in der Reihenfolge, in der die Seite sie zeigt, und auf jeder Seite ab 1. Ein Verweis auf ein Label zeigt dann die Nummer oder den Namen seines Elements.
