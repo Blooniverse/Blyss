@@ -1,8 +1,8 @@
 ---
-title: Labels and numbers
+title: Labels, numbers, references
 description: How to label the elements of a text, how Blyss numbers its figures, formulae and footnotes, and how to refer to them.
 order: 5
-translationKey: book-labels-and-numbers
+translationKey: book-labels-nbrs-refs
 ---
 
 A label names an element of a page, a post or a doc. Blyss numbers the figures and the formulae that have a label, as well as the footnotes: each kind on its own, in the order in which the page shows it, and from 1 on every page. A reference to a label then shows the number or the name of its element.
