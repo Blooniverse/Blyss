@@ -4,7 +4,7 @@ title: Warum Blyss
 
 ### Markdown rein, HTML raus
 
-Inhalte aller Art sind Markdown-Dateien mit etwas Front Matter.
+Dokumente, Seiten und Beiträge sind Markdown-Dateien mit etwas Front Matter.
 
 ### Mehrsprachigkeit
 
