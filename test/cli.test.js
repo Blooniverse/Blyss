@@ -303,10 +303,12 @@ describe("a generated starter", () => {
     }
   });
 
-  test("renders the home pages with home.html: title and slogan in the header, then the article, the hero and the footer", async () => {
+  test("renders the home pages with a site header and the title and slogan inside main", async () => {
     const { title, description } = await starterText("en", "pages", "index.md");
     const english = (await readFile(join(site, "public", "en", "index.html"), "utf8")).replace(/>\s+</g, "><");
-    assert.ok(english.includes(`</div><div class="page"><header><h1>${title}</h1><h2>${description}</h2></header><main><article>`));
+    assert.ok(english.includes(`<header class="site-bar">`));
+    assert.ok(english.includes(`<nav aria-label="Main navigation">`));
+    assert.ok(english.includes(`</header><div class="page"><main><header><h1>${title}</h1><h2>${description}</h2></header><article>`));
     assert.match(english, /<\/article><\/main><\/div><aside class="hero" aria-label="Highlights">.*<\/aside><footer>/s);
     const german = await readFile(join(site, "public", "de", "index.html"), "utf8");
     const [slider, heroTexts] = await Promise.all([starterText("de", "components", "componentSliderHero.md"), starterText("de", "heroTexts.md")]);
