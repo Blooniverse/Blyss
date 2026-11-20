@@ -1,6 +1,6 @@
 ---
 title: Blyss SSG
-description: Lean for knowledge
+description: Lean & local
 translationKey: home
 ---
 

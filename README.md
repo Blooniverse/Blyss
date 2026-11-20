@@ -1,17 +1,18 @@
 # Blyss SSG 1.0.1
 
-Blyss is a lean SSG (static site generator) for Markdown++. It ships with a dependency-free Node.js server.
-- Perfect for technical documentation and scientific web publishing.
-    - [MyST](https://mystmd.org/) subset!  
-- Perfect for everyday web publishing.
-- Perfect for creative authors wanting to co-design the visuals.
+Blyss is a lean local-first SSG (static site generator) for Markdown++. Ships with a dependency-free Node.js server.
+
+↪︎ Build multilingual sites from Markdown++ (with math, diagrams, cross-references … ) — keep local control!
+
+- Technical & scientific: [MyST](https://mystmd.org/) subset!  
+- Creative: Authors can co-design the visuals.
 
 ## Features
 
 - **Markdown++**: AI & KMS ready for the knowledge management era.
-    - **Code highlighting**: Supports nearly 200 languages – via [Highlight.js](https://highlightjs.org/).
-    - **Formulae**: LaTeX in Markdown to MathML in HTML – via [Temml.org](https://temml.org/).
-    - **Diagrams**: Extensive charting – via [Flowchart.js](https://flowchart.js.org/), [Mermaid](https://mermaid.js.org/), even [Vega-Lite](https://vega.github.io/vega-lite/).
+    - **Code highlighting**: Supports nearly 200 languages — via [Highlight.js](https://highlightjs.org/).
+    - **Formulae**: LaTeX in Markdown to MathML in HTML — via [Temml.org](https://temml.org/).
+    - **Diagrams**: Extensive charting — via [Flowchart.js](https://flowchart.js.org/), [Mermaid](https://mermaid.js.org/), even [Vega-Lite](https://vega.github.io/vega-lite/).
     - **Callouts & figures**: Admonitions, images and figures as [MyST](https://mystmd.org/) directives, plus GitHub alerts.
     - **Labels, numbers & references**: Numbered figures and formulae, and references that fill in their own text.
     - **Task lists**: `- [x]` and `- [ ]` as checkboxes.
@@ -23,12 +24,16 @@ Blyss is a lean SSG (static site generator) for Markdown++. It ships with a depe
 - **Themeable**: Blyss comes with a lean starter.
 - **Composable**: Markdown components and their fragments can be used anywhere.
 - **Configurable**: Via blyss.config.js and component Markdown.
-- **Multilingual**: EN/DE are defaults – they can be extended.
+- **Multilingual**: EN/DE are defaults — they can be extended.
 - **AIO & SEO**: Semantic RDF graph (in JSON-LD), plus a classic sitemap.xml.
-- Lightweight Javascript.
-- **3 dependencies only**: `highlight.js`, `marked`, `temml` (nor any further dependencies).
-- **Local-first & Git-based**: For devs & authors.
+> [!IMPORTANT]
+> - **Cybersecurity**:
+>     - 0 (ZERO) dependencies in the Node.js server!
+>     - 3 (THREE) dependencies in the SSG engine: `highlight.js`, `marked`, `temml` (nor any further dependencies)!
+> - **Local-first & Git-based**: Full control for devs & authors.
 
+
+## Workflow
 ```text
 Author
   ▼
@@ -56,8 +61,6 @@ npm start                             # serve public/ on localhost:3000
 ```
 
 `blyss init` only copies files. Installing dependencies, building and serving are separate steps.
-> [!NOTE]
-> The Node.js static server is dependency free!
 
 
 ## Installation
