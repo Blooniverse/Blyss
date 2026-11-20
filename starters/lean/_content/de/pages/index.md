@@ -1,9 +1,14 @@
 ---
 title: Blyss SSG
-description: Lean for knowledge
+description: Schlank und lokal
 translationKey: home
 ---
 
-### Intro
+### Was Blyss bietet
 
-Blyss erzeugt diese Website aus Markdown-Dateien. Diese Seite liegt in `_content/de/pages/index.md`.
+Blyss ist ein schlanker Local-first-SSG (statischer Website-Generator) für Markdown++. Dazu gehört ein Node.js-Server ohne Abhängigkeiten.
+
+↪︎ Mehrsprachige Websites aus Markdown++ erstellen (mit Formeln, Diagrammen, Querverweisen …) – und die Kontrolle vor Ort behalten!
+
+- Technik und Wissenschaft: [MyST](https://mystmd.org/)-Teilmenge!
+- Kreativität: Autoren können die Gestaltung mitbestimmen.
