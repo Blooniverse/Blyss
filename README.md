@@ -27,7 +27,7 @@ Build multilingual sites from Markdown++ — with math, diagrams, and cross-refe
 - **Multilingual**: EN/DE are defaults — they can be extended.
 - **AIO & SEO**: Semantic RDF graph (in JSON-LD), plus a classic sitemap.xml.
 - Lightweight Javascript.
-- **3 dependencies only**: `highlight.js`, `marked`, `temml` (nor any further dependencies).
+- **Cybersecurity**: Merely 3 dependencies: `highlight.js`, `marked`, `temml` (nor any further dependencies).
 - **Local-first & Git-based**: For devs & authors.
 
 ```text
