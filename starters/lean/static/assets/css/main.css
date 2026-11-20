@@ -46,7 +46,7 @@ h2 { font-size: 1.5rem; letter-spacing: .04em; line-height: 1.1; margin-bottom: 
 h3 { font-size: 1.3rem; letter-spacing: 0em; line-height: 1.1; margin-bottom: .5rem; }
 article h2 { margin-top: 1em; }
 body[data-kind="home"] article > h3 {
-  background: linear-gradient(15deg, var(--color040border), var(--color202border));
+  background: linear-gradient(15deg, var(--color040border), var(--color202black));
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
