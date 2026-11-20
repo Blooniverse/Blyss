@@ -1,14 +1,15 @@
 import { lexMarkdown, renderTokens } from "./markdown.js";
 
-// Each ### heading of a Markdown text starts one of its texts, which runs up to the next one and is never shortened.
-// Returns the texts as HTML, each starting with its heading as <h3>, and the tokens before the first one. file names
-// the text in errors, and labels are those of its language.
-export function splitTexts(markdown, file, labels) {
+// Each heading of the selected depth starts a text, which runs up to the next one and is never shortened.
+// Returns the rendered texts, the tokens before the first one, and the depths of top-level headings.
+export function splitTexts(markdown, file, labels, depth = 3) {
   const texts = [];
   const before = [];
+  const headings = [];
   for (const token of lexMarkdown(markdown, file, labels)) {
-    if (token.type === "heading" && token.depth === 3) texts.push([token]);
+    if (token.type === "heading") headings.push(token.depth);
+    if (token.type === "heading" && token.depth === depth) texts.push([token]);
     else (texts.at(-1) ?? before).push(token);
   }
-  return { texts: texts.map(renderTokens), before };
+  return { texts: texts.map(renderTokens), before, headings };
 }

@@ -4,6 +4,10 @@
 
 ### Breaking changes
 
+- **Hero and overlay text headings**: each section of `heroTexts.md` and
+  `overlayTexts.md` now starts with `####`, below the region's title.
+  Existing sites must change their region section headings from `###` to
+  `####`; component texts continue to use `###`.
 - **Directives in braces**: a fenced code block whose language is the kind of
   a callout, `admonition`, `image`, `figure` or `math` in braces, such as
   ` ```{note} `, is no longer shown as code but as that directive, and lines

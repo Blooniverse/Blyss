@@ -37,13 +37,14 @@ async function starterFiles() {
   return (await listFiles(starter)).map(file => file === "gitignore" ? ".gitignore" : file).sort();
 }
 
-// The title, the description and the ### headings of a text of the starter, as its pages show them: the tests of
+// The title, description and section headings of a text of the starter, as its pages show them: the tests of
 // the starter follow its wording, which changes more often than the engine.
 async function starterText(language, ...file) {
   const source = await readFile(join(starter, "_content", language, ...file), "utf8");
   const field = name => escapeHtml(source.match(new RegExp(`^${name}: (.*)$`, "m"))?.[1] ?? "");
+  const heading = /^(?:hero|overlay)Texts\.md$/.test(file.at(-1)) ? /^#### (.+)$/gm : /^### (.+)$/gm;
   return { title: field("title"), description: field("description"),
-    headings: [...source.matchAll(/^### (.+)$/gm)].map(match => escapeHtml(match[1])) };
+    headings: [...source.matchAll(heading)].map(match => escapeHtml(match[1])) };
 }
 
 async function emptyDirectory(name) {
@@ -825,7 +826,7 @@ describe("a site with several tagged posts", () => {
     };
     const hero = path => region(path, '<aside class="hero"');
     const overlay = path => region(path, '<div id="overlay"');
-    const texts = html => [...html.matchAll(/<div>\n<h3>([^<]+)<\/h3>/g)].map(match => match[1]);
+    const texts = html => [...html.matchAll(/<div>\n<h4>([^<]+)<\/h4>/g)].map(match => match[1]);
     const [heroEnglish, heroGerman, overlayEnglish, overlayGerman] = await Promise.all([["en", "heroTexts.md"], ["de", "heroTexts.md"],
       ["en", "overlayTexts.md"], ["de", "overlayTexts.md"]].map(([language, file]) => starterText(language, file)));
     const home = await hero("en/index.html");
@@ -1143,10 +1144,10 @@ describe("a site with its own hero texts and fragments", () => {
   before(async () => {
     site = join(sandbox, "hero");
     assert.equal(run(["init", site], sandbox).status, 0);
-    const texts = [`### One\n\n${long}\n\n#### Part of one\n\nMore.`, "### Two\n\n```md\n### Not a text\n```",
-      ...[3, 4, 5, 6, 7, 8, 9].map(number => `### Text ${number}\n\nText.`)];
+    const texts = [`#### One\n\n${long}\n\n##### Part of one\n\nMore.`, "#### Two\n\n```md\n### Not a text\n```",
+      ...[3, 4, 5, 6, 7, 8, 9].map(number => `#### Text ${number}\n\nText.`)];
     await writeFile(join(site, "_content", "en", "heroTexts.md"),
-      `---\ntitle: Nine <texts>\n---\n\n<!-- Each ### heading starts a text. -->\n\n${texts.join("\n\n")}\n`);
+      `---\ntitle: Nine <texts>\n---\n\n<!-- Each #### heading starts a text. -->\n\n${texts.join("\n\n")}\n`);
     await writeFile(join(site, "_content", "en", "notice.md"), "---\ntitle: Notice\n---\n\nClosed on *Monday*.\n");
     const documentFile = join(site, "templates", "document.html");
     const template = await readFile(documentFile, "utf8");
@@ -1156,13 +1157,13 @@ describe("a site with its own hero texts and fragments", () => {
     assert.equal(result.status, 0, result.stderr);
   });
 
-  test("shows every text of heroTexts.md in full, each from one ### heading to the next", async () => {
+  test("shows every text of heroTexts.md in full, each from one #### heading to the next", async () => {
     const html = await page("en/index.html");
     const hero = html.slice(html.indexOf("<h3>Nine"), html.indexOf("</aside>"));
     assert.ok(hero.startsWith("<h3>Nine &lt;texts&gt;</h3>"));
-    assert.equal(hero.match(/<div>\n<h3>/g).length, 9);
-    assert.ok(hero.includes(`<div>\n<h3>One</h3>\n<p>${long}</p>\n<h4>Part of one</h4>\n<p>More.</p>\n</div>`));
-    assert.ok(hero.includes('<div>\n<h3>Two</h3>\n<pre tabindex="0"><code class="language-md"><span class="hljs-section">### Not a text</span>\n</code></pre>\n</div>'));
+    assert.equal(hero.match(/<div>\n<h4>/g).length, 9);
+    assert.ok(hero.includes(`<div>\n<h4>One</h4>\n<p>${long}</p>\n<h5>Part of one</h5>\n<p>More.</p>\n</div>`));
+    assert.ok(hero.includes('<div>\n<h4>Two</h4>\n<pre tabindex="0"><code class="language-md"><span class="hljs-section">### Not a text</span>\n</code></pre>\n</div>'));
   });
 
   test("gives templates each Markdown file directly in _content/<language>/ without publishing it", async () => {
@@ -1305,7 +1306,7 @@ describe("a site with its own hero and overlay", () => {
     for (const name of ["hero", "overlay"]) {
       for (const language of ["en", "de"]) {
         const { title, headings: texts } = await starterText(language, `${name}Texts.md`);
-        headings[name][language] = [title, ...texts].map(text => `<h3>${text}</h3>`);
+        headings[name][language] = [`<h3>${title}</h3>`, ...texts.map(text => `<h4>${text}</h4>`)];
       }
     }
   });
@@ -1543,7 +1544,7 @@ export default ({ settings, source, texts, refuse }) => {
     // Formulas are read in every text: in that of a component and in those of the hero.
     await writeFile(join(site, sliderText), `${await readFile(join(site, sliderText), "utf8")}\nA formula $s$.\n`);
     const heroTexts = join(site, "_content", "en", "heroTexts.md");
-    await writeFile(heroTexts, `${await readFile(heroTexts, "utf8")}\n### Formula\n\nA formula $h$.\n`);
+    await writeFile(heroTexts, `${await readFile(heroTexts, "utf8")}\n#### Formula\n\nA formula $h$.\n`);
     const result = run(["build"], site);
     assert.equal(result.status, 0, result.stderr);
   });
@@ -1563,7 +1564,7 @@ export default ({ settings, source, texts, refuse }) => {
       `comes ${formula("w")}.</p>`));
     const home = await page("en/index.html");
     assert.ok(home.includes(`<p>A formula ${formula("s")}.</p>`));
-    assert.ok(home.includes(`<div>\n<h3>Formula</h3>\n<p>A formula ${formula("h")}.</p>\n</div>`));
+    assert.ok(home.includes(`<div>\n<h4>Formula</h4>\n<p>A formula ${formula("h")}.</p>\n</div>`));
   });
 
   test("numbers the footnotes by their first references and lists those that the text refers to, each with its links back", async () => {
@@ -1714,8 +1715,8 @@ describe("a site with the callouts, the figures and the formulas of MyST", () =>
     // A text of the hero is no page, but its callout is titled in its language as well; its formula has no number,
     // and its {ref} is no reference.
     const heroTexts = join(site, "_content", "de", "heroTexts.md");
-    await writeFile(heroTexts, `${await readFile(heroTexts, "utf8")}\n### Hinweisbox\n\n:::{tip}\nIm Hero.\n:::\n\n` +
-      "### Formel\n\n$$\n\\begin{equation} E \\end{equation}\n$$\n\nKein Verweis: {ref}`formel`.\n");
+    await writeFile(heroTexts, `${await readFile(heroTexts, "utf8")}\n#### Hinweisbox\n\n:::{tip}\nIm Hero.\n:::\n\n` +
+      "#### Formel\n\n$$\n\\begin{equation} E \\end{equation}\n$$\n\nKein Verweis: {ref}`formel`.\n");
     await writeFile(join(site, labelled), labels);
     await writeFile(join(site, "_content", "de", "pages", "labels.md"),
       "---\ntitle: Labels\n---\n\n:::{figure} /assets/img/logo.svg\n:label: logo\nDas Logo.\n:::\n\n> [!TIP]\n> Ein Rat.\n\nSiehe [](#logo).\n");
@@ -1736,7 +1737,7 @@ describe("a site with the callouts, the figures and the formulas of MyST", () =>
     assert.ok(html.includes(callout("warning", "Warning", "<p>Only this text</p>\n")));
     assert.ok((await page("de/pages/directives/index.html"))
       .includes(callout("note", "Anmerkung", "<p>Text.</p>\n") + callout("seealso", "Siehe auch", "<p>Mehr.</p>\n")));
-    assert.ok((await page("de/index.html")).includes(`<div>\n<h3>Hinweisbox</h3>\n${callout("tip", "Tipp", "<p>Im Hero.</p>\n")}</div>`));
+    assert.ok((await page("de/index.html")).includes(`<div>\n<h4>Hinweisbox</h4>\n${callout("tip", "Tipp", "<p>Im Hero.</p>\n")}</div>`));
   });
 
   test("holds a directive and code within a directive, and a directive below a paragraph, in a list and in a quotation", async () => {
@@ -1808,7 +1809,7 @@ describe("a site with the callouts, the figures and the formulas of MyST", () =>
     assert.match(html, /<mi>h<\/mi><\/mtd><mtd[^>]*><mtext><\/mtext><\/mtd><\/mtr><\/mtable><\/math><\/div>/);
     assert.ok(!html.includes("tml-eqn"));
     // Any other text has no numbers, so that none stands twice on a page.
-    assert.match(await page("de/index.html"), /<h3>Formel<\/h3>\n<div class="math"><math [^\n]+<mi>E<\/mi><\/mtd><mtd[^>]*><mtext><\/mtext><\/mtd><\/mtr><\/mtable><\/math><\/div>/);
+    assert.match(await page("de/index.html"), /<h4>Formel<\/h4>\n<div class="math"><math [^\n]+<mi>E<\/mi><\/mtd><mtd[^>]*><mtext><\/mtext><\/mtd><\/mtr><\/mtable><\/math><\/div>/);
     // The footnote, which the text defines first, is shown last; one without a reference is not shown.
     assert.match(html, /<li id="fn:1">\n<p>Shown last, with <a href="#fig-note">Figure 4<\/a>\.<\/p>\n<div class="math" id="eq-note"><math [^\n]+<mtext class="tml-tag">\(7\)<\/mtext>[^\n]+\n<figure id="fig-note">\n[^\n]+\n<figcaption>\n<p><span class="caption-number">Figure 4<\/span><\/p>/);
     assert.ok(!html.includes("eq-unused"));
@@ -1882,7 +1883,7 @@ describe("a site with the callouts, the figures and the formulas of MyST", () =>
       [labelled, labels, ":class: dropdown", ":class: drop.down", 'its \\{note\\} directive cannot use class "drop\\.down", which must be the names of classes, ' +
         'each of letters, digits, hyphens and underscores, such as "dropdown"\\.\\n$'],
       [labelled, labels, ":open:", ":open: maybe", 'its \\{warning\\} directive cannot use open "maybe", which must be true or false\\.\\n$'],
-      [heroTexts, hero, hero, `${hero}\n### Figure\n\n:::{figure} /assets/img/logo.svg\n:label: hero\n:::\n`, "its \\{figure\\} directive has a label or a number, " +
+      [heroTexts, hero, hero, `${hero}\n#### Figure\n\n:::{figure} /assets/img/logo.svg\n:label: hero\n:::\n`, "its \\{figure\\} directive has a label or a number, " +
         "but only the text of a page, of a post or of a doc has labels and numbers\\.\\n$"]
     ]) {
       assert.ok(original.includes(search), search);
@@ -1981,10 +1982,14 @@ describe("invalid content", () => {
       `Cannot build ${dated}: its datePublished "10.11.2026" is not a date.\n${notADate}`],
     ["a doc whose dateModified names a day that its month lacks", modified, "---\ntitle: Modified\ndateModified: 2026-02-30\n---\n",
       `Cannot build ${modified}: its dateModified "2026-02-30" is not a date.\n${notADate}`],
-    ["hero texts with content before their first ### heading", hero, "Introduction.\n\n### Text\n\nText.\n",
-      `Cannot build ${hero}: each of its texts starts with a ### heading, but there is content before the first one.\n`],
-    ["overlay texts with content before their first ### heading", overlay, "---\ntitle: Texts\n---\n\n## Text\n\n### Text\n",
-      `Cannot build ${overlay}: each of its texts starts with a ### heading, but there is content before the first one.\n`],
+    ["hero texts with content before their first #### heading", hero, "Introduction.\n\n#### Text\n\nText.\n",
+      `Cannot build ${hero}: each of its texts starts with a #### heading, but there is content before the first one.\n`],
+    ["overlay texts with content before their first #### heading", overlay, "---\ntitle: Texts\n---\n\n## Text\n\n#### Text\n",
+      `Cannot build ${overlay}: each of its texts starts with a #### heading, but there is content before the first one.\n`],
+    ["hero texts using an old ### heading", hero, "### Old\n\nText.\n",
+      `Cannot build ${hero}: its region texts use a ### heading.\nChange each ### heading to #### to start a text below the region's title.\n`],
+    ["overlay texts using an old ### heading after a section", overlay, "#### New\n\nText.\n\n### Old\n",
+      `Cannot build ${overlay}: its region texts use a ### heading.\nChange each ### heading to #### to start a text below the region's title.\n`],
     ["a fragment whose name templates cannot use", fragment, "---\ntitle: Mine\n---\n",
       `Cannot build ${fragment}: templates use its name in placeholders, so it must start with a Latin letter and contain ` +
       "only Latin letters and digits, such as heroTexts.md.\n"],
