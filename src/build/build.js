@@ -147,7 +147,8 @@ async function discoverContent(projectDir, config, contentDirectory, locate, dra
     const urlParts = [languageKey, section, ...nested, slug];
     if (type !== 'post' && filename === 'index') urlParts.pop();
     if (type === 'page' && !nested.length && filename === 'index') urlParts.pop();
-    return { sourceFile, languageKey, languageConfig, type, metadata, markdown, tags, draft, ...locate(urlParts) };
+    return { sourceFile, languageKey, languageConfig, type, metadata, markdown, tags, draft,
+      ...(type === "book" ? { writtenTitle: written.title } : {}), ...locate(urlParts) };
   }));
 }
 

@@ -15,6 +15,8 @@ const script = await readFile(join(root, "starters/lean/static/assets/js/copy-ma
 describe("copying documentation Markdown", () => {
   let site;
   const body = '\nGrüße & <tag href="/hello"> "quoted"\n\n{{componentSlider}}\n\n```html\n</script>\n```\n';
+  const title = '"Copy: \\"test\\""';
+  const copied = `---\ntitle: ${title}\n---\n${body}`;
   const run = args => spawnSync(process.execPath, [cli, ...args], { cwd: site, encoding: "utf8" });
   const page = path => readFile(join(site, "public", path, "index.html"), "utf8");
 
@@ -24,23 +26,28 @@ describe("copying documentation Markdown", () => {
     assert.equal(result.status, 0, result.stderr);
     const config = join(site, "blyss.config.js");
     await writeFile(config, (await readFile(config, "utf8")).replace('baseUrl: "https://example.com"', 'baseUrl: "https://example.com/docs"'));
-    await writeFile(join(site, "_content/en/book/copy-test.md"), `---\ntitle: Copy test\n---\n${body}`);
+    await writeFile(join(site, "_content/en/book/copy-test.md"),
+      `---\ntitle: ${title}\ndescription: Private description\ntranslationKey: copy-test\n---\n${body}`);
+    await writeFile(join(site, "_content/en/book/untitled.md"), "---\ndescription: Private description\n---\n\nUntitled body.\n");
+    await writeFile(join(site, "_content/en/book/no-front-matter.md"), "No front matter.\n");
     await writeFile(join(site, "_content/en/book/private-draft.md"), "---\ntitle: Private draft\ndraft: true\n---\nsecret draft body\n");
     result = run(["build"]);
     assert.equal(result.status, 0, result.stderr);
   });
   after(() => rm(site, { recursive: true, force: true }));
 
-  test("publishes the authored body only on documentation pages in both languages", async () => {
+  test("copies only the title and authored body on documentation pages in both languages", async () => {
     const html = await page("en/book/copy-test");
     const encoded = html.match(/data-markdown="([^"]*)"/)[1];
-    assert.equal(Buffer.from(encoded, "base64").toString("utf8"), body);
+    assert.equal(Buffer.from(encoded, "base64").toString("utf8"), copied);
+    assert.deepEqual(parseFrontMatter(copied).metadata, { title: 'Copy: "test"' });
     assert.match(html, /<button type="button">Copy Markdown<\/button>/);
     assert.match(html, /src="\/docs\/assets\/js\/copy-markdown\.js"/);
     const german = await page("de/book");
     const germanSource = await readFile(join(site, "_content/de/book/index.md"), "utf8");
+    const germanFrontMatter = parseFrontMatter(germanSource);
     assert.equal(Buffer.from(german.match(/data-markdown="([^"]*)"/)[1], "base64").toString("utf8"),
-      parseFrontMatter(germanSource).markdown);
+      `---\ntitle: ${germanFrontMatter.written.title}\n---\n${germanFrontMatter.markdown}`);
     assert.match(german, /<button type="button">Markdown kopieren<\/button>/);
     for (const path of ["en", "en/pages/about", "en/posts/hello-world", "en/posts"]) {
       assert.doesNotMatch(await page(path), /class="copy-markdown"/, path);
@@ -48,23 +55,30 @@ describe("copying documentation Markdown", () => {
     assert.ok(!(await readdir(join(site, "public/en/book"))).includes("private-draft"));
   });
 
+  test("leaves out front matter when there is no authored title", async () => {
+    for (const [path, expected] of [["untitled", "\nUntitled body.\n"], ["no-front-matter", "No front matter.\n"]]) {
+      const html = await page(`en/book/${path}`);
+      assert.equal(Buffer.from(html.match(/data-markdown="([^"]*)"/)[1], "base64").toString("utf8"), expected);
+    }
+  });
+
   test("copies Unicode Markdown and reports success or failure", async () => {
-    let copied;
+    let clipboardText;
     let click;
     const status = { textContent: "" };
     const button = { addEventListener: (event, handler) => { assert.equal(event, "click"); click = handler; } };
     const container = {
       hidden: true,
-      dataset: { markdown: Buffer.from(body).toString("base64"), copied: "Copied", failed: "Failed", unavailable: "Unavailable" },
+      dataset: { markdown: Buffer.from(copied).toString("base64"), copied: "Copied", failed: "Failed", unavailable: "Unavailable" },
       querySelector: selector => selector === "button" ? button : status
     };
-    const clipboard = { writeText: async text => { copied = text; } };
+    const clipboard = { writeText: async text => { clipboardText = text; } };
     const context = { document: { querySelector: () => container }, navigator: { clipboard },
       window: { isSecureContext: true }, atob, Uint8Array, TextDecoder };
     runInNewContext(script, context);
     assert.equal(container.hidden, false);
     await click();
-    assert.equal(copied, body);
+    assert.equal(clipboardText, copied);
     assert.equal(status.textContent, "Copied");
     clipboard.writeText = async () => { throw new Error("Permission denied"); };
     await click();

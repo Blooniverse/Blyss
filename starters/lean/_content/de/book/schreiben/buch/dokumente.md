@@ -18,7 +18,7 @@ Dokumente haben das [Front Matter der Seiten](/de/book/schreiben/seiten-und-beit
 - `translationKey` verknüpft seine Übersetzungen, wie auf jeder Seite.
 - `draft: true` lässt das Dokument beim Build aus, wie eine Seite oder einen Beitrag; siehe [Entwürfe](/de/book/schreiben/seiten-und-beitraege/#entwürfe).
 
-Der Button **Markdown kopieren** des Starters kopiert den geschriebenen Text eines Dokuments ohne Front Matter. Platzhalter für Komponenten bleiben wie geschrieben erhalten und werden nicht durch ihren dargestellten Inhalt ersetzt. Der Text ist Teil der veröffentlichten Seite und für ihre Besucher zugänglich. Das Kopieren benötigt HTTPS oder localhost und die Erlaubnis für die Zwischenablage.
+Der Button **Markdown kopieren** des Starters kopiert den geschriebenen Text eines Dokuments und sein Front-Matter-Feld `title`, falls vorhanden; alle anderen Front-Matter-Felder lässt er aus. Platzhalter für Komponenten bleiben wie geschrieben erhalten und werden nicht durch ihren dargestellten Inhalt ersetzt. Der kopierte Text ist Teil der veröffentlichten Seite und für ihre Besucher zugänglich. Das Kopieren benötigt HTTPS oder localhost und die Erlaubnis für die Zwischenablage.
 
 ## Einen Abschnitt hinzufügen
 
