@@ -2,7 +2,7 @@
 title: Warum Blyss
 ---
 
-### Markdown++
+#### Markdown++
 - **Syntaxhervorhebung**: Unterstützt fast 200 Sprachen – mit [Highlight.js](https://highlightjs.org/).
 - **Formeln**: LaTeX in Markdown wird zu MathML in HTML – mit [Temml.org](https://temml.org/).
 - **Diagramme**: Umfangreiche Diagramme – mit [Flowchart.js](https://flowchart.js.org/), [Mermaid](https://mermaid.js.org/) und sogar [Vega-Lite](https://vega.github.io/vega-lite/).
@@ -12,7 +12,7 @@ title: Warum Blyss
 - **Fußnoten**: `[^footnote]`
 - **Kompatibilität**: [Marktext.me](https://marktext.me), [Obsidian.md](https://obsidian.md) usw.
 
-### Inhalte erstellen
+#### Inhalte erstellen
 - **3 Inhaltstypen**: Dokument, Seite, Beitrag.
     - `draft: true` im Front Matter.
     - Inhalte im Browser bearbeiten mit [Decap CMS](https://decapcms.org/) oder [Tina](https://tina.io/).
@@ -22,7 +22,7 @@ title: Warum Blyss
 - **Mehrsprachig**: EN/DE sind die Voreinstellung und lassen sich erweitern.
 - **AIO und SEO**: Semantischer RDF-Graph (in JSON-LD) und eine klassische sitemap.xml.
 
-### Lokale Kontrolle und Cybersicherheit
+#### Lokale Kontrolle und Cybersicherheit
 - **Local-first und Git-basiert**: Volle Kontrolle für Entwickler und Autoren.
 > [!IMPORTANT]
 > - **Cybersicherheit**:

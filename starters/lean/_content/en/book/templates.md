@@ -100,7 +100,7 @@ Region templates can use these placeholders:
 The texts of the regions are `_content/<language>/heroTexts.md` and `overlayTexts.md`:
 
 - The file's title is the texts' heading.
-- Each `###` heading starts a text ending at the next heading.
+- Each `####` heading starts a text ending at the next `####` heading. Existing sites using `###` must change those headings to `####`.
 - Only whitespace and comments may precede the first heading.
 
 On screens at least 1024 by 640 pixels, the hero can slide over and fade the page as it scrolls. It is static:
@@ -110,4 +110,4 @@ On screens at least 1024 by 640 pixels, the hero can slide over and fade the pag
 - with reduced motion;
 - without scroll-driven animation support.
 
-Region headings are H3s beneath the page's own headings.
+Region titles are H3s; their text-section headings are H4s.

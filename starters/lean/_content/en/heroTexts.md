@@ -3,7 +3,7 @@ title: Why Blyss
 ---
 
 
-### Markdown++
+#### Markdown++
 - **Code highlighting**: Supports nearly 200 languages — via [Highlight.js](https://highlightjs.org/).
 - **Formulae**: LaTeX in Markdown to MathML in HTML — via [Temml.org](https://temml.org/).
 - **Diagrams**: Extensive charting — via [Flowchart.js](https://flowchart.js.org/), [Mermaid](https://mermaid.js.org/), even [Vega-Lite](https://vega.github.io/vega-lite/).
@@ -13,7 +13,7 @@ title: Why Blyss
 - **Footnotes**: `[^footnote]`
 - **Compatibility**: [Marktext.me](https://marktext.me), [Obsidian.md](https://obsidian.md), etc.
  
-### Authoring
+#### Authoring
 - **3 content types**: book doc, page, post.
     - `draft: true` in Frontmatter.
     - In-browser content editing via: [Decap CMS](https://decapcms.org/) or [Tina](https://tina.io/).
@@ -23,7 +23,7 @@ title: Why Blyss
 - **Multilingual**: EN/DE are defaults — they can be extended.
 - **AIO & SEO**: Semantic RDF graph (in JSON-LD), plus a classic sitemap.xml.
 
-### Local control & cybersecurity
+#### Local control & cybersecurity
 - **Local-first & Git-based**: Full control for devs & authors.
 > [!IMPORTANT]
 > - **Cybersecurity**:

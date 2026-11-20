@@ -79,8 +79,10 @@ Die Vorlagen der Bereiche kennen diese Platzhalter:
 Die Texte der Bereiche stehen in `_content/<Sprache>/heroTexts.md` und `overlayTexts.md`:
 
 - `title` ist ihre Überschrift.
-- Jede `###`-Überschrift beginnt einen Text bis zur nächsten.
-- Vor der ersten `###`-Überschrift sind nur Leerraum und HTML-Kommentare erlaubt.
+- Jede `####`-Überschrift beginnt einen Text bis zur nächsten `####`-Überschrift. Bestehende Websites müssen dafür `###` in `####` ändern.
+- Vor der ersten `####`-Überschrift sind nur Leerraum und HTML-Kommentare erlaubt.
+
+Die Titel der Bereiche sind H3-Überschriften, die Überschriften ihrer Texte H4.
 
 Auf großen Bildschirmen gleitet der Hero beim Scrollen über die Seite. Er bleibt statisch:
 

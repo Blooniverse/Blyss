@@ -38,9 +38,14 @@ function readTexts(projectDir, fragments, names, languages) {
   for (const { sourceFile, languageKey, name, metadata, markdown } of fragments) {
     const region = names.find(region => name === `${region}Texts`);
     if (!region) continue;
-    const { texts: parts, before } = splitTexts(markdown, relative(projectDir, sourceFile), languages[languageKey].labels);
+    const file = relative(projectDir, sourceFile);
+    const { texts: parts, before, headings } = splitTexts(markdown, file, languages[languageKey].labels, 4);
+    if (headings.includes(3)) {
+      throw new BlyssError(`Cannot build ${file}: its region texts use a ### heading.\n` +
+        "Change each ### heading to #### to start a text below the region's title.");
+    }
     if (!before.every(isBlank)) {
-      throw new BlyssError(`Cannot build ${relative(projectDir, sourceFile)}: each of its texts starts with a ### heading, ` +
+      throw new BlyssError(`Cannot build ${file}: each of its texts starts with a #### heading, ` +
         "but there is content before the first one.");
     }
     texts.set(`${region}/${languageKey}`, { textsTitle: escapeHtml(metadata.title), texts: parts.map(html => `<div>\n${html}</div>`).join("\n") });
@@ -54,7 +59,7 @@ function readTexts(projectDir, fragments, names, languages) {
 // - components, <region>.components in blyss.config.js: each is switched on (true) or off (false), and they appear in
 //   the order of that setting; usually they are the region's variants, such as componentSliderHero in the hero (see
 //   components.js);
-// - texts, _content/<language>/<region>Texts.md, which start at its ### headings and which <region>.texts switches on
+// - texts, _content/<language>/<region>Texts.md, which start at its #### headings and which <region>.texts switches on
 //   or off as a whole.
 // synchroniseHeroOverlay gives the overlay the components and the texts of the hero instead of its own. unknownComponent
 // tells what is wrong with the name of a component, if anything.
