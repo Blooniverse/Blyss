@@ -8,6 +8,12 @@ name: Node.js build & test CI workflow
 on:
   push:
     branches: [ "main" ]
+    paths-ignore:
+      - ".gitignore"
+      - "README.md"
+      - "CHANGELOG.md"
+      - "starters/lean/README.md"
+      - "starters/lean/gitignore"
   pull_request:
     branches: [ "main" ]
     types: [ "opened", "synchronize", "reopened", "closed" ]
