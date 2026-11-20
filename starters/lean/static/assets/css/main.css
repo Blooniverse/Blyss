@@ -40,6 +40,15 @@ body {
   border-image: linear-gradient(15deg, var(--color040border), var(--color202border)) 1% 1 1 stretch;
 }
 
+body[data-kind="home"] {
+  background: radial-gradient(
+    ellipse 30rem 18rem at 75% 10rem,
+    color-mix(in srgb, var(--color202border) 45%, transparent),
+    transparent 70%
+  ) no-repeat;
+  background-size: 100% 32rem;
+}
+
 h1, h2, h3 { color: var(--color202); text-wrap: balance; }
 h1 { font-size: 2rem; letter-spacing: .05em; line-height: 1; margin: -.1rem 0 .1rem; text-shadow: var(--h-textshadow); }
 h2 { font-size: 1.5rem; letter-spacing: .04em; line-height: 1.1; margin-bottom: .5rem; }
