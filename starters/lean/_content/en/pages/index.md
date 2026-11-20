@@ -4,6 +4,6 @@ description: Lean & local
 translationKey: home
 ---
 
-### Value proposal
+### Building value
 
 Build multilingual sites from Markdown++ whilst keeping local control!
