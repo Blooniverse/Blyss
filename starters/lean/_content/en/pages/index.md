@@ -6,4 +6,4 @@ translationKey: home
 
 ### Build multilingual sites from Markdown++
 
-And keep system & content under local control
+Full control for developers & authors
