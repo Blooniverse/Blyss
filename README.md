@@ -30,7 +30,7 @@ Build multilingual sites from Markdown++ — with math, diagrams, and cross-refe
 > - **Cybersecurity**:
 >     - 0 (ZERO) dependencies in the Node.js server!
 >     - 3 (THREE) dependencies in the SSG engine: `highlight.js`, `marked`, `temml` (nor any further dependencies)!
-> - **Local-first & Git-based**: For devs & authors.
+> - **Local-first & Git-based**: Full control for devs & authors.
 
 
 ## Workflow
