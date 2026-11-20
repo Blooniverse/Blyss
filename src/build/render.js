@@ -157,7 +157,12 @@ export async function renderRecord({ record, file, templates, templateFile = nam
   const content = applyTemplate(innerTemplate, {
     ...components,
     ...book,
+    ...(inner === "book" ? Object.fromEntries(
+      ["copyMarkdown", "markdownCopied", "markdownCopyFailed", "markdownCopyUnavailable"]
+        .map(key => [`${key}Label`, escapeHtml(record.languageConfig.labels[key])])
+    ) : {}),
     bookToc: isBook ? renderToc(body.headings, record.languageConfig.labels.onThisPage) : "",
+    bookMarkdownBase64: isBook ? Buffer.from(record.markdown, "utf8").toString("base64") : "",
     title: escapeHtml(title), description: escapeHtml(description), dateBlock, tags: renderTags(record),
     basePath: escapeHtml(basePath),
     content: body.html

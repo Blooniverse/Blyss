@@ -18,6 +18,8 @@ Docs have the [front matter of pages](/en/book/writing/pages-and-posts/#front-ma
 - `translationKey` links its translations, as on every page.
 - `draft: true` leaves the doc out of the build, as it does a page or a post; see [Drafts](/en/book/writing/pages-and-posts/#drafts).
 
+The starter's **Copy Markdown** button copies the authored body of a doc without its front matter. Component placeholders remain as written, rather than becoming their rendered content. The body is included in the published page and is available to its visitors. Copying needs HTTPS or localhost and clipboard permission.
+
 ## Adding a section
 
 A directory, such as `_content/en/book/writing/`, is a section of the documentation. Its `index.md` is the start page of the section, and its title names the section in the navigation; the `order` of this file places the section. A section can hold further sections: this doc lies in `_content/en/book/writing/book/`. Blyss stops with an error if a directory with docs lacks its `index.md`, or if that start page is a draft while a doc of its section is not.
