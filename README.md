@@ -31,6 +31,8 @@ Build multilingual sites from Markdown++ — with math, diagrams, and cross-refe
 > 
 > **Local-first & Git-based**: For devs & authors.
 
+
+## Workflow
 ```text
 Author
   ▼
