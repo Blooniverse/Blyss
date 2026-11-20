@@ -11,6 +11,6 @@ Alle Inhalte sind Markdown in `_content/<Sprache>/`, mit einem Verzeichnis für 
 - [Seiten und Beiträge](/de/book/schreiben/seiten-und-beitraege/): einzelne Seiten in `pages/` und datierte Beiträge mit Schlagwörtern in `posts/`, mit ihrem Front Matter und ihren URLs.
 - [Übersetzungen](/de/book/schreiben/uebersetzungen/): wie Blyss die Fassungen einer Seite in mehreren Sprachen verknüpft.
 - [Markdown-Würze](/de/book/schreiben/markdown-wuerze/): hervorgehobener Code, Formeln, Diagramme, Hinweisboxen und Abbildungen sowie Fußnoten.
-- [Labels und Nummern](/de/book/schreiben/labels-und-nummern/): Labels für die Elemente eines Textes, die Nummern seiner Abbildungen, Formeln und Fußnoten sowie Verweise auf sie.
+- [Labels und Nummern](/de/book/schreiben/labels-nummern-referenzen/): Labels für die Elemente eines Textes, die Nummern seiner Abbildungen, Formeln und Fußnoten sowie Verweise auf sie.
 
 Dieser Abschnitt liegt in `_content/de/book/schreiben/`; `index.md` ist seine Startseite.

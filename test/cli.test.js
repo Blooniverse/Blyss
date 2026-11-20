@@ -261,8 +261,8 @@ describe("a generated starter", () => {
   test("builds with the local Blyss package", async () => {
     const result = run(["build"], site);
     assert.equal(result.status, 0, result.stderr);
-    const pages = [["en", ["hello-world", "templates", "translations"], ["installation", "configuration", "templates", "components", "deployment", "development", "writing", "writing/book", "writing/book/docs", "writing/book/navigation", "writing/pages-and-posts", "writing/translations", "writing/markdown-spice", "writing/labels-and-numbers"]],
-      ["de", ["hallo-welt", "uebersetzungen", "vorlagen"], ["installation", "konfiguration", "vorlagen", "komponenten", "bereitstellung", "entwicklung", "schreiben", "schreiben/buch", "schreiben/buch/dokumente", "schreiben/buch/navigation", "schreiben/seiten-und-beitraege", "schreiben/uebersetzungen", "schreiben/markdown-wuerze", "schreiben/labels-und-nummern"]]]
+    const pages = [["en", ["hello-world", "templates", "translations"], ["installation", "configuration", "templates", "components", "deployment", "development", "writing", "writing/book", "writing/book/docs", "writing/book/navigation", "writing/pages-and-posts", "writing/translations", "writing/markdown-spice", "writing/labels-numbers-references"]],
+      ["de", ["hallo-welt", "uebersetzungen", "vorlagen"], ["installation", "konfiguration", "vorlagen", "komponenten", "bereitstellung", "entwicklung", "schreiben", "schreiben/buch", "schreiben/buch/dokumente", "schreiben/buch/navigation", "schreiben/seiten-und-beitraege", "schreiben/uebersetzungen", "schreiben/markdown-wuerze", "schreiben/labels-nummern-referenzen"]]]
       .flatMap(([language, posts, docs]) => ["", "pages/about/", "posts/", ...posts.map(post => `posts/${post}/`), "tags/", "tags/blyss/",
         "tags/markdown/", "book/", ...docs.map(doc => `book/${doc}/`)].map(path => `${language}/${path}index.html`));
     const notFoundPages = ["404.html", "en/404.html", "de/404.html"];
@@ -293,7 +293,7 @@ describe("a generated starter", () => {
       ["writing", "schreiben"], ["writing/book", "schreiben/buch"], ["writing/book/docs", "schreiben/buch/dokumente"],
       ["writing/book/navigation", "schreiben/buch/navigation"], ["writing/pages-and-posts", "schreiben/seiten-und-beitraege"],
       ["writing/translations", "schreiben/uebersetzungen"], ["writing/markdown-spice", "schreiben/markdown-wuerze"],
-      ["writing/labels-and-numbers", "schreiben/labels-und-nummern"]
+      ["writing/labels-numbers-references", "schreiben/labels-nummern-referenzen"]
     ]) {
       const en = await readFile(join(site, "public", "en", "book", english, "index.html"), "utf8");
       const de = await readFile(join(site, "public", "de", "book", german, "index.html"), "utf8");
@@ -436,7 +436,7 @@ describe("a generated starter", () => {
   });
 
   test("labels, numbers and refers to the figures and the formulas of the doc that describes them, in the language of the page", async () => {
-    for (const [language, doc, figure] of [["en", "writing/labels-and-numbers", "Figure"], ["de", "schreiben/labels-und-nummern", "Abbildung"]]) {
+    for (const [language, doc, figure] of [["en", "writing/labels-numbers-references", "Figure"], ["de", "schreiben/labels-nummern-referenzen", "Abbildung"]]) {
       const html = await readFile(join(site, "public", language, "book", doc, "index.html"), "utf8");
       assert.match(html, new RegExp(`<figure id="[a-z-]+" class="align-center">\\n<img [^>]+>\\n<figcaption>\\n<p><span class="caption-number">${figure} 1:</span> `));
       assert.match(html, new RegExp(`<figure id="([a-z-]+)" class="subfigures">\\n<figure id="\\1-a">\\n[^]+?<figcaption>\\n<p><span class="caption-number">${figure} 2:</span> `));

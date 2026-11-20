@@ -163,7 +163,7 @@ Blyss ist hier strenger als MyST:
 
 - **Fehlendes Label**: Der Build stoppt bei einem Verweis auf ein Label, das seine Seite nicht hat. Geben Sie dem Element ein Label oder dem Link einen Text.
 - **Fehlende Nummer oder fehlender Name**: Der Build stoppt bei einem Verweis, der eine Nummer oder einen Namen verlangt, die sein Element nicht hat. MyST zeigt dann „??“ oder das Label.
-- **Andere Links**: Nur ein Verweis zeigt einen Text, ohne einen zu haben. Jeder andere Link ohne Text stoppt den Build, auch einer zu einem Label einer anderen Seite, wie in `[](/de/book/schreiben/labels-und-nummern/#abb-ringe)`. Schreiben Sie den Text eines solchen Links selbst, denn die Nummern beginnen auf jeder Seite neu.
+- **Andere Links**: Nur ein Verweis zeigt einen Text, ohne einen zu haben. Jeder andere Link ohne Text stoppt den Build, auch einer zu einem Label einer anderen Seite, wie in `[](/de/book/schreiben/labels-nummern-referenzen/#abb-ringe)`. Schreiben Sie den Text eines solchen Links selbst, denn die Nummern beginnen auf jeder Seite neu.
 
 
 

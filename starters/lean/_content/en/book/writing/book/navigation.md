@@ -11,7 +11,7 @@ The navigation lists the start page of the documentation first, then its docs an
 
 ## Headings
 
-Each heading of a doc gets an id from its text, as on GitHub: this one is `#headings`. A [label](/en/book/writing/labels-and-numbers/#labels) above a heading gives it an id of your choice. The table of contents at the top lists the second-level headings, each with its third-level headings.
+Each heading of a doc gets an id from its text, as on GitHub: this one is `#headings`. A [label](/en/book/writing/labels-numbers-references/#labels) above a heading gives it an id of your choice. The table of contents at the top lists the second-level headings, each with its third-level headings.
 
 ### Tips
 

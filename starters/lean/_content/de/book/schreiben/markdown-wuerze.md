@@ -52,7 +52,7 @@ Wie in [MyST](https://mystmd.org/guide/math) kommt eine Formel auch ohne Dollarz
 \int_0^1 x^2 \, dx = \frac{1}{3}
 ```
 
-Eine Formel auf eigenen Zeilen kann ein Label und eine Nummer haben; siehe [Labels und Nummern](/de/book/schreiben/labels-und-nummern/#formeln).
+Eine Formel auf eigenen Zeilen kann ein Label und eine Nummer haben; siehe [Labels und Nummern](/de/book/schreiben/labels-nummern-referenzen/#formeln).
 
 Formeln funktionieren auch in Komponententexten, Fragmenten und Texten der Bereiche. Die lokalen Temml-Dateien des Starters müssen zur installierten Version passen; siehe [Gestaltung und Schriften](/de/book/vorlagen/#gestaltung-und-schriften).
 
@@ -193,7 +193,7 @@ Es ist generierte Ausgabe: Jeder Build legt es neu an.
 > [!IMPORTANT]
 > Ersetzen Sie die Platzhalterwerte, bevor Sie veröffentlichen.
 
-Eine Hinweisbox ist ein `div` mit den Klassen `admonition` und ihrer Art, ihr Titel ein Absatz mit der Klasse `admonition-title`; eine aufklappbare ist ein `details` mit ihrem Titel als `summary`. `static/assets/css/main.css` gestaltet sie im Starter, und jede weitere Klasse der Option `class` können Sie selbst gestalten. Die Option `label` benennt eine Hinweisbox; siehe [Labels und Nummern](/de/book/schreiben/labels-und-nummern/#labels).
+Eine Hinweisbox ist ein `div` mit den Klassen `admonition` und ihrer Art, ihr Titel ein Absatz mit der Klasse `admonition-title`; eine aufklappbare ist ein `details` mit ihrem Titel als `summary`. `static/assets/css/main.css` gestaltet sie im Starter, und jede weitere Klasse der Option `class` können Sie selbst gestalten. Die Option `label` benennt eine Hinweisbox; siehe [Labels und Nummern](/de/book/schreiben/labels-nummern-referenzen/#labels).
 
 
 
@@ -245,7 +245,7 @@ Beide haben diese Optionen:
 - `alt`: die Beschreibung des Bildes für alle, die es nicht sehen können.
 - `width`: eine Zahl mit einer CSS-Einheit, etwa `30%` der Textbreite oder `300px`; eine Zahl allein zählt in Pixeln. Das Stylesheet des Starters hält ein Bild innerhalb der Textbreite.
 - `align`: `left`, `center` oder `right`. Ohne diese Option steht das Bild wie der Text um es herum.
-- `label` und, für eine Abbildung, `enumerated`: Sie benennen und nummerieren sie; siehe [Labels und Nummern](/de/book/schreiben/labels-und-nummern/#abbildungen).
+- `label` und, für eine Abbildung, `enumerated`: Sie benennen und nummerieren sie; siehe [Labels und Nummern](/de/book/schreiben/labels-nummern-referenzen/#abbildungen).
 
 Ein ausgerichtetes Bild trägt die Klasse `align-left`, `align-center` oder `align-right` an seinem Absatz oder an seinem `figure`, nach der das Stylesheet es platziert.
 

@@ -163,7 +163,7 @@ Blyss is stricter than MyST here:
 
 - **Missing label**: the build stops at a reference to a label that its page lacks. Label the element, or give the link a text.
 - **Missing number or name**: the build stops at a reference that asks for a number or a name that its element lacks. MyST shows "??" or the label then.
-- **Other links**: only a reference shows a text without having one. Any other link without a text stops the build, also one to a label of another page, as in `[](/en/book/writing/labels-and-numbers/#fig-rings)`. Write the text of such a link yourself, as numbers start anew on every page.
+- **Other links**: only a reference shows a text without having one. Any other link without a text stops the build, also one to a label of another page, as in `[](/en/book/writing/labels-numbers-references/#fig-rings)`. Write the text of such a link yourself, as numbers start anew on every page.
 
 
 

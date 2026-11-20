@@ -11,7 +11,7 @@ Die Navigation listet zuerst die Startseite der Dokumentation auf, dann ihre Dok
 
 ## Überschriften
 
-Jede Überschrift eines Dokuments erhält eine ID aus ihrem Text, wie auf GitHub: Diese hier ist `#überschriften`. Ein [Label](/de/book/schreiben/labels-und-nummern/#labels) über einer Überschrift gibt ihr eine ID Ihrer Wahl. Das Inhaltsverzeichnis oben listet die Überschriften der zweiten Ebene auf, jede mit ihren Überschriften der dritten Ebene.
+Jede Überschrift eines Dokuments erhält eine ID aus ihrem Text, wie auf GitHub: Diese hier ist `#überschriften`. Ein [Label](/de/book/schreiben/labels-nummern-referenzen/#labels) über einer Überschrift gibt ihr eine ID Ihrer Wahl. Das Inhaltsverzeichnis oben listet die Überschriften der zweiten Ebene auf, jede mit ihren Überschriften der dritten Ebene.
 
 ### Tipps
 
