@@ -54,6 +54,8 @@ body[data-kind="home"] main::before {
   background:
     radial-gradient(ellipse at 20% 80%, hsla(40, 90%, 60%, .22), transparent 65%),
     radial-gradient(ellipse at 80% 20%, hsla(202, 100%, 25%, .15), transparent 65%);
+  -webkit-mask-image: radial-gradient(ellipse closest-side, black 30%, transparent 100%);
+  mask-image: radial-gradient(ellipse closest-side, black 30%, transparent 100%);
 }
 
 h1, h2, h3 { color: var(--color202); text-wrap: balance; }
