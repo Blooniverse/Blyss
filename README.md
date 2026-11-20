@@ -73,16 +73,18 @@ npm install @blooniverse/blyss
 Clone repo, then run NPM's regular `npm ci` and `npm run build` followed by `npm start`. 
 
 
----
 ## Documentation
 
 - [Documentation book](starters/lean/_content/en/book/index.md) ([Deutsch](starters/lean/_content/de/book/index.md)): setup, authoring & deployment.
 > [!TIP]
 > In a built starter, visit `/en/book/` or `/de/book/`.
 
+
 ## License
 
 Blyss and its starter are licensed under the [GNU General Public License v3.0](LICENSE). The starter also ships the stylesheet and the font of [Temml](https://temml.org/) under the [MIT License](starters/lean/static/assets/temml/LICENSE.txt).
 
+
+---
 ## Image placeholder
 <img alt="" src="https://blooniverse.com/assets/logosignet.svg" />
