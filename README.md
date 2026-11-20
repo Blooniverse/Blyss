@@ -89,10 +89,10 @@ Blyss and its starter are licensed under the [GNU General Public License v3.0](L
 ---
 ## Impressions
 > Vega-Lite:
-![Vega-Lite example](https://github.com/vega/vega-lite/blob/main/site/static/teaser.png)
+> ![Vega-Lite example](https://github.com/vega/vega-lite/blob/main/site/static/teaser.png)
 
 > Mermaid:
-![Mermaid example](https://mermaid.js.org/hero-chart.svg)
+> ![Mermaid example](https://mermaid.js.org/hero-chart.svg)
 
-Flowchart.js:
-![Flowchart.js example](https://github.com/adrai/flowchart.js/blob/master/imgs/example.svg)
+> Flowchart.js:
+> ![Flowchart.js example](https://github.com/adrai/flowchart.js/blob/master/imgs/example.svg)
