@@ -271,7 +271,12 @@ body:has(> .overlay) { padding-bottom: calc(var(--site-margin) + 2rem); } /* lea
 }
 .overlay-toggle[popovertargetaction="hide"] { position: sticky; top: 0; z-index: 1; display: block; margin: 0 0 .5rem auto; }
 /* The headings of the hero and overlay retain their label styling. */
-:where(.hero-panel, #overlay) h3,
+:where(.hero-panel, #overlay) h3 {
+  display: inline-block;
+  color: white;
+  background-color: var(--color202black);
+  margin-bottom: 0.3em; 
+}
 :where(.hero-panel, #overlay) .region-texts h4 {
   display: block; 
   margin: 0 0 .3em;
