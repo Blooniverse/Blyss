@@ -6,7 +6,9 @@ import { join } from "node:path";
 import { after, before, describe, test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { runInNewContext } from "node:vm";
+import { marked } from "marked";
 import { parseFrontMatter } from "../src/build/front-matter.js";
+import { escapeHtml } from "../src/build/html.js";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 const cli = join(root, "bin", "blyss.js");
@@ -15,8 +17,8 @@ const script = await readFile(join(root, "starters/lean/static/assets/js/copy-ma
 describe("copying documentation Markdown", () => {
   let site;
   const body = '\nGrüße & <tag href="/hello"> "quoted"\n\n{{componentSlider}}\n\n```html\n</script>\n```\n';
-  const title = '"Copy: \\"test\\""';
-  const copied = `---\ntitle: ${title}\n---\n${body}`;
+  const title = 'Copy: "test" *bold* & <tag> [link](https://example.com) # person@example.com www.example.com';
+  const copied = `# Copy: "test" \\*bold\\* &amp; \\<tag\\> \\[link\\](https\\://example.com) \\# person\\@example.com www\\.example.com\n${body}`;
   const run = args => spawnSync(process.execPath, [cli, ...args], { cwd: site, encoding: "utf8" });
   const page = path => readFile(join(site, "public", path, "index.html"), "utf8");
 
@@ -27,27 +29,28 @@ describe("copying documentation Markdown", () => {
     const config = join(site, "blyss.config.js");
     await writeFile(config, (await readFile(config, "utf8")).replace('baseUrl: "https://example.com"', 'baseUrl: "https://example.com/docs"'));
     await writeFile(join(site, "_content/en/book/copy-test.md"),
-      `---\ntitle: ${title}\ndescription: Private description\ntranslationKey: copy-test\n---\n${body}`);
+      `---\ntitle: ${JSON.stringify(title)}\ndescription: Private description\ntranslationKey: copy-test\n---\n${body}`);
     await writeFile(join(site, "_content/en/book/untitled.md"), "---\ndescription: Private description\n---\n\nUntitled body.\n");
     await writeFile(join(site, "_content/en/book/no-front-matter.md"), "No front matter.\n");
+    await writeFile(join(site, "_content/en/book/no-blank-line.md"), "---\ntitle: Tight\n---\nBody immediately follows.\n");
     await writeFile(join(site, "_content/en/book/private-draft.md"), "---\ntitle: Private draft\ndraft: true\n---\nsecret draft body\n");
     result = run(["build"]);
     assert.equal(result.status, 0, result.stderr);
   });
   after(() => rm(site, { recursive: true, force: true }));
 
-  test("copies only the title and authored body on documentation pages in both languages", async () => {
+  test("copies the title as a heading and the authored body on documentation pages in both languages", async () => {
     const html = await page("en/book/copy-test");
     const encoded = html.match(/data-markdown="([^"]*)"/)[1];
     assert.equal(Buffer.from(encoded, "base64").toString("utf8"), copied);
-    assert.deepEqual(parseFrontMatter(copied).metadata, { title: 'Copy: "test"' });
+    assert.equal(marked.parse(copied).split("\n")[0], `<h1>${escapeHtml(title)}</h1>`);
     assert.match(html, /<button type="button">Copy Markdown<\/button>/);
     assert.match(html, /src="\/docs\/assets\/js\/copy-markdown\.js"/);
     const german = await page("de/book");
     const germanSource = await readFile(join(site, "_content/de/book/index.md"), "utf8");
     const germanFrontMatter = parseFrontMatter(germanSource);
     assert.equal(Buffer.from(german.match(/data-markdown="([^"]*)"/)[1], "base64").toString("utf8"),
-      `---\ntitle: ${germanFrontMatter.written.title}\n---\n${germanFrontMatter.markdown}`);
+      `# ${germanFrontMatter.metadata.title}\n${germanFrontMatter.markdown}`);
     assert.match(german, /<button type="button">Markdown kopieren<\/button>/);
     for (const path of ["en", "en/pages/about", "en/posts/hello-world", "en/posts"]) {
       assert.doesNotMatch(await page(path), /class="copy-markdown"/, path);
@@ -60,6 +63,12 @@ describe("copying documentation Markdown", () => {
       const html = await page(`en/book/${path}`);
       assert.equal(Buffer.from(html.match(/data-markdown="([^"]*)"/)[1], "base64").toString("utf8"), expected);
     }
+  });
+
+  test("separates the heading from a body that starts immediately after front matter", async () => {
+    const html = await page("en/book/no-blank-line");
+    assert.equal(Buffer.from(html.match(/data-markdown="([^"]*)"/)[1], "base64").toString("utf8"),
+      "# Tight\n\nBody immediately follows.\n");
   });
 
   test("copies Unicode Markdown and reports success or failure", async () => {
