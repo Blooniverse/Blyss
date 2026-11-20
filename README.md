@@ -87,7 +87,7 @@ Blyss and its starter are licensed under the [GNU General Public License v3.0](L
 
 ---
 ## Impressions
-![Flowchart.js example](https://github.com/adrai/flowchart.js/blob/master/imgs/condition.png](https://github.com/adrai/flowchart.js/blob/master/imgs/example.svg)
+![Flowchart.js example](https://github.com/adrai/flowchart.js/blob/master/imgs/example.svg)
 ![Mermaid example](https://mermaid.js.org/hero-chart.svg)
 ![Vega-Lite example](https://github.com/vega/vega-lite/blob/main/site/static/teaser.png)
 ![Text]()
