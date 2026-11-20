@@ -45,6 +45,14 @@ h1 { font-size: 2rem; letter-spacing: .05em; line-height: 1; margin: -.1rem 0 .1
 h2 { font-size: 1.5rem; letter-spacing: .04em; line-height: 1.1; margin-bottom: .5rem; }
 h3 { font-size: 1.3rem; letter-spacing: 0em; line-height: 1.1; margin-bottom: .5rem; }
 article h2 { margin-top: 1em; }
+body[data-kind="home"] article > h3::after {
+  content: "";
+  display: block;
+  width: 3em;
+  height: 3px;
+  margin-top: .2em;
+  background: linear-gradient(15deg, var(--color040border), var(--color202border));
+}
 
 main { max-width: var(--column); overflow-wrap: break-word; } /* a long word, such as a path in code, breaks rather than widen the page */
 :is(p, ul, ol, pre, blockquote, table, figure, .admonition) { margin-bottom: .6em; }
