@@ -64,11 +64,23 @@ h2 { font-size: 1.5rem; letter-spacing: .04em; line-height: 1.1; margin-bottom: 
 h3 { font-size: 1.3rem; letter-spacing: 0em; line-height: 1.1; margin-bottom: .5rem; }
 article h2 { margin-top: 1em; }
 body[data-kind="home"] article > h3 {
-  background: linear-gradient(15deg, var(--color202black), var(--color040border));
+  background: linear-gradient(15deg, var(--color202), var(--color040border));
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
   -webkit-text-fill-color: transparent;
+}
+body[data-kind="home"] article > h3::after {
+  content: "";
+  display: block;
+  width: 4em;
+  height: .4em;
+  margin: .1em auto 0;
+  border-bottom: 2px solid var(--color202);
+  border-radius: 0 0 50% 70%;
+  transform: rotate(-3deg);
+  -webkit-mask-image: linear-gradient(to right, transparent, black 15%, black 70%, transparent);
+  mask-image: linear-gradient(to right, transparent, black 15%, black 70%, transparent);
 }
 
 main { max-width: var(--column); overflow-wrap: break-word; } /* a long word, such as a path in code, breaks rather than widen the page */
