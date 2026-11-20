@@ -61,8 +61,6 @@ npm start                             # serve public/ on localhost:3000
 ```
 
 `blyss init` only copies files. Installing dependencies, building and serving are separate steps.
-> [!NOTE]
-> The Node.js static server is dependency free!
 
 
 ## Installation
