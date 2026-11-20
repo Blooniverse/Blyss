@@ -1,9 +1,9 @@
 ---
 title: Blyss SSG
-description: Schlank & lokal
+description: Lean & local
 translationKey: home
 ---
 
-### Arbeite in deinem Zentrum
+### Produziere mehrsprachige sites aus Markdown++
 
-Erstelle mehrsprachige Websites aus Markdown++ – und behalte die lokale Kontrolle!
+Und halte System sowie Inhalt unter lokaler Kontrolle
