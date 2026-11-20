@@ -4,6 +4,6 @@ description: Lean & local
 translationKey: home
 ---
 
-### Produziere mehrsprachige sites aus Markdown++
+### Produziere mehrsprachige Websites aus Markdown++
 
 Volle Kontrolle für Entwickler und Autoren
