@@ -2,6 +2,7 @@
 
 Blyss is a lean SSG (static site generator) for Markdown++. It ships with a dependency-free Node.js server.
 - Perfect for technical and scientific web publishing.
+    - [MyST](https://mystmd.org/) subset!  
 - Perfect for everyday web publishing.
 - Made for creative authors who want to co-design the visual appearance.
 
