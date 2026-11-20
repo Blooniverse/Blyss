@@ -18,7 +18,7 @@ Docs have the [front matter of pages](/en/book/writing/pages-and-posts/#front-ma
 - `translationKey` links its translations, as on every page.
 - `draft: true` leaves the doc out of the build, as it does a page or a post; see [Drafts](/en/book/writing/pages-and-posts/#drafts).
 
-The starter's **Copy Markdown** button copies the authored body of a doc without its front matter. Component placeholders remain as written, rather than becoming their rendered content. The body is included in the published page and is available to its visitors. Copying needs HTTPS or localhost and clipboard permission.
+The starter's **Copy Markdown** button copies the authored body of a doc and its `title` front matter field, if present; it leaves out all other front matter. Component placeholders remain as written, rather than becoming their rendered content. The copied text is included in the published page and is available to its visitors. Copying needs HTTPS or localhost and clipboard permission.
 
 ## Adding a section
 

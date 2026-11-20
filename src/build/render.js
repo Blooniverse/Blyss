@@ -154,6 +154,10 @@ export async function renderRecord({ record, file, templates, templateFile = nam
   const regionTemplates = Object.values(shown).map(region => region?.template ?? "").join("");
   const takenIds = new Set(idsOf(templates.document + innerTemplate + regionTemplates));
   const body = await renderBody(record, file, records, components, languages, takenIds, isBook);
+  const writtenTitle = record.writtenTitle;
+  const copyTitle = writtenTitle === undefined ? "" : Array.isArray(writtenTitle)
+    ? `---\ntitle:\n${writtenTitle.map(item => `  - ${item}\n`).join("")}---\n`
+    : `---\ntitle: ${writtenTitle}\n---\n`;
   const content = applyTemplate(innerTemplate, {
     ...components,
     ...book,
@@ -162,7 +166,7 @@ export async function renderRecord({ record, file, templates, templateFile = nam
         .map(key => [`${key}Label`, escapeHtml(record.languageConfig.labels[key])])
     ) : {}),
     bookToc: isBook ? renderToc(body.headings, record.languageConfig.labels.onThisPage) : "",
-    bookMarkdownBase64: isBook ? Buffer.from(record.markdown, "utf8").toString("base64") : "",
+    bookMarkdownBase64: isBook ? Buffer.from(copyTitle + record.markdown, "utf8").toString("base64") : "",
     title: escapeHtml(title), description: escapeHtml(description), dateBlock, tags: renderTags(record),
     basePath: escapeHtml(basePath),
     content: body.html
