@@ -1,6 +1,6 @@
 # Blyss SSG 1.0.1
 
-Blyss is a lean SSG (static site generator) for Markdown++. It ships with a dependency-free Node.js server.
+Blyss is an ultra lean SSG (static site generator) for Markdown++. It ships with a dependency-free Node.js server.
 
 ↪︎ Build multilingual sites from Markdown++ — with math, diagrams, and cross-references!
 
