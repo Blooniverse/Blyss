@@ -41,7 +41,7 @@ body {
 }
 
 h1, h2 { color: var(--color202); text-wrap: balance; }
-h1 { font-size: 2rem; letter-spacing: .16em; line-height: 1; margin: -.1rem 0 .1rem; text-shadow: var(--h-textshadow); }
+h1 { font-size: 2rem; letter-spacing: .05em; line-height: 1; margin: -.1rem 0 .1rem; text-shadow: var(--h-textshadow); }
 h2 { font-size: 1.5rem; letter-spacing: .04em; line-height: 1.1; margin-bottom: .5rem; }
 h3 { display: inline-block; margin: 3vh 0 .3em; padding: 0 .3em; color: #fff; background-color: var(--color202black); }
 article h2 { margin-top: 1em; }
