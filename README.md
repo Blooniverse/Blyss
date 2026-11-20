@@ -9,7 +9,7 @@ Blyss is a lean SSG (static site generator) for Markdown++. It ships with a depe
 
 - **Markdown++**: AI & KMS ready for the knowledge management era.
     - **Code highlighting**: Supports nearly 200 languages via [Highlight.js](https://highlightjs.org/).
-    - **Formulae**: HTML output in MathML via [Temml.org](https://temml.org/).
+    - **Formulae**: LaTeX in Markdown to MathML in HTML via [Temml.org](https://temml.org/).
     - **Diagrams**: Extensive charting via Flowchart.js, Mermaid & even Vega-Lite.
     - **Callouts & figures**: Admonitions, images and figures as [MyST](https://mystmd.org/) directives, plus GitHub alerts.
     - **Labels, numbers & references**: Numbered figures and formulae, and references that fill in their own text.
