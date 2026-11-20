@@ -23,9 +23,9 @@ title: Why Blyss
 - **Multilingual**: EN/DE are defaults — they can be extended.
 - **AIO & SEO**: Semantic RDF graph (in JSON-LD), plus a classic sitemap.xml.
 
-### Cybersecurity & local ctrl
+### Local control & cybersecurity
+- **Local-first & Git-based**: Full control for devs & authors.
 > [!IMPORTANT]
 > - **Cybersecurity**:
 >     - 0 (ZERO) dependencies in the Node.js server!
 >     - 3 (THREE) dependencies in the SSG engine: `highlight.js`, `marked`, `temml` (nor any further dependencies)!
-- **Local-first & Git-based**: Full control for devs & authors.
