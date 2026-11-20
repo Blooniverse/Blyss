@@ -152,7 +152,7 @@ export default {
     showOn: { // the kinds of pages that have the overlay: the three content types, then the other kinds
       page: true, // the pages in _content/<language>/pages/
       post: true, // the posts in _content/<language>/posts/
-      book: false, // the docs in _content/<language>/book/
+      book: true, // the docs in _content/<language>/book/
       home: false, // the home pages, which have the hero
       list: true, // the archive and the tag pages
       "not-found": true // the "not found" pages
