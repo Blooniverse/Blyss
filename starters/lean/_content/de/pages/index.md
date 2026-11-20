@@ -6,9 +6,7 @@ translationKey: home
 
 ### Was Blyss bietet
 
-Blyss ist ein schlanker Local-first-SSG (statischer Website-Generator) für Markdown++. Dazu gehört ein Node.js-Server ohne Abhängigkeiten.
-
-↪︎ Mehrsprachige Websites aus Markdown++ erstellen (mit Formeln, Diagrammen, Querverweisen …) – und die Kontrolle vor Ort behalten!
+Erstelle mehrsprachige Websites aus Markdown++  (mit Formeln, Diagrammen, Querverweisen …) – und behalte die lokale Kontrolle!
 
 - Technik und Wissenschaft: [MyST](https://mystmd.org/)-Teilmenge!
 - Kreativität: Autoren können die Gestaltung mitbestimmen.
