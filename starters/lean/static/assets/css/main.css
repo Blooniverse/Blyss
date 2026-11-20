@@ -79,6 +79,10 @@ tr:nth-child(even) { background: var(--table-shade); }
 time { color: var(--color202grey); }
 article > header { margin-bottom: 1rem; }
 article > header p { margin: 0; font-size: .9rem; }
+.copy-markdown { margin-top: .75rem; font-size: .8rem; }
+.copy-markdown button { padding: .3em .65em; border: 1px solid var(--color202); border-radius: 4px; color: var(--color202); background: white; font: inherit; cursor: pointer; }
+.copy-markdown button:disabled { opacity: .65; cursor: not-allowed; }
+.copy-markdown [role="status"] { margin-left: .5em; }
 
 /* Formulas are MathML, laid out by Temml's stylesheet, static/assets/temml/Temml-Local.css. A formula on lines of
    its own scrolls sideways where it is wider than the text, and its number stands at the end of its line, where

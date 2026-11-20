@@ -4,6 +4,10 @@
         <article>
           <header>
             <h1>{{title}}</h1>
+            <div class="copy-markdown" hidden data-markdown="{{bookMarkdownBase64}}" data-copied="{{markdownCopiedLabel}}" data-failed="{{markdownCopyFailedLabel}}" data-unavailable="{{markdownCopyUnavailableLabel}}">
+              <button type="button">{{copyMarkdownLabel}}</button>
+              <span role="status"></span>
+            </div>
           </header>
 {{bookToc}}
 {{content}}
@@ -11,3 +15,4 @@
 {{bookPager}}
       </main>
     </div>
+    <script src="/assets/js/copy-markdown.js" defer></script>
