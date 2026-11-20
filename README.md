@@ -26,7 +26,7 @@ Build multilingual sites from Markdown++ — with math, diagrams, and cross-refe
 - **Configurable**: Via blyss.config.js and component Markdown.
 - **Multilingual**: EN/DE are defaults — they can be extended.
 - **AIO & SEO**: Semantic RDF graph (in JSON-LD), plus a classic sitemap.xml.
-> [!NOTE]
+> [!IMPORTANT]
 > - **Cybersecurity**:
 >     - 0 (ZERO) dependencies in the Node.js server!
 >     - 3 (THREE) dependencies in the SSG engine: `highlight.js`, `marked`, `temml` (nor any further dependencies)!
