@@ -27,7 +27,7 @@ Content templates can use these placeholders:
 - `{{basePath}}`: the path of a website [below a path](/en/book/deployment/#below-a-path), and empty otherwise.
 - The placeholders of the [components](/en/book/components/).
 - In `book.html` also `{{bookNavigation}}`, `{{bookToc}}` and `{{bookPager}}`: the navigation of the book, the table of contents of the doc, and the links to the previous and the next doc. They are empty outside docs. See [Navigation](/en/book/writing/book/navigation/).
-- `{{bookMarkdownBase64}}`: the authored body of a doc with its `title` front matter field, if present, encoded as UTF-8 Base64; all other front matter is omitted, and the placeholder is empty outside docs. The starter uses it for the Copy Markdown button, whose labels are available in `book.html` as `{{copyMarkdownLabel}}`, `{{markdownCopiedLabel}}`, `{{markdownCopyFailedLabel}}` and `{{markdownCopyUnavailableLabel}}`.
+- `{{bookMarkdownBase64}}`: the authored body of a doc, preceded by its `title` as a Markdown heading if present, encoded as UTF-8 Base64; front matter is omitted, and the placeholder is empty outside docs. The starter uses it for the Copy Markdown button, whose labels are available in `book.html` as `{{copyMarkdownLabel}}`, `{{markdownCopiedLabel}}`, `{{markdownCopyFailedLabel}}` and `{{markdownCopyUnavailableLabel}}`.
 
 `document.html` can use these placeholders:
 
