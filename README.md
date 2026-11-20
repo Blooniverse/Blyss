@@ -1,6 +1,12 @@
 # Blyss SSG 1.0.1
 
-Blyss is a lean SSG (static site generator) for Markdown! It ships with a dependency-free Node.js server.
+Blyss is a lean SSG (static site generator) for Markdown++! It ships with a dependency-free Node.js server.
+- Perfect for technical and scientific web-publishing.
+- Perfect for everyday web-publishing.
+- Made for creative authors who want to co-design the visual appearance.
+
+## Features
+
 - **Markdown++**: AI & KMS ready for the knowledge management era.
     - **Code highlighting**: Supports nearly 200 languages via [Highlight.js](https://highlightjs.org/).
     - **Formulae**: HTML output in MathML via [Temml.org](https://temml.org/).
@@ -21,8 +27,6 @@ Blyss is a lean SSG (static site generator) for Markdown! It ships with a depend
 - Lightweight Javascript.
 - **3 dependencies only**: `highlight.js`, `marked`, `temml` (nor any further dependencies).
 - **Local-first & Git-based**: For devs & authors.
-
-<img alt="" src="https://blooniverse.com/assets/logosignet.svg" />
 
 ```text
 Author
@@ -51,7 +55,8 @@ npm start                             # serve public/ on localhost:3000
 ```
 
 `blyss init` only copies files. Installing dependencies, building and serving are separate steps.
-The Node.js static server is dependency free!
+> [!NOTE]
+> The Node.js static server is dependency free!
 
 
 ## Installation
@@ -61,6 +66,12 @@ To add Blyss to an existing website instead:
 ```bash
 npm install @blooniverse/blyss
 ```
+
+
+## Development
+
+Clone repo, then run NPM's regular `npm ci` and `npm run build` followed by `npm start`. 
+
 
 ---
 ## Documentation
@@ -72,3 +83,6 @@ npm install @blooniverse/blyss
 ## License
 
 Blyss and its starter are licensed under the [GNU General Public License v3.0](LICENSE). The starter also ships the stylesheet and the font of [Temml](https://temml.org/) under the [MIT License](starters/lean/static/assets/temml/LICENSE.txt).
+
+## Image placeholder
+<img alt="" src="https://blooniverse.com/assets/logosignet.svg" />
