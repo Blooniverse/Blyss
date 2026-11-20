@@ -4,6 +4,6 @@ description: Schlank & lokal
 translationKey: home
 ---
 
-### Build value
+### Arbeite in deinem Zentrum
 
 Erstelle mehrsprachige Websites aus Markdown++ – und behalte die lokale Kontrolle!
