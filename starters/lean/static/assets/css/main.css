@@ -273,11 +273,13 @@ body:has(> .overlay) { padding-bottom: calc(var(--site-margin) + 2rem); } /* lea
 /* The headings of the hero and overlay retain their label styling. */
 :where(.hero-panel, #overlay) h3,
 :where(.hero-panel, #overlay) .region-texts h4 {
-  display: inline-block;
-  margin: 3vh 0 .3em;
-  padding: 0 .3em;
-  color: #fff;
-  background-color: var(--color202black);
+  display: block; 
+  margin: 0 0 .3em;
+  padding: 0;
+  font-size: 1.1em;
+  line-height: 1.2;
+  color: var(--color202);
+  background: none;
 }
 :where(.hero-panel, #overlay) h3 { margin-top: 0; font-size: 1.17em; letter-spacing: inherit; line-height: inherit; text-wrap: inherit; }
 :is(.hero-panel, #overlay) h3:empty { display: none; } /* such as the title of the texts when there is none */
