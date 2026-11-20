@@ -28,8 +28,8 @@ Build multilingual sites from Markdown++ — with math, diagrams, and cross-refe
 - **AIO & SEO**: Semantic RDF graph (in JSON-LD), plus a classic sitemap.xml.
 > [!NOTE]
 > - **Cybersecurity**:
->     - 0 dependencies in the Node.js server!
->     - 3 dependencies in the SSG engine only: `highlight.js`, `marked`, `temml` (nor any further dependencies)!
+>     - 0 (ZERO) dependencies in the Node.js server!
+>     - 3 (ONLY) dependencies in the SSG engine: `highlight.js`, `marked`, `temml` (nor any further dependencies)!
 > - **Local-first & Git-based**: For devs & authors.
 
 
