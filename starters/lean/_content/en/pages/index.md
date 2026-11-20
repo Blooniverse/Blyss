@@ -6,4 +6,4 @@ translationKey: home
 
 ### Build multilingual sites from Markdown++
 
-Multilingual sites from Markdown++ whilst keeping local control!
+Keep system and content under local control!
