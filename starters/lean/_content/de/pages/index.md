@@ -7,3 +7,5 @@ translationKey: home
 ### Produziere mehrsprachige Websites aus Markdown++
 
 Sichere lokale Kontrolle für Entwickler und Autoren
+
+![Blyss illustrative overview: local Markdown becomes charts, diagrams and mathematical notation.](starters/lean/static/assets/img/blyss-showcase.svg)
