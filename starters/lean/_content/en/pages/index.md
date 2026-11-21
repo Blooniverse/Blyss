@@ -7,3 +7,5 @@ translationKey: home
 ### Build multilingual sites from Markdown++
 
 Secure control for developers & authors – lean & local
+
+![Blyss illustrative overview: local Markdown becomes charts, diagrams and mathematical notation.](starters/lean/static/assets/img/blyss-showcase.svg)
