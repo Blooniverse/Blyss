@@ -9,6 +9,9 @@ Blyss is a lean, local-first SSG (static site generator) for Markdown++. Ships w
 ↪︎ Secure local control.
 - Creative: Authors can co-design the visuals.
 
+![Blyss illustrative overview: local Markdown becomes charts, diagrams and mathematical notation.](starters/lean/static/assets/img/blyss-showcase.svg)
+
+
 ## Features
 
 - **Markdown++**: AI & KMS ready for the knowledge management era.
@@ -113,9 +116,3 @@ Treat `public/` as generated output; make changes in the source or starter.
 ## License
 
 Blyss and its starter are licensed under the [GNU General Public License v3.0](LICENSE). The starter also ships the stylesheet and the font of [Temml](https://temml.org/) under the [MIT License](starters/lean/static/assets/temml/LICENSE.txt).
-
-
----
-## Impressions
-
-![Blyss illustrative overview: local Markdown becomes charts, diagrams and mathematical notation.](starters/lean/static/assets/img/blyss-showcase.svg)
