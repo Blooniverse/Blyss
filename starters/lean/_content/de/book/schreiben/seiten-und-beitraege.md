@@ -15,7 +15,7 @@ title: Hallo Welt
 description: Der erste Beitrag dieser Website.
 datePublished: 2026-11-10
 dateModified: 2026-11-12
-translationKey: hello-world
+translationKey: 261110-init-hello-world
 tags: [Blyss, Markdown]
 ---
 
@@ -37,7 +37,7 @@ Blyss veröffentlicht Inhalte nach ihrem Verzeichnis:
 - `pages/index.md` wird zur Startseite `/de/`.
 - `pages/404.md` ist eine besondere [Fehlerseite](#fehlerseite).
 
-Der Slug ist der Name der Datei ohne `.md`: `posts/hallo-welt.md` erscheint unter `/de/posts/hallo-welt/`; benennen Sie die Dateien jeder Sprache deshalb in dieser Sprache. Das Front Matter braucht einen `slug` nur für einen anderen, etwa `slug: mein-erster-beitrag`. Ein Slug ist ein einzelner Teil der URL, ohne `/`, `\`, `?` oder `#`.
+Der Slug ist der Name der Datei ohne `.md`: `posts/261110-init-hallo-welt.md` erscheint unter `/de/posts/261110-init-hallo-welt/`; benennen Sie die Dateien jeder Sprache deshalb in dieser Sprache. Das Front Matter braucht einen `slug` nur für einen anderen, etwa `slug: mein-erster-beitrag`. Ein Slug ist ein einzelner Teil der URL, ohne `/`, `\`, `?` oder `#`.
 
 Bilder und andere Dateien einer Seite liegen in `static/`, etwa in `static/assets/img/`, und eine Seite verlinkt sie von der Wurzel der Website aus, etwa mit `![Der Hafen](/assets/img/hafen.jpg)`; eine [Abbildung](/de/book/schreiben/markdown-wuerze/#bilder-und-abbildungen) gibt einem Bild eine Bildunterschrift, eine Breite und eine Ausrichtung. Blyss veröffentlicht nur die Markdown-Dateien aus `_content/`, nicht die anderen Dateien daneben.
 

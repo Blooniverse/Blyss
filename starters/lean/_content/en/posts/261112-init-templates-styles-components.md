@@ -16,6 +16,19 @@ The slider, the gallery and the flower are components. Each has its template, st
 
 A fenced code block whose language is such a name in double curly braces shows the component with a text and settings of its own. The block below sets the title of this slider, its range and its steps in its front matter, and its text below that:
 
+````markdown
+```{{componentSlider}}
+---
+title: A slider of its own
+start: 0
+end: 10
+steps: []
+---
+
+It runs from 0 to 10 and has no steps.
+```
+````
+
 ```{{componentSlider}}
 ---
 title: A slider of its own
