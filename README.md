@@ -35,22 +35,35 @@ Blyss is a lean, local-first SSG (static site generator) for Markdown++. Ships w
 > - **Local-first & Git-based**: Full control for devs & authors.
 
 
-## Workflow
+## Simple local workflow
 ```text
-Author
+Authoring (local)
+  ▼
+Blyss SSG (local)
+  ▼
+Static website (local)
+  ▼
+Publishing (optional)
+```
+
+
+## Optional Git & automation workflow
+```text
+Authoring
   ▼
 Git Client (CLI, GUI, CMS)
   ▼
 Git Repository
-  ├───────────┐
-  ▼           │
-Blyss SSG     │
-  ▼           │
-Website       │
-              ▼
-        Automation Platform
-    (Activepieces, Windmill, N8n)
+  ├────────────────┐
+  ▼                │
+Blyss SSG          │
+  ▼                │
+Website            │
+                   ▼
+            Automation Platform
+        (Activepieces, Windmill, N8n)
 ```
+
 
 ## Quick start
 
