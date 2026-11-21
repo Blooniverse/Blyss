@@ -47,6 +47,14 @@ async function starterText(language, ...file) {
     headings: [...source.matchAll(heading)].map(match => escapeHtml(match[1])) };
 }
 
+async function enableStarterComponent(site, name) {
+  const configFile = join(site, "blyss.config.js");
+  const config = await readFile(configFile, "utf8");
+  const setting = `${name}: false`;
+  assert.ok(config.includes(setting), setting);
+  await writeFile(configFile, config.replace(setting, `${name}: true`));
+}
+
 async function emptyDirectory(name) {
   const path = join(sandbox, name);
   await mkdir(path, { recursive: true });
@@ -249,11 +257,12 @@ describe("a generated starter", () => {
   before(async () => {
     site = join(sandbox, "built");
     assert.equal(run(["init", site], sandbox).status, 0);
+    await enableStarterComponent(site, "componentSliderHero");
     full = join(sandbox, "built-full");
     assert.equal(run(["init", full], sandbox).status, 0);
     const configFile = join(full, "blyss.config.js");
     const config = await readFile(configFile, "utf8");
-    assert.equal(config.match(/component\w+(?:Hero|Overlay): false/g).length, 4);
+    assert.equal(config.match(/component\w+(?:Hero|Overlay): false/g).length, 5);
     await writeFile(configFile, config.replace(/(component\w+(?:Hero|Overlay)): false/g, "$1: true"));
     const result = run(["build"], full);
     assert.equal(result.status, 0, result.stderr);
@@ -612,6 +621,7 @@ describe("a website below a path", () => {
   before(async () => {
     site = join(sandbox, "below");
     assert.equal(run(["init", site], sandbox).status, 0);
+    await enableStarterComponent(site, "componentSliderHero");
     // The website lies below /docs, hosts Mermaid itself and names its path in a template.
     const configFile = join(site, "blyss.config.js");
     const config = await readFile(configFile, "utf8");
@@ -672,6 +682,7 @@ describe("a site with a third language and German as its default", () => {
   before(async () => {
     site = join(sandbox, "trilingual");
     assert.equal(run(["init", site], sandbox).status, 0);
+    await enableStarterComponent(site, "componentSliderHero");
     configFile = join(site, "blyss.config.js");
     const config = await readFile(configFile, "utf8");
     // French follows English, whose labels it takes but for the language switcher's, and gets a text for each slider step.
@@ -1521,6 +1532,7 @@ describe("a site with formulas, footnotes and a component that shows code blocks
   before(async () => {
     site = join(sandbox, "writing");
     assert.equal(run(["init", site], sandbox).status, 0);
+    await enableStarterComponent(site, "componentSliderHero");
     // The component shows the code blocks in two languages and counts the lines of the code as it is written.
     const component = join(site, "components", "chart");
     await mkdir(component);
@@ -2131,7 +2143,7 @@ describe("invalid configuration", () => {
       ['paddingOverlay: "1rem"', 'paddingOverlay: "1em"', `layout.paddingOverlay "1em": ${length} "2vmin"`],
       ['alignOverlay: "centerExtra"', 'alignOverlay: "centerLeft"',
         'layout.alignOverlay "centerLeft": it must be "centerExtra", "left" or "center"'],
-      ["componentSliderHero: true", "componentSlyderHero: true",
+      ["componentSliderHero: false", "componentSlyderHero: false",
         'hero.components.componentSlyderHero: there is no component "componentSlyderHero" or "componentSlyder" in components/'],
       ["componentFlowerHero: false", 'componentFlowerHero: "on"', 'hero.components.componentFlowerHero "on": it must be true (on) or false (off)'],
       ["componentGalleryOverlay: false", "componentGalleryOverlay: 0", "overlay.components.componentGalleryOverlay 0: it must be true (on) or false (off)"],
