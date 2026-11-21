@@ -1,11 +1,19 @@
 ---
 title: Hallo Welt
-description: Der erste Beitrag dieser Website.
+description: Lokales Markdown, mehrsprachige Reichweite.
 datePublished: 2026-11-10
 translationKey: hello-world
 tags: [Blyss, Markdown]
 ---
 
-Beiträge liegen in `_content/de/posts/` und erscheinen unter `/de/posts/`, jeder unter dem Namen seiner Datei: dieser Beitrag, `hallo-welt.md`, unter `/de/posts/hallo-welt/`. Die englische Übersetzung teilt den `translationKey` dieses Beitrags, hat aber einen eigenen lokalisierten Dateinamen, `hello-world.md`.
+Small source. Big expression. Lokal in Markdown schreiben, mit Blyss erstellen und publizieren, wann immer Sie bereit sind.
 
-Die `tags` im Front Matter fügen ihn den Schlagwortseiten unter `/de/tags/` hinzu; das Archiv unter `/de/posts/` listet alle Beiträge.
+## Ihre Worte, Ihre Website
+
+Dieser Beitrag liegt in `_content/de/posts/hallo-welt.md` und erscheint unter `/de/posts/hallo-welt/`. Seine `tags` im Front Matter machen ihn unter `/de/tags/` auffindbar; das [Beitragsarchiv](/de/posts/) versammelt Ihre Texte.
+
+## Eine Geschichte, viele Sprachen
+
+Geben Sie Übersetzungen einer Seite oder eines Beitrags denselben `translationKey`. Dateinamen und klare URLs dürfen sich unterscheiden: Das englische Gegenstück dieses Beitrags heißt `hello-world.md` und liegt unter `/en/posts/hello-world/`. Blyss verbindet die vorhandenen Fassungen im Sprachumschalter, ergänzt `hreflang` für Suchmaschinen und nennt die Sprache jeder Seite im JSON-LD-Graphen. Fehlt eine Übersetzung, erscheint nur die vorhandene Sprache.
+
+Englisch und Deutsch sind der Anfang, nicht die Grenze. [Ergänzen Sie die Sprachen, die Sie brauchen](/de/book/konfiguration/#sprachen).

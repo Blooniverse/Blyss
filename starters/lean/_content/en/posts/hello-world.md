@@ -1,11 +1,19 @@
 ---
 title: Hello World
-description: The first post of this website.
+description: Local Markdown, multilingual reach.
 datePublished: 2026-11-10
 translationKey: hello-world
 tags: [Blyss, Markdown]
 ---
 
-Posts live in `_content/en/posts/` and appear under `/en/posts/`, each at the name of its file: this post, `hello-world.md`, at `/en/posts/hello-world/`. The German translation shares this post's `translationKey` but has a localized file name of its own, `hallo-welt.md`.
+Small source. Big expression. Write locally in Markdown, build with Blyss, and publish when you are ready.
 
-Its `tags` front matter adds it to the tag pages under `/en/tags/`; the archive at `/en/posts/` lists every post.
+## Your words, your website
+
+This post lives in `_content/en/posts/hello-world.md` and appears at `/en/posts/hello-world/`. Its front-matter `tags` make it discoverable under `/en/tags/`; the [post archive](/en/posts/) brings your writing together.
+
+## One story, many languages
+
+Give translated pages or posts the same `translationKey`. Their filenames and clean URLs can differ: this post's German counterpart is `hallo-welt.md`, at `/de/posts/hallo-welt/`. Blyss links the available versions in the language switcher, adds `hreflang` for search engines, and declares each page's language in its JSON-LD graph. No translation? Only the available language appears.
+
+English and German are the defaults, not the limit. [Add the languages you need](/en/book/configuration/#languages).
