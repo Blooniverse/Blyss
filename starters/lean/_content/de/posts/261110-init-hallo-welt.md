@@ -1,12 +1,13 @@
 ---
-title: Hallo Welt
-description: Lokales Markdown, mehrsprachige Reichweite.
+title: Hallo Blyss
+description: Small source. Big expression.
 datePublished: 2026-11-10
 translationKey: 261110-init-hello-world
 tags: [Blyss, Markdown]
 ---
 
 Small source. Big expression. Lokal in Markdown schreiben, mit Blyss erstellen und publizieren, wann immer Sie bereit sind.
+![Blyss illustration: local Markdown becomes charts, diagrams and mathematical notation.](/assets/img/blyss-showcase-home.svg)
 
 ## Ihre Worte, Ihre Website
 
