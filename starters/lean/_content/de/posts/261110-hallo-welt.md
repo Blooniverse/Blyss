@@ -2,7 +2,7 @@
 title: Hallo Welt
 description: Lokales Markdown, mehrsprachige Reichweite.
 datePublished: 2026-11-10
-translationKey: hello-world
+translationKey: 261110-init-hello-world
 tags: [Blyss, Markdown]
 ---
 
