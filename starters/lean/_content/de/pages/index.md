@@ -4,8 +4,8 @@ description: Small source. Big expression.
 translationKey: home
 ---
 
-### Produziere mehrsprachige Websites aus Markdown++
+### Aus Markdown++ direkt Charts, Diagramme und Formeln generieren.
 
-Sichere lokale Kontrolle für Entwickler und Autoren
+Lokal kreieren. Lokal entwickeln. Dann publizieren.
 
 ![Blyss illustrative overview: local Markdown becomes charts, diagrams and mathematical notation.](/assets/img/blyss-showcase.svg)
