@@ -118,8 +118,4 @@ Blyss and its starter are licensed under the [GNU General Public License v3.0](L
 ---
 ## Impressions
 
-> ![Vega-Lite example](https://github.com/vega/vega-lite/blob/main/site/static/teaser.png)
-
-> ![Mermaid example](https://mermaid.js.org/hero-chart.svg)
-
-> ![Flowchart.js example](https://github.com/adrai/flowchart.js/blob/master/imgs/example.svg)
+![Blyss illustrative overview: local Markdown becomes charts, diagrams and mathematical notation.](starters/lean/static/assets/img/blyss-showcase.svg)
