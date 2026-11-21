@@ -173,7 +173,7 @@ export default {
   // 7. Components: the settings of the components in components/<name>/. The slider, the gallery and the flower each
   // have a variant for the hero, <name>Hero, and one for the overlay, <name>Overlay, each with settings of its own
   // and with its texts in _content/<language>/components/<variant>.md. Templates, pages and posts show a variant by
-  // its name, like a component. Each duration is a time in ms or s.
+  // its name, like a component. Each duration is a time in ms or s. The diagrams and the live demo follow below.
   components: {
     // The slider runs through the whole numbers from start to end. Each step marks a value on the way and has a
     // description in every language; change, add or remove steps as you like.
@@ -254,6 +254,14 @@ export default {
       libraryVega: "https://cdn.jsdelivr.net/npm/vega@6.4.0/build/vega.min.js", // Vega, which Vega-Lite draws with
       libraryVegaLite: "https://cdn.jsdelivr.net/npm/vega-lite@6.5.0/build/vega-lite.min.js",
       renderer: "svg" // or "canvas"
+    },
+    // The live demo shows the Markdown of its examples beside what Blyss makes of it, and lets visitors edit it. Its
+    // examples and its texts are in _content/<language>/components/componentLiveDemo.md. What a visitor writes stays
+    // in the browser, which reads it with the renderer of Blyss: the build publishes it with the website.
+    componentLiveDemo: {
+      rows: 7, // the lines of the editor that are visible at once, from 2 to 40; a text can be longer
+      libraryMermaid: "https://cdn.jsdelivr.net/npm/mermaid@12.3.0/dist/mermaid.esm.min.mjs", // draws the diagrams, loaded once a text holds one; or your copy, as for componentMermaid
+      themeMermaid: "dark" // which suits the dark demo; or "default", "neutral", "forest" or "base": Mermaid's themes
     }
   },
 

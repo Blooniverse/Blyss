@@ -1,11 +1,11 @@
-import hljs from "highlight.js";
-import { Marked } from "marked";
-import temml from "temml";
 import { BlyssError } from "../errors.js";
 import { directives, labelDocument, referDocument } from "./directives.js";
 import { escapeHtml } from "./html.js";
+import { hljs, Marked, temml } from "./libraries.js";
 
-// Every Markdown text of a website is read here, so that formulas and code look the same everywhere.
+// Every Markdown text of a website is read here, so that formulas and code look the same everywhere: also in the
+// browser, which loads this module and those that it imports as they are (see browser.js). They use nothing that
+// only Node.js has.
 
 // The text that is being read: its file, which the errors of its formulas and of its directives name, the labels of
 // its language, which title its callouts, and whether it is the text of a page, of a post or of a doc, which alone
@@ -233,3 +233,9 @@ export function lexDocument(markdown, file, labels) {
     text: `<section class="footnotes" role="doc-endnotes" aria-label="${escapeHtml(labels.footnotes)}">\n<ol>\n${items.join("\n")}\n</ol>\n</section>\n` });
   return { tokens, ids };
 }
+
+// The HTML of a text that is read like that of a page, of a post or of a doc, with its footnotes, labels, numbers
+// and references, but without what only a build knows: the components of the website and its newest posts (see
+// renderBody in render.js). The data file of a component reads a text with it, and so does the browser, which gets
+// the same HTML for the same text.
+export const renderDocument = (markdown, file, labels) => renderTokens(lexDocument(markdown, file, labels).tokens);

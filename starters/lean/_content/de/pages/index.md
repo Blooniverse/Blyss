@@ -9,3 +9,5 @@ translationKey: home
 Lokal kreieren. Lokal entwickeln. Publizieren.
 
 ![Blyss-Illustration: Lokales Markdown wird zu Diagrammen und mathematischer Notation. Die Beschriftung ist auf Englisch.](/assets/img/blyss-showcase-home.svg)
+
+{{componentLiveDemo}}

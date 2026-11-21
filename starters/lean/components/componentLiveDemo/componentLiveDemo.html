@@ -1,0 +1,30 @@
+<link rel="stylesheet" href="/components/componentLiveDemo/componentLiveDemo.css">
+<script type="module" src="/components/componentLiveDemo/componentLiveDemo.js"></script>
+<component-live-demo class="component" id="{{id}}" role="group" aria-labelledby="{{id}}-title" data-labels="{{labels}}" data-base-path="{{basePath}}" data-library-mermaid="{{libraryMermaid}}" data-theme-mermaid="{{themeMermaid}}" data-loading="{{loading}}" data-unavailable="{{unavailable}}" data-failed="{{failed}}" data-diagram-failed="{{diagramFailed}}" data-diagram-unavailable="{{diagramUnavailable}}">
+  <div class="head">
+    <h3 id="{{id}}-title">{{title}}</h3>
+    <div class="choice" role="group" aria-label="{{examples}}" hidden></div>
+  </div>
+  <div class="live" hidden>
+    <div class="panes">
+      <div class="pane">
+        <div class="pane-head">
+          <label for="{{id}}-editor">{{editor}}</label>
+          <button type="button" class="reset">{{reset}}</button>
+        </div>
+        <textarea id="{{id}}-editor" rows="{{rows}}" spellcheck="false" autocapitalize="off" autocomplete="off" aria-describedby="{{id}}-status"></textarea>
+      </div>
+      <div class="pane">
+        <div class="pane-head"><span aria-hidden="true">{{result}}</span></div>
+        <iframe title="{{result}}" sandbox="allow-same-origin"></iframe>
+      </div>
+    </div>
+    <p class="status" id="{{id}}-status" role="status"></p>
+  </div>
+  <ul class="examples">
+{{exampleItems}}
+  </ul>
+  <div class="note">
+{{note}}
+  </div>
+</component-live-demo>

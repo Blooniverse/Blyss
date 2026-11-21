@@ -39,4 +39,6 @@ npm test
 - `temml` für MathML. Temml ist auf eine exakte Version festgelegt, da der Starter das zugehörige Stylesheet und die Schrift mitliefert. Nach einer Versionsänderung kopieren Sie `Temml-Local.css` und `Temml.woff2` aus `node_modules/temml/dist/` nach `starters/lean/static/assets/temml/`; ein Test prüft deren Übereinstimmung.
 - `highlight.js` für Syntaxhervorhebung.
 
+Nur `src/build/libraries.js` nennt diese Abhängigkeiten. Für eine Komponente, die Markdown im Browser liest, veröffentlicht `src/build/browser.js` `markdown.js` und die Module, die es importiert, unverändert, mit einer `libraries.js`, die Kopien der Bibliotheken nennt. Diese Module dürfen deshalb nichts verwenden, was nur Node.js hat; ein Test prüft ihre Importe.
+
 Prüfen Sie Änderungen an der Engine zusammen mit dem Starter und beiden Sprachen. Hinweise zur Pflege einer erzeugten Website stehen unter [Installation](/de/book/installation/) und [Bereitstellung](/de/book/bereitstellung/).
