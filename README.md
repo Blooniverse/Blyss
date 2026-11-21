@@ -1,12 +1,17 @@
-# Blyss SSG 1.0.1 — lean & local
+# BLYSS SSG 1.0.1 / LEAN & LOCAL
+## SMALL SOURCE. BIG EXPRESSION.
+[![Build & test](https://github.com/Blooniverse/Blyss/actions/workflows/ci-dev-build-test.yml/badge.svg?branch=main&event=push)](https://github.com/Blooniverse/Blyss/actions/workflows/ci-dev-build-test.yml)
 
 Blyss is a lean, local-first SSG (static site generator) for Markdown++. Ships with a dependency-free Node.js server.
 
 ↪︎ Build multilingual sites from Markdown++ with math, diagrams and cross-references.
 - Technical & scientific: [MyST](https://mystmd.org/) subset!  
 
-↪︎ Keep local control! Keep control local!
+↪︎ Secure local control.
 - Creative: Authors can co-design the visuals.
+
+![Blyss illustrative overview: local Markdown becomes charts, diagrams and mathematical notation.](starters/lean/static/assets/img/blyss-showcase-github.svg)
+
 
 ## Features
 
@@ -34,22 +39,35 @@ Blyss is a lean, local-first SSG (static site generator) for Markdown++. Ships w
 > - **Local-first & Git-based**: Full control for devs & authors.
 
 
-## Workflow
+## Simple local workflow
 ```text
-Author
+Authoring (local)
+  ▼
+Blyss SSG (local)
+  ▼
+Static website (local)
+  ▼
+Publishing (optional)
+```
+
+
+## Optional Git & automation workflow
+```text
+Authoring
   ▼
 Git Client (CLI, GUI, CMS)
   ▼
 Git Repository
-  ├───────────┐
-  ▼           │
-Blyss SSG     │
-  ▼           │
-Website       │
-              ▼
-        Automation Platform
-    (Activepieces, Windmill, N8n)
+  ├────────────────┐
+  ▼                │
+Blyss SSG          │
+  ▼                │
+Website            │
+                   ▼
+            Automation Platform
+        (Activepieces, Windmill, N8n)
 ```
+
 
 ## Quick start
 
@@ -75,7 +93,18 @@ npm install @blooniverse/blyss
 
 ## Development
 
-Clone repo, then run NPM's regular `npm ci` and `npm run build` followed by `npm start`. 
+Requires Node.js 24 or newer.
+
+```bash
+git clone https://github.com/Blooniverse/Blyss.git
+cd Blyss
+npm ci
+npm run build   # render starters/lean/ into public/
+npm start       # preview locally at http://localhost:3000
+```
+
+Run `npm test` to rebuild the starter and execute the test suite.
+Treat `public/` as generated output; make changes in the source or starter.
 
 
 ## Documentation
@@ -88,9 +117,3 @@ Clone repo, then run NPM's regular `npm ci` and `npm run build` followed by `npm
 ## License
 
 Blyss and its starter are licensed under the [GNU General Public License v3.0](LICENSE). The starter also ships the stylesheet and the font of [Temml](https://temml.org/) under the [MIT License](starters/lean/static/assets/temml/LICENSE.txt).
-
-
----
-## Impressions
-
-![Blyss illustrative overview: local Markdown becomes charts, diagrams and mathematical notation.](starters/lean/static/assets/img/blyss-showcase-github.svg)

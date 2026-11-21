@@ -139,7 +139,7 @@ export default {
   // (true) or off (false); a hero without a part that is switched on is not shown at all.
   hero: {
     components: { // its variants of the components from components/, in this order
-      componentSliderHero: true,
+      componentSliderHero: false,
       componentGalleryHero: false,
       componentFlowerHero: false
     },

@@ -1,11 +1,11 @@
 ---
 title: Blyss SSG
-description: Lean & local
+description: Small source. Big expression.
 translationKey: home
 ---
 
-### Build multilingual sites from Markdown++
+### From Markdown++ to charts, diagrams and maths.
 
-Full local-first control for developers & authors
+Author locally. Build locally. Publish when ready.
 
 ![Blyss illustration: local Markdown becomes charts, diagrams and mathematical notation.](/assets/img/blyss-showcase-home.svg)
