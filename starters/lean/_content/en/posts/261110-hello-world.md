@@ -2,7 +2,7 @@
 title: Hello World
 description: Local Markdown, multilingual reach.
 datePublished: 2026-11-10
-translationKey: hello-world
+translationKey: 261110-hello-world
 tags: [Blyss, Markdown]
 ---
 
