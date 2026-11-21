@@ -2,7 +2,7 @@
 title: Vorlagen, Stile, Komponenten
 description: Wo die Vorlagen, das Stylesheet und die Komponenten dieser Website liegen.
 datePublished: 2026-11-12
-translationKey: 261112-templates-styles-components
+translationKey: 261112-init-templates-styles-components
 tags: [Blyss]
 ---
 
