@@ -50,9 +50,32 @@ Die Funktion wird für jede Sprache und jeden Block aufgerufen und erhält auch:
 - `frontMatter`: die Felder des Front Matters.
 - `texts`: die durch `###` eingeleiteten Textabschnitte.
 - `basePath`: den Pfad einer Website unterhalb eines Pfads, für URLs, die die Datendatei schreibt.
+- `labels`: die Labels der Sprache.
+- `renderDocument`: eine Funktion, die das HTML eines Markdown-Texts liefert, gelesen wie der Text einer Seite, eines Beitrags oder eines Dokuments.
 - `refuse`: erzeugt eine aussagekräftige Fehlermeldung.
 
 Ungültige Einstellungen stoppen den Build.
+
+### Markdown im Browser
+
+Eine Komponente, deren Skript Markdown im Browser liest, fordert den Renderer von Blyss in ihrer Datendatei an:
+
+```js
+export const renderer = true;
+```
+
+Der Build veröffentlicht dann die Module, mit denen er selbst Markdown liest, samt ihren Bibliotheken unter `/components/blyss-renderer/`. Ein Skript der Komponente importiert den Renderer von dort:
+
+```js
+const { renderDocument, withBasePath } = await import("../blyss-renderer/renderer.js");
+const html = withBasePath(renderDocument(markdown, "this text", labels), basePath);
+```
+
+- `renderDocument(markdown, name, labels)` liefert dasselbe HTML wie die gleichnamige Funktion der Datendatei. `name` benennt den Text in einer Fehlermeldung, `labels` sind die einer Sprache.
+- `withBasePath(html, basePath)` ergänzt URLs, die mit `/` beginnen, um den Pfad einer Website unterhalb eines Pfads.
+- Ein Text, der sich nicht lesen lässt, wirft einen Fehler mit der Meldung des Builds.
+
+Der Renderer umfasst rund 1 MB JavaScript; ein Skript sollte ihn erst laden, wenn es ihn braucht. Er wird unter der Lizenz von Blyss, der GPL-3.0, veröffentlicht, zusammen mit den Lizenzen von marked, Temml und highlight.js. Ohne eine solche Komponente veröffentlicht eine Website ihn nicht. Die Live-Demo auf den Startseiten des Starters verwendet ihn: Entfernen Sie `{{componentLiveDemo}}` aus `pages/index.md`, um auf sie zu verzichten.
 
 ## Varianten
 
@@ -111,7 +134,7 @@ Der Browser lädt die Bibliothek erst, wenn das Diagramm nahe am Fenster ist ode
 
 | Einstellung | Datei und Quelle | Beispiel-URL |
 | --- | --- | --- |
-| `componentMermaid.library` | `dist/mermaid.esm.min.mjs` und daneben `dist/chunks/mermaid.esm.min/` aus npm `mermaid@12.3.0` | `/assets/mermaid/mermaid.esm.min.mjs` |
+| `componentMermaid.library` und `componentLiveDemo.libraryMermaid` | `dist/mermaid.esm.min.mjs` und daneben `dist/chunks/mermaid.esm.min/` aus npm `mermaid@12.3.0` | `/assets/mermaid/mermaid.esm.min.mjs` |
 | `componentFlowchart.libraryRaphael` | `raphael.min.js` aus npm `raphael@2.3.0` | `/assets/flowchart/raphael.min.js` |
 | `componentFlowchart.libraryFlowchart` | `release/flowchart.min.js` aus [flowchart.js v1.18.1](https://github.com/adrai/flowchart.js/tree/v1.18.1/release) | `/assets/flowchart/flowchart.min.js` |
 | `componentVegaLite.libraryVega` | `build/vega.min.js` aus npm `vega@6.4.0` | `/assets/vega/vega.min.js` |

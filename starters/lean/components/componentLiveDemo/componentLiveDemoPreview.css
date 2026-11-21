@@ -1,0 +1,48 @@
+/* The result of the live demo stands in a frame of its own, with the stylesheets of the page. This one follows
+   them: it takes from the page what belongs to its window, the frame and the margin, and gives it the dark look of
+   the showcase illustration through the colours of main.css. The script of the component sets the size of the
+   text. */
+:root {
+  --color202: #62dec4;
+  --color202grey: #b7c8d9;
+  --color202border: #395068;
+  --h-textshadow: none;
+  --card: #0c1728;
+  --card-border: #395068;
+  --table-line: #395068;
+  --table-shade: rgb(255 255 255 / .05);
+  color-scheme: dark;
+  background: #182c40; /* that of the card around the frame */
+}
+body {
+  display: flow-root; /* holds the margins of the text, so that the frame is as tall as its content */
+  min-height: 0;
+  margin: 0;
+  padding: .6em .8em;
+  border: 0;
+  overflow-wrap: break-word;
+  color: #d6e1ed;
+}
+article > :first-child { margin-top: 0; }
+article > :last-child { margin-bottom: 0; }
+h1, h2, h3 { color: #f4f7fb; }
+code { background: rgb(255 255 255 / .08); }
+pre { background: #0c1728; }
+pre code { background: none; }
+.footnote-ref a, .footnotes [role="doc-backlink"] { color: #62dec4; }
+/* Callouts: the colours of their kinds, each clear enough on the dark card. */
+.admonition { --kind: #62dec4; }
+.admonition:is(.hint, .seealso, .tip) { --kind: #7ee2a8; }
+.admonition:is(.attention, .caution, .warning) { --kind: #f5c26b; }
+.admonition:is(.danger, .error) { --kind: #ff9a8f; }
+/* Highlighted code, in the colours of the illustration. */
+.hljs-comment, .hljs-quote, .hljs-meta { color: #95aabd; }
+.hljs-keyword, .hljs-selector-tag, .hljs-name, .hljs-section, .hljs-doctag { color: #62dec4; }
+.hljs-string, .hljs-regexp, .hljs-addition, .hljs-attribute { color: #faab91; }
+.hljs-number, .hljs-literal, .hljs-symbol, .hljs-bullet, .hljs-link { color: #b6a3f5; }
+.hljs-title, .hljs-selector-id, .hljs-selector-class { color: #e5dbff; }
+.hljs-built_in, .hljs-type, .hljs-attr, .hljs-variable, .hljs-template-variable { color: #8fb8de; }
+.hljs-deletion { color: #ff9a8f; }
+/* A Mermaid diagram; one that is wider than the text scrolls sideways. */
+.diagram { margin-bottom: .6em; overflow-x: auto; }
+.diagram svg { display: block; max-width: 100%; height: auto; margin-inline: auto; }

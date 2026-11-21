@@ -44,6 +44,8 @@ body[data-kind="home"] main {
   position: relative;
   isolation: isolate;
 }
+/* The background of the home pages reaches beyond their text, but never widens the page on a narrow screen. */
+body[data-kind="home"] .page { overflow-x: clip; }
 
 body[data-kind="home"] main::before {
   content: "";

@@ -1,0 +1,96 @@
+/* The live demo, in the look of the showcase illustration, static/assets/img/blyss-showcase-home.svg: a dark panel
+   with the buttons of its examples, then the editor as a window beside the result as a card where both have room,
+   and one above the other on a narrow screen, then its message and its note. Without its script, the examples are
+   a list of code. It keeps its text at the start, also in centered text. */
+component-live-demo {
+  --demo-ink: #f4f7fb; /* the colours of the illustration */
+  --demo-text: #b7c8d9;
+  --demo-line: #395068;
+  --demo-window: #0c1728;
+  --demo-card: #182c40;
+  --demo-teal: #62dec4;
+  --demo-salmon: #faab91;
+  --demo-violet: #b6a3f5;
+  display: block;
+  container-type: inline-size; /* for the limit of the result's height, which follows the width of the demo */
+  padding: 1em 1.4em .9em;
+  border-radius: 1em;
+  font-size: .85rem;
+  text-align: start;
+  color: var(--demo-text);
+  background: linear-gradient(135deg, #101d32, #192d42);
+}
+component-live-demo :is(.choice, .live, .examples)[hidden] { display: none; }
+/* The title beside the buttons of the examples, where both have room. */
+component-live-demo .head { display: flex; flex-wrap: wrap; align-items: center; gap: .4em 1.2em; margin-bottom: .7em; }
+component-live-demo h3 { margin: 0; color: var(--demo-ink); }
+component-live-demo :focus-visible { outline-color: var(--demo-teal); }
+component-live-demo .choice { display: flex; flex-wrap: wrap; gap: .4em; }
+component-live-demo button {
+  padding: .25em .8em;
+  border: 1px solid var(--demo-line);
+  border-radius: 2em;
+  font: inherit;
+  color: var(--demo-text);
+  background: none;
+  cursor: pointer;
+}
+component-live-demo button:hover { border-color: var(--demo-teal); color: var(--demo-ink); }
+/* The chosen example, like the "SSG" of the illustration. */
+component-live-demo .choice [aria-pressed="true"] { border-color: var(--demo-teal); font-weight: 700; color: #102235; background: var(--demo-teal); }
+component-live-demo .panes { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 15em), 1fr)); gap: .8em 1em; }
+component-live-demo .pane { display: flex; flex-direction: column; min-width: 0; overflow: hidden; border: 1px solid var(--demo-line); border-radius: .8em; background: var(--demo-card); }
+component-live-demo .pane:has(textarea) { background: var(--demo-window); }
+component-live-demo .pane-head {
+  display: flex;
+  align-items: center;
+  gap: .6em;
+  min-height: 2.4em; /* that of the editor's head, which holds a button */
+  padding: .2em .7em;
+  border-bottom: 1px solid var(--demo-line);
+  font-size: .85em;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--demo-teal);
+}
+/* The three dots of the window. */
+component-live-demo .pane:has(textarea) .pane-head::before {
+  content: "";
+  flex: none;
+  width: .7em;
+  height: .7em;
+  margin-right: 2.2em;
+  border-radius: 50%;
+  background: var(--demo-salmon);
+  box-shadow: 1.1em 0 var(--demo-violet), 2.2em 0 var(--demo-teal);
+}
+component-live-demo .pane-head button { margin-left: auto; font-weight: 400; letter-spacing: 0; text-transform: none; }
+/* The editor and the result are equally tall where they stand side by side; the result grows with its content. */
+component-live-demo :is(textarea, iframe) { display: block; flex: 1 0 auto; width: 100%; border: 0; background: none; }
+component-live-demo textarea {
+  padding: .6em .8em;
+  font: max(16px, .85em) / 1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; /* at least 16px, below which phones zoom in */
+  color: #d6e1ed;
+  caret-color: var(--demo-teal);
+  resize: vertical;
+}
+component-live-demo textarea:focus-visible { outline-offset: -2px; }
+/* The result is as tall as its content, up to a limit, beyond which it scrolls: where the editor and the result
+   stand side by side, the demo stays about as tall as the showcase illustration, which is 0.38 times as tall as it
+   is wide, and a fifth more at most. */
+component-live-demo iframe { max-height: 60svh; }
+@container (min-width: 34em) {
+  component-live-demo iframe { max-height: max(9em, 45.6cqw - 11em); }
+}
+component-live-demo .status { margin: .5em 0 0; font-size: .85em; white-space: pre-line; }
+component-live-demo .status:empty { margin: 0; } /* stays in place for the tools that announce its messages */
+component-live-demo .status:is([data-kind="invalid"], [data-kind="problem"]) { color: var(--demo-salmon); }
+component-live-demo .examples { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 14em), 1fr)); gap: .4em 1em; padding: 0; list-style: none; }
+component-live-demo .examples h4 { margin-bottom: .2em; color: var(--demo-teal); }
+component-live-demo .examples pre { border-color: var(--demo-line); color: #d6e1ed; background: var(--demo-window); }
+component-live-demo .examples code { color: inherit; background: none; }
+component-live-demo .note { margin-top: .4em; padding-top: .6em; border-top: 1px solid var(--demo-line); font-size: .85em; }
+component-live-demo .note > :last-child { margin-bottom: 0; }
+component-live-demo .note strong { color: var(--demo-ink); }
+component-live-demo .note a { color: var(--demo-ink); text-decoration-color: var(--demo-teal); }

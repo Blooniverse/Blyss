@@ -84,9 +84,32 @@ The function receives, among others:
 - `frontMatter`: the fields of the text.
 - `texts`: the HTML texts started by `###` headings.
 - `basePath`: the path of a website below a path, for a URL that the data file writes.
+- `labels`: the labels of the language.
+- `renderDocument`: a function that returns the HTML of a Markdown text, read like that of a page, a post or a doc.
 - `refuse`: creates a setting error naming the component.
 
 The data file receives block overrides in the same way as ordinary settings and text.
+
+### Markdown in the browser
+
+A component whose script reads Markdown in the browser asks for Blyss's renderer in its data file:
+
+```js
+export const renderer = true;
+```
+
+The build then publishes the modules with which it reads Markdown itself, and the libraries that they use, at `/components/blyss-renderer/`. A script of the component imports the renderer from there:
+
+```js
+const { renderDocument, withBasePath } = await import("../blyss-renderer/renderer.js");
+const html = withBasePath(renderDocument(markdown, "this text", labels), basePath);
+```
+
+- `renderDocument(markdown, name, labels)` returns the same HTML as the function of that name in the data file. `name` names the text in an error message, and `labels` are those of a language.
+- `withBasePath(html, basePath)` gives root-relative URLs the path of a website below a path.
+- A text that cannot be read throws an error with the message of the build.
+
+The renderer is about 1 MB of JavaScript, which a script should load only when it needs it. It is published under Blyss's licence, the GPL-3.0, beside the licences of marked, Temml and highlight.js. Without such a component, a website does not publish it. The live demo on the starter's home pages uses it: remove `{{componentLiveDemo}}` from `pages/index.md` to do without it.
 
 ## Diagrams and code blocks
 
@@ -113,7 +136,7 @@ By default the libraries come from jsDelivr, exposing the visitor's IP address t
 
 | Setting | Source files |
 | --- | --- |
-| `componentMermaid.library` | npm `mermaid@12.3.0`: `dist/mermaid.esm.min.mjs` and `dist/chunks/mermaid.esm.min/`, keeping the `chunks/mermaid.esm.min/` path beside it |
+| `componentMermaid.library` and `componentLiveDemo.libraryMermaid` | npm `mermaid@12.3.0`: `dist/mermaid.esm.min.mjs` and `dist/chunks/mermaid.esm.min/`, keeping the `chunks/mermaid.esm.min/` path beside it |
 | `componentFlowchart.libraryRaphael` | npm `raphael@2.3.0`: `raphael.min.js` |
 | `componentFlowchart.libraryFlowchart` | [flowchart.js v1.18.1](https://github.com/adrai/flowchart.js/tree/v1.18.1/release): `release/flowchart.min.js` |
 | `componentVegaLite.libraryVega` | npm `vega@6.4.0`: `build/vega.min.js` |

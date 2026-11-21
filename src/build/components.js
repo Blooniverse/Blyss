@@ -2,8 +2,9 @@ import { cp, readdir, readFile } from "node:fs/promises";
 import { basename, join, relative } from "node:path";
 import { pathToFileURL } from "node:url";
 import { BlyssError } from "../errors.js";
+import { publishRenderer, readRenderer } from "./browser.js";
 import { parseFrontMatter } from "./front-matter.js";
-import { renderMarkdown } from "./markdown.js";
+import { renderDocument, renderMarkdown } from "./markdown.js";
 import { applyTemplate, escapeHtml, labelValues } from "./render.js";
 import { basePathOf, refuse } from "./settings.js";
 import { splitTexts } from "./texts.js";
@@ -30,16 +31,18 @@ function settingsOf({ written, metadata }) {
 }
 
 // A component's optional data file checks its settings and returns further values for its template. It can also name
-// the languages of the fenced code blocks that the component shows, such as export const languages = ["mermaid"].
+// the languages of the fenced code blocks that the component shows, such as export const languages = ["mermaid"],
+// and ask for the renderer of Blyss in the browser, with export const renderer = true (see browser.js).
 async function importData(file, location) {
   const url = pathToFileURL(file).href;
   let data;
   let languages;
+  let renderer;
   try {
-    ({ default: data, languages = [] } = await import(url));
+    ({ default: data, languages = [], renderer = false } = await import(url));
   } catch (error) {
     // Only the data file itself may be missing, not a module it imports.
-    if (error?.code === "ERR_MODULE_NOT_FOUND" && error.url === url) return { data: () => ({}), languages: [] };
+    if (error?.code === "ERR_MODULE_NOT_FOUND" && error.url === url) return { data: () => ({}), languages: [], renderer: false };
     throw error;
   }
   if (typeof data !== "function") {
@@ -49,7 +52,11 @@ async function importData(file, location) {
     throw new BlyssError(`Cannot build ${location}: its languages must be a list of the languages of the code blocks that ` +
       'the component shows, each without a space, such as ["mermaid"].');
   }
-  return { data, languages };
+  if (typeof renderer !== "boolean") {
+    throw new BlyssError(`Cannot build ${location}: its renderer must be true or false. With true, the build publishes ` +
+      "the renderer of Blyss with the website, for a script of the component that reads Markdown in the browser.");
+  }
+  return { data, languages, renderer };
 }
 
 // The variants of every component, by the suffix of their names: one for each region.
@@ -77,6 +84,8 @@ const isPublished = file => !/^[._]/.test(basename(file));
 // settings of its own, which the block holds in place of that file and of blyss.config.js (see valuesOf below).
 // A component whose data file names languages shows the fenced code blocks in these languages, each as an instance
 // with the code as its text. Its text is code wherever it comes from: {{content}} is that code, escaped for HTML.
+// A component whose data file asks for the renderer has it at /components/blyss-renderer/, where a script of the
+// component finds the modules that read Markdown, to read in the browser what a visitor writes there.
 // Every other file of the directory, such as a stylesheet or a script, is published at /components/<name>/ under the
 // name of the component, which its variants share, unless its name or that of one of its directories starts with a
 // dot or an underscore (see isPublished above).
@@ -88,6 +97,7 @@ export async function loadComponents(projectDir, config, directory, texts) {
   });
   const components = new Map();
   const languages = new Map(); // the component that shows the code blocks of each language
+  let inBrowser = false; // whether a component asks for the renderer of Blyss in the browser
   // In this order, a component comes before any directory whose name starts with the component's name. A directory
   // whose name starts with a dot or an underscore is no component: it can hold what the data files of several
   // components import.
@@ -106,7 +116,8 @@ export async function loadComponents(projectDir, config, directory, texts) {
       if (error.code !== "ENOENT") throw error;
       throw new BlyssError(`Cannot build ${join(location, name)}: a component needs a template, ${name}.html.`);
     });
-    const { data, languages: shown } = await importData(join(path, `${name}.data.js`), join(location, name, `${name}.data.js`));
+    const { data, languages: shown, renderer } = await importData(join(path, `${name}.data.js`), join(location, name, `${name}.data.js`));
+    inBrowser ||= renderer;
     for (const language of shown) {
       if (languages.has(language) && languages.get(language) !== name) {
         throw new BlyssError(`Cannot build ${join(location, name)}: ${languages.get(language)} already shows the code blocks in "${language}".`);
@@ -119,6 +130,9 @@ export async function loadComponents(projectDir, config, directory, texts) {
       components.set(`${name}${suffix}`, { base: name, region, path, template, data, code, values: {}, errors: {} });
     }
   }
+
+  // The renderer of Blyss for the browser, if a component asks for it.
+  const renderer = inBrowser ? await readRenderer() : undefined;
 
   // What is wrong with the name of a component or a variant, if anything.
   function unknown(name) {
@@ -166,7 +180,9 @@ export async function loadComponents(projectDir, config, directory, texts) {
       content,
       ...await data({
         settings: ownSettings, languageKey, content, texts: code ? [] : splitTexts(markdown, origin, labels).texts, source: markdown,
-        frontMatter: metadata, escapeHtml, basePath,
+        frontMatter: metadata, escapeHtml, basePath, labels,
+        // Reads a text like that of a page, of a post or of a doc, as the renderer does in the browser.
+        renderDocument: text => renderDocument(text, origin ?? join(location, name), labels),
         refuse: (setting, value, requirement) => (block === undefined
           ? refuse(`components.${name}.${setting}`, value, requirement)
           : new BlyssError(`Cannot build ${file}: its {{${name}}} block cannot use ${setting} ${JSON.stringify(value)}, ` +
@@ -214,6 +230,7 @@ export async function loadComponents(projectDir, config, directory, texts) {
           await cp(join(path, file), join(publicDirectory, "components", name, file), { recursive: true, filter: isPublished });
         }
       }
+      if (renderer) await publishRenderer(renderer, publicDirectory);
     }
   };
 }

@@ -28,4 +28,6 @@ The engine reads Markdown in `src/build/markdown.js`, and the directives of MyST
 - `temml` for MathML. It is pinned to an exact version because the starter ships its stylesheet and font. When updating Temml, copy `Temml-Local.css` and `Temml.woff2` from `node_modules/temml/dist/` into `starters/lean/static/assets/temml/`; a test checks this.
 - `highlight.js` for code.
 
+Only `src/build/libraries.js` names these dependencies. For a component that reads Markdown in the browser, `src/build/browser.js` publishes `markdown.js` and the modules that it imports as they are, with a `libraries.js` that names copies of the libraries. These modules must therefore use nothing that only Node.js has; a test checks their imports.
+
 Blyss was initially developed with assistance from Microsoft 365 Copilot in August 2026 and is co-developed by Blooniverse and GitHub Copilot.

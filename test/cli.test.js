@@ -7,6 +7,7 @@ import { tmpdir } from "node:os";
 import { basename, dirname, join, posix, relative, sep, win32 } from "node:path";
 import { after, before, describe, test } from "node:test";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { readRenderer } from "../src/build/browser.js";
 import { parseFrontMatter } from "../src/build/front-matter.js";
 import { escapeHtml } from "../src/build/html.js";
 import { fileFor } from "../src/server/server.js";
@@ -296,12 +297,12 @@ describe("a generated starter", () => {
       .flatMap(([language, posts, docs]) => ["", "pages/about/", "posts/", ...posts.map(post => `posts/${post}/`), "tags/", "tags/blyss/",
         "tags/markdown/", "book/", ...docs.map(doc => `book/${doc}/`)].map(path => `${language}/${path}index.html`));
     const notFoundPages = ["404.html", "en/404.html", "de/404.html"];
-    // Static files are copied as they are; components publish their files but their templates and data files.
+    // Static files are copied as they are; components publish their files but their templates and data files, and
+    // the renderer of Blyss, which the live demo asks for.
     const componentFiles = (await listFiles(join(starter, "components"))).filter(file => !/\.(?:html|data\.js)$/.test(file));
-    assert.deepEqual(componentFiles, ["componentFlowchart", "componentFlower", "componentGallery", "componentMermaid", "componentSlider", "componentVegaLite"]
-      .flatMap(name => ["css", "js"].map(type => `${name}/${name}.${type}`)));
+    const rendererFiles = Object.keys(await readRenderer()).map(file => `blyss-renderer/${file}`);
     assert.deepEqual(await listFiles(join(site, "public")), [...await listFiles(join(starter, "static")),
-      ...componentFiles.map(file => `components/${file}`), "sitemap.xml", ...pages, ...notFoundPages].sort());
+      ...[...componentFiles, ...rendererFiles].map(file => `components/${file}`), "sitemap.xml", ...pages, ...notFoundPages].sort());
     for (const page of [...pages, ...notFoundPages]) {
       const html = await readFile(join(site, "public", page), "utf8");
       assert.doesNotMatch(html.replace(/<code\b[^>]*>[\s\S]*?<\/code>/g, ""), /{{\w+}}/, page);
@@ -1394,7 +1395,8 @@ describe("a site with its own hero and overlay", () => {
     await buildWith("  hero: { components: { componentSliderHero: false, componentFlowerHero: false }, texts: false },\n  overlay: { texts: false },");
     for (const path of ["en/index.html", "de/index.html", "en/pages/about/index.html", "de/posts/index.html"]) {
       const html = await page(path);
-      assert.doesNotMatch(html, /<aside|<component-/, path);
+      // The regions follow the content of the page, which may show components of its own.
+      assert.doesNotMatch(html.slice(html.indexOf("</main>")), /<aside|<component-/, path);
       for (const name of ["hero", "overlay"]) assert.ok(!html.includes(headings[name][path.slice(0, 2)][0]), path);
       assert.doesNotMatch(html, /{{\w+}}/, path);
       assert.match(html, /<\/div>\s*<footer>/, path);
@@ -1503,8 +1505,8 @@ export default ({ settings, languageKey, escapeHtml, refuse }) => {
   });
 
   test("publishes its files but its template, its data file and what has a name that starts with a dot or an underscore", async () => {
-    // Beside the components of the starter, whose names start with "component".
-    assert.deepEqual((await listFiles(join(site, "public", "components"))).filter(file => !file.startsWith("component")),
+    // Beside the components of the starter, whose names start with "component", and the renderer that one of them asks for.
+    assert.deepEqual((await listFiles(join(site, "public", "components"))).filter(file => !/^(?:component|blyss-renderer\/)/.test(file)),
       ["notice/img/icon.svg", "notice/notice.css"]);
   });
 

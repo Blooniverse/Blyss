@@ -3,7 +3,7 @@ import { basename, extname, join, relative, sep } from "node:path";
 import { loadConfig } from "../config.js";
 import { BlyssError } from "../errors.js";
 import { loadComponents } from "./components.js";
-import { escapeHtml } from "./html.js";
+import { withBasePath } from "./html.js";
 import { createListRecords, parseTags } from "./lists.js";
 import { renderFragments } from "./fragments.js";
 import { parseFrontMatter } from "./front-matter.js";
@@ -181,15 +181,6 @@ function assertUniqueTranslations(projectDir, records) {
     }
     owners.set(`${record.languageKey}/${key}`, record);
   }
-}
-
-// A website below a path, such as /docs for https://example.com/docs/, finds its pages and its files below that
-// path: every href, src, poster and action of a page that starts at the root of the website, with a single "/",
-// gets the path. The content, the templates and the components need not know it.
-function withBasePath(html, basePath) {
-  if (!basePath) return html;
-  const path = escapeHtml(basePath);
-  return html.replace(/(\s(?:href|src|poster|action)=["'])\/(?!\/)/g, (match, start) => `${start}${path}/`);
 }
 
 // With drafts, the build includes the pages, posts and docs that draft: true leaves out of every other build.

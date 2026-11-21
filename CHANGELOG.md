@@ -147,6 +147,28 @@
 
 ### New features
 
+- **Live demo**: the starter's home pages show `componentLiveDemo`, in the
+  look of the showcase illustration: the Markdown of an example beside what
+  Blyss makes of it, with a button for each example, an editor and a Reset
+  button. Its examples and its texts are in
+  `_content/<language>/components/componentLiveDemo.md`, and a block gives an
+  occurrence its own. The build reads every example; the browser reads what a
+  visitor writes with Blyss's own renderer, in a frame without scripts, and
+  nothing that is written is sent or stored. It supports what the text of a
+  page supports, and draws Mermaid diagrams; other components and front
+  matter are shown as written. Remove `{{componentLiveDemo}}` from
+  `pages/index.md` to do without it.
+- **Markdown in the browser**: a component whose data file has
+  `export const renderer = true;` gets Blyss's renderer at
+  `/components/blyss-renderer/`: the modules with which the build itself
+  reads Markdown, as they are, and its copies of marked, Temml and
+  highlight.js with their licences, about 1 MB. A script imports
+  `renderDocument` and `withBasePath` from `renderer.js` there. A website
+  without such a component publishes none of it. In the browser, code is
+  highlighted in the languages that highlight.js calls common.
+- **Data files**: the function of a data file also receives `labels`, the
+  labels of the language, and `renderDocument`, which returns the HTML of a
+  Markdown text that is read like that of a page, a post or a doc.
 - **Further languages**: a third or any further language needs its entry in
   `site.languages`, its directory in `content/` and the texts of its
   components; the starter's README shows how to add one. The language
@@ -600,6 +622,9 @@
 
 ### Fixes
 
+- **Home pages on narrow screens**: the background of the starter's home
+  pages reached beyond the window on a narrow screen, so that the page
+  scrolled sideways. It no longer widens the page.
 - **Directories without their final slash**: `blyss serve` answered a
   request such as `/en` with 404. Like static hosts, it now leads to `/en/`
   with a redirect, which keeps the query and never names another host.
