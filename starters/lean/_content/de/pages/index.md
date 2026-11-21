@@ -1,6 +1,6 @@
 ---
 title: Blyss SSG
-description: Lean & local
+description: Small source. Big expression.
 translationKey: home
 ---
 
