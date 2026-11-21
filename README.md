@@ -10,7 +10,7 @@ Blyss is a lean, local-first SSG (static site generator) for Markdown++. Ships w
 ↪︎ Secure local control.
 - Creative: Authors can co-design the visuals.
 
-![Blyss illustrative overview: local Markdown becomes charts, diagrams and mathematical notation.](starters/lean/static/assets/img/blyss-showcase.svg)
+![Blyss illustrative overview: local Markdown becomes charts, diagrams and mathematical notation.](starters/lean/static/assets/img/blyss-showcase-github.svg)
 
 
 ## Features

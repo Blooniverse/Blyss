@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="456" viewBox="0 184 1200 456" role="img" aria-labelledby="title description">
+  <title id="title">Blyss: local Markdown, expressive websites</title>
+  <desc id="description">An original illustrative overview: a local Markdown document flows through Blyss into a chart, a branching diagram and a mathematical expression. Author locally, build locally, publish when ready.</desc>
+  <defs>
+    <linearGradient id="background" x2="1" y2="1">
+      <stop stop-color="#101d32"/>
+      <stop offset="1" stop-color="#192d42"/>
+    </linearGradient>
+    <linearGradient id="chart" x2="0" y2="1">
+      <stop stop-color="#62dec4" stop-opacity=".3"/>
+      <stop offset="1" stop-color="#62dec4" stop-opacity="0"/>
+    </linearGradient>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+      <path d="M1 1 6 4 1 7" fill="none" stroke="#7b91a9" stroke-width="1.5"/>
+    </marker>
+  </defs>
+  <rect y="184" width="1200" height="456" rx="24" fill="url(#background)"/>
+  <g font-family="system-ui, -apple-system, 'Segoe UI', sans-serif">
+    <rect x="48" y="220" width="280" height="300" rx="16" fill="#0c1728" stroke="#395068"/>
+    <path d="M48 270H328" stroke="#395068"/>
+    <circle cx="70" cy="245" r="5" fill="#faab91"/>
+    <circle cx="88" cy="245" r="5" fill="#b6a3f5"/>
+    <circle cx="106" cy="245" r="5" fill="#62dec4"/>
+    <text x="308" y="250" text-anchor="end" fill="#b7c8d9" font-size="14">ideas.md</text>
+    <g font-family="'DejaVu Sans Mono', monospace" font-size="17">
+      <text x="70" y="307" fill="#62dec4"># A little discovery</text>
+      <text x="70" y="344" fill="#b7c8d9">Words become worlds.</text>
+      <text x="70" y="386" fill="#faab91">```mermaid</text>
+      <text x="70" y="415" fill="#d6e1ed">graph TD</text>
+      <text x="70" y="444" fill="#d6e1ed">  A --&gt; B</text>
+      <text x="70" y="473" fill="#faab91">```</text>
+      <text x="70" y="502" fill="#b6a3f5">... and more</text>
+    </g>
+
+    <g fill="none" stroke="#7b91a9" stroke-width="2" marker-end="url(#arrow)">
+      <path d="M328 370H399"/>
+      <path d="M364 370V204H766V220"/>
+      <path d="M364 370V544H1022V520"/>
+    </g>
+    <rect x="337" y="354" width="54" height="32" rx="16" fill="#62dec4"/>
+    <text x="364" y="375" text-anchor="middle" fill="#102235" font-size="13" font-weight="700">SSG</text>
+
+    <rect x="408" y="220" width="232" height="300" rx="16" fill="#182c40" stroke="#395068"/>
+    <text x="428" y="254" fill="#62dec4" font-size="13" font-weight="700" letter-spacing="2">01 / CHARTS</text>
+    <text x="428" y="290" fill="#f4f7fb" font-size="23" font-weight="600">See the pattern.</text>
+    <g stroke="#395068" fill="none">
+      <path d="M436 332H612M436 372H612M436 412H612M436 452H612"/>
+      <path d="M436 326V452H612"/>
+    </g>
+    <path d="M436 430 472 401 507 414 542 370 577 378 612 334V452H436Z" fill="url(#chart)"/>
+    <path d="M436 430 472 401 507 414 542 370 577 378 612 334" fill="none" stroke="#62dec4" stroke-width="3" stroke-linejoin="round"/>
+    <g fill="#62dec4" stroke="#182c40" stroke-width="2">
+      <circle cx="436" cy="430" r="5"/>
+      <circle cx="472" cy="401" r="5"/>
+      <circle cx="507" cy="414" r="5"/>
+      <circle cx="542" cy="370" r="5"/>
+      <circle cx="577" cy="378" r="5"/>
+      <circle cx="612" cy="334" r="5"/>
+    </g>
+    <text x="428" y="492" fill="#b7c8d9" font-size="15">Data, made readable.</text>
+
+    <rect x="660" y="220" width="232" height="300" rx="16" fill="#182c40" stroke="#395068"/>
+    <text x="680" y="254" fill="#faab91" font-size="13" font-weight="700" letter-spacing="2">02 / DIAGRAMS</text>
+    <text x="680" y="290" fill="#f4f7fb" font-size="23" font-weight="600">Connect the dots.</text>
+    <g fill="none" stroke="#faab91" stroke-width="2">
+      <path d="M776 358V382M776 422V440M776 440H715V448M776 440H837V448"/>
+    </g>
+    <rect x="734" y="324" width="84" height="34" rx="8" fill="#faab91"/>
+    <text x="776" y="346" text-anchor="middle" fill="#102235" font-size="15" font-weight="600">Idea</text>
+    <path d="M776 378 820 400 776 422 732 400Z" fill="#273a4d" stroke="#faab91" stroke-width="2"/>
+    <text x="776" y="405" text-anchor="middle" fill="#f4f7fb" font-size="14">Explore</text>
+    <rect x="683" y="448" width="64" height="26" rx="7" fill="#faab91"/>
+    <rect x="805" y="448" width="64" height="26" rx="7" fill="#faab91"/>
+    <text x="715" y="466" text-anchor="middle" fill="#102235" font-size="13">Build</text>
+    <text x="837" y="466" text-anchor="middle" fill="#102235" font-size="13">Refine</text>
+    <text x="680" y="492" fill="#b7c8d9" font-size="15">Structure, made visible.</text>
+
+    <rect x="912" y="220" width="240" height="300" rx="16" fill="#182c40" stroke="#395068"/>
+    <text x="932" y="254" fill="#b6a3f5" font-size="13" font-weight="700" letter-spacing="2">03 / MATHS</text>
+    <text x="932" y="290" fill="#f4f7fb" font-size="23" font-weight="600">Keep the precision.</text>
+    <circle cx="1032" cy="392" r="76" fill="#b6a3f5" fill-opacity=".06" stroke="#b6a3f5" stroke-opacity=".25"/>
+    <g font-family="'DejaVu Serif', Georgia, serif" fill="#e5dbff">
+      <text x="965" y="408" font-size="36" font-style="italic">E = mc</text>
+      <text x="1090" y="387" font-size="23">2</text>
+    </g>
+    <text x="932" y="492" fill="#b7c8d9" font-size="15">Notation, made native.</text>
+
+    <path d="M48 568H1152" stroke="#395068"/>
+    <text x="48" y="604" fill="#d6e1ed" font-size="17">Author locally. Build locally. Publish when ready.</text>
+    <text x="1152" y="604" text-anchor="end" fill="#95aabd" font-size="14">Illustrative overview</text>
+  </g>
+</svg>
