@@ -1,4 +1,4 @@
-# Blyss SSG 1.0.1 — lean & local
+# BLYSS SSG 1.0.1 — LEAN & LOCAL
 [![Build & test](https://github.com/Blooniverse/Blyss/actions/workflows/ci-dev-build-test.yml/badge.svg?branch=main&event=push)](https://github.com/Blooniverse/Blyss/actions/workflows/ci-dev-build-test.yml)
 
 Blyss is a lean, local-first SSG (static site generator) for Markdown++. Ships with a dependency-free Node.js server.
