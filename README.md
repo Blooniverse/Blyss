@@ -89,7 +89,18 @@ npm install @blooniverse/blyss
 
 ## Development
 
-Clone repo, then run NPM's regular `npm ci` and `npm run build` followed by `npm start`. 
+Requires Node.js 24 or newer.
+
+```bash
+git clone https://github.com/Blooniverse/Blyss.git
+cd Blyss
+npm ci
+npm run build   # render starters/lean/ into public/
+npm start       # preview locally at http://localhost:3000
+```
+
+Run `npm test` to rebuild the starter and execute the test suite.
+Treat `public/` as generated output; make changes in the source or starter.
 
 
 ## Documentation
