@@ -4,8 +4,8 @@ description: Small source. Big expression.
 translationKey: home
 ---
 
-### Build multilingual sites from Markdown++
+### From Markdown++ to charts, diagrams and maths. On your terms.
 
-Secure control for developers & authors – lean & local
+Author locally. Build locally. Publish when ready.
 
 ![Blyss illustrative overview: local Markdown becomes charts, diagrams and mathematical notation.](/assets/img/blyss-showcase.svg)
