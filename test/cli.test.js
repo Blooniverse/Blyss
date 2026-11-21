@@ -271,8 +271,8 @@ describe("a generated starter", () => {
   test("builds with the local Blyss package", async () => {
     const result = run(["build"], site);
     assert.equal(result.status, 0, result.stderr);
-    const pages = [["en", ["hello-world", "templates", "translations"], ["installation", "configuration", "templates", "components", "deployment", "development", "writing", "writing/book", "writing/book/docs", "writing/book/navigation", "writing/pages-and-posts", "writing/translations", "writing/markdown-spice", "writing/labels-numbers-references"]],
-      ["de", ["hallo-welt", "uebersetzungen", "vorlagen"], ["installation", "konfiguration", "vorlagen", "komponenten", "bereitstellung", "entwicklung", "schreiben", "schreiben/buch", "schreiben/buch/dokumente", "schreiben/buch/navigation", "schreiben/seiten-und-beitraege", "schreiben/uebersetzungen", "schreiben/markdown-wuerze", "schreiben/labels-nummern-referenzen"]]]
+    const pages = [["en", ["hello-world", "templates"], ["installation", "configuration", "templates", "components", "deployment", "development", "writing", "writing/book", "writing/book/docs", "writing/book/navigation", "writing/pages-and-posts", "writing/translations", "writing/markdown-spice", "writing/labels-numbers-references"]],
+      ["de", ["hallo-welt", "vorlagen"], ["installation", "konfiguration", "vorlagen", "komponenten", "bereitstellung", "entwicklung", "schreiben", "schreiben/buch", "schreiben/buch/dokumente", "schreiben/buch/navigation", "schreiben/seiten-und-beitraege", "schreiben/uebersetzungen", "schreiben/markdown-wuerze", "schreiben/labels-nummern-referenzen"]]]
       .flatMap(([language, posts, docs]) => ["", "pages/about/", "posts/", ...posts.map(post => `posts/${post}/`), "tags/", "tags/blyss/",
         "tags/markdown/", "book/", ...docs.map(doc => `book/${doc}/`)].map(path => `${language}/${path}index.html`));
     const notFoundPages = ["404.html", "en/404.html", "de/404.html"];
@@ -815,8 +815,8 @@ describe("a site with several tagged posts", () => {
   });
 
   test("lists the three newest posts of each language by datePublished", async () => {
-    assert.deepEqual(await postSlugs("en"), ["newest", "templates", "translations"]);
-    assert.deepEqual(await postSlugs("de"), ["dollar", "vorlagen", "uebersetzungen"]);
+    assert.deepEqual(await postSlugs("en"), ["newest", "templates", "hello-world"]);
+    assert.deepEqual(await postSlugs("de"), ["dollar", "vorlagen", "hallo-welt"]);
   });
 
   test("lists a post with $ in its title as it is", async () => {
@@ -859,8 +859,8 @@ describe("a site with several tagged posts", () => {
 
   test("archives all posts newest first, pageSize posts per page", async () => {
     assert.deepEqual(await postSlugs("en/posts"), ["newest", "templates"]);
-    assert.deepEqual(await postSlugs("en/posts/page/2"), ["translations", "hello-world"]);
-    assert.deepEqual(await postSlugs("en/posts/page/3"), ["older", "oldest"]);
+    assert.deepEqual(await postSlugs("en/posts/page/2"), ["hello-world", "older"]);
+    assert.deepEqual(await postSlugs("en/posts/page/3"), ["oldest"]);
     await assert.rejects(stat(join(site, "public", "en", "posts", "page", "4")), { code: "ENOENT" });
     assert.match(await page("en"), /<a href="\/en\/posts\/">Posts<\/a>/);
   });
@@ -900,10 +900,10 @@ describe("a site with several tagged posts", () => {
   test("lists every tag with its post count and the posts of each tag", async () => {
     const tags = [...(await main("en/tags")).matchAll(/<li><a href="[^"]+">([^<]+)<\/a> (\(\d+\))<\/li>/g)];
     assert.deepEqual(tags.map(([, name, count]) => `${name} ${count}`),
-      ["Blyss (5)", "Markdown (1)", "Static Sites (2)", "Über Blyss (1)"]);
-    assert.deepEqual(await postSlugs("en/tags/blyss"), ["templates", "translations"]);
-    assert.deepEqual(await postSlugs("en/tags/blyss/page/2"), ["hello-world", "older"]);
-    assert.deepEqual(await postSlugs("en/tags/blyss/page/3"), ["oldest"]);
+      ["Blyss (4)", "Markdown (1)", "Static Sites (2)", "Über Blyss (1)"]);
+    assert.deepEqual(await postSlugs("en/tags/blyss"), ["templates", "hello-world"]);
+    assert.deepEqual(await postSlugs("en/tags/blyss/page/2"), ["older", "oldest"]);
+    await assert.rejects(stat(join(site, "public", "en", "tags", "blyss", "page", "3")), { code: "ENOENT" });
     assert.deepEqual(await postSlugs("en/tags/static-sites"), ["newest", "older"]);
     assert.deepEqual(await postSlugs("en/tags/uber-blyss"), ["newest"]);
     assert.match(await page("en/tags/blyss"), /<a lang="de" hreflang="de" href="\/de\/tags\/blyss\/">Deutsch<\/a>/);
