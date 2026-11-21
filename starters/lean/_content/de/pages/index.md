@@ -8,4 +8,4 @@ translationKey: home
 
 Sichere lokale Kontrolle für Entwickler und Autoren
 
-![Blyss illustrative overview: local Markdown becomes charts, diagrams and mathematical notation.](starters/lean/static/assets/img/blyss-showcase.svg)
+![Blyss illustrative overview: local Markdown becomes charts, diagrams and mathematical notation.](assets/img/blyss-showcase.svg)
