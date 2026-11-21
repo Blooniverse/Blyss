@@ -6,4 +6,4 @@ translationKey: home
 
 ### Produziere mehrsprachige Websites aus Markdown++
 
-Volle Kontrolle für Entwickler und Autoren
+Sichere lokale Kontrolle für Entwickler und Autoren
