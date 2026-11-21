@@ -1,8 +1,8 @@
 ---
-title: Templates and styles
+title: Templates, styles, components
 description: Where the templates, the stylesheet and the components of this website live.
 datePublished: 2026-11-12
-translationKey: templates
+translationKey: 261112-templates-styles-components
 tags: [Blyss]
 ---
 
