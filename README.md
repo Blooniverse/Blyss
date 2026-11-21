@@ -93,4 +93,4 @@ Blyss and its starter are licensed under the [GNU General Public License v3.0](L
 ---
 ## Impressions
 
-![Blyss illustrative overview: local Markdown becomes charts, diagrams and mathematical notation.](starters/lean/static/assets/img/blyss-showcase.svg)
+![Blyss illustrative overview: local Markdown becomes charts, diagrams and mathematical notation.](starters/lean/static/assets/img/blyss-showcase-github.svg)
