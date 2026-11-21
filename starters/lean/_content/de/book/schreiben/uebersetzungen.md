@@ -12,13 +12,13 @@ Jede Sprache hat ihre eigenen Inhalte in `_content/<Sprache>/`. Eine Seite, ein 
 ```markdown
 ---
 title: Hallo Welt
-translationKey: hello-world
+translationKey: 261110-init-hello-world
 ---
 ```
 
 Blyss verknüpft solche Seiten im Sprachwechsler und nennt sie Suchmaschinen als `hreflang`-Alternativen, im Kopf jeder Seite und in `sitemap.xml`. Die Übersetzung in der Standardsprache ist zugleich die Alternative `x-default`, für Besuchende aller anderen Sprachen.
 
-Die Namen der Dateien und ihrer Verzeichnisse dürfen sich von Sprache zu Sprache unterscheiden und mit ihnen die URLs: `/de/posts/hallo-welt/` ist auf Englisch `/en/posts/hello-world/`.
+Die Namen der Dateien und ihrer Verzeichnisse dürfen sich von Sprache zu Sprache unterscheiden und mit ihnen die URLs: `/de/posts/261110-init-hallo-welt/` ist auf Englisch `/en/posts/261110-hello-world/`.
 
 Innerhalb einer Sprache hat jede Seite ihren eigenen Schlüssel: Zwei Seiten einer Sprache mit demselben Schlüssel stoppen den Build. Eine Seite ohne Übersetzung zeigt im Sprachwechsler nur ihre eigene Sprache.
 

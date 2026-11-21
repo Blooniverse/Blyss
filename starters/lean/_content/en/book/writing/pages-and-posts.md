@@ -14,7 +14,7 @@ Pages, posts and docs start with front matter. The title is rendered as the page
 title: Hello World
 description: The first post of this website.
 datePublished: 2026-11-10
-translationKey: hello-world
+translationKey: 261110-init-hello-world
 tags: [Blyss, Markdown]
 ---
 ```
@@ -33,7 +33,7 @@ Blyss publishes content by its directory in `_content/<language>/`:
 - [Docs](/en/book/writing/book/docs/) in `book/` are published below `/<language>/book/`.
 - `pages/index.md` is the home page at `/<language>/`, and its title and description are the heading and slogan.
 
-The slug is the name of the file without `.md`: `posts/hello-world.md` is published at `/<language>/posts/hello-world/`, so name the files of each language in that language. The front matter needs a `slug` only for another one, as in `slug: my-first-post`. A slug is one part of a URL, without `/`, `\`, `?` or `#`.
+The slug is the name of the file without `.md`: `posts/261110-hello-world.md` is published at `/<language>/posts/261110-hello-world/`, so name the files of each language in that language. The front matter needs a `slug` only for another one, as in `slug: my-first-post`. A slug is one part of a URL, without `/`, `\`, `?` or `#`.
 
 `pages/404.md` is the not-found page of its language:
 

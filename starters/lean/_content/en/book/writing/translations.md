@@ -12,13 +12,13 @@ Each language has its own content in `_content/<language>/`. A page, a post or a
 ```markdown
 ---
 title: Hello World
-translationKey: hello-world
+translationKey: 261110-init-hello-world
 ---
 ```
 
 Blyss links such pages in the language switcher and declares them to search engines as `hreflang` alternates, in the head of each page and in `sitemap.xml`. The translation in the default language is the `x-default` alternate as well, for the visitors of any other language.
 
-The names of the files and of their directories may differ from language to language, and with them the URLs: `/en/posts/hello-world/` is `/de/posts/hallo-welt/` in German.
+The names of the files and of their directories may differ from language to language, and with them the URLs: `/en/posts/261110-hello-world/` is `/de/posts/261110-init-hallo-welt/` in German.
 
 Within a language, each page has a key of its own: two pages of one language with the same key stop the build. A page without a translation shows only its own language in the language switcher.
 

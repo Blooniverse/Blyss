@@ -34,6 +34,7 @@ describe("copying documentation Markdown", () => {
     await writeFile(join(site, "_content/en/book/no-front-matter.md"), "No front matter.\n");
     await writeFile(join(site, "_content/en/book/no-blank-line.md"), "---\ntitle: Tight\n---\nBody immediately follows.\n");
     await writeFile(join(site, "_content/en/book/private-draft.md"), "---\ntitle: Private draft\ndraft: true\n---\nsecret draft body\n");
+    await writeFile(join(site, "_content/en/posts/copy-test-post.md"), "---\ntitle: Post\n---\n\nPost body.\n");
     result = run(["build"]);
     assert.equal(result.status, 0, result.stderr);
   });
@@ -52,7 +53,7 @@ describe("copying documentation Markdown", () => {
     assert.equal(Buffer.from(german.match(/data-markdown="([^"]*)"/)[1], "base64").toString("utf8"),
       `# ${germanFrontMatter.metadata.title}\n${germanFrontMatter.markdown}`);
     assert.match(german, /<button type="button">Markdown kopieren<\/button>/);
-    for (const path of ["en", "en/pages/about", "en/posts/hello-world", "en/posts"]) {
+    for (const path of ["en", "en/pages/about", "en/posts/copy-test-post", "en/posts"]) {
       assert.doesNotMatch(await page(path), /class="copy-markdown"/, path);
     }
     assert.ok(!(await readdir(join(site, "public/en/book"))).includes("private-draft"));
