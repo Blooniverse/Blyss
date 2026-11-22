@@ -1,7 +1,7 @@
 ---
 title: Hallo Blyss
 description: Small source. Big expression.
-datePublished: 000000-00-00
+datePublished: 2000-01-01
 translationKey: 000000-init-hello-world
 tags: [Blyss, Markdown]
 ---
