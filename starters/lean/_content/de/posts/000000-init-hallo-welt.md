@@ -6,7 +6,7 @@ translationKey: 000000-init-hello-world
 tags: [Blyss, Markdown]
 ---
 
-![Blyss illustration: local Markdown becomes charts, diagrams and mathematical notation.](/assets/img/blyss-showcase-github.svg)
+![Blyss-Illustration](/assets/img/blyss-showcase-github.svg)
 
 ## Ihre Worte, Ihre Website
 
