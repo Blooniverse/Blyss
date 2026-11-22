@@ -1,12 +1,12 @@
 ---
 title: Hello Blyss
 description: Small source. Big expression.
-datePublished: 2026-11-10
-translationKey: 261110-init-hello-world
+datePublished: 0000-00-00
+translationKey: 000000-init-hello-world
 tags: [Blyss, Markdown]
 ---
 
-![Blyss-Illustration: Lokales Markdown wird zu Diagrammen und mathematischer Notation.](/assets/img/blyss-showcase-github.svg)
+![Blyss illustration](/assets/img/blyss-showcase-github.svg)
 
 ## Your words, your website
 
