@@ -1,6 +1,6 @@
 # BLYSS SSG
 ## SMALL SOURCE. BIG EXPRESSION.
-[![Latest tag](https://img.shields.io/github/v/tag/Blooniverse/Blyss?sort=semver)](https://github.com/Blooniverse/Blyss/tags)
+[![Last commit on main](https://img.shields.io/github/last-commit/Blooniverse/Blyss/main)](https://github.com/Blooniverse/Blyss/commits/main/)
 [![Build & test](https://github.com/Blooniverse/Blyss/actions/workflows/ci-dev-build-test.yml/badge.svg?branch=main&event=push)](https://github.com/Blooniverse/Blyss/actions/workflows/ci-dev-build-test.yml)
 
 Blyss is a lean, local-first SSG (static site generator) for Markdown++. Ships with a dependency-free Node.js server.
