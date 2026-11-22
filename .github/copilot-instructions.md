@@ -25,7 +25,7 @@ Blyss is a lean multilingual (bilingual per default) SSG (static site generator)
 
 ## Validation
 
-For every code change:
+For every code change (apart from small edits, for instance an SVG file revision):
 
 1. Run node --check on all JavaScript files.
 2. Run npm run build (it renders starters/lean/ into public/).
