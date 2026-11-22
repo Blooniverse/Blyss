@@ -11,7 +11,7 @@ diagramFailed: This diagram cannot be shown. Mermaid says:
 diagramUnavailable: Mermaid cannot be loaded, so the diagram stays code.
 ---
 
-Your text stays in your browser. **Supported:** Markdown, highlighted code, formulae, callouts, figures, footnotes, references and Mermaid diagrams. **Not supported:** other components and front matter.
+Note: Limited demonstration. Input is filtered and stays local in your browser.
 
 ### Text
 
@@ -41,7 +41,7 @@ Callouts follow **MyST**.
 Highlighted by Blyss:
 
 ```js
-const greet = name => `Hello, ${name}!`;
+const greet = name => `Hi, ${name}!`;
 console.log(greet("Blyss"));
 ```
 ````
