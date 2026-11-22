@@ -21,9 +21,9 @@
     <circle cx="1110" cy="80" r="230"/>
   </g>
   <g font-family="system-ui, -apple-system, 'Segoe UI', sans-serif">
-    <text x="48" y="70" fill="#62dec4" font-size="20" font-weight="700" letter-spacing="3">BLYSS / LEAN &amp; LOCAL</text>
+    <text x="48" y="70" fill="#62dec4" font-size="20" font-weight="700" letter-spacing="3">BLYSS SSG</text>
     <text x="48" y="130" fill="#f4f7fb" font-size="44" font-weight="700">Small source. Big expression.</text>
-    <text x="48" y="170" fill="#b7c8d9" font-size="21">From Markdown to charts, diagrams and maths. On your terms.</text>
+    <text x="48" y="170" fill="#b7c8d9" font-size="21">From Markdown to charts, diagrams and maths.</text>
 
     <rect x="48" y="220" width="280" height="300" rx="16" fill="#0c1728" stroke="#395068"/>
     <path d="M48 270H328" stroke="#395068"/>
@@ -95,7 +95,7 @@
     <text x="932" y="492" fill="#b7c8d9" font-size="15">Notation, made native.</text>
 
     <path d="M48 568H1152" stroke="#395068"/>
-    <text x="48" y="604" fill="#d6e1ed" font-size="17">Author locally. Build locally. Publish when ready.</text>
+    <text x="48" y="604" fill="#d6e1ed" font-size="17">Lean &amp; local: author locally, build locally, publish when ready.</text>
     <text x="1152" y="604" text-anchor="end" fill="#95aabd" font-size="14">Illustrative overview</text>
   </g>
 </svg>
