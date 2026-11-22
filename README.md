@@ -1,4 +1,4 @@
-# Blʸss SSG 1.0.1 / LEAN & LOCAL
+# BlʸSS SSG 1.0.1 / LEAN & LOCAL
 ## SMALL SOURCE. BIG EXPRESSION.
 [![Build & test](https://github.com/Blooniverse/Blyss/actions/workflows/ci-dev-build-test.yml/badge.svg?branch=main&event=push)](https://github.com/Blooniverse/Blyss/actions/workflows/ci-dev-build-test.yml)
 
