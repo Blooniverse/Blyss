@@ -11,7 +11,7 @@ diagramFailed: Dieses Diagramm lässt sich nicht darstellen. Mermaid meldet:
 diagramUnavailable: Mermaid lässt sich nicht laden, das Diagramm bleibt deshalb Code.
 ---
 
-Ihr Text bleibt in Ihrem Browser. **Unterstützt:** Markdown, hervorgehobener Code, Formeln, Hinweisboxen, Abbildungen, Fußnoten, Referenzen und Mermaid-Diagramme. **Nicht unterstützt:** andere Komponenten und Front Matter.
+Notiz: Limitierte Demonstration. Eingaben werden gefiltert und bleiben lokal im Browser.
 
 ### Text
 
@@ -41,7 +41,7 @@ Hinweisboxen folgen **MyST**.
 Von Blyss hervorgehoben:
 
 ```js
-const greet = name => `Hallo, ${name}!`;
+const greet = name => `Hi, ${name}!`;
 console.log(greet("Blyss"));
 ```
 ````
