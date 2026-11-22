@@ -6,8 +6,7 @@ translationKey: 261110-init-hello-world
 tags: [Blyss, Markdown]
 ---
 
-Small source. Big expression. Lokal in Markdown schreiben, mit Blyss erstellen und publizieren, wann immer Sie bereit sind.
-![Blyss illustration: local Markdown becomes charts, diagrams and mathematical notation.](/assets/img/blyss-showcase-home.svg)
+![Blyss illustration: local Markdown becomes charts, diagrams and mathematical notation.](/assets/img/blyss-showcase-github.svg)
 
 ## Ihre Worte, Ihre Website
 
