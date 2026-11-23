@@ -3,11 +3,11 @@ title: Warum Blyss
 ---
 
 #### Markdown++
-- **Syntaxhervorhebung**: Unterstützt fast 200 Sprachen – mit [Highlight.js](https://highlightjs.org/).
 - **Formeln**: LaTeX in Markdown wird zu MathML in HTML – mit [Temml.org](https://temml.org/).
 - **Diagramme**: Umfangreiche Diagramme – mit [Flowchart.js](https://flowchart.js.org/), [Mermaid](https://mermaid.js.org/) und sogar [Vega-Lite](https://vega.github.io/vega-lite/).
 - **Hinweise und Abbildungen**: Hinweise, Bilder und Abbildungen als [MyST](https://mystmd.org/)-Direktiven sowie GitHub Alerts.
 - **Labels, Nummern und Referenzen**: Nummerierte Abbildungen und Formeln sowie Referenzen, die ihren Text selbst ergänzen.
+- **Syntaxhervorhebung**: Unterstützt fast 200 Sprachen – mit [Highlight.js](https://highlightjs.org/).
 - **Aufgabenlisten**: `- [x]` und `- [ ]` als Checkboxen.
 - **Fußnoten**: `[^footnote]`
 - **Kompatibilität**: [Marktext.me](https://marktext.me), [Obsidian.md](https://obsidian.md) usw.

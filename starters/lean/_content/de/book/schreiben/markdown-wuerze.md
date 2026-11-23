@@ -1,27 +1,11 @@
 ---
 title: Markdown-Würze
-description: Wie Sie hervorgehobenen Code, Formeln, Diagramme, Hinweisboxen und Abbildungen sowie Fußnoten in Markdown schreiben.
+description: Wie Sie Formeln, Diagramme, Hinweisboxen und Abbildungen sowie hervorgehobenen Code und Fußnoten in Markdown schreiben.
 order: 4
 translationKey: book-markdown-spice
 ---
 
-Über reines Markdown hinaus rendert Blyss hervorgehobenen Code, Formeln, Diagramme, Hinweisboxen und Abbildungen sowie Fußnoten.
-
-
-
-## Code
-
-Ein mit drei Backticks eingefasster Codeblock, der seine Sprache nennt, wird beim Erstellen hervorgehoben:
-
-```js
-// Grüßt mit Namen.
-const greet = name => `Hallo, ${name}!`;
-console.log(greet("Blyss"));
-```
-
-Ein Block ohne Sprache oder in einer, die der Hervorheber nicht kennt, bleibt schlicht.
-
-`static/assets/css/main.css` färbt im Starter die `hljs-…`-Klassen. Erhalten Sie beim Ändern der Farben einen Kontrast von mindestens 4,5:1 zum Codehintergrund.
+Über reines Markdown hinaus rendert Blyss Formeln, Diagramme, Hinweisboxen und Abbildungen sowie hervorgehobenen Code und Fußnoten.
 
 
 
@@ -197,24 +181,6 @@ Eine Hinweisbox ist ein `div` mit den Klassen `admonition` und ihrer Art, ihr Ti
 
 
 
-## Aufgabenlisten
-
-Ein Listenpunkt, der mit `[ ]` oder `[x]` beginnt, zeigt ein Kontrollkästchen, wie auf GitHub und in Editoren wie MarkText:
-
-```markdown
-- [x] Text schreiben
-- [ ] Abbildung ergänzen
-- [ ] Veröffentlichen
-```
-
-- [x] Text schreiben
-- [ ] Abbildung ergänzen
-- [ ] Veröffentlichen
-
-Ein Kontrollkästchen zeigt, was im Markdown steht; Lesende können es nicht ankreuzen.
-
-
-
 ## Bilder und Abbildungen
 
 `![Beschreibung](URL)` zeigt ein Bild im Text. Wie in [MyST](https://mystmd.org/guide/figures) zeigen zwei [Direktiven](#direktiven) ein Bild auf eigenen Zeilen, jeweils mit der URL des Bildes hinter ihrem Namen:
@@ -281,6 +247,40 @@ Hinweisboxen, `{image}`, `{figure}` und `{math}` sind Direktiven von [MyST](http
 - **Andere Namen**: Eine Begrenzung mit einem anderen Namen in geschweiften Klammern bleibt, was sie in Markdown ist: ein Codeblock zwischen Backticks und Text zwischen Doppelpunkten.
 
 Direktiven funktionieren in jedem Markdown-Text, auch in einer Liste, einem Zitat oder einer anderen Direktive. In einer Direktive bleibt, wie in einer Liste, ein Diagramm oder der [Block einer Komponente](/de/book/komponenten/#blöcke-pro-verwendung), den doppelte geschweifte Klammern benennen, Code.
+
+
+
+## Code
+
+Ein mit drei Backticks eingefasster Codeblock, der seine Sprache nennt, wird beim Erstellen hervorgehoben:
+
+```js
+// Grüßt mit Namen.
+const greet = name => `Hallo, ${name}!`;
+console.log(greet("Blyss"));
+```
+
+Ein Block ohne Sprache oder in einer, die der Hervorheber nicht kennt, bleibt schlicht.
+
+`static/assets/css/main.css` färbt im Starter die `hljs-…`-Klassen. Erhalten Sie beim Ändern der Farben einen Kontrast von mindestens 4,5:1 zum Codehintergrund.
+
+
+
+## Aufgabenlisten
+
+Ein Listenpunkt, der mit `[ ]` oder `[x]` beginnt, zeigt ein Kontrollkästchen, wie auf GitHub und in Editoren wie MarkText:
+
+```markdown
+- [x] Text schreiben
+- [ ] Abbildung ergänzen
+- [ ] Veröffentlichen
+```
+
+- [x] Text schreiben
+- [ ] Abbildung ergänzen
+- [ ] Veröffentlichen
+
+Ein Kontrollkästchen zeigt, was im Markdown steht; Lesende können es nicht ankreuzen.
 
 
 

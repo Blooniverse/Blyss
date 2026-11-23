@@ -90,4 +90,4 @@ Markdown directly in `_content/<language>/`, such as `heroCards.md`, is a fragme
 - Fragment names start with a Latin letter and contain only Latin letters and digits.
 - The fragments `heroCards.md` and `overlayCards.md` also hold the cards of the [hero and the overlay](/en/book/templates/#hero-and-overlay). `hero.md` and `overlay.md` beside them are no fragments: they show the [components](/en/book/components/#components-of-the-hero-and-the-overlay) of these regions.
 
-A paragraph consisting only of `{{<name>}}` displays a component. A fenced [component block](/en/book/components/#blocks) gives one occurrence its own text and settings. See [Markdown spice](/en/book/writing/markdown-spice/) for formulas, footnotes, highlighted code, task lists, callouts, figures and diagrams.
+A paragraph consisting only of `{{<name>}}` displays a component. A fenced [component block](/en/book/components/#blocks) gives one occurrence its own text and settings. See [Markdown spice](/en/book/writing/markdown-spice/) for formulas, diagrams, callouts, figures, highlighted code, task lists and footnotes.

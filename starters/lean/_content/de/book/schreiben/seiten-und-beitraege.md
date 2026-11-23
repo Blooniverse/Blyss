@@ -87,7 +87,7 @@ Markdown-Dateien direkt in `_content/<Sprache>/`, etwa `heroCards.md`, sind Frag
 - Fehlt die Datei in einer Sprache, sind ihre Platzhalter dort leer.
 - Die Fragmente `heroCards.md` und `overlayCards.md` enthalten zugleich die Karten von [Hero und Overlay](/de/book/vorlagen/#hero-und-overlay). `hero.md` und `overlay.md` daneben sind keine Fragmente: Sie zeigen die [Komponenten](/de/book/komponenten/#komponenten-in-hero-und-overlay) dieser Bereiche.
 
-Ein Absatz, der nur aus dem Namen einer Komponente in doppelten geschweiften Klammern besteht, zeigt sie an; ein [Block](/de/book/komponenten/#blöcke-pro-verwendung) gibt einer einzelnen Verwendung eigene Texte und Einstellungen. Formeln, Fußnoten, hervorgehobenen Code, Aufgabenlisten, Hinweisboxen, Abbildungen und Diagramme zeigt [Markdown-Würze](/de/book/schreiben/markdown-wuerze/).
+Ein Absatz, der nur aus dem Namen einer Komponente in doppelten geschweiften Klammern besteht, zeigt sie an; ein [Block](/de/book/komponenten/#blöcke-pro-verwendung) gibt einer einzelnen Verwendung eigene Texte und Einstellungen. Formeln, Diagramme, Hinweisboxen, Abbildungen, hervorgehobenen Code, Aufgabenlisten und Fußnoten zeigt [Markdown-Würze](/de/book/schreiben/markdown-wuerze/).
 
 ## Fehlerseite
 
