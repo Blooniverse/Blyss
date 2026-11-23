@@ -10,6 +10,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { readRenderer } from "../src/build/browser.js";
 import { parseFrontMatter } from "../src/build/front-matter.js";
 import { escapeHtml } from "../src/build/html.js";
+import { parseTags } from "../src/build/lists.js";
 import { fileFor } from "../src/server/server.js";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
@@ -55,6 +56,34 @@ const englishPost = starterEnglishPosts.find(post =>
   post.metadata.translationKey && starterGermanPosts.some(other => other.metadata.translationKey === post.metadata.translationKey));
 assert.ok(englishPost, "The starter needs a translated post for the translation tests.");
 const germanPost = starterGermanPosts.find(post => post.metadata.translationKey === englishPost.metadata.translationKey);
+// The pages that the content of a language makes in the starter, as paths in public/: one for each page, post and doc
+// that is no draft, with its section and its translationKey, and the lists of the posts and of their tags. The tests
+// take them from the content, which may change, rather than naming them.
+async function starterPages(language) {
+  const directory = join(starter, "_content", language);
+  const pages = [];
+  const tags = new Set();
+  for (const section of ["pages", "posts", "book"]) {
+    const files = await listFiles(join(directory, section)).catch(error => error.code === "ENOENT" ? [] : Promise.reject(error));
+    for (const file of files.filter(file => file.endsWith(".md") && !(section === "pages" && file === "404.md"))) {
+      const { metadata } = parseFrontMatter(await readFile(join(directory, section, file), "utf8"));
+      if (metadata.draft === "true") continue;
+      const slug = metadata.slug || basename(file, ".md");
+      const parts = [section, ...posix.dirname(file).split("/").filter(part => part !== "."), ...slug === "index" ? [] : [slug]];
+      if (section === "pages" && parts.length === 1) parts.shift();
+      pages.push({ path: `${language}/${parts.map(part => `${part}/`).join("")}index.html`, section, translationKey: metadata.translationKey });
+      if (section === "posts") for (const tag of parseTags(metadata.tags, language, file)) tags.add(tag.slug);
+    }
+  }
+  const lists = pages.some(page => page.section === "posts")
+    ? ["posts/", "tags/", ...[...tags].map(tag => `tags/${tag}/`)].map(path => `${language}/${path}index.html`) : [];
+  return [...pages, ...lists.map(path => ({ path, section: "lists" }))];
+}
+
+const starterPagesOf = { en: await starterPages("en"), de: await starterPages("de") };
+// The doc of the starter's German book that lies deepest within its sections, if it has a book.
+const deepGermanDoc = starterPagesOf.de.filter(page => page.section === "book")
+  .sort((a, b) => b.path.split("/").length - a.path.split("/").length)[0]?.path;
 const sliderPost = starterEnglishPosts.find(post => post.markdown.includes("```{{componentSlider}}"));
 assert.ok(sliderPost, "The starter needs a post showing the slider component.");
 
@@ -98,6 +127,17 @@ async function showHiddenBlocks(site) {
       assert.notEqual(shown, source, file);
       await writeFile(file, shown);
     }
+  }
+}
+
+// Gives each language of a site a book with a start page, unless it has one: the tests of the docs need a book, which
+// the starter may have or not.
+async function ensureBook(site) {
+  for (const language of ["en", "de"]) {
+    const directory = join(site, "_content", language, "book");
+    await mkdir(directory, { recursive: true });
+    await writeFile(join(directory, "index.md"), "---\ntitle: Book\n---\n\nText.\n", { flag: "wx" })
+      .catch(error => { if (error.code !== "EEXIST") throw error; });
   }
 }
 
@@ -320,10 +360,7 @@ describe("a generated starter", () => {
   test("builds with the local Blyss package", async () => {
     const result = run(["build"], site);
     assert.equal(result.status, 0, result.stderr);
-    const pages = [["en", starterEnglishPosts.map(post => post.slug), ["installation", "configuration", "templates", "components", "deployment", "development", "writing", "writing/book", "writing/book/docs", "writing/book/navigation", "writing/pages-and-posts", "writing/translations", "writing/markdown-spice", "writing/labels-numbers-references"]],
-      ["de", starterGermanPosts.map(post => post.slug), ["installation", "konfiguration", "vorlagen", "komponenten", "bereitstellung", "entwicklung", "schreiben", "schreiben/buch", "schreiben/buch/dokumente", "schreiben/buch/navigation", "schreiben/seiten-und-beitraege", "schreiben/uebersetzungen", "schreiben/markdown-wuerze", "schreiben/labels-nummern-referenzen"]]]
-      .flatMap(([language, posts, docs]) => ["", "pages/about/", "posts/", ...posts.map(post => `posts/${post}/`), "tags/", "tags/blyss/",
-        "tags/markdown/", "book/", ...docs.map(doc => `book/${doc}/`)].map(path => `${language}/${path}index.html`));
+    const pages = [...starterPagesOf.en, ...starterPagesOf.de].map(page => page.path);
     const notFoundPages = ["404.html", "en/404.html", "de/404.html"];
     // Static files are copied as they are; components publish their files but their templates and data files, and
     // the renderer of Blyss, which the live demo asks for.
@@ -345,19 +382,16 @@ describe("a generated starter", () => {
     assert.match(await readFile(join(site, "public", "de", "404.html"), "utf8"), /<h1>Seite nicht gefunden<\/h1>/);
   });
 
-  test("links each doc to its translation, also in a section within a section", async () => {
-    for (const [english, german] of [
-      ["installation", "installation"], ["configuration", "konfiguration"], ["templates", "vorlagen"],
-      ["components", "komponenten"], ["deployment", "bereitstellung"], ["development", "entwicklung"],
-      ["writing", "schreiben"], ["writing/book", "schreiben/buch"], ["writing/book/docs", "schreiben/buch/dokumente"],
-      ["writing/book/navigation", "schreiben/buch/navigation"], ["writing/pages-and-posts", "schreiben/seiten-und-beitraege"],
-      ["writing/translations", "schreiben/uebersetzungen"], ["writing/markdown-spice", "schreiben/markdown-wuerze"],
-      ["writing/labels-numbers-references", "schreiben/labels-nummern-referenzen"]
-    ]) {
-      const en = await readFile(join(site, "public", "en", "book", english, "index.html"), "utf8");
-      const de = await readFile(join(site, "public", "de", "book", german, "index.html"), "utf8");
-      assert.ok(en.includes(`hreflang="de" href="https://example.com/de/book/${german}/"`), english);
-      assert.ok(de.includes(`hreflang="en" href="https://example.com/en/book/${english}/"`), german);
+  test("links each page, post and doc to its translation", async () => {
+    const translated = starterPagesOf.en.filter(page => page.translationKey).map(page =>
+      [page.path, starterPagesOf.de.find(other => other.translationKey === page.translationKey)?.path]).filter(([, german]) => german);
+    assert.ok(translated.length);
+    for (const [english, german] of translated) {
+      const url = path => `https://example.com/${path.replace(/index\.html$/, "")}`;
+      const en = await readFile(join(site, "public", english), "utf8");
+      const de = await readFile(join(site, "public", german), "utf8");
+      assert.ok(en.includes(`hreflang="de" href="${url(german)}"`), english);
+      assert.ok(de.includes(`hreflang="en" href="${url(english)}"`), german);
     }
   });
 
@@ -412,21 +446,29 @@ describe("a generated starter", () => {
   });
 
   test("shows every component of the starter in its hero and in its overlay, once the comments around their blocks are gone", async () => {
-    const all = ["slider", "gallery", "flower", "live-demo", "mermaid", "flowchart", "vega-lite"].map(name => `component-${name}`);
+    // The components that a region shows, in their order: the blocks and the paragraphs that name them, outside comments.
+    const shownIn = async (site, language, region) => [...(await readFile(join(site, "_content", language, `${region}.md`), "utf8"))
+      .replace(/<!--[\s\S]*?-->/g, "").matchAll(/^(?:```)?\{\{(component\w+)\}\}$/gm)]
+      .map(match => match[1].replace(/[A-Z]/g, letter => `-${letter.toLowerCase()}`));
     const { default: { components: settings } } = await import(pathToFileURL(join(full, "blyss.config.js")).href);
     for (const [path, region] of [["en/index.html", "hero"], ["de/index.html", "hero"], ["en/pages/about/index.html", "overlay"],
       ["de/pages/about/index.html", "overlay"]]) {
+      const language = path.slice(0, 2);
       const html = (await readFile(join(full, "public", path), "utf8")).match(new RegExp(`<aside class="${region}"[\\s\\S]*?</aside>`))[0];
-      assert.deepEqual([...html.matchAll(/<(component-[a-z-]+) /g)].map(match => match[1]), all, path);
+      const shown = await shownIn(full, language, region);
+      assert.deepEqual([...html.matchAll(/<(component-[a-z-]+) /g)].map(match => match[1]), shown, path);
+      if (shown.includes("component-vega-lite")) assert.ok(html.includes(`data-library-vega="${settings.componentVegaLite.libraryVega}"`), path);
+      if (!shown.includes("component-mermaid")) continue;
       // A diagram has the code of its block, whose arrows end no comment, and the libraries of blyss.config.js.
+      const source = await readFile(join(full, "_content", language, `${region}.md`), "utf8");
+      const block = source.match(/^```\{\{componentMermaid\}\}\n([\s\S]*?)^```$/m)[1];
       const diagram = html.slice(html.indexOf("<component-mermaid "), html.indexOf("</component-mermaid>"));
       assert.ok(diagram.includes(`data-library="${settings.componentMermaid.library}" data-theme="neutral"`), path);
-      assert.match(diagram, /<pre tabindex="0">flowchart LR\n {2}write\[[^\]]+\] --&gt; build\[blyss build\]\n/, path);
-      assert.ok(html.includes(`data-library-vega="${settings.componentVegaLite.libraryVega}"`), path);
+      assert.ok(diagram.includes(`<pre tabindex="0">${escapeHtml(parseFrontMatter(block).markdown.trim())}`), path);
     }
-    // As the starter comes, its overlay shows the slider alone.
+    // As the starter comes, its overlay shows the components whose blocks no comment holds.
     const overlay = (await readFile(join(site, "public", "en", "pages", "about", "index.html"), "utf8")).match(/<aside class="overlay"[\s\S]*?<\/aside>/)[0];
-    assert.deepEqual([...overlay.matchAll(/<(component-[a-z-]+) /g)].map(match => match[1]), ["component-slider"]);
+    assert.deepEqual([...overlay.matchAll(/<(component-[a-z-]+) /g)].map(match => match[1]), await shownIn(site, "en", "overlay"));
   });
 
   test("gives the hero and the overlay each a component with settings of its own", async () => {
@@ -467,9 +509,10 @@ describe("a generated starter", () => {
 
   test("marks every page with its kind and the layout of blyss.config.js", async () => {
     const { default: { layout } } = await import(pathToFileURL(join(site, "blyss.config.js")).href);
-    const kinds = { "en/index.html": "home", "de/pages/about/index.html": "page", [`en/posts/${englishPost.slug}/index.html`]: "post",
-      "de/posts/index.html": "list", "en/tags/blyss/index.html": "list", "en/book/index.html": "book",
-      "de/book/schreiben/buch/navigation/index.html": "book", "de/404.html": "not-found" };
+    const kindOf = { pages: "page", posts: "post", book: "book", lists: "list" };
+    const kinds = Object.fromEntries([...starterPagesOf.en, ...starterPagesOf.de]
+      .map(page => [page.path, /^[a-z]+\/index\.html$/.test(page.path) ? "home" : kindOf[page.section]]));
+    Object.assign(kinds, { "en/404.html": "not-found", "de/404.html": "not-found" });
     for (const [path, kind] of Object.entries(kinds)) {
       const html = await readFile(join(site, "public", path), "utf8");
       const align = kind === "home" ? layout.alignHome : layout.alignOther;
@@ -486,65 +529,6 @@ describe("a generated starter", () => {
     assert.ok((await stat(join(site, "public", azure.responseOverrides["404"].rewrite))).isFile());
   });
 
-  test("shows formulas as MathML, footnotes, highlighted code and diagrams in the doc that describes them", async () => {
-    const english = await readFile(join(site, "public", "en", "book", "writing", "markdown-spice", "index.html"), "utf8");
-    const german = await readFile(join(site, "public", "de", "book", "schreiben", "markdown-wuerze", "index.html"), "utf8");
-    for (const html of [english, german]) {
-      assert.ok(html.includes('<link rel="stylesheet" href="/assets/temml/Temml-Local.css">'));
-      assert.match(html, / in <math><mrow><msup><mi>e<\/mi>/);
-      assert.match(html, /<div class="math"><math display="block" class="tml-display" style="display:block math;"><mrow><mi>x<\/mi><mo>=<\/mo><mfrac>/);
-      assert.ok(html.includes('<pre tabindex="0"><code class="language-js"><span class="hljs-comment">//'));
-      assert.deepEqual([...html.matchAll(/<(component-[a-z-]+) class="component"/g)].map(match => match[1]),
-        ["component-mermaid", "component-flowchart", "component-vega-lite", "component-slider"]);
-      assert.equal(html.match(/ id="[^"]+"/g).length, new Set(html.match(/ id="[^"]+"/g)).size);
-    }
-    assert.ok(english.includes("prices such as $5 and $10 stay text. Write <code>\\$</code>"));
-    assert.ok(english.includes('a caret<sup class="footnote-ref"><a href="#fn:1" id="fnref:1" role="doc-noteref">1</a></sup>, and'));
-    assert.ok(english.includes('<section class="footnotes" role="doc-endnotes" aria-label="Footnotes">\n<ol>\n<li id="fn:1">\n<p>This footnote'));
-    assert.ok(english.includes('<p>A further paragraph of a footnote is indented by four spaces. ' +
-      '<a href="#fnref:2" role="doc-backlink" aria-label="Back to the text">↩︎</a></p>\n</li>\n</ol>\n</section>'));
-    assert.ok(german.includes('<section class="footnotes" role="doc-endnotes" aria-label="Fußnoten">'));
-    assert.ok(german.includes('role="doc-backlink" aria-label="Zurück zum Text">'));
-    // The diagrams keep their code, escaped, for the scripts that draw them, and take their texts from their language.
-    assert.ok(english.includes('<component-mermaid class="component" id="componentMermaid-1" ' +
-      'data-library="https://cdn.jsdelivr.net/npm/mermaid@12.3.0/dist/mermaid.esm.min.mjs" data-theme="neutral" ' +
-      'data-error="This diagram cannot be shown.">\n  <figure>\n    <pre tabindex="0">flowchart LR\n  write[Write Markdown] --&gt; build[blyss build]\n'));
-    assert.ok(german.includes('data-line-width="2" data-yes="ja" data-no="nein" data-error="Dieses Flussdiagramm kann nicht angezeigt werden.">'));
-    assert.ok(german.includes('<pre tabindex="0">{\n  &quot;description&quot;: &quot;Beiträge pro Monat als Balken&quot;,'));
-  });
-
-  test("shows a task list, callouts titled in the language of the page, figures and a formula of MyST in the doc that describes them", async () => {
-    for (const [language, doc, note, gives] of [["en", "writing/markdown-spice", "Note", "gives"], ["de", "schreiben/markdown-wuerze", "Anmerkung", "ergibt"]]) {
-      const html = await readFile(join(site, "public", language, "book", doc, "index.html"), "utf8");
-      assert.match(html, /<ul>\n<li><input checked="" disabled="" type="checkbox"> [^<]+<\/li>\n<li><input disabled="" type="checkbox"> /);
-      assert.ok(html.includes(`<div class="admonition note" role="note">\n<p class="admonition-title">${note}</p>\n`));
-      assert.match(html, /<div class="admonition warning" role="note">\n<p class="admonition-title"><code>public\/<\/code> [^<]+<\/p>\n<p>[^<]+<\/p>\n<pre /);
-      assert.match(html, /<figure class="align-center">\n<img src="\/assets\/img\/gallery\/lighthouse\.svg" alt="[^"]+" style="width: 30%">\n<figcaption>\n<p>/);
-      assert.ok(html.includes(` ${gives} <math><mrow><msup><mi>a</mi><mn>2</mn></msup>`));
-      // A callout that opens, an alert of GitHub and the images of a figure.
-      assert.match(html, /<details class="admonition dropdown tip">\n<summary class="admonition-title">[^\n]+<\/summary>\n<p>/);
-      assert.match(html, /<div class="admonition important" role="note">\n<p class="admonition-title">(?:Important|Wichtig)<\/p>\n<p>/);
-      assert.match(html, /<figure class="subfigures">\n<figure>\n<img src="\/assets\/img\/gallery\/sunrise\.svg" alt="[^"]+">\n<figcaption><span class="caption-number">\(a\)<\/span> /);
-    }
-  });
-
-  test("labels, numbers and refers to the figures and the formulas of the doc that describes them, in the language of the page", async () => {
-    for (const [language, doc, figure] of [["en", "writing/labels-numbers-references", "Figure"], ["de", "schreiben/labels-nummern-referenzen", "Abbildung"]]) {
-      const html = await readFile(join(site, "public", language, "book", doc, "index.html"), "utf8");
-      assert.match(html, new RegExp(`<figure id="[a-z-]+" class="align-center">\\n<img [^>]+>\\n<figcaption>\\n<p><span class="caption-number">${figure} 1:</span> `));
-      assert.match(html, new RegExp(`<figure id="([a-z-]+)" class="subfigures">\\n<figure id="\\1-a">\\n[^]+?<figcaption>\\n<p><span class="caption-number">${figure} 2:</span> `));
-      // The formula with a label and the two lines of the environment of LaTeX share one sequence.
-      assert.deepEqual(html.match(/<mtext class="tml-tag">[^<]+<\/mtext>/g).map(tag => tag.replace(/<[^>]+>/g, "")), ["(1)", "(2)", "(3)"]);
-      // A reference shows the number of a figure after the label of the language, that of a formula and the text of a heading.
-      assert.match(html, new RegExp(`<code>\\[\\]\\(#([a-z-]+)\\)</code> \\S+ <a href="#\\1">${figure} 1</a>, [^\\n]+ <a href="#[a-z-]+">${figure} 2b</a>`));
-      assert.match(html, /<code>\{eq\}`([a-z-]+)`<\/code> \S+ <a href="#\1">\(1\)<\/a>/);
-      assert.match(html, /<code>\[\]\(#([a-z]+)\)<\/code> \S+ <a href="#\1">(?:References|Verweise)<\/a>/);
-      // Each link to a part of the page leads to one of its elements.
-      const ids = new Set(html.match(/ id="[^"]+"/g).map(id => id.slice(5, -1)));
-      for (const href of html.match(/ href="#[^"]+"/g)) assert.ok(ids.has(decodeURIComponent(href.slice(8, -1))), href);
-    }
-  });
-
   test("ships the stylesheet and the font of the Temml version that writes the formulas", async () => {
     for (const file of ["Temml-Local.css", "Temml.woff2"]) {
       const shipped = await readFile(join(starter, "static", "assets", "temml", file));
@@ -558,8 +542,8 @@ describe("a generated starter", () => {
       await home.text();
       assert.equal(home.status, 302);
       assert.equal(home.headers.get("location"), "/en/");
-      for (const [path, status] of [["/en/", 200], [`/de/posts/${germanPost.slug}/`, 200], ["/en/posts/", 200], ["/de/tags/blyss/", 200],
-        ["/en/book/", 200], ["/de/book/schreiben/buch/navigation/", 200], ["/de/404.html", 200], ["/sitemap.xml", 200], ["/assets/css/main.css", 200], ["/assets/img/logo.svg", 200],
+      for (const [path, status] of [["/en/", 200], [`/de/posts/${germanPost.slug}/`, 200], ["/en/posts/", 200], ["/de/tags/", 200],
+        ...deepGermanDoc ? [[`/${deepGermanDoc.replace(/index\.html$/, "")}`, 200]] : [], ["/de/404.html", 200], ["/sitemap.xml", 200], ["/assets/css/main.css", 200], ["/assets/img/logo.svg", 200],
         ["/components/componentSlider/componentSlider.js", 200], ["/components/componentSlider/componentSlider.html", 404],
         ["/components/componentSlider/componentSlider.data.js", 404], ["/missing/", 404]]) {
         const response = await fetch(base + path);
@@ -616,7 +600,7 @@ describe("blyss serve", () => {
 
   test("leads a directory that is requested without its final slash to its page, never to another host", { timeout: 15_000 }, async () => {
     const stderr = await whileServing(site, async base => {
-      for (const [path, location] of [["/en", "/en/"], ["/de/book?page=2", "/de/book/?page=2"], [`/en/posts/${englishPost.slug}`, `/en/posts/${englishPost.slug}/`]]) {
+      for (const [path, location] of [["/en", "/en/"], ["/de/posts?page=2", "/de/posts/?page=2"], [`/en/posts/${englishPost.slug}`, `/en/posts/${englishPost.slug}/`]]) {
         const response = await fetch(base + path, { redirect: "manual" });
         await response.text();
         assert.equal(response.status, 302, path);
@@ -712,6 +696,8 @@ describe("a website below a path", () => {
       .replace(library, 'library: "/assets/mermaid/mermaid.esm.min.mjs"'));
     const document = join(site, "templates", "document.html");
     await writeFile(document, (await readFile(document, "utf8")).replace("<body ", '<body data-base="{{basePath}}" '));
+    await writeFile(join(site, "_content", "en", "pages", "paths.md"), "---\ntitle: Paths\n---\n\n[Posts](/en/posts/)\n\n" +
+      "```{figure} /assets/img/logo.svg\n---\nalt: Logo\n---\nThe logo.\n```\n\n```mermaid\ngraph TD\n```\n");
     const result = run(["build"], site);
     assert.equal(result.status, 0, result.stderr);
   });
@@ -730,10 +716,10 @@ describe("a website below a path", () => {
     }
     // A link of the Markdown, the image of a figure, and the URL of a library in static/, which its component writes
     // into a data attribute.
-    assert.ok((await page("en", "book", "index.html")).includes('<a href="/docs/en/book/installation/">'));
-    const spice = await page("en", "book", "writing", "markdown-spice", "index.html");
-    assert.ok(spice.includes('<img src="/docs/assets/img/gallery/lighthouse.svg" '));
-    assert.ok(spice.includes('data-library="/docs/assets/mermaid/mermaid.esm.min.mjs"'));
+    const paths = await page("en", "pages", "paths", "index.html");
+    assert.ok(paths.includes('<a href="/docs/en/posts/">'));
+    assert.ok(paths.includes('<img src="/docs/assets/img/logo.svg" '));
+    assert.ok(paths.includes('data-library="/docs/assets/mermaid/mermaid.esm.min.mjs"'));
     assert.ok((await page("sitemap.xml")).includes("<loc>https://example.com/docs/en/</loc>"));
   });
 
@@ -745,7 +731,7 @@ describe("a website below a path", () => {
         assert.equal(response.status, 302, path);
         assert.equal(response.headers.get("location"), "/docs/en/", path);
       }
-      for (const [path, status] of [["/docs/en/", 200], ["/docs/de/book/", 200], ["/docs/assets/css/main.css", 200], ["/docs/missing/", 404],
+      for (const [path, status] of [["/docs/en/", 200], ["/docs/de/posts/", 200], ["/docs/assets/css/main.css", 200], ["/docs/missing/", 404],
         ["/en/", 404], ["/assets/css/main.css", 404]]) {
         const response = await fetch(base + path);
         await response.text();
@@ -872,6 +858,7 @@ describe("a site with several tagged posts", () => {
   before(async () => {
     site = join(sandbox, "blog");
     assert.equal(run(["init", site], sandbox).status, 0);
+    await ensureBook(site);
     const configFile = join(site, "blyss.config.js");
     const config = await readFile(configFile, "utf8");
     assert.ok(config.includes("pageSize: 10"));
@@ -1060,7 +1047,7 @@ describe("a site with technical documentation", () => {
     site = join(sandbox, "book");
     assert.equal(run(["init", site], sandbox).status, 0);
     const docs = join(site, "_content", "en", "book");
-    await rm(docs, { recursive: true });
+    await rm(docs, { recursive: true, force: true });
     await mkdir(join(docs, "guides"), { recursive: true });
     const headings = "## Overview\n\n### Details\n\n#### Deep\n\n## Overview\n\n## Overlay\n\n## Install & *run*\n\n## ???\n\n## Demo\n\n" +
       '<div id="demo">Demo</div>';
@@ -1074,6 +1061,20 @@ describe("a site with technical documentation", () => {
       ["guides/deploy.md", "title: Deploy\norder: 2.5\nslug: shipping"]
     ]) {
       await writeFile(join(docs, file), `---\n${frontMatter}\n---\n\n${body}\n`);
+    }
+    // German docs with a section within a section, whose last doc leads to the doc that follows the outer section's.
+    const german = join(site, "_content", "de", "book");
+    await rm(german, { recursive: true, force: true });
+    await mkdir(join(german, "teil", "unter"), { recursive: true });
+    for (const [file, frontMatter, body = "Text."] of [
+      ["index.md", "title: Doku"],
+      ["teil/index.md", "title: Teil"],
+      ["teil/unter/index.md", "title: Unter\norder: 1"],
+      ["teil/unter/erst.md", "title: Erst\norder: 1"],
+      ["teil/unter/letzt.md", "title: Letzt\norder: 2", "## Überschriften"],
+      ["teil/danach.md", "title: Danach\norder: 2"]
+    ]) {
+      await writeFile(join(german, file), `---\n${frontMatter}\n---\n\n${body}\n`);
     }
     const result = run(["build"], site);
     assert.equal(result.status, 0, result.stderr);
@@ -1096,12 +1097,10 @@ describe("a site with technical documentation", () => {
     assert.ok((await page("en/book")).includes(pager(null, ["apple/", "Apple"])));
     assert.ok((await page("en/book/guides")).includes(pager(["zebra/", "Zebra"], ["guides/setup/", "Setup"])));
     assert.ok((await page("en/book/later")).includes(pager(["guides/shipping/", "Deploy"], null)));
-    // In the starter's German docs: from the last doc of a section within a section to the doc that follows the section.
-    const [previous, next] = await Promise.all([starterText("de", "book", "schreiben", "buch", "dokumente.md"),
-      starterText("de", "book", "schreiben", "seiten-und-beitraege.md")]);
-    assert.ok((await page("de/book/schreiben/buch/navigation")).includes('<nav aria-label="Seitennavigation">\n<ul>\n' +
-      `  <li><a href="/de/book/schreiben/buch/dokumente/" rel="prev">Zurück: ${previous.title}</a></li>\n` +
-      `  <li><a href="/de/book/schreiben/seiten-und-beitraege/" rel="next">Weiter: ${next.title}</a></li>\n</ul>\n</nav>`));
+    // From the last doc of a section within a section to the doc that follows the section, in German.
+    assert.ok((await page("de/book/teil/unter/letzt")).includes('<nav aria-label="Seitennavigation">\n<ul>\n' +
+      '  <li><a href="/de/book/teil/unter/erst/" rel="prev">Zurück: Erst</a></li>\n' +
+      '  <li><a href="/de/book/teil/danach/" rel="next">Weiter: Danach</a></li>\n</ul>\n</nav>'));
   });
 
   test("gives the headings of a doc unique ids and lists its ## and ### headings above its text", async () => {
@@ -1118,7 +1117,7 @@ describe("a site with technical documentation", () => {
       '  <li><a href="#demo-1">Demo</a></li>\n</ul>\n</nav>'));
     const ids = html.match(/ id="[^"]+"/g);
     assert.equal(ids.length, new Set(ids).size);
-    assert.ok((await page("de/book/schreiben/buch/navigation")).includes('<h2 id="überschriften">Überschriften</h2>'));
+    assert.ok((await page("de/book/teil/unter/letzt")).includes('<h2 id="überschriften">Überschriften</h2>'));
     assert.doesNotMatch(await page("en/book/later"), /On this page/);
   });
 
@@ -1169,6 +1168,7 @@ describe("a site with drafts", () => {
   before(async () => {
     site = join(sandbox, "drafts");
     assert.equal(run(["init", site], sandbox).status, 0);
+    await ensureBook(site);
     // A draft of each kind: the newest post, with a tag of its own and a German translation that is published, a
     // page whose date is not one yet, and the first doc of the documentation.
     await writeFile(join(site, drafts.post),
@@ -1409,6 +1409,7 @@ describe("a site with its own hero and overlay", () => {
   before(async () => {
     site = join(sandbox, "regions");
     assert.equal(run(["init", site], sandbox).status, 0);
+    await ensureBook(site);
     configFile = join(site, "blyss.config.js");
     config = await readFile(configFile, "utf8");
     for (const name of ["hero", "overlay"]) {
@@ -1449,7 +1450,7 @@ describe("a site with its own hero and overlay", () => {
     for (const heading of headings.overlay.en) assert.ok(overlay.includes(heading), heading);
     const home = await page("en/index.html");
     assert.equal(home.match(/ id="[^"]+"/g).length, new Set(home.match(/ id="[^"]+"/g)).size);
-    for (const [path, shown] of [["en/book/index.html", false], ["de/book/schreiben/buch/navigation/index.html", false],
+    for (const [path, shown] of [["en/book/index.html", false], ["de/book/index.html", false],
       [`en/posts/${englishPost.slug}/index.html`, true], ["de/tags/index.html", true], ["404.html", true]]) {
       assert.equal(Boolean(await region(path, "overlay")), shown, path);
       assert.equal(await region(path, "hero"), "", path);
@@ -1781,6 +1782,12 @@ export default ({ settings, source, texts, refuse }) => {
     await writeFile(join(site, sliderText), `${await readFile(join(site, sliderText), "utf8")}\nA formula $s$.\n`);
     const heroCards = join(site, "_content", "en", "heroCards.md");
     await writeFile(heroCards, `${await readFile(heroCards, "utf8")}\n#### Formula\n\nA formula $h$.\n`);
+    // The diagrams of the starter's components, a task list and a footnote, in each language.
+    for (const language of ["en", "de"]) {
+      await writeFile(join(site, "_content", language, "pages", "diagrams.md"), "---\ntitle: Diagrams\n---\n\n- [x] Done\n- [ ] Open\n\n" +
+        "A note[^n].\n\n[^n]: The note.\n\n```mermaid\ngraph TD\n  a --> b\n```\n\n```flowchart\nst=>start: <Start>\n```\n\n" +
+        '```flow\ne=>end: End\n```\n\n```vega-lite\n{ "description": "a < b & \\"c\\"", "mark": "bar" }\n```\n');
+    }
     const result = run(["build"], site);
     assert.equal(result.status, 0, result.stderr);
   });
@@ -1826,6 +1833,34 @@ export default ({ settings, source, texts, refuse }) => {
     assert.ok(html.includes('<pre tabindex="0"><code class="language-chart">nested\n</code></pre>'));
     // A block of a diagram sets the URL of its library, escaped like every setting.
     assert.ok(html.includes('<component-mermaid class="component" id="componentMermaid-1" data-library="/mermaid.mjs?v=1&amp;x=&quot;y&quot;" data-theme="neutral" '));
+  });
+
+  test("shows the code blocks of the starter's diagrams with their components, escaped, and the texts of the page's language", async () => {
+    for (const language of ["en", "de"]) {
+      const html = (await page(`${language}/pages/diagrams/index.html`)).split('<aside class="overlay"')[0];
+      const markdown = await readFile(join(site, "_content", language, "pages", "diagrams.md"), "utf8");
+      const texts = async component =>
+        parseFrontMatter(await readFile(join(site, "_content", language, "components", `${component}.md`), "utf8")).metadata;
+      const [mermaid, flowchart, vegaLite] = await Promise.all(["componentMermaid", "componentFlowchart", "componentVegaLite"].map(texts));
+      assert.deepEqual([...html.matchAll(/<(component-[a-z-]+) class="component"/g)].map(match => match[1]),
+        ["component-mermaid", "component-flowchart", "component-flowchart", "component-vega-lite"], language);
+      for (const [, code] of markdown.matchAll(/^```[a-z-]+\n([\s\S]*?)\n```$/gm)) {
+        assert.ok(html.includes(`<pre tabindex="0">${escapeHtml(code)}`), code);
+      }
+      assert.match(html, new RegExp(`<component-mermaid [^>]*data-error="${escapeHtml(mermaid.error)}">`), language);
+      assert.ok(html.includes(`data-yes="${escapeHtml(flowchart.yes)}" data-no="${escapeHtml(flowchart.no)}" data-error="${escapeHtml(flowchart.error)}">`), language);
+      assert.match(html, new RegExp(`<component-vega-lite [^>]*data-error="${escapeHtml(vegaLite.error)}">`), language);
+      assert.equal(html.match(/ id="[^"]+"/g).length, new Set(html.match(/ id="[^"]+"/g)).size, language);
+    }
+  });
+
+  test("shows a task list with its boxes, and the footnotes with the labels of the page's language", async () => {
+    for (const [language, footnotes, back] of [["en", "Footnotes", "Back to the text"], ["de", "Fußnoten", "Zurück zum Text"]]) {
+      const html = await page(`${language}/pages/diagrams/index.html`);
+      assert.ok(html.includes('<ul>\n<li><input checked="" disabled="" type="checkbox"> Done</li>\n<li><input disabled="" type="checkbox"> Open</li>\n</ul>'), language);
+      assert.ok(html.includes(`<section class="footnotes" role="doc-endnotes" aria-label="${footnotes}">`), language);
+      assert.ok(html.includes(`<a href="#fnref:1" role="doc-backlink" aria-label="${back}">↩︎</a>`), language);
+    }
   });
 
   test("refuses a formula that is not LaTeX, a language that two components show and code that a component refuses, and keeps the previous output", async () => {
@@ -1945,6 +1980,7 @@ describe("a site with the callouts, the figures and the formulas of MyST", () =>
   before(async () => {
     site = join(sandbox, "directives");
     assert.equal(run(["init", site], sandbox).status, 0);
+    await ensureBook(site);
     await writeFile(join(site, file), source);
     await writeFile(join(site, "_content", "de", "pages", "directives.md"),
       `---\ntitle: Direktiven\ntranslationKey: directives\n---\n\n:::{note}\nText.\n:::\n\n${fence}{seealso}\nMehr.\n${fence}\n`);

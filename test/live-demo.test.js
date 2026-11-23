@@ -62,7 +62,7 @@ describe("the renderer of Blyss in the browser", () => {
     const browser = await import(pathToFileURL(join(published, "renderer.js")).href);
     const content = join(starter, "_content");
     const texts = (await files(content)).filter(file => file.endsWith(".md"));
-    assert.ok(texts.length > 40);
+    assert.ok(texts.length);
     // What a renderer makes of a text: its HTML, or the message with which it refuses the text.
     const read = (render, markdown, file, labels) => {
       try {
