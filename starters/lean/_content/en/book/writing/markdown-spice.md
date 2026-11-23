@@ -75,7 +75,7 @@ check(yes)->publish
 check(no)->fix->write
 ```
 
-### Charts
+### Complex charts
 
 The language `vega-lite` shows a [Vega-Lite](https://vega.github.io/vega-lite/) chart from its specification in JSON. This [Seattle weather example](https://vega.github.io/vega-lite/examples/interactive_seattle_weather.html) loads a CSV from Vega-Lite: drag across the dates to filter the bars, or click a weather type to filter the points.
 
