@@ -102,7 +102,6 @@ The language `vega-lite` shows a [Vega-Lite](https://vega.github.io/vega-lite/) 
 
 ```vega-lite
 {
-  "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
   "width": 300,
   "height": 300,
   "projection": {
