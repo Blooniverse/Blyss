@@ -1,10 +1,12 @@
 // Enhances every gallery on the page: its arrows and the arrow keys bring the previous or the next image to the centre
 // of the strip, and the image in the centre is enlarged. A click or a touch on that image, or the Enter or the space
-// key, expands it further, and another one shrinks it again. Swiping and scrolling move the strip without this script.
+// key, expands it further, and another one shrinks it again. The text of the image in the centre stands below the
+// strip and below the expanded image. Swiping and scrolling move the strip without this script.
 customElements.define("component-gallery", class extends HTMLElement {
   #strip;
   #images = [];
   #buttons = [];
+  #text; // shows the text of the image in the centre below the strip
   #current; // the image in the centre
   #target; // the index of the image that an arrow is bringing to the centre
   #frame;
@@ -16,6 +18,7 @@ customElements.define("component-gallery", class extends HTMLElement {
     this.#strip = this.querySelector("ul");
     this.#images = [...this.#strip?.children ?? []];
     this.#buttons = [...this.querySelectorAll("button")];
+    this.#text = this.querySelector(".text");
     if (!this.#images.length || this.#buttons.length !== 2) return;
     this.#buttons.forEach((button, index) => button.addEventListener("click", () => this.#show(index ? 1 : -1)));
     this.addEventListener("keydown", event => {
@@ -56,7 +59,13 @@ customElements.define("component-gallery", class extends HTMLElement {
     return image.offsetLeft + image.offsetWidth / 2 - this.#strip.clientWidth / 2;
   }
 
-  // Marks the image nearest to the centre, which the stylesheet enlarges, and dims the arrow at either end.
+  // Gives an element the text of the image in the centre, or none if that image has no text.
+  #caption(element) {
+    element.replaceChildren(...this.#current.querySelector("figcaption")?.cloneNode(true).childNodes ?? []);
+  }
+
+  // Marks the image nearest to the centre, which the stylesheet enlarges, shows its text and dims the arrow at either
+  // end. A screen reader announces the texts that follow the first one.
   #mark() {
     const position = this.#strip.scrollLeft;
     const distance = image => Math.abs(this.#offset(image) - position);
@@ -65,6 +74,8 @@ customElements.define("component-gallery", class extends HTMLElement {
     this.#current?.removeAttribute("aria-current");
     current.setAttribute("aria-current", "true");
     this.#current = current;
+    this.#caption(this.#text);
+    this.#text.setAttribute("aria-live", "polite");
     const index = this.#images.indexOf(current);
     this.#buttons[0].setAttribute("aria-disabled", index === 0);
     this.#buttons[1].setAttribute("aria-disabled", index === this.#images.length - 1);
@@ -100,13 +111,13 @@ customElements.define("component-gallery", class extends HTMLElement {
   }
 
   // Shows the image in the centre above the page, as high as --height-expanded percent of the screen and never wider
-  // than the screen, until a click, a touch or a key shrinks it again.
+  // than the screen, with its text below it, until a click, a touch or a key shrinks it again.
   #expand() {
     const image = this.#current?.querySelector("img");
     if (!image) return;
     if (!this.#dialog) {
       this.#dialog = document.createElement("dialog");
-      this.#dialog.append(document.createElement("img"));
+      this.#dialog.innerHTML = '<img><p class="text"></p>';
       this.#dialog.addEventListener("click", () => this.#shrink());
       this.#dialog.addEventListener("keydown", event => {
         if (event.key !== " " && event.key !== "Enter") return;
@@ -119,6 +130,7 @@ customElements.define("component-gallery", class extends HTMLElement {
     expanded.src = image.currentSrc || image.src;
     expanded.alt = image.alt;
     expanded.style.setProperty("--ratio", image.naturalWidth / image.naturalHeight || image.offsetWidth / image.offsetHeight || 1.5);
+    this.#caption(this.#dialog.lastChild);
     this.#dialog.showModal();
     this.#grow("normal");
   }

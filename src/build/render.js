@@ -8,13 +8,14 @@ export { escapeHtml };
 
 // A value can be a function, which is called for each of its placeholders. file names a template of the website:
 // one of its placeholders that has no value, as a misspelt one, stops the build instead of leaving a gap in the
-// pages. Without file, as for the template of a component, whose values depend on its texts, such a placeholder is
-// empty.
-export function applyTemplate(template, values, file) {
+// pages; renamed tells the name that such a placeholder has now, if it had another one. Without file, as for the
+// template of a component, whose values depend on its texts, such a placeholder is empty.
+export function applyTemplate(template, values, file, renamed = {}) {
   return template.replace(/{{([a-zA-Z][a-zA-Z0-9]*)}}/g, (placeholder, key) => {
     if (!Object.hasOwn(values, key)) {
       if (!file) return "";
-      throw new BlyssError(`Cannot build with ${file}: there is no placeholder ${placeholder}.\nCorrect its name or remove it.`);
+      throw new BlyssError(`Cannot build with ${file}: there is no placeholder ${placeholder}.\n` +
+        (Object.hasOwn(renamed, key) ? `It is {{${renamed[key]}}} now: rename it.` : "Correct its name or remove it."));
     }
     const value = values[key];
     return (typeof value === "function" ? value() : value) ?? "";
@@ -184,7 +185,7 @@ export async function renderRecord({ record, file, templates, templateFile = nam
   }, templateFile(inner));
   const pageTitle = title === site.name ? title : `${title} | ${site.name}`;
 
-  // The components and the fragments of the language, such as {{heroTextsTitle}}, cannot replace the labels or the
+  // The components and the fragments of the language, such as {{heroCardsTitle}}, cannot replace the labels or the
   // placeholders below.
   const values = {
     ...components,
@@ -211,15 +212,16 @@ export async function renderRecord({ record, file, templates, templateFile = nam
     content
   };
   // {{hero}} and {{overlay}} show the regions of the page, each rendered by its template, which has the placeholders
-  // above and {{components}}, {{componentsBelow}}, {{textsTitle}} and {{texts}}; a region that the page lacks is
-  // empty. Each component of a region is shown with the values that the region has prepared for it, if any.
+  // above and {{components}}, {{componentsBelow}}, {{cardsTitle}} and {{cards}}; the last two used to be
+  // {{textsTitle}} and {{texts}}. A region that the page lacks is empty. Each component of a region is shown with
+  // the values that the region has prepared for it, if any.
   const show = ({ name, values: own }) => components[name](own);
   const regionValues = Object.entries(shown).map(([name, region]) => [name, region ? () => applyTemplate(region.template, {
     ...values,
     components: () => region.above.map(show).join(""),
     componentsBelow: () => region.below.map(show).join(""),
-    textsTitle: region.textsTitle,
-    texts: region.texts
-  }, templateFile(name)) : ""]);
+    cardsTitle: region.cardsTitle,
+    cards: region.cards
+  }, templateFile(name), { textsTitle: "cardsTitle", texts: "cards" }) : ""]);
   return applyTemplate(templates.document, { ...values, ...Object.fromEntries(regionValues) }, templateFile("document"));
 }

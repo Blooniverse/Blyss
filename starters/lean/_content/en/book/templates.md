@@ -85,24 +85,27 @@ Formulas use the local Temml stylesheet and font in `static/assets/temml/`, with
 - The hero follows home-page content.
 - The overlay is a bottom bar whose button opens a panel. Close it with its button, Escape or an outside click; the browser's Popover API does this without JavaScript.
 
-`_content/<language>/hero.md` and `overlay.md` show the [components of a region](/en/book/components/#components-of-the-hero-and-the-overlay), above or below its texts. The `hero`, `overlay` and `synchroniseHeroOverlay` comments in `blyss.config.js` explain the switches of the texts, the page kinds and the synchronization. Beyond them:
+`_content/<language>/hero.md` and `overlay.md` show the [components of a region](/en/book/components/#components-of-the-hero-and-the-overlay), above or below its cards. The `hero`, `overlay` and `synchroniseHeroOverlay` comments in `blyss.config.js` explain the switches of the cards, the page kinds and the synchronization. Beyond them:
 
-- A region without a component and without texts is omitted.
+- A region without a component and without cards is omitted.
 - `overlay.showOn` applies to page kinds, not individual pages; an unnamed kind is enabled.
 - Layout settings still apply separately when the regions are synchronized.
 
 Region templates can use these placeholders:
 
-- `{{components}}`: the components above the texts of the region.
+- `{{components}}`: the components above the cards of the region.
 - `{{componentsBelow}}`: the components below them; a template without the placeholder of a place that a file uses stops the build.
-- `{{textsTitle}}` and `{{texts}}`: the heading and the texts of the region.
+- `{{cardsTitle}}` and `{{cards}}`: the heading and the cards of the region.
 - The document placeholders other than the two region placeholders.
 
-The texts of the regions are `_content/<language>/heroTexts.md` and `overlayTexts.md`:
+The cards of the regions are the texts of `_content/<language>/heroCards.md` and `overlayCards.md`:
 
-- The file's title is the texts' heading.
-- Each `####` heading starts a text ending at the next `####` heading. Existing sites using `###` must change those headings to `####`.
+- The file's title is the cards' heading.
+- Each `####` heading starts a card ending at the next `####` heading. Existing sites using `###` must change those headings to `####`.
 - Only whitespace and comments may precede the first heading.
+- The text of a component does not belong here but in its [block](/en/book/components/#components-of-the-hero-and-the-overlay) in `hero.md` or `overlay.md`.
+
+Earlier websites called the cards texts. The build stops at each of the old names and tells the new one: `heroTexts.md` and `overlayTexts.md`, `hero.texts` and `overlay.texts`, and `{{textsTitle}}` and `{{texts}}` in the region templates.
 
 On screens at least 1024 by 640 pixels, the hero can slide over and fade the page as it scrolls. It is static:
 
@@ -111,4 +114,4 @@ On screens at least 1024 by 640 pixels, the hero can slide over and fade the pag
 - with reduced motion;
 - without scroll-driven animation support.
 
-Region titles are H3s; their text-section headings are H4s.
+Region titles are H3s; the headings of their cards are H4s.

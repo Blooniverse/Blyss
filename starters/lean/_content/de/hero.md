@@ -1,13 +1,14 @@
 <!--
 Die Komponenten des Heros der Startseiten, in der Reihenfolge dieser Datei; templates/hero.html zeigt sie über
-oder unter den Texten aus heroTexts.md.
+oder unter den Karten aus heroCards.md.
 
 Ein Codeblock zeigt die Komponente, die seine erste Zeile nennt:
-- Die Zeilen zwischen seinen beiden --- sind ihre Einstellungen, die blyss.config.js erklärt. Fehlt eine
+- Ihre Einstellungen sind die Zeilen zwischen seinen beiden ---, die blyss.config.js erklärt. Fehlt eine
   Einstellung, wie die Bibliotheken der Diagramme, gilt die von components.<name> dort. regionPosition stellt die
-  Komponente über die Texte (above) oder unter sie (below).
-- Ihr Titel und ihr Text stammen aus components/<name>.md neben dieser Datei. Ein title unter den Einstellungen und
-  ein Text unter dem zweiten --- ersetzen sie; der Text eines Diagramms ist sein Code.
+  Komponente über die Karten (above) oder unter sie (below).
+- Ihr Text gehört nur zum Hero: title unter den Einstellungen und der Text unter dem zweiten ---, wie beim
+  Schieberegler und bei der Blume. Ein Block ohne beides, wie der der Galerie, zeigt Titel und Text aus
+  components/<name>.md neben dieser Datei. Der Text eines Diagramms ist sein Code.
 - Ein Kommentar wie dieser blendet eine Komponente aus: Entfernen Sie die Zeile über und die Zeile unter einem
   Block, um ihn zu zeigen.
 -->
@@ -15,6 +16,7 @@ Ein Codeblock zeigt die Komponente, die seine erste Zeile nennt:
 <!--
 ```{{componentSlider}}
 ---
+title: Schieberegler im Hero
 regionPosition: above
 start: 1
 end: 10000
@@ -30,6 +32,8 @@ steps:
   - value: 10000
     description: Und Voll
 ---
+
+Dieser Titel und dieser Text gehören nur zum Hero: Sie stehen im Block des Schiebereglers in `_content/de/hero.md`.
 ```
 -->
 
@@ -42,6 +46,7 @@ heightCenter: 140%
 heightExpanded: 70%
 animationSpeedScrolling: 400ms
 animationSpeedImgEnlargement: 300ms
+fontSizeText: 80%
 ---
 ```
 -->
@@ -49,6 +54,7 @@ animationSpeedImgEnlargement: 300ms
 <!--
 ```{{componentFlower}}
 ---
+title: Blume im Hero
 regionPosition: above
 petals: 4
 colourSystem: triadic
@@ -59,6 +65,22 @@ animationSpeedFading: 4s
 opacityFallen: 20%
 fontSizeText: 60%
 ---
+
+### Eigens für den Hero
+
+Diese Texte stehen im Block der Blume in `_content/de/hero.md`: Nur die Blume des Heros zeigt sie.
+
+### Je ein Text
+
+Jede `###`-Überschrift des Blocks beginnt den Text des nächsten Blütenblatts: vier Blütenblätter, vier Texte.
+
+### Einstellungen darüber
+
+`petals` und die übrigen Einstellungen dieser Blume stehen zwischen den beiden `---` des Blocks.
+
+### Oder gar keiner
+
+Ein Block ohne Text zeigt den Text aus `_content/de/components/componentFlower.md`.
 ```
 -->
 

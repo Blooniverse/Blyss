@@ -83,12 +83,13 @@ Der Renderer umfasst rund 1 MB JavaScript; ein Skript sollte ihn erst laden, wen
 
 - Jede Komponente der Website kann dort stehen, auch die Diagramme und die Live-Demo.
 - Ein Absatz `{{<name>}}` zeigt eine Komponente unverändert; ein [Block](#blöcke-pro-verwendung) gibt ihr eigene Einstellungen und einen eigenen Text.
+- Der Text einer Komponente eines Bereichs steht in ihrem Block: `title` unter den Einstellungen und der Text unter dem zweiten `---`. Ein Block ohne beides zeigt Titel und Text aus `components/<name>.md`, wie jede andere Verwendung der Komponente.
 - Die Komponenten erscheinen in der Reihenfolge der Datei, die nichts anderes enthält.
-- `regionPosition: below` im Front Matter eines Blocks stellt ihn unter die Texte des Bereichs; die Vorgabe ist `above`.
-- Eine Zeile `<!--` über einer Komponente und eine Zeile `-->` darunter blenden sie aus, was immer sie enthält: Die Pfeile eines Diagramms beenden einen solchen Kommentar nicht. Die Dateien des Starters enthalten so jede seiner Komponenten, mit den Einstellungen einer einzelnen.
+- `regionPosition: below` im Front Matter eines Blocks stellt ihn unter die Karten des Bereichs; die Vorgabe ist `above`.
+- Eine Zeile `<!--` über einer Komponente und eine Zeile `-->` darunter blenden sie aus, was immer sie enthält: Die Pfeile eines Diagramms beenden einen solchen Kommentar nicht. Die Dateien des Starters enthalten so jede seiner Komponenten mit ihren Einstellungen, den Slider und die Blume mit eigenem Text.
 - Jede Sprache hat eigene Dateien; ein Bereich kann sich also zwischen den Sprachen unterscheiden.
 
-Zum Beispiel ein Slider unter den Texten des deutschen Overlays:
+Zum Beispiel ein Slider unter den Karten des deutschen Overlays, mit eigenem Titel und Text:
 
 ````markdown
 ```{{componentSlider}}
@@ -112,7 +113,7 @@ Frühere Websites schalteten die Komponenten eines Bereichs mit `hero.components
 
 1. Nennen Sie jede Komponente eines Bereichs in `hero.md` oder `overlay.md`, in einem Block mit den Einstellungen und dem Text ihrer früheren Variante.
 2. Benennen Sie die Einstellungen und Texte, die Seiten weiterhin zeigen, in `components.<name>` und `components/<name>.md` um, und schreiben Sie `{{<name>}}` statt `{{<name>Hero}}` und `{{<name>Overlay}}`.
-3. Ergänzen Sie in eigenen Bereichsvorlagen `{{componentsBelow}}` unter `{{texts}}`.
+3. Ergänzen Sie in eigenen Bereichsvorlagen `{{componentsBelow}}` unter `{{cards}}`.
 
 ## Blöcke pro Verwendung
 
@@ -125,10 +126,12 @@ title: Unsere Reise
 heightOverall: 12rem
 ---
 
-- ![Hafen im Morgenlicht](/assets/img/trip/harbour.jpg)
+- ![Hafen im Morgenlicht](/assets/img/trip/harbour.jpg) Ankunft im Morgengrauen
 - ![Leuchtturm am Abend](/assets/img/trip/lighthouse.jpg)
 ```
 ````
+
+Der Text, der in der Galerie einem Bild in seinem Listenpunkt folgt, hier „Ankunft im Morgengrauen“, ist der Text dieses Bildes: Die Galerie zeigt ihn unter ihrem Bildstreifen, solange das Bild in der Mitte steht, und unter dem vergrößerten Bild.
 
 Für einen Block gilt:
 

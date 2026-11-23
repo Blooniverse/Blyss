@@ -64,26 +64,29 @@ Ein Platzhalter, den seine Vorlage nicht füllen kann, etwa ein falsch geschrieb
 
 Ihren Inhalt bestimmen zwei Dateien je Sprache und die Schalter in `blyss.config.js`:
 
-- `_content/<Sprache>/hero.md` und `overlay.md` zeigen die [Komponenten eines Bereichs](/de/book/komponenten/#komponenten-in-hero-und-overlay) in ihrer Reihenfolge, über oder unter seinen Texten.
-- `hero.texts` und `overlay.texts` schalten die jeweiligen Texte ein oder aus.
+- `_content/<Sprache>/hero.md` und `overlay.md` zeigen die [Komponenten eines Bereichs](/de/book/komponenten/#komponenten-in-hero-und-overlay) in ihrer Reihenfolge, über oder unter seinen Karten.
+- `hero.cards` und `overlay.cards` schalten die jeweiligen Karten ein oder aus.
 - `overlay.showOn` gilt für Seitentypen, nicht für einzelne Seiten; ein nicht aufgeführter Seitentyp hat ein Overlay.
-- Mit `synchroniseHeroOverlay: true` übernimmt das Overlay Komponenten, Einstellungen und Texte des Heros; `overlay.showOn` und das Overlay-Layout gelten weiterhin.
-- Ohne Vorlage oder ohne Komponenten und Texte entfällt der jeweilige Bereich.
+- Mit `synchroniseHeroOverlay: true` übernimmt das Overlay Komponenten, Einstellungen und Karten des Heros; `overlay.showOn` und das Overlay-Layout gelten weiterhin.
+- Ohne Vorlage oder ohne Komponenten und Karten entfällt der jeweilige Bereich.
 
 Die Vorlagen der Bereiche kennen diese Platzhalter:
 
-- `{{components}}`: die Komponenten über den Texten des Bereichs.
+- `{{components}}`: die Komponenten über den Karten des Bereichs.
 - `{{componentsBelow}}`: die Komponenten darunter; fehlt einer Vorlage der Platzhalter einer Stelle, die eine Datei verwendet, stoppt der Build.
-- `{{textsTitle}}` und `{{texts}}`: Überschrift und Texte des Bereichs.
+- `{{cardsTitle}}` und `{{cards}}`: Überschrift und Karten des Bereichs.
 - Die Platzhalter von `document.html` außer `{{hero}}` und `{{overlay}}`.
 
-Die Texte der Bereiche stehen in `_content/<Sprache>/heroTexts.md` und `overlayTexts.md`:
+Die Karten der Bereiche sind die Texte aus `_content/<Sprache>/heroCards.md` und `overlayCards.md`:
 
 - `title` ist ihre Überschrift.
-- Jede `####`-Überschrift beginnt einen Text bis zur nächsten `####`-Überschrift. Bestehende Websites müssen dafür `###` in `####` ändern.
+- Jede `####`-Überschrift beginnt eine Karte bis zur nächsten `####`-Überschrift. Bestehende Websites müssen dafür `###` in `####` ändern.
 - Vor der ersten `####`-Überschrift sind nur Leerraum und HTML-Kommentare erlaubt.
+- Der Text einer Komponente gehört nicht hierher, sondern in ihren [Block](/de/book/komponenten/#komponenten-in-hero-und-overlay) in `hero.md` oder `overlay.md`.
 
-Die Titel der Bereiche sind H3-Überschriften, die Überschriften ihrer Texte H4.
+Frühere Websites nannten die Karten Texte. Der Build stoppt bei jedem der alten Namen und nennt den neuen: `heroTexts.md` und `overlayTexts.md`, `hero.texts` und `overlay.texts` sowie `{{textsTitle}}` und `{{texts}}` in den Vorlagen der Bereiche.
+
+Die Titel der Bereiche sind H3-Überschriften, die Überschriften ihrer Karten H4.
 
 Auf großen Bildschirmen gleitet der Hero beim Scrollen über die Seite. Er bleibt statisch:
 

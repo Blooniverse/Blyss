@@ -54,7 +54,7 @@ Wie in [MyST](https://mystmd.org/guide/math) kommt eine Formel auch ohne Dollarz
 
 Eine Formel auf eigenen Zeilen kann ein Label und eine Nummer haben; siehe [Labels und Nummern](/de/book/schreiben/labels-nummern-referenzen/#formeln).
 
-Formeln funktionieren auch in Komponententexten, Fragmenten und Texten der Bereiche. Die lokalen Temml-Dateien des Starters müssen zur installierten Version passen; siehe [Gestaltung und Schriften](/de/book/vorlagen/#gestaltung-und-schriften).
+Formeln funktionieren auch in Komponententexten, Fragmenten und den Karten der Bereiche. Die lokalen Temml-Dateien des Starters müssen zur installierten Version passen; siehe [Gestaltung und Schriften](/de/book/vorlagen/#gestaltung-und-schriften).
 
 
 

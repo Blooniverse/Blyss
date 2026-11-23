@@ -28,7 +28,7 @@ Jede Sprache braucht:
 
 - `pages/index.md`, `pages/about.md` und `book/index.md`, ohne abweichenden Slug, denn die Navigation des Starters verlinkt die Startseite, die Seite „Über uns“ und die Startseite der Dokumentation;
 - ihre eigene Fehlerseite, `pages/404.md`;
-- ihre eigenen Texte für [Hero und Overlay](/de/book/vorlagen/#hero-und-overlay) und für die [Komponenten](/de/book/komponenten/);
+- ihre eigenen Komponenten und Karten für [Hero und Overlay](/de/book/vorlagen/#hero-und-overlay) und ihre eigenen Texte für die [Komponenten](/de/book/komponenten/);
 - ihre eigenen Labels in `blyss.config.js`.
 
 ## Erzeugte Seiten

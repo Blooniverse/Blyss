@@ -8,6 +8,10 @@
   in `_content/<language>/` show them. `hero.components`,
   `overlay.components` and the variants `<name>Hero` and `<name>Overlay` are
   gone; the build tells what to write instead.
+- **Cards of the hero and of the overlay**: `heroTexts.md` and
+  `overlayTexts.md` are `heroCards.md` and `overlayCards.md`, `hero.texts`
+  and `overlay.texts` are `cards`, and `{{textsTitle}}` and `{{texts}}` are
+  `{{cardsTitle}}` and `{{cards}}`; the build tells the new names.
 - **Front matter**: a line that is neither a field nor an item of a list, a
   field that stands twice and a tab as indentation stop the build.
 - **Hero and overlay text headings**: each section of `heroTexts.md` and
@@ -143,8 +147,11 @@
 ### New features
 
 - **Components of a region**: a block in `hero.md` or `overlay.md` gives a
-  component settings of its own. `regionPosition` places it `above` or
-  `below` the texts, and a comment hides it.
+  component settings and a text of its own. `regionPosition` places it
+  `above` or `below` the cards, and a comment hides it.
+- **Texts of the gallery's images**: the text that follows an image in its
+  list item stands below the gallery while the image is in the centre, and
+  below the expanded image; `fontSizeText` sets its size.
 - **Lists and groups in front matter**: a field without a value holds the
   indented list or group of fields below it, such as the `steps` of the
   slider, whose descriptions can be texts alone.

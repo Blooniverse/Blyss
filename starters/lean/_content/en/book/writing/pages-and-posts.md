@@ -83,11 +83,11 @@ A paragraph that consists of `{{recentPosts}}` alone lists the three newest post
 
 ## Fragments and components
 
-Markdown directly in `_content/<language>/`, such as `heroTexts.md`, is a fragment, not a page:
+Markdown directly in `_content/<language>/`, such as `heroCards.md`, is a fragment, not a page:
 
 - `templates/document.html` can display its front-matter title and body as `{{<name>Title}}` and `{{<name>Content}}`.
 - In a language that lacks the file, they are empty.
 - Fragment names start with a Latin letter and contain only Latin letters and digits.
-- The fragments `heroTexts.md` and `overlayTexts.md` also hold the texts of the [hero and the overlay](/en/book/templates/#hero-and-overlay). `hero.md` and `overlay.md` beside them are no fragments: they show the [components](/en/book/components/#components-of-the-hero-and-the-overlay) of these regions.
+- The fragments `heroCards.md` and `overlayCards.md` also hold the cards of the [hero and the overlay](/en/book/templates/#hero-and-overlay). `hero.md` and `overlay.md` beside them are no fragments: they show the [components](/en/book/components/#components-of-the-hero-and-the-overlay) of these regions.
 
 A paragraph consisting only of `{{<name>}}` displays a component. A fenced [component block](/en/book/components/#blocks) gives one occurrence its own text and settings. See [Markdown spice](/en/book/writing/markdown-spice/) for formulas, footnotes, highlighted code, task lists, callouts, figures and diagrams.

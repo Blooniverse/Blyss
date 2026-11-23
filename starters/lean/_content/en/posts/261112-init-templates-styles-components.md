@@ -10,7 +10,7 @@ The HTML around the content comes from the templates in `templates/`: `document.
 
 The look comes from a single stylesheet, `static/assets/css/main.css`. The home pages end with the hero; on the other pages, the overlay waits as a bar at the bottom of the window.
 
-The slider, the gallery and the flower are components. Each has its template, stylesheet and script in a directory of its own in `components/`, its texts in `_content/en/components/` and its settings in `blyss.config.js`. The hero and the overlay show the components of `_content/en/hero.md` and `overlay.md`, each with settings of its own. A paragraph that holds nothing but the name of a component in double curly braces shows it in a page or post, like the slider here:
+The slider, the gallery and the flower are components. Each has its template, stylesheet and script in a directory of its own in `components/`, its texts in `_content/en/components/` and its settings in `blyss.config.js`. The hero and the overlay show the components of `_content/en/hero.md` and `overlay.md`, each with settings and a text of its own. A paragraph that holds nothing but the name of a component in double curly braces shows it in a page or post, like the slider here:
 
 {{componentSlider}}
 
