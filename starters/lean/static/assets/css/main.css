@@ -329,8 +329,10 @@ body:has(> .overlay) { padding-bottom: calc(var(--site-margin) + 2rem); } /* lea
 }
 :where(.hero-panel, #overlay) h3 { margin-top: 0; font-size: 1.17em; letter-spacing: inherit; line-height: inherit; text-wrap: inherit; }
 :is(.hero-panel, #overlay) h3:empty { display: none; } /* such as the title of the texts when there is none */
-/* The components of the hero and of the overlay follow each other; each brings its own styles from components/. */
+/* The components of the hero and of the overlay follow each other; each brings its own styles from components/.
+   Those below the texts of a region keep their distance above themselves. */
 .component { margin: 0 0 1rem; }
+.region-texts ~ .component { margin-block: 1rem 0; }
 /* The texts of heroTexts.md and of overlayTexts.md, side by side in as many columns as fit, each in full length. */
 .region-texts {
   display: grid;

@@ -4,6 +4,8 @@
 // that is written leaves the browser or is stored. The result stands in a frame without scripts, with the
 // stylesheets of the page. A Mermaid diagram is drawn by Mermaid, which the browser loads from the URL of
 // data-library-mermaid once a text holds such a diagram. Without JavaScript, the examples stay code.
+// A text that cannot be shown leaves the last result as it is, and a message below the demo says so in plain words:
+// what the renderer or Mermaid has to say about it is of no use to a visitor.
 const stylesheet = new URL("./componentLiveDemoPreview.css", import.meta.url).href;
 const pause = 120; // the time without a keystroke after which the result follows the text, in ms
 const patience = 600; // the time after which a message tells of an error or of a slow load, in ms
@@ -30,10 +32,11 @@ customElements.define("component-live-demo", class extends HTMLElement {
   #renderer; // the promise of the renderer of Blyss
   #mermaid; // the promise of Mermaid
   #drawer; // Mermaid, once it is loaded
-  #turn = 0; // counts the results, so that a slow one never replaces a newer one
+  #turn = 0; // counts the texts and their results, so that a slow result never replaces a newer one
   #diagrams = 0; // counts the diagrams, for their ids
   #waiting; // the timer of the result
   #telling; // the timer of the message
+  #warned = new Set(); // what the console has been told that it cannot be loaded
 
   connectedCallback() {
     if (this.#started) return; // already set up when the demo moves within the page
@@ -62,9 +65,12 @@ customElements.define("component-live-demo", class extends HTMLElement {
     });
     // The renderer is on its way before the first keystroke.
     this.#editor.addEventListener("focus", () => this.#load().catch(() => {}), { once: true });
+    // A keystroke leaves behind what the text before it was about to show or to tell.
     this.#editor.addEventListener("input", () => {
       this.#texts[this.#selected] = this.#editor.value;
+      this.#turn++;
       clearTimeout(this.#waiting);
+      clearTimeout(this.#telling);
       this.#waiting = setTimeout(() => this.#update(), pause);
     });
     this.#frame.addEventListener("load", () => this.#prepare(), { once: true });
@@ -133,6 +139,13 @@ customElements.define("component-live-demo", class extends HTMLElement {
     else tell();
   }
 
+  // Tells the console, once, of what cannot be loaded: the author of the website finds the reason there.
+  #warn(what, error) {
+    if (this.#warned.has(what)) return;
+    this.#warned.add(what);
+    console.warn(`Blyss live demo: ${what} cannot be loaded.`, error);
+  }
+
   // The renderer of Blyss, which the browser loads once, from the website itself.
   #load() {
     this.#renderer ??= import("../blyss-renderer/renderer.js").catch(error => {
@@ -154,16 +167,17 @@ customElements.define("component-live-demo", class extends HTMLElement {
       try {
         if (!this.#status.textContent) this.#tell(this.dataset.loading, "", true); // only if loading takes a while
         renderer = await this.#load();
-      } catch {
+      } catch (error) {
+        this.#warn("the renderer of Blyss", error);
         if (turn === this.#turn) this.#tell(this.dataset.unavailable, "problem");
         return;
       }
       if (turn !== this.#turn) return;
       try {
         html = renderer.withBasePath(renderer.renderDocument(text, "this text", JSON.parse(this.dataset.labels)), this.dataset.basePath);
-      } catch (error) {
+      } catch {
         // The last result stays, and the message waits for a pause: a text is often invalid while it is written.
-        this.#tell(`${this.dataset.failed}\n${error?.message ?? error}`, "invalid", true);
+        this.#tell(this.dataset.failed, "invalid", true);
         return;
       }
     }
@@ -182,8 +196,8 @@ customElements.define("component-live-demo", class extends HTMLElement {
     if (mermaid) {
       try {
         for (const code of codes) code.parentElement.replaceWith(await this.#draw(mermaid, code.textContent));
-      } catch (error) {
-        if (turn === this.#turn) this.#tell(`${this.dataset.diagramFailed}\n${error?.message ?? error}`, "invalid", true);
+      } catch {
+        if (turn === this.#turn) this.#tell(this.dataset.diagramFailed, "invalid", true);
         return;
       }
     }
@@ -195,8 +209,9 @@ customElements.define("component-live-demo", class extends HTMLElement {
     // Once Mermaid has arrived, the diagrams of this result are drawn, unless a newer result has come.
     try {
       this.#drawer = await (this.#mermaid ??= this.#loadMermaid());
-    } catch {
+    } catch (error) {
       this.#mermaid = undefined; // the next result tries again
+      this.#warn("Mermaid", error);
       if (turn === this.#turn) this.#tell(this.dataset.diagramUnavailable, "problem");
       return;
     }

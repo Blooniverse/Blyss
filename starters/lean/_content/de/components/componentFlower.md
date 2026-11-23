@@ -9,7 +9,7 @@ Klicken oder tippen Sie auf ein Blütenblatt: Es dreht sich, fällt zu Boden und
 
 ### Je ein Text
 
-Jede `###`-Überschrift von `componentFlowerOverlay.md` in `_content/de/components/` beginnt den Text des nächsten Blütenblatts.
+Jede `###`-Überschrift von `componentFlower.md` in `_content/de/components/` beginnt den Text des nächsten Blütenblatts.
 
 ### Zählen Sie nach
 

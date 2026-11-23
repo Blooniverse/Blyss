@@ -10,9 +10,9 @@ Das HTML rund um den Inhalt stammt aus den Vorlagen in `templates/`: `document.h
 
 Das Aussehen stammt aus einem einzigen Stylesheet, `static/assets/css/main.css`. Die Startseiten enden mit dem Hero; auf den anderen Seiten wartet das Overlay als Leiste am unteren Fensterrand.
 
-Der Schieberegler, die Galerie und die Blume sind Komponenten. Jede hat ihre Vorlage, ihr Stylesheet und ihr Skript in einem eigenen Verzeichnis in `components/` sowie eine Variante für den Hero und eine für das Overlay, etwa `componentSliderHero` und `componentSliderOverlay`. Jede Variante hat ihre Texte in `_content/de/components/` und ihre Einstellungen in `blyss.config.js`, wo sie sich auch in ihrem Bereich ein- oder ausschalten lässt. Ein Absatz, der nichts als den Namen einer Komponente oder einer Variante in doppelten geschweiften Klammern enthält, zeigt sie in einer Seite oder einem Beitrag, wie hier den Schieberegler des Heros:
+Der Schieberegler, die Galerie und die Blume sind Komponenten. Jede hat ihre Vorlage, ihr Stylesheet und ihr Skript in einem eigenen Verzeichnis in `components/`, ihre Texte in `_content/de/components/` und ihre Einstellungen in `blyss.config.js`. Der Hero und das Overlay zeigen die Komponenten aus `_content/de/hero.md` und `overlay.md`, jede mit eigenen Einstellungen. Ein Absatz, der nichts als den Namen einer Komponente in doppelten geschweiften Klammern enthält, zeigt sie in einer Seite oder einem Beitrag, wie hier den Schieberegler:
 
-{{componentSliderHero}}
+{{componentSlider}}
 
 Ein mit drei Backticks eingefasster Codeblock, dessen Sprache ein solcher Name in doppelten geschweiften Klammern ist, zeigt die Komponente mit eigenem Text und eigenen Einstellungen. Der folgende Block legt in seinem Front Matter den Titel, den Bereich und die Schritte dieses Schiebereglers fest und darunter seinen Text:
 

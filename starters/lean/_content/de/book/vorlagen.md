@@ -62,17 +62,18 @@ Ein Platzhalter, den seine Vorlage nicht füllen kann, etwa ein falsch geschrieb
 - Der Hero begleitet die Startseiten.
 - Das Overlay begleitet die in `overlay.showOn` gewählten Seitentypen. Im Starter öffnet ein Knopf das Overlay als Panel; Schließen, Escape oder ein Klick außerhalb schließen es über die Popover-API.
 
-Die Schalter in `blyss.config.js` bestimmen ihren Inhalt:
+Ihren Inhalt bestimmen zwei Dateien je Sprache und die Schalter in `blyss.config.js`:
 
-- `hero.components` und `overlay.components` wählen Komponenten in ihrer Reihenfolge.
-- `texts` schaltet die jeweiligen Texte ein oder aus.
+- `_content/<Sprache>/hero.md` und `overlay.md` zeigen die [Komponenten eines Bereichs](/de/book/komponenten/#komponenten-in-hero-und-overlay) in ihrer Reihenfolge, über oder unter seinen Texten.
+- `hero.texts` und `overlay.texts` schalten die jeweiligen Texte ein oder aus.
 - `overlay.showOn` gilt für Seitentypen, nicht für einzelne Seiten; ein nicht aufgeführter Seitentyp hat ein Overlay.
 - Mit `synchroniseHeroOverlay: true` übernimmt das Overlay Komponenten, Einstellungen und Texte des Heros; `overlay.showOn` und das Overlay-Layout gelten weiterhin.
-- Ohne Vorlage oder eingeschalteten Inhalt entfällt der jeweilige Bereich.
+- Ohne Vorlage oder ohne Komponenten und Texte entfällt der jeweilige Bereich.
 
 Die Vorlagen der Bereiche kennen diese Platzhalter:
 
-- `{{components}}`: die eingeschalteten Komponenten des Bereichs.
+- `{{components}}`: die Komponenten über den Texten des Bereichs.
+- `{{componentsBelow}}`: die Komponenten darunter; fehlt einer Vorlage der Platzhalter einer Stelle, die eine Datei verwendet, stoppt der Build.
 - `{{textsTitle}}` und `{{texts}}`: Überschrift und Texte des Bereichs.
 - Die Platzhalter von `document.html` außer `{{hero}}` und `{{overlay}}`.
 

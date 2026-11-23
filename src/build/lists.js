@@ -9,6 +9,11 @@ function slugify(name) {
 
 // Accepts "tags: [Blyss, Markdown]", "tags: Blyss, Markdown" or a YAML block list.
 export function parseTags(value, languageKey, source) {
+  // An item of a list that starts with a name, a colon and a space is a field, as in YAML, and no text.
+  if (![value ?? ""].flat().every(tag => typeof tag === "string")) {
+    throw new BlyssError(`Cannot build ${source}: each of its tags is a text, but one of them is a field or a list.\n` +
+      'Put a tag with a colon in quotes, as in - "Blyss: an introduction".');
+  }
   const names = Array.isArray(value) ? value : String(value ?? "").replace(/^\[(.*)\]$/, "$1").split(",");
   const tags = new Map();
   for (const name of names.map(item => item.trim().replace(/^(["'])(.*)\1$/, "$2").trim()).filter(Boolean)) {

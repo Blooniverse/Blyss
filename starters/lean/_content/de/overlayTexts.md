@@ -8,7 +8,7 @@ Das Overlay wartet als Leiste am unteren Fensterrand. `overlay.showOn` in `blyss
 
 #### Eigene Inhalte
 
-Diese Texte stammen aus `_content/de/overlayTexts.md`, und `overlay.components` schaltet die Komponenten darüber ein oder aus: die Varianten des Overlays, etwa `componentSliderOverlay`, jede mit eigenen Einstellungen und Texten. Der Hero der Startseiten hat seine eigenen Texte, Schalter und Varianten.
+Diese Texte stammen aus `_content/de/overlayTexts.md`, die Komponenten darüber aus `_content/de/overlay.md`: Die Datei gibt jeder ihre Einstellungen und kann sie auch unter die Texte stellen. Der Hero der Startseiten hat eigene Dateien.
 
 #### Oder eine Kopie des Heros
 

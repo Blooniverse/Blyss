@@ -1,5 +1,5 @@
-// Checks the flower's settings, those of a block or of components.componentFlowerHero, componentFlowerOverlay and so
-// on in blyss.config.js, and prepares the values of its template: its colours, its petals, each a button at its angle
+// Checks the flower's settings, those of a block or of components.componentFlower in blyss.config.js, and prepares
+// the values of its template: its colours, its petals, each a button at its angle
 // around the centre, their texts and the ground with a place for each fallen petal. The first text of the flower
 // belongs to the first petal, the second to the second and so on; a petal without a text falls all the same, and
 // texts beyond the last petal are left out.

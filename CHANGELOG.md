@@ -4,6 +4,12 @@
 
 ### Breaking changes
 
+- **Components of the hero and of the overlay**: `hero.md` and `overlay.md`
+  in `_content/<language>/` show them. `hero.components`,
+  `overlay.components` and the variants `<name>Hero` and `<name>Overlay` are
+  gone; the build tells what to write instead.
+- **Front matter**: a line that is neither a field nor an item of a list, a
+  field that stands twice and a tab as indentation stop the build.
 - **Hero and overlay text headings**: each section of `heroTexts.md` and
   `overlayTexts.md` now starts with `####`, below the region's title.
   Existing sites must change their region section headings from `###` to
@@ -114,17 +120,6 @@
   well-formed `locale` (such as `"en-GB"`, not `"en_GB"`), languages whose
   `labels` differ, a `site.defaultLanguage` that is not one of the languages
   and a `site.languageSwitcher` other than `true` or `false`.
-- **Hero and overlay variants in the starter**: the starter's
-  `blyss.config.js` switches `componentSliderHero`, `componentGalleryHero`
-  and `componentFlowerHero` on or off in the hero and the corresponding
-  `…Overlay` variants in the overlay, and holds the settings of each variant
-  in `components` instead of `componentSlider`, `componentGallery` and
-  `componentFlower`. Their texts moved from `<name>.md` in
-  `_content/<language>/components/` to `<name>Hero.md` and `<name>Overlay.md`.
-  Rename these settings and files in websites made from the starter.
-- **Component names ending in Hero or Overlay**: a component directory named
-  like the variant of another, such as `components/componentSliderHero/` next
-  to `components/componentSlider/`, stops the build; rename it.
 - **Dollar signs start formulas**: in every Markdown text, `$…$` and `$$…$$`
   are now LaTeX formulas. A text between two dollar signs is read as a formula
   if no space follows the first one, no space precedes the second one and no
@@ -147,6 +142,12 @@
 
 ### New features
 
+- **Components of a region**: a block in `hero.md` or `overlay.md` gives a
+  component settings of its own. `regionPosition` places it `above` or
+  `below` the texts, and a comment hides it.
+- **Lists and groups in front matter**: a field without a value holds the
+  indented list or group of fields below it, such as the `steps` of the
+  slider, whose descriptions can be texts alone.
 - **Live demo**: the starter's home pages show `componentLiveDemo`, in the
   look of the showcase illustration: the Markdown of an example beside what
   Blyss makes of it, with a button for each example, an editor and a Reset
@@ -231,23 +232,22 @@
 - **Hero and overlay**: two independent regions accompany the pages, the
   hero on the home pages and the overlay on the kinds of pages of your
   choice. Each has an optional template, `hero.html` or `overlay.html`,
-  which `{{hero}}` or `{{overlay}}` shows in `document.html`, and settings of
-  its own in `blyss.config.js`: `hero.components` and `overlay.components`
-  list its components in their order, each switched on with `true` or off
-  with `false`, and `hero.texts` and `overlay.texts` switch its texts on or
-  off as a whole. The texts are those of `content/<language>/heroTexts.md`
+  which `{{hero}}` or `{{overlay}}` shows in `document.html`, components of
+  its own and texts of its own, which `hero.texts` and `overlay.texts` in
+  `blyss.config.js` switch on or off as a whole. The texts are those of
+  `content/<language>/heroTexts.md`
   and `overlayTexts.md`: each `###` heading starts a text, a `<div>` in full
   length, and content before the first `###` heading stops the build. The
   templates receive them as `{{components}}`, `{{textsTitle}}` and
-  `{{texts}}`. A region without a part that is switched on is not shown at
-  all.
+  `{{texts}}`. A region without a component and without texts is not shown
+  at all.
 - **Overlay per kind of page**: `overlay.showOn` switches the overlay on or
   off for the content types `page`, `post` and `book` and for the further
   kinds of pages `home`, `list` and `not-found`, but not for a single page.
 - **Synchronised hero and overlay**: `synchroniseHeroOverlay: true` gives the
-  overlay the components and the texts of the hero, whatever
-  `overlay.components` and `overlay.texts` say; `overlay.showOn` still
-  applies. It defaults to `false`.
+  overlay the components and the texts of the hero, whatever `overlay.md`
+  and `overlay.texts` say; `overlay.showOn` still applies. It defaults to
+  `false`.
 - **Labels**: every label of a language is available in templates as
   `{{<key>Label}}`, such as `{{overlayLabel}}`; previously only six labels
   were.
@@ -285,16 +285,6 @@
   component needs no change for it. A setting of a block that the component
   refuses stops the build with the name of the page before the previous
   output is deleted.
-- **Component variants for the hero and the overlay**: every component
-  `<name>` has a variant `<name>Hero` and a variant `<name>Overlay`, the same
-  component with a text, `_content/<language>/components/<variant>.md`, and
-  settings, `components.<variant>`, of its own, so that the hero and the
-  overlay show it differently. A variant shares the component's template,
-  data file, stylesheet and script and can appear wherever the component can:
-  in `hero.components` and `overlay.components`, as `{{<variant>}}` in
-  templates and Markdown and in blocks. Its `{{id}}` and the errors of its
-  data file carry the variant's name; a variant without settings that its
-  data file requires stops only a build that shows it.
 - **Books**: the content type `book` publishes each
   Markdown file in `content/<language>/book/` below
   `/<language>/book/`. Each directory is a section whose `index.md` is its
@@ -453,6 +443,8 @@
 
 ### Changes
 
+- **Messages of the live demo**: plain words, without what the renderer or
+  Mermaid report.
 - **Lists in the starter's book**: the docs list what they enumerate, such as
   the placeholders of the templates, the options of a block and the steps of
   hosting a font, instead of naming it in running text.

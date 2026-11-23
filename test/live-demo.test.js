@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdir, mkdtemp, readdir, readFile, rm, stat, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readdir, readFile, rename, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, posix } from "node:path";
 import { after, before, describe, test } from "node:test";
@@ -137,6 +137,150 @@ describe("the live demo of the starter", () => {
     await writeFile(join(site, block), own);
     const result = run(["build"], site);
     assert.equal(result.status, 0, result.stderr);
+  });
+
+  test("keeps the last result and the text of a visitor, and tells in plain words of what it cannot show or load", async t => {
+    const site = await createSite("demo-feedback");
+    const result = run(["build"], site);
+    assert.equal(result.status, 0, result.stderr);
+    // The page of the demo, as far as its script needs it.
+    class Element {
+      listeners = {};
+      attributes = {};
+      dataset = {};
+      addEventListener(name, callback) { (this.listeners[name] ??= []).push(callback); }
+      dispatch(name) { for (const callback of this.listeners[name] ?? []) callback({}); }
+      setAttribute(name, value) { this.attributes[name] = value; }
+      removeAttribute(name) { delete this.attributes[name]; }
+      append() {}
+    }
+    const article = { html: "", shown: [], replaceChildren(content) { this.shown.push(this.html = content.html); } };
+    const preview = {
+      documentElement: { style: {}, getBoundingClientRect: () => ({ height: 100 }) },
+      querySelector: () => article,
+      addEventListener() {},
+      createElement() {
+        return {
+          set innerHTML(html) {
+            this.content = { html, querySelectorAll: () => /language-mermaid/.test(html)
+              ? [{ textContent: "diagram", parentElement: { replaceWith() {} } }] : [] };
+          }
+        };
+      }
+    };
+    const editor = new Element();
+    const frame = Object.assign(new Element(), { contentDocument: preview, style: {}, offsetHeight: 100, clientHeight: 100 });
+    const status = Object.assign(new Element(), { textContent: "" });
+    const example = { querySelector: selector => ({
+      h4: { textContent: "Example" }, code: { textContent: "Example" }, template: { innerHTML: "<p>Example</p>" }
+    })[selector] };
+    const elements = {
+      ".live": new Element(), ".examples": { children: [example] }, ".choice": new Element(),
+      textarea: editor, iframe: frame, ".status": status, ".reset": new Element()
+    };
+    let Demo;
+    const page = {
+      HTMLElement: class extends Element { querySelector(selector) { return elements[selector]; } },
+      customElements: { define(_name, constructor) { Demo = constructor; } },
+      document: { compatMode: "CSS1Compat", documentElement: { lang: "en" }, head: { querySelectorAll: () => [] }, createElement: () => new Element() },
+      ResizeObserver: class { observe() {} },
+      getComputedStyle: () => ({ fontSize: "16px", fontFamily: "sans-serif" })
+    };
+    const previous = Object.fromEntries(Object.keys(page).map(name => [name, Object.getOwnPropertyDescriptor(globalThis, name)]));
+    Object.assign(globalThis, page);
+    t.after(() => {
+      for (const [name, descriptor] of Object.entries(previous)) {
+        if (descriptor) Object.defineProperty(globalThis, name, descriptor);
+        else delete globalThis[name];
+      }
+    });
+
+    await import(pathToFileURL(join(site, "public", "components", "componentLiveDemo", "componentLiveDemo.js")).href);
+    const demo = new Demo();
+    demo.id = "demo";
+    demo.dataset = {
+      labels: JSON.stringify(starterConfig.site.languages.en.labels), basePath: "",
+      loading: "Loading", unavailable: "Preview unavailable", failed: "Check the text.",
+      diagramFailed: "Check the diagram.", diagramUnavailable: "Diagram stays code.",
+      libraryMermaid: pathToFileURL(join(site, "missing-mermaid.mjs")).href
+    };
+    // The times of the demo's script pass at once, and what it loads takes the time that it takes.
+    const [pause, patience] = [120, 600];
+    t.mock.timers.enable({ apis: ["setTimeout"] });
+    const warnings = t.mock.method(console, "warn", () => {});
+    const turn = () => new Promise(setImmediate);
+    const until = async state => {
+      for (const start = Date.now(); !state(); await turn()) {
+        assert.ok(Date.now() - start < 10_000, `The live demo says ${JSON.stringify(status.textContent)} and shows ${article.html}`);
+        t.mock.timers.tick(patience);
+      }
+    };
+    const type = text => {
+      editor.value = text;
+      editor.dispatch("input");
+    };
+
+    demo.connectedCallback();
+    frame.dispatch("load");
+    assert.equal(article.html, "<p>Example</p>");
+
+    // Without the renderer, the result of the example stays, and the console is told once.
+    const renderer = join(site, "public", "components", "blyss-renderer", "renderer.js");
+    await rename(renderer, `${renderer}.hidden`);
+    for (const text of ["First edit", "Second edit"]) {
+      status.textContent = "";
+      type(text);
+      await until(() => status.textContent === "Preview unavailable");
+      assert.equal(article.html, "<p>Example</p>");
+    }
+    await rename(`${renderer}.hidden`, renderer);
+
+    // A text that is on its way to its result when the next keystroke comes is never shown: here, the renderer
+    // arrives between that keystroke and the result that follows it.
+    type("Passing by");
+    t.mock.timers.tick(pause);
+    type("Fixed **text**");
+    await import(pathToFileURL(renderer).href);
+    await turn();
+    await until(() => /<strong>text<\/strong>/.test(article.html));
+    assert.ok(!article.shown.some(html => html.includes("Passing by")));
+    assert.equal(status.textContent, "");
+
+    // A text that cannot be shown leaves the last result, and its message has nothing of what the renderer says.
+    const last = article.html;
+    type("Bad $\\frac{a$");
+    await until(() => status.textContent === "Check the text.");
+    assert.equal(editor.attributes["aria-invalid"], "true");
+    assert.equal(article.html, last);
+    assert.equal(editor.value, "Bad $\\frac{a$");
+    type("Fixed again");
+    await until(() => article.html.includes("Fixed again"));
+    assert.equal(status.textContent, "");
+    assert.equal(editor.attributes["aria-invalid"], undefined);
+
+    // A keystroke before the message of such a text is due leaves that message behind.
+    type("Bad $\\frac{a$");
+    t.mock.timers.tick(pause);
+    await turn();
+    t.mock.timers.tick(patience - 100);
+    type("And fixed");
+    t.mock.timers.tick(100);
+    assert.equal(status.textContent, "");
+    await until(() => article.html.includes("And fixed"));
+    assert.equal(status.textContent, "");
+
+    // Without Mermaid, a diagram stays code; one that Mermaid cannot draw leaves the last result.
+    type("```mermaid\ngraph TD\nA-->B\n```");
+    await until(() => status.textContent === "Diagram stays code.");
+    assert.match(article.html, /language-mermaid/);
+    const mermaid = join(site, "mermaid.mjs");
+    await writeFile(mermaid, 'export default { initialize() {}, async render() { throw new Error("technical secret"); } };\n');
+    demo.dataset.libraryMermaid = pathToFileURL(mermaid).href;
+    type(`${editor.value}\n`);
+    await until(() => status.textContent === "Check the diagram.");
+
+    assert.deepEqual(warnings.mock.calls.map(call => call.arguments[0]),
+      ["Blyss live demo: the renderer of Blyss cannot be loaded.", "Blyss live demo: Mermaid cannot be loaded."]);
   });
 
   test("shows each example of its text as code, with the result of the build, in every language", async () => {

@@ -85,13 +85,25 @@ function renderToc(headings, label) {
   return `<nav aria-label="${escapeHtml(label)}">\n<p>${escapeHtml(label)}</p>\n<ul>\n${list.join("\n")}\n</ul>\n</nav>\n`;
 }
 
-// A paragraph that consists of {{recentPosts}} alone lists the newest posts of the page's language, and one that
-// consists of {{<name>}} alone shows the component of that name; a fenced code block with {{<name>}} as its language
-// shows the component with the text and the settings that the block holds (see components.js). Other code and
-// running text keep a placeholder as it is written. A fenced code block in a language of a component, such as
-// mermaid, shows that component with the code as its text. takenIds are the ids of the templates, which no label of
-// the text can be. In a doc, the headings get ids (see identifyHeadings), which are returned with the headings.
-async function renderBody(record, file, records, components, languages, takenIds, isBook) {
+// The component that a block of Markdown shows, if it shows one. A paragraph that consists of {{<name>}} alone shows
+// the component of that name; a fenced code block with {{<name>}} as its language shows it with the text and the
+// settings that the block holds (see components.js). A fenced code block in a language of a component, such as
+// mermaid, shows that component with the code as its text. Returns the name, which may be that of no component, the
+// text of a block and whether it is code. languages names the component that shows the code blocks of a language.
+export function componentOf(token, languages) {
+  const block = token.type === "code" ? token.text : undefined;
+  const language = block === undefined ? "" : token.lang ?? "";
+  const shown = languages.get(language.split(/\s/)[0]);
+  const placeholder = token.type === "paragraph" ? token.text : language;
+  return { name: shown ?? /^{{([a-zA-Z][a-zA-Z0-9]*)}}$/.exec(placeholder.trim())?.[1], block, isCode: Boolean(shown) };
+}
+
+// A paragraph that consists of {{recentPosts}} alone lists the newest posts of the page's language, and a block
+// that shows a component is replaced by it (see componentOf above). Other code and running text keep a placeholder
+// as it is written; former tells what to write instead of a name that no longer shows a component. takenIds are
+// the ids of the templates, which no label of the text can be. In a doc, the headings get ids (see
+// identifyHeadings), which are returned with the headings.
+async function renderBody(record, file, records, components, languages, former, takenIds, isBook) {
   if (record.type === "list") return { html: record.html, headings: [] };
   const { tokens, ids } = lexDocument(record.markdown, file, record.languageConfig.labels);
   for (const id of ids) {
@@ -101,15 +113,13 @@ async function renderBody(record, file, records, components, languages, takenIds
     takenIds.add(id);
   }
   for (const [index, token] of tokens.entries()) {
-    const block = token.type === "code" ? token.text : undefined;
-    const language = block === undefined ? "" : token.lang ?? "";
-    const placeholder = token.type === "paragraph" ? token.text : language;
-    const shown = languages.get(language.split(/\s/)[0]);
-    const name = shown ?? /^{{([a-zA-Z][a-zA-Z0-9]*)}}$/.exec(placeholder.trim())?.[1];
+    const { name, block, isCode } = componentOf(token, languages);
     if (name === "recentPosts" && token.type === "paragraph") {
       tokens[index] = { type: "html", block: true, raw: token.raw, text: renderRecentPosts(record, records) };
     } else if (name && Object.hasOwn(components, name)) {
-      tokens[index] = { type: "html", block: true, raw: token.raw, text: await components[name](block, Boolean(shown)) };
+      tokens[index] = { type: "html", block: true, raw: token.raw, text: await components[name](block, isCode) };
+    } else if (name && former(name)) {
+      throw new BlyssError(`Cannot build ${file}: ${former(name)}.`);
     }
   }
   const headings = isBook ? identifyHeadings(tokens, takenIds) : [];
@@ -134,11 +144,12 @@ function renderTags(record) {
 // file names the record's Markdown file in errors, and templateFile the file of a template, such as
 // templates/document.html for "document"; components holds a function for each component of the website, which
 // renders it in the language of the record, and resolves to it for a block of the record's Markdown; languages
-// names the component that shows the code blocks of a language; regions tells which of the hero and the overlay the
-// page shows (see regions.js); book holds the navigation and the pager of a doc (see book.js); basePath is the path
-// below which the website is hosted, {{basePath}} in every template.
+// names the component that shows the code blocks of a language, and former tells what to write instead of a name
+// that no longer shows a component; regions tells which of the hero and the overlay the page shows (see
+// regions.js); book holds the navigation and the pager of a doc (see book.js); basePath is the path below which the
+// website is hosted, {{basePath}} in every template.
 export async function renderRecord({ record, file, templates, templateFile = name => `${name}.html`, translationIndex, site, records = [],
-  layout, fragments = {}, components = {}, languages = new Map(), regions = { of: () => ({}) }, book = {}, basePath = "" }) {
+  layout, fragments = {}, components = {}, languages = new Map(), former = () => "", regions = { of: () => ({}) }, book = {}, basePath = "" }) {
   const metadata = record.metadata;
   const title = metadata.title || site.name;
   const description = metadata.description || record.languageConfig.description;
@@ -153,7 +164,7 @@ export async function renderRecord({ record, file, templates, templateFile = nam
   const shown = regions.of(kind, record.languageKey);
   const regionTemplates = Object.values(shown).map(region => region?.template ?? "").join("");
   const takenIds = new Set(idsOf(templates.document + innerTemplate + regionTemplates));
-  const body = await renderBody(record, file, records, components, languages, takenIds, isBook);
+  const body = await renderBody(record, file, records, components, languages, former, takenIds, isBook);
   const copyTitle = isBook && metadata.title
     ? `# ${String(metadata.title).replaceAll("&", "&amp;").replace(/[\\`*_[\]<>#~@]/g, "\\$&")
       .replace(/\b(https?|ftp):(?=\/\/)/gi, "$1\\:").replace(/\bwww\.(?=\S)/gi, "www\\.")}\n${record.markdown.startsWith("\n") ? "" : "\n"}`
@@ -200,10 +211,13 @@ export async function renderRecord({ record, file, templates, templateFile = nam
     content
   };
   // {{hero}} and {{overlay}} show the regions of the page, each rendered by its template, which has the placeholders
-  // above and {{components}}, {{textsTitle}} and {{texts}}; a region that the page lacks is empty.
+  // above and {{components}}, {{componentsBelow}}, {{textsTitle}} and {{texts}}; a region that the page lacks is
+  // empty. Each component of a region is shown with the values that the region has prepared for it, if any.
+  const show = ({ name, values: own }) => components[name](own);
   const regionValues = Object.entries(shown).map(([name, region]) => [name, region ? () => applyTemplate(region.template, {
     ...values,
-    components: () => region.components.map(component => components[component]()).join(""),
+    components: () => region.above.map(show).join(""),
+    componentsBelow: () => region.below.map(show).join(""),
     textsTitle: region.textsTitle,
     texts: region.texts
   }, templateFile(name)) : ""]);

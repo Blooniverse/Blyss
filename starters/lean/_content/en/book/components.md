@@ -23,18 +23,51 @@ A component gets its values and is shown as follows:
 - A paragraph containing only that placeholder in a page, post or doc displays the component; a block gives one occurrence its own values.
 - Components can appear several times on one page.
 
-The starter includes slider, gallery and flower components. Their localized text files are `_content/<language>/components/componentSliderHero.md` and `componentSliderOverlay.md`, and similarly for `componentGallery` and `componentFlower`; `blyss.config.js` explains their settings. Gallery images are in `static/assets/img/gallery/`. Each occurrence of these components is an independent custom element.
+The starter includes slider, gallery and flower components. Their localized default texts are in `_content/<language>/components/`; `blyss.config.js` explains their settings. Gallery images are in `static/assets/img/gallery/`. Each occurrence is an independent custom element.
 
-## Variants
+## Components of the hero and the overlay
 
-Each component has `<name>Hero` and `<name>Overlay` variants, with separate text files and settings but the same template, data file and assets. A variant does not inherit the base component's text or settings. `hero.components` and `overlay.components` can list components or variants. A component directory cannot have the name of another component's variant.
+`_content/<language>/hero.md` and `overlay.md` show the components of the two [regions](/en/book/templates/#hero-and-overlay), as a page shows them:
+
+- Every component of the website can stand there, the diagrams and the live demo as well.
+- A paragraph `{{<name>}}` shows a component as it is; a [block](#blocks) gives it settings and a text of its own.
+- The components appear in the order of the file, which holds nothing else.
+- `regionPosition: below` in the front matter of a block places it below the texts of the region; the default is `above`.
+- A line `<!--` above a component and a line `-->` below it hide it, whatever it holds: the arrows of a diagram do not end such a comment. The starter's files hold each of its components in this way, with the settings of a single one.
+- Each language has its own files, so a region can differ between languages.
+
+For example, a slider below the texts of the English overlay:
+
+````markdown
+```{{componentSlider}}
+---
+title: Progress
+regionPosition: below
+start: 0
+end: 10
+steps:
+  - value: 5
+    description: Halfway
+---
+
+How far along are you?
+```
+````
+
+A setting that a block leaves out is that of `components.componentSlider` in `blyss.config.js`; the starter's blocks leave the libraries of the diagrams to it. The description of a step is a text here, since the file belongs to one language; in `blyss.config.js` it is an object with a text for every language.
+
+Earlier websites switched the components of a region on and off with `hero.components` and `overlay.components` and named them `<name>Hero` and `<name>Overlay`. The build stops at each of these and tells what to write instead:
+
+1. Name each component of a region in `hero.md` or `overlay.md`, in a block with the settings and the text of its former variant.
+2. Rename the settings and the texts that pages still show to `components.<name>` and `components/<name>.md`, and write `{{<name>}}` for `{{<name>Hero}}` and `{{<name>Overlay}}`.
+3. In region templates of your own, add `{{componentsBelow}}` below `{{texts}}`.
 
 ## Blocks
 
-A fenced block named for a component or variant displays it with text and settings specific to that occurrence:
+A fenced block named for a component displays it with text and settings specific to that occurrence:
 
 ````markdown
-```{{componentGalleryHero}}
+```{{componentGallery}}
 ---
 title: Our trip
 heightOverall: 12rem
@@ -49,6 +82,7 @@ Front matter and body are optional:
 
 - Fields merge with and override the component text's front matter; fields matching settings also override the configuration.
 - JSON values such as `5`, `true`, `"5"` and `[1, 2]` keep their types; other values are text.
+- A field without a value holds the list or the group of fields on the lines below it, like the `steps` of the slider above; see [front matter](/en/book/writing/pages-and-posts/#front-matter-and-urls).
 - The block body replaces the component's body; without a body it keeps it.
 - Invalid settings stop the build with the source file named.
 
@@ -63,7 +97,7 @@ Template placeholders are resolved in this order, with later values replacing ea
 3. Scalar settings, `{{<setting>}}`.
 4. Front-matter fields and `{{content}}`.
 5. Values returned by the data file.
-6. `{{id}}`, unique per occurrence, such as `componentSliderHero-1`.
+6. `{{id}}`, unique per occurrence, such as `componentSlider-1`.
 
 Labels, settings and front matter are HTML-escaped; data-file values are inserted as returned. A placeholder without a value is empty, as for a field that a text lacks.
 

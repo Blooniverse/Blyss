@@ -6,7 +6,7 @@ import { loadComponents } from "./components.js";
 import { withBasePath } from "./html.js";
 import { createListRecords, parseTags } from "./lists.js";
 import { renderFragments } from "./fragments.js";
-import { parseFrontMatter } from "./front-matter.js";
+import { readFrontMatter } from "./front-matter.js";
 import { languagesOf } from "./languages.js";
 import { resolvePaths } from "./paths.js";
 import { renderRecord } from "./render.js";
@@ -38,6 +38,15 @@ function createLocator(config, publicDirectory) {
     const url = `/${urlParts.join('/')}/${fileName}`.replace(/\/{2,}/g, '/');
     return { url, outputFile: join(publicDirectory, ...urlParts, fileName || 'index.html'), canonicalUrl: absoluteUrl(url) };
   };
+}
+
+// A front matter can hold a list or a group of fields, for the settings of a component. The fields that the pages
+// show as they are, are texts.
+function assertTexts(file, metadata, fields) {
+  const field = fields.find(field => metadata[field] !== undefined && typeof metadata[field] !== "string");
+  if (field === undefined) return;
+  throw new BlyssError(`Cannot build ${file}: its ${field} holds a list or a group of fields, but it is a text.\n` +
+    "Write the text on the line of the field.");
 }
 
 // A date as in 2026-11-10, or with its time as in 2026-11-10T09:30:00+01:00: the format of <time>, of JSON-LD and
@@ -91,25 +100,15 @@ async function discoverContent(projectDir, config, contentDirectory, locate, dra
         `Add the language to site.languages, or move the file to the directory of one of its languages, such as ${example}.`);
     }
     const languageConfig = config.site.languages[languageKey];
-    const source = await readFile(sourceFile, "utf8");
-    let metadata;
-    let written;
-    let markdown;
-    try {
-      ({ metadata, written, markdown } = parseFrontMatter(source));
-    } catch (error) {
-      throw new BlyssError(`Cannot build ${file}: its front matter lacks its closing ---.`, { cause: error });
-    }
-    // In YAML, > and | start a text of several lines, which the front matter does not have: such a value would be
-    // shown as it is, and the lines below it would be lost.
-    const [field, sign] = Object.entries(written).find(([, value]) => typeof value === "string" && /^[>|][+-]?$/.test(value)) ?? [];
-    if (field) {
-      throw new BlyssError(`Cannot build ${file}: its ${field} is "${sign}", which starts a text of several lines in YAML, ` +
-        `but a field of the front matter is a single line.\nWrite the text on the line of the field, or "${sign}" in quotes if it is the text itself.`);
-    }
+    const { metadata, markdown } = readFrontMatter(await readFile(sourceFile, "utf8"), file);
     const filename = basename(sourceFile, '.md');
     // Files directly in _content/<language>/, such as heroTexts.md, are fragments for templates (see fragments.js).
-    if (parts.length === 2) return { sourceFile, languageKey, type: 'fragment', name: filename, metadata, markdown };
+    // hero.md and overlay.md are none: they show the components of the hero and of the overlay (see regions.js).
+    if (parts.length === 2) {
+      assertTexts(file, metadata, ["title"]);
+      const type = ['hero', 'overlay'].includes(filename) ? 'region' : 'fragment';
+      return { sourceFile, languageKey, type, name: filename, metadata, markdown };
+    }
     // Those directly in _content/<language>/components/ hold the texts of the components (see components.js).
     if (section === 'components') {
       if (parts.length === 3) return { sourceFile, languageKey, type: 'component', name: filename, metadata, markdown };
@@ -126,6 +125,7 @@ async function discoverContent(projectDir, config, contentDirectory, locate, dra
     const draft = isDraft(file, metadata);
     // Nothing else of a draft that is left out is checked: it may lack what a page needs.
     if (draft && !drafts) return { sourceFile, type: 'draft' };
+    assertTexts(file, metadata, ["title", "description", "slug", "translationKey"]);
     assertDates(file, metadata);
     const tags = type === 'post' ? parseTags(metadata.tags, languageKey, file) : [];
     // pages/404.md becomes /<language>/404.html, the file name static hosts expect for "not found" pages.
@@ -223,14 +223,15 @@ export async function build(projectDir, configPath = './blyss.config.js', { draf
   const fragmentRecords = discovered.filter(record => record.type === 'fragment');
   const fragments = renderFragments(projectDir, fragmentRecords, config.site.languages);
   const components = await loadComponents(projectDir, config, componentsDirectory, discovered.filter(record => record.type === 'component'));
-  const regions = arrangeRegions(projectDir, config, { hero, overlay }, fragmentRecords, components.unknown);
+  // The file of a template in messages, such as templates/document.html.
+  const templateFile = name => join(relative(projectDir, templatesDirectory), `${name}.html`);
+  const regionRecords = discovered.filter(record => record.type === 'region');
+  const regions = await arrangeRegions(projectDir, config, { hero, overlay }, templateFile, [...regionRecords, ...fragmentRecords], components);
   const books = arrangeBooks(projectDir, contentDirectory, content, leftOut);
   const records = [...content, ...createListRecords(config, content, locate)];
   assertUniqueUrls(projectDir, records);
   assertUniqueTranslations(projectDir, records);
   const templates = { document, page, post, home, book };
-  // The file of a template in messages, such as templates/document.html.
-  const templateFile = name => join(relative(projectDir, templatesDirectory), `${name}.html`);
   const translationIndex = indexTranslations(records, config.site.languages);
 
   // Every page is rendered before the previous output is deleted, so that a block with settings that its component
@@ -243,6 +244,7 @@ export async function build(projectDir, configPath = './blyss.config.js', { draf
       fragments: fragments.get(record.languageKey),
       components: components.placeholders(record.languageKey, file),
       languages: components.languages,
+      former: components.former,
       book: books.placeholders(record)
     });
     pages.push({ record, html: withBasePath(html, basePath) });
