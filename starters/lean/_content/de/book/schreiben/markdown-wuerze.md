@@ -75,7 +75,7 @@ check(yes)->publish
 check(no)->fix->write
 ```
 
-### Chart-Grafiken
+### Komplexe Charts
 
 Die Sprache `vega-lite` zeigt eine Grafik von [Vega-Lite](https://vega.github.io/vega-lite/) aus ihrer Spezifikation in JSON.
 In diesem interaktiven Beispiel zum Wetter in Seattle wird eine CSV-Datei geladen: Ziehen Sie den Mauszeiger über die Datumsangaben, um die Balken zu filtern, oder klicken Sie auf eine Wetterart, um die Punkte zu filtern.
