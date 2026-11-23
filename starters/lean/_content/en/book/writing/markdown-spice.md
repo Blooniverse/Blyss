@@ -1,27 +1,11 @@
 ---
 title: Markdown spice
-description: How to author highlighted code, formulae, diagrams, callouts and figures as well as footnotes in Markdown.
+description: How to author formulae, diagrams, callouts and figures as well as highlighted code and footnotes in Markdown.
 order: 4
 translationKey: book-markdown-spice
 ---
 
-Beyond plain Markdown, Blyss renders highlighted code, formulae, diagrams, callouts and figures as well as footnotes.
-
-
-
-## Code
-
-A fenced code block that names its language is highlighted during the build:
-
-```js
-// Greets by name.
-const greet = name => `Hello, ${name}!`;
-console.log(greet("Blyss"));
-```
-
-A block without a language, or in one that the highlighter does not know, stays plain.
-
-The starter's `static/assets/css/main.css` colours the `hljs-…` classes; preserve a contrast of at least 4.5:1 against the code background when changing them.
+Beyond plain Markdown, Blyss renders formulae, diagrams, callouts and figures as well as highlighted code and footnotes.
 
 
 
@@ -197,24 +181,6 @@ A callout is a `div` with the classes `admonition` and its kind, and its title a
 
 
 
-## Task lists
-
-A list item that starts with `[ ]` or `[x]` shows a checkbox, as on GitHub and in editors such as MarkText:
-
-```markdown
-- [x] Write the text
-- [ ] Add a figure
-- [ ] Publish
-```
-
-- [x] Write the text
-- [ ] Add a figure
-- [ ] Publish
-
-A checkbox shows what the Markdown says; a reader cannot tick it.
-
-
-
 ## Images and figures
 
 `![description](url)` shows an image within a text. As in [MyST](https://mystmd.org/guide/figures), two [directives](#directives) show an image on lines of its own, each with the URL of the image after its name:
@@ -281,6 +247,40 @@ Callouts, `{image}`, `{figure}` and `{math}` are directives of [MyST](https://my
 - **Other names**: a fence with any other name in braces stays what it is in Markdown, a code block between backticks and text between colons.
 
 Directives work in every Markdown text, also within a list, a quotation or another directive. Within a directive, as within a list, a diagram or the [block of a component](/en/book/components/#blocks), which double braces name, remains code.
+
+
+
+## Code
+
+A fenced code block that names its language is highlighted during the build:
+
+```js
+// Greets by name.
+const greet = name => `Hello, ${name}!`;
+console.log(greet("Blyss"));
+```
+
+A block without a language, or in one that the highlighter does not know, stays plain.
+
+The starter's `static/assets/css/main.css` colours the `hljs-…` classes; preserve a contrast of at least 4.5:1 against the code background when changing them.
+
+
+
+## Task lists
+
+A list item that starts with `[ ]` or `[x]` shows a checkbox, as on GitHub and in editors such as MarkText:
+
+```markdown
+- [x] Write the text
+- [ ] Add a figure
+- [ ] Publish
+```
+
+- [x] Write the text
+- [ ] Add a figure
+- [ ] Publish
+
+A checkbox shows what the Markdown says; a reader cannot tick it.
 
 
 
