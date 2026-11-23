@@ -1,13 +1,12 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { after, before, describe, test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { runInNewContext } from "node:vm";
 import { marked } from "marked";
-import { parseFrontMatter } from "../src/build/front-matter.js";
 import { escapeHtml } from "../src/build/html.js";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
@@ -28,6 +27,13 @@ describe("copying documentation Markdown", () => {
     assert.equal(result.status, 0, result.stderr);
     const config = join(site, "blyss.config.js");
     await writeFile(config, (await readFile(config, "utf8")).replace('baseUrl: "https://example.com"', 'baseUrl: "https://example.com/docs"'));
+    // The docs need the start page of the book, which the starter may lack.
+    for (const language of ["en", "de"]) {
+      await mkdir(join(site, "_content", language, "book"), { recursive: true });
+      await writeFile(join(site, "_content", language, "book", "index.md"), "---\ntitle: Book\n---\n\nText.\n", { flag: "wx" })
+        .catch(error => { if (error.code !== "EEXIST") throw error; });
+    }
+    await writeFile(join(site, "_content/de/book/kopieren.md"), "---\ntitle: Kopieren\n---\n\nDer *Text*.\n");
     await writeFile(join(site, "_content/en/book/copy-test.md"),
       `---\ntitle: ${JSON.stringify(title)}\ndescription: Private description\ntranslationKey: copy-test\n---\n${body}`);
     await writeFile(join(site, "_content/en/book/untitled.md"), "---\ndescription: Private description\n---\n\nUntitled body.\n");
@@ -47,11 +53,8 @@ describe("copying documentation Markdown", () => {
     assert.equal(marked.parse(copied).split("\n")[0], `<h1>${escapeHtml(title)}</h1>`);
     assert.match(html, /<button type="button">Copy Markdown<\/button>/);
     assert.match(html, /src="\/docs\/assets\/js\/copy-markdown\.js"/);
-    const german = await page("de/book");
-    const germanSource = await readFile(join(site, "_content/de/book/index.md"), "utf8");
-    const germanFrontMatter = parseFrontMatter(germanSource);
-    assert.equal(Buffer.from(german.match(/data-markdown="([^"]*)"/)[1], "base64").toString("utf8"),
-      `# ${germanFrontMatter.metadata.title}\n${germanFrontMatter.markdown}`);
+    const german = await page("de/book/kopieren");
+    assert.equal(Buffer.from(german.match(/data-markdown="([^"]*)"/)[1], "base64").toString("utf8"), "# Kopieren\n\nDer *Text*.\n");
     assert.match(german, /<button type="button">Markdown kopieren<\/button>/);
     for (const path of ["en", "en/pages/about", "en/posts/copy-test-post", "en/posts"]) {
       assert.doesNotMatch(await page(path), /class="copy-markdown"/, path);
