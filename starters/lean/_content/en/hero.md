@@ -1,19 +1,21 @@
 <!--
 The components of the hero of the home pages, in the order of this file; templates/hero.html shows them above or
-below the texts of heroTexts.md.
+below the cards of heroCards.md.
 
 A fenced code block shows the component that its first line names:
-- The lines between its two --- are its settings, which blyss.config.js explains. A setting that is left out, like
+- Its settings are the lines between its two ---, which blyss.config.js explains. A setting that is left out, like
   the libraries of the diagrams, is that of components.<name> there. regionPosition places the component above or
-  below the texts.
-- Its title and its text are those of components/<name>.md beside this file. A title among the settings and a text
-  below the second --- replace them; the text of a diagram is its code.
+  below the cards.
+- Its text is the hero's own: title among the settings, and the text below the second ---, as for the slider and
+  the flower. A block without them, like that of the gallery, shows the title and the text of components/<name>.md
+  beside this file. The text of a diagram is its code.
 - A comment like this one hides a component: remove the line above and the line below a block to show it.
 -->
 
 <!--
 ```{{componentSlider}}
 ---
+title: Slider in the hero
 regionPosition: above
 start: 1
 end: 10000
@@ -29,6 +31,8 @@ steps:
   - value: 10000
     description: And Full
 ---
+
+This title and this text are the hero's own: they stand in the block of the slider in `_content/en/hero.md`.
 ```
 -->
 
@@ -41,6 +45,7 @@ heightCenter: 140%
 heightExpanded: 70%
 animationSpeedScrolling: 400ms
 animationSpeedImgEnlargement: 300ms
+fontSizeText: 80%
 ---
 ```
 -->
@@ -48,6 +53,7 @@ animationSpeedImgEnlargement: 300ms
 <!--
 ```{{componentFlower}}
 ---
+title: Flower in the hero
 regionPosition: above
 petals: 4
 colourSystem: triadic
@@ -58,6 +64,22 @@ animationSpeedFading: 4s
 opacityFallen: 20%
 fontSizeText: 60%
 ---
+
+### The hero's own
+
+These texts stand in the block of the flower in `_content/en/hero.md`: only the flower of the hero shows them.
+
+### One text each
+
+Every `###` heading of the block starts the text of the next petal: four petals, four texts.
+
+### Settings above
+
+`petals` and the other settings of this flower stand between the two `---` of the block.
+
+### Or none at all
+
+A block without a text shows the text of `_content/en/components/componentFlower.md`.
 ```
 -->
 

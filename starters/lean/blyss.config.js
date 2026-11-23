@@ -5,8 +5,8 @@
 //   1. site                    the name, the URL, the publisher and the languages
 //   2. pagination              the length of the lists of posts
 //   3. layout                  the margin, the paddings and the alignments
-//   4. hero                    the texts of the hero of the home pages
-//   5. overlay                 the pages and the texts of the overlay
+//   4. hero                    the cards of the hero of the home pages
+//   5. overlay                 the pages and the cards of the overlay
 //   6. synchroniseHeroOverlay  the overlay as a copy of the hero
 //   7. components              the settings of each component
 //   8. directories             the directories of the website
@@ -130,20 +130,20 @@ export default {
     alignHome: "center", // or "left", which aligns all content of the home pages (only the home pages)
     alignOther: "centerLeft", // or "left" or "center" ("centerLeft" centers the content but keeps its text left-aligned), which aligns all content of the other pages (pages, posts, docs, lists and not-found pages)
     paddingHero: "1rem", // the space above and below the content of the hero
-    alignHero: "centerExtra", // or "left" or "center" ("centerExtra" centers everything apart from the left-aligned text boxes of heroTexts.md, including their headings), which aligns the content of the hero
+    alignHero: "centerExtra", // or "left" or "center" ("centerExtra" centers everything apart from the left-aligned cards of heroCards.md, including their headings), which aligns the content of the hero
     paddingOverlay: "1rem", // the space above and below the content of the opened overlay
-    alignOverlay: "centerExtra" // or "left" or "center" (as above, with the text boxes of overlayTexts.md), which aligns the content of the overlay
+    alignOverlay: "centerExtra" // or "left" or "center" (as above, with the cards of overlayCards.md), which aligns the content of the overlay
   },
 
   // 4. Hero: the region below the content of the home pages (templates/hero.html). It shows the components of
-  // _content/<language>/hero.md, each with its settings, and its texts, which are switched on (true) or off (false)
-  // here; a hero without a component and without texts is not shown at all.
+  // _content/<language>/hero.md, each with its settings and its text, and its cards, which are switched on (true) or
+  // off (false) here; a hero without a component and without cards is not shown at all.
   hero: {
-    texts: true // all texts of _content/<language>/heroTexts.md, with their title
+    cards: true // all cards of _content/<language>/heroCards.md, with their title
   },
 
   // 5. Overlay: the bar at the bottom of the window whose button opens a panel (templates/overlay.html). It shows
-  // the components of _content/<language>/overlay.md and its own texts, like the hero, and is not shown without them
+  // the components of _content/<language>/overlay.md and its own cards, like the hero, and is not shown without them
   // either.
   overlay: {
     showOn: { // the kinds of pages that have the overlay: the three content types, then the other kinds
@@ -154,11 +154,11 @@ export default {
       list: true, // the archive and the tag pages
       "not-found": true // the "not found" pages
     },
-    texts: true // all texts of _content/<language>/overlayTexts.md, with their title
+    cards: true // all cards of _content/<language>/overlayCards.md, with their title
   },
 
   // 6. Synchronisation: true makes the overlay a copy of the hero. The overlay then shows the components of hero.md
-  // and, if hero.texts is true, the texts of heroTexts.md, whatever overlay.md and overlay.texts say; overlayTexts.md
+  // and, if hero.cards is true, the cards of heroCards.md, whatever overlay.md and overlay.cards say; overlayCards.md
   // is not used, and overlay.showOn still applies.
   synchroniseHeroOverlay: false,
 
@@ -183,13 +183,15 @@ export default {
       ]
     },
     // The gallery shows the images that its text lists, side by side, and enlarges the image in its centre, which a
-    // click or a touch expands further.
+    // click or a touch expands further. The text that follows an image in its list item stands below the gallery
+    // while that image is in the centre, and below the expanded image.
     componentGallery: {
       heightOverall: "8rem", // the height of the images: a CSS length in px, rem, vw, vh, vmin or vmax
       heightCenter: "140%", // the height of the image in the centre: a percentage of heightOverall, from 100% up
       heightExpanded: "70%", // the height of the image in the centre after a click or a touch: a percentage of the height of the screen, up to 100%
       animationSpeedScrolling: "400ms", // the time an arrow takes to bring the next image to the centre
-      animationSpeedImgEnlargement: "300ms" // the time the image in the centre takes to grow and to expand
+      animationSpeedImgEnlargement: "300ms", // the time the image in the centre takes to grow and to expand
+      fontSizeText: "80%" // the size of the texts of the images: a percentage of the default text size
     },
     // The flower loses a petal at each click or touch: the petal twirls, falls to the ground and fades there, while
     // its text appears. The texts of the petals are those of its text file: the first for the first petal, and so on.

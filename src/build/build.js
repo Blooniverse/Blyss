@@ -102,7 +102,7 @@ async function discoverContent(projectDir, config, contentDirectory, locate, dra
     const languageConfig = config.site.languages[languageKey];
     const { metadata, markdown } = readFrontMatter(await readFile(sourceFile, "utf8"), file);
     const filename = basename(sourceFile, '.md');
-    // Files directly in _content/<language>/, such as heroTexts.md, are fragments for templates (see fragments.js).
+    // Files directly in _content/<language>/, such as heroCards.md, are fragments for templates (see fragments.js).
     // hero.md and overlay.md are none: they show the components of the hero and of the overlay (see regions.js).
     if (parts.length === 2) {
       assertTexts(file, metadata, ["title"]);

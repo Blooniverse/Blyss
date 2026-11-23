@@ -31,12 +31,13 @@ The starter includes slider, gallery and flower components. Their localized defa
 
 - Every component of the website can stand there, the diagrams and the live demo as well.
 - A paragraph `{{<name>}}` shows a component as it is; a [block](#blocks) gives it settings and a text of its own.
+- The text of a component of a region stands in its block: `title` among the settings, and the text below the second `---`. A block without them shows the title and the text of `components/<name>.md`, like every other occurrence of the component.
 - The components appear in the order of the file, which holds nothing else.
-- `regionPosition: below` in the front matter of a block places it below the texts of the region; the default is `above`.
-- A line `<!--` above a component and a line `-->` below it hide it, whatever it holds: the arrows of a diagram do not end such a comment. The starter's files hold each of its components in this way, with the settings of a single one.
+- `regionPosition: below` in the front matter of a block places it below the cards of the region; the default is `above`.
+- A line `<!--` above a component and a line `-->` below it hide it, whatever it holds: the arrows of a diagram do not end such a comment. The starter's files hold each of its components in this way, with its settings, and the slider and the flower with a text of their own.
 - Each language has its own files, so a region can differ between languages.
 
-For example, a slider below the texts of the English overlay:
+For example, a slider below the cards of the English overlay, with a title and a text of its own:
 
 ````markdown
 ```{{componentSlider}}
@@ -60,7 +61,7 @@ Earlier websites switched the components of a region on and off with `hero.compo
 
 1. Name each component of a region in `hero.md` or `overlay.md`, in a block with the settings and the text of its former variant.
 2. Rename the settings and the texts that pages still show to `components.<name>` and `components/<name>.md`, and write `{{<name>}}` for `{{<name>Hero}}` and `{{<name>Overlay}}`.
-3. In region templates of your own, add `{{componentsBelow}}` below `{{texts}}`.
+3. In region templates of your own, add `{{componentsBelow}}` below `{{cards}}`.
 
 ## Blocks
 
@@ -73,10 +74,12 @@ title: Our trip
 heightOverall: 12rem
 ---
 
-- ![The harbour](/assets/img/trip/harbour.jpg)
+- ![The harbour](/assets/img/trip/harbour.jpg) Arriving at dawn
 - ![The lighthouse](/assets/img/trip/lighthouse.jpg)
 ```
 ````
+
+The text that follows an image of the gallery in its list item, here "Arriving at dawn", is the text of that image: the gallery shows it below its strip while the image is in the centre, and below the expanded image.
 
 Front matter and body are optional:
 

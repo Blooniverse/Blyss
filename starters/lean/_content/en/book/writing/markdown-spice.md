@@ -54,7 +54,7 @@ As in [MyST](https://mystmd.org/guide/math), a formula needs no dollar signs, wh
 
 A formula on lines of its own can have a label and a number; see [Labels and numbers](/en/book/writing/labels-numbers-references/#formulae).
 
-Formulas also work in component texts, fragments and region texts. The starter's local Temml assets must match the installed version; see [Templates and the lean theme](/en/book/templates/#top-bar-and-fonts).
+Formulas also work in component texts, fragments and the cards of the regions. The starter's local Temml assets must match the installed version; see [Templates and the lean theme](/en/book/templates/#top-bar-and-fonts).
 
 
 

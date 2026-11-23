@@ -80,12 +80,12 @@ Ein Absatz, der nur aus `{{recentPosts}}` besteht, zeigt die drei neuesten Beitr
 
 ## Fragmente und Komponenten
 
-Markdown-Dateien direkt in `_content/<Sprache>/`, etwa `heroTexts.md`, sind Fragmente ohne eigene Seite:
+Markdown-Dateien direkt in `_content/<Sprache>/`, etwa `heroCards.md`, sind Fragmente ohne eigene Seite:
 
-- `templates/document.html` kann deren Titel und Text mit `{{heroTextsTitle}}` und `{{heroTextsContent}}` einfügen.
+- `templates/document.html` kann deren Titel und Text mit `{{heroCardsTitle}}` und `{{heroCardsContent}}` einfügen.
 - Der Dateiname muss mit einem lateinischen Buchstaben beginnen und darf nur lateinische Buchstaben und Ziffern enthalten.
 - Fehlt die Datei in einer Sprache, sind ihre Platzhalter dort leer.
-- Die Fragmente `heroTexts.md` und `overlayTexts.md` enthalten zugleich die Texte von [Hero und Overlay](/de/book/vorlagen/#hero-und-overlay). `hero.md` und `overlay.md` daneben sind keine Fragmente: Sie zeigen die [Komponenten](/de/book/komponenten/#komponenten-in-hero-und-overlay) dieser Bereiche.
+- Die Fragmente `heroCards.md` und `overlayCards.md` enthalten zugleich die Karten von [Hero und Overlay](/de/book/vorlagen/#hero-und-overlay). `hero.md` und `overlay.md` daneben sind keine Fragmente: Sie zeigen die [Komponenten](/de/book/komponenten/#komponenten-in-hero-und-overlay) dieser Bereiche.
 
 Ein Absatz, der nur aus dem Namen einer Komponente in doppelten geschweiften Klammern besteht, zeigt sie an; ein [Block](/de/book/komponenten/#blöcke-pro-verwendung) gibt einer einzelnen Verwendung eigene Texte und Einstellungen. Formeln, Fußnoten, hervorgehobenen Code, Aufgabenlisten, Hinweisboxen, Abbildungen und Diagramme zeigt [Markdown-Würze](/de/book/schreiben/markdown-wuerze/).
 

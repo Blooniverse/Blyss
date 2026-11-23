@@ -1,7 +1,8 @@
 /* A strip of images that scrolls sideways and stops with an image in its centre, which the script enlarges without a
    frame. The strip is as high as the enlarged image, and its gaps keep an enlarged image of three by two clear of its
-   neighbours. A click or a touch expands the image in the centre above the page. The settings arrive as custom
-   properties from the template. It uses the colours of main.css. */
+   neighbours. A click or a touch expands the image in the centre above the page. An image can have a text, which
+   stands below the strip while the image is in the centre. The settings arrive as custom properties from the
+   template. It uses the colours of main.css. */
 component-gallery { display: block; }
 component-gallery h3:empty { display: none; }
 component-gallery .stage { position: relative; }
@@ -25,6 +26,15 @@ component-gallery ul::before, component-gallery ul::after { content: ""; flex: n
 component-gallery li { flex: none; scroll-snap-align: center; transition: scale var(--speed-enlargement); }
 component-gallery li[aria-current] { z-index: 1; scale: var(--scale-center); }
 component-gallery li p { margin: 0; }
+/* An image with a text is a figure with that text as its caption, which is no wider than the image. Until the script
+   runs, every image shows its text below itself; then the line below the strip shows the text of the image in the
+   centre. A gallery without texts has no such line. */
+component-gallery .stage figure { margin: 0; }
+component-gallery :is(figcaption, .text) { font-size: calc(1rem * var(--font-size-text)); }
+component-gallery :is(figcaption, dialog .text) { width: 0; min-width: 100%; }
+component-gallery:defined figcaption { display: none; }
+component-gallery .text { min-height: 1lh; margin: .4rem 0 0; color: var(--color202grey); text-align: center; }
+component-gallery:not(:has(figcaption)) .text, component-gallery dialog .text:empty { display: none; }
 /* Every image is as high as the others and as wide as its format, three by two until it has loaded; an image wider
    than the strip is fitted into it. */
 component-gallery img {
@@ -80,8 +90,12 @@ component-gallery dialog img {
   width: min(100vw - 2rem, var(--height-expanded) * 1dvh * var(--ratio));
   max-width: none;
   height: auto;
+  min-height: 0;
   aspect-ratio: var(--ratio);
 }
+/* The text of the expanded image stands below it, on the veil; an image that fills the screen leaves room for it. */
+component-gallery dialog[open] { display: flex; flex-direction: column; max-height: 100dvh; }
+component-gallery dialog .text { color: #fff; text-shadow: 0 0 .3em #000; }
 @keyframes component-gallery-veil { from { opacity: 0; } }
 
 @media (prefers-reduced-motion: reduce) {

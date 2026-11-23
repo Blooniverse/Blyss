@@ -58,14 +58,26 @@ const germanPost = starterGermanPosts.find(post => post.metadata.translationKey 
 const sliderPost = starterEnglishPosts.find(post => post.markdown.includes("```{{componentSlider}}"));
 assert.ok(sliderPost, "The starter needs a post showing the slider component.");
 
-// The title, description and section headings of a text of the starter, as its pages show them: the tests of
-// the starter follow its wording, which changes more often than the engine.
-async function starterText(language, ...file) {
-  const source = await readFile(join(starter, "_content", language, ...file), "utf8");
+// The title, description and section headings of a text, as the pages show them.
+function wordingOf(source, heading = /^### (.+)$/gm) {
   const field = name => escapeHtml(source.match(new RegExp(`^${name}: (.*)$`, "m"))?.[1] ?? "");
-  const heading = /^(?:hero|overlay)Texts\.md$/.test(file.at(-1)) ? /^#### (.+)$/gm : /^### (.+)$/gm;
   return { title: field("title"), description: field("description"),
     headings: [...source.matchAll(heading)].map(match => escapeHtml(match[1])) };
+}
+
+// Those of a text of the starter: the tests of the starter follow its wording, which changes more often than the
+// engine.
+async function starterText(language, ...file) {
+  const source = await readFile(join(starter, "_content", language, ...file), "utf8");
+  return wordingOf(source, /^(?:hero|overlay)Cards\.md$/.test(file.at(-1)) ? /^#### (.+)$/gm : undefined);
+}
+
+// Those of the block that shows a component in a region of the starter, the hero or the overlay.
+async function starterBlock(language, region, component) {
+  const source = await readFile(join(starter, "_content", language, `${region}.md`), "utf8");
+  const [block] = source.match(new RegExp(`^\`\`\`{{${component}}}\\n[\\s\\S]*?^\`\`\`$`, "m")) ?? [];
+  assert.ok(block, `${component} in ${language}/${region}.md`);
+  return wordingOf(block);
 }
 
 // Shows a component in a region of a starter, the hero or the overlay, as it is: with a paragraph of its name.
@@ -357,33 +369,36 @@ describe("a generated starter", () => {
     assert.ok(english.includes(`</header><div class="page"><main><header><h1>${title}</h1><h2>${description}</h2></header><article>`));
     assert.match(english, /<\/article><\/main><\/div><aside class="hero" aria-label="Highlights">.*<\/aside><footer>/s);
     const german = await readFile(join(site, "public", "de", "index.html"), "utf8");
-    const [slider, heroTexts] = await Promise.all([starterText("de", "components", "componentSlider.md"), starterText("de", "heroTexts.md")]);
-    for (const label of [`<h3><label for="componentSlider-1-input">${slider.title}</label></h3>`, `<h3>${heroTexts.title}</h3>`,
+    const [slider, heroCards] = await Promise.all([starterText("de", "components", "componentSlider.md"), starterText("de", "heroCards.md")]);
+    for (const label of [`<h3><label for="componentSlider-1-input">${slider.title}</label></h3>`, `<h3>${heroCards.title}</h3>`,
       '<input type="search" aria-label="Suchen" placeholder="Suchen">']) {
       assert.ok(german.includes(label), label);
     }
     assert.doesNotMatch(german, /<component-(?:gallery|flower|mermaid|flowchart|vega-lite) /);
+    // The block of the gallery has no title and shows that of the component's text; the block of the flower has its own.
     const switchedOn = await readFile(join(full, "public", "de", "index.html"), "utf8");
-    for (const name of ["componentGallery", "componentFlower"]) {
-      const { title: heading } = await starterText("de", "components", `${name}.md`);
-      assert.ok(switchedOn.includes(`<h3 id="${name}-1-title">${heading}</h3>`), name);
+    for (const [name, { title: heading }] of [["componentGallery", await starterText("de", "components", "componentGallery.md")],
+      ["componentFlower", await starterBlock("de", "hero", "componentFlower")]]) {
+      assert.ok(heading && switchedOn.includes(`<h3 id="${name}-1-title">${heading}</h3>`), name);
     }
   });
 
-  test("shows the gallery of the starter's overlay with its settings, its texts and its images, which load lazily", async () => {
+  test("shows the gallery of the starter's overlay with its settings, its texts and its images, which load lazily and have a text each", async () => {
     const html = await readFile(join(full, "public", "de", "pages", "about", "index.html"), "utf8");
     assert.ok(html.includes('<component-gallery class="component" role="group" aria-labelledby="componentGallery-1-title" ' +
-      'style="--height-overall: 8rem; --scale-center: 1.4; --height-expanded: 70; --speed-scrolling: 400ms; --speed-enlargement: 300ms">'));
+      'style="--height-overall: 8rem; --scale-center: 1.4; --height-expanded: 70; --speed-scrolling: 400ms; --speed-enlargement: 300ms; ' +
+      '--font-size-text: 0.8">'));
     for (const label of ["Vorheriges Bild", "Nächstes Bild"]) assert.ok(html.includes(`<button type="button" aria-label="${label}">`), label);
-    const images = [...html.matchAll(/<li><img loading="lazy" src="\/(assets\/img\/gallery\/[^"]+)" alt="[^"]+"><\/li>/g)].map(match => match[1]);
+    const images = [...html.matchAll(/<li><figure><img loading="lazy" src="\/(assets\/img\/gallery\/[^"]+)" alt="[^"]+"><figcaption>[^\n]+<\/figcaption><\/figure><\/li>/g)]
+      .map(match => match[1]);
     assert.equal(images.length, 7);
     for (const image of images) assert.ok((await stat(join(full, "public", image))).isFile(), image);
   });
 
-  test("shows the flower of the starter's hero with its colours, a button for each petal and the texts of the petals", async () => {
-    const headings = { en: ["Pluck a petal", "One text each", "Count them", "Three colours"],
-      de: ["Zupfen Sie ein Blatt", "Je ein Text", "Zählen Sie nach", "Drei Farben"] };
+  test("shows the flower of the starter's hero with its colours, a button for each petal and the texts of its block, one for each petal", async () => {
     for (const [language, label] of [["en", "Petal"], ["de", "Blütenblatt"]]) {
+      const { headings } = await starterBlock(language, "hero", "componentFlower");
+      assert.equal(headings.length, 4, language);
       const html = await readFile(join(full, "public", language, "index.html"), "utf8");
       const flower = html.slice(html.indexOf("<component-flower "), html.indexOf("</component-flower>"));
       assert.ok(flower.startsWith('<component-flower class="component" role="group" aria-labelledby="componentFlower-1-title" ' +
@@ -391,7 +406,7 @@ describe("a generated starter", () => {
         '--speed-fading: 4s; --opacity-fallen: 0.2; --font-size-text: 0.6">'), language);
       assert.deepEqual([...flower.matchAll(/<button type="button" class="petal" style="--angle: ([\d.]+)deg" aria-label="([^"]+)" disabled><\/button>/g)]
         .map(match => match.slice(1)), [0, 90, 180, 270].map((angle, index) => [String(angle), `${label} ${index + 1}`]));
-      assert.deepEqual([...flower.matchAll(/<li>\n<h3>([^<]+)<\/h3>\n<p>/g)].map(match => match[1]), headings[language]);
+      assert.deepEqual([...flower.matchAll(/<li>\n<h3>([^<]+)<\/h3>\n<p>/g)].map(match => match[1]), headings, language);
       assert.equal(flower.match(/<span style="--lie: -?\d+deg"><\/span>/g).length, 4, language);
     }
   });
@@ -438,7 +453,13 @@ describe("a generated starter", () => {
     const value = Math.floor((Number(metadata.start) + Number(metadata.end)) / 2);
     assert.ok(article.includes(`<label for="componentSlider-2-input">${escapeHtml(metadata.title)}</label>`));
     assert.ok(article.includes(`<input id="componentSlider-2-input" type="range" min="${metadata.start}" max="${metadata.end}" value="${value}">`));
-    // The slider of the overlay is a block of the starter's overlay.md, whose steps are described in its language alone.
+    // The slider of the overlay is a block of the starter's overlay.md, with a title and a text of its own and with
+    // steps that are described in its language alone.
+    const own = await starterBlock("en", "overlay", "componentSlider");
+    assert.ok(own.title && own.title !== hero.title);
+    assert.ok(overlay.includes(`<label for="componentSlider-3-input">${own.title}</label>`));
+    const text = html => html.match(/<\/ol>\n(<p>[\s\S]*?<\/p>)\s*<\/component-slider>/)?.[1];
+    assert.ok(text(overlay) && text(article) && text(overlay) !== text(article));
     assert.ok(overlay.includes('<input id="componentSlider-3-input" type="range" min="1" max="10000" value="5000">'));
     assert.ok(overlay.includes('<li style="--position: 100%"><data value="10000">10000</data> <span>And Full</span></li>'));
     assert.equal(html.match(/ id="[^"]+"/g).length, new Set(html.match(/ id="[^"]+"/g)).size);
@@ -903,20 +924,20 @@ describe("a site with several tagged posts", () => {
     assert.ok(home.includes('<pre tabindex="0"><code class="language-markdown">{{recentPosts}}\n</code></pre>'));
   });
 
-  test("shows the texts of heroTexts.md in the hero of the home pages and those of overlayTexts.md in the overlay of the other pages", async () => {
+  test("shows the cards of heroCards.md in the hero of the home pages and those of overlayCards.md in the overlay of the other pages", async () => {
     const region = async (path, start) => {
       const html = await readFile(join(site, "public", path), "utf8");
       return html.includes(start) ? html.slice(html.indexOf(start), html.indexOf("</aside>")) : "";
     };
     const hero = path => region(path, '<aside class="hero"');
     const overlay = path => region(path, '<div id="overlay"');
-    const texts = html => [...html.matchAll(/<div>\n<h4>([^<]+)<\/h4>/g)].map(match => match[1]);
-    const [heroEnglish, heroGerman, overlayEnglish, overlayGerman] = await Promise.all([["en", "heroTexts.md"], ["de", "heroTexts.md"],
-      ["en", "overlayTexts.md"], ["de", "overlayTexts.md"]].map(([language, file]) => starterText(language, file)));
+    const cards = html => [...html.matchAll(/<div>\n<h4>([^<]+)<\/h4>/g)].map(match => match[1]);
+    const [heroEnglish, heroGerman, overlayEnglish, overlayGerman] = await Promise.all([["en", "heroCards.md"], ["de", "heroCards.md"],
+      ["en", "overlayCards.md"], ["de", "overlayCards.md"]].map(([language, file]) => starterText(language, file)));
     const home = await hero("en/index.html");
     assert.ok(home.includes(`<h3>${heroEnglish.title}</h3>`));
-    assert.deepEqual(texts(home), heroEnglish.headings);
-    assert.deepEqual(texts(await hero("de/index.html")), heroGerman.headings);
+    assert.deepEqual(cards(home), heroEnglish.headings);
+    assert.deepEqual(cards(await hero("de/index.html")), heroGerman.headings);
     assert.equal(await overlay("en/index.html"), "");
     const about = await overlay("en/pages/about/index.html");
     for (const path of ["en/posts/older/index.html", "en/tags/index.html", "en/book/index.html", "en/404.html"]) {
@@ -924,8 +945,8 @@ describe("a site with several tagged posts", () => {
       assert.equal(await hero(path), "", path);
     }
     assert.ok(about.includes(`<h3>${overlayEnglish.title}</h3>`));
-    assert.deepEqual(texts(about), overlayEnglish.headings);
-    assert.deepEqual(texts(await overlay("de/posts/index.html")), overlayGerman.headings);
+    assert.deepEqual(cards(about), overlayEnglish.headings);
+    assert.deepEqual(cards(await overlay("de/posts/index.html")), overlayGerman.headings);
   });
 
   test("archives all posts newest first, pageSize posts per page", async () => {
@@ -1220,7 +1241,7 @@ describe("a site with drafts", () => {
   });
 });
 
-describe("a site with its own hero texts and fragments", () => {
+describe("a site with its own hero cards and fragments", () => {
   let site;
   const page = path => readFile(join(site, "public", path), "utf8");
   const long = Array.from({ length: 300 }, (_, index) => `w${index + 1}`).join(" ");
@@ -1228,10 +1249,10 @@ describe("a site with its own hero texts and fragments", () => {
   before(async () => {
     site = join(sandbox, "hero");
     assert.equal(run(["init", site], sandbox).status, 0);
-    const texts = [`#### One\n\n${long}\n\n##### Part of one\n\nMore.`, "#### Two\n\n```md\n### Not a text\n```",
-      ...[3, 4, 5, 6, 7, 8, 9].map(number => `#### Text ${number}\n\nText.`)];
-    await writeFile(join(site, "_content", "en", "heroTexts.md"),
-      `---\ntitle: Nine <texts>\n---\n\n<!-- Each #### heading starts a text. -->\n\n${texts.join("\n\n")}\n`);
+    const cards = [`#### One\n\n${long}\n\n##### Part of one\n\nMore.`, "#### Two\n\n```md\n### Not a card\n```",
+      ...[3, 4, 5, 6, 7, 8, 9].map(number => `#### Card ${number}\n\nText.`)];
+    await writeFile(join(site, "_content", "en", "heroCards.md"),
+      `---\ntitle: Nine <cards>\n---\n\n<!-- Each #### heading starts a card. -->\n\n${cards.join("\n\n")}\n`);
     await writeFile(join(site, "_content", "en", "notice.md"), "---\ntitle: Notice\n---\n\nClosed on *Monday*.\n");
     const documentFile = join(site, "templates", "document.html");
     const template = await readFile(documentFile, "utf8");
@@ -1241,20 +1262,20 @@ describe("a site with its own hero texts and fragments", () => {
     assert.equal(result.status, 0, result.stderr);
   });
 
-  test("shows every text of heroTexts.md in full, each from one #### heading to the next", async () => {
+  test("shows every card of heroCards.md in full, each from one #### heading to the next", async () => {
     const html = await page("en/index.html");
     const hero = html.slice(html.indexOf("<h3>Nine"), html.indexOf("</aside>"));
-    assert.ok(hero.startsWith("<h3>Nine &lt;texts&gt;</h3>"));
+    assert.ok(hero.startsWith("<h3>Nine &lt;cards&gt;</h3>"));
     assert.equal(hero.match(/<div>\n<h4>/g).length, 9);
     assert.ok(hero.includes(`<div>\n<h4>One</h4>\n<p>${long}</p>\n<h5>Part of one</h5>\n<p>More.</p>\n</div>`));
-    assert.ok(hero.includes('<div>\n<h4>Two</h4>\n<pre tabindex="0"><code class="language-md"><span class="hljs-section">### Not a text</span>\n</code></pre>\n</div>'));
+    assert.ok(hero.includes('<div>\n<h4>Two</h4>\n<pre tabindex="0"><code class="language-md"><span class="hljs-section">### Not a card</span>\n</code></pre>\n</div>'));
   });
 
   test("gives templates each Markdown file directly in _content/<language>/ without publishing it", async () => {
     assert.ok((await page("en/posts/index.html")).includes(
       '<section class="notice"><h2>Notice</h2><p>Closed on <em>Monday</em>.</p>\n</section>'));
     assert.ok((await page("de/posts/index.html")).includes('<section class="notice"><h2></h2></section>'));
-    for (const name of ["heroTexts", "overlayTexts", "notice"]) {
+    for (const name of ["heroCards", "overlayCards", "notice"]) {
       await assert.rejects(stat(join(site, "public", "en", name)), { code: "ENOENT" });
     }
   });
@@ -1301,7 +1322,8 @@ ${regions}  components: {
         { value: 0, description: { en: "Frost", de: "Frost" } }
       ]
     },
-    componentGallery: { heightOverall: "200px", heightCenter: "150%", heightExpanded: "90%", animationSpeedScrolling: "1s", animationSpeedImgEnlargement: ".2s" },
+    componentGallery: { heightOverall: "200px", heightCenter: "150%", heightExpanded: "90%", animationSpeedScrolling: "1s", animationSpeedImgEnlargement: ".2s",
+      fontSizeText: "110%" },
     componentFlower: { petals: 5, colourSystem: "complementary", colourBaseHue: 40, animationSpeedFalling: "1500ms", animationSpeedText: "2s",
       animationSpeedFading: ".5s", opacityFallen: "20%", fontSizeText: "75%" }
   },
@@ -1335,9 +1357,9 @@ ${regions}  components: {
       '  <li style="--position: 100%"><data value="4">4</data> <span>Voll</span></li>\n</ol>'));
   });
 
-  test("gives the gallery its heights and speeds, the height of the image in the centre as a factor", async () => {
+  test("gives the gallery its heights, its speeds and the size of its texts, the height of the image in the centre and that size as factors", async () => {
     assert.ok((await gallery("de/index.html")).endsWith(
-      'style="--height-overall: 200px; --scale-center: 1.5; --height-expanded: 90; --speed-scrolling: 1s; --speed-enlargement: .2s">'));
+      'style="--height-overall: 200px; --scale-center: 1.5; --height-expanded: 90; --speed-scrolling: 1s; --speed-enlargement: .2s; --font-size-text: 1.1">'));
   });
 
   test("gives the flower its petals, colours and times, and each petal the text of its number", async () => {
@@ -1369,7 +1391,7 @@ ${regions}  components: {
     assert.ok(fallback.includes('<input id="componentSlider-1-input" type="range" min="0" max="100" value="50">'));
     assert.doesNotMatch(fallback, /<ol/);
     assert.ok((await gallery("en/index.html")).endsWith(
-      'style="--height-overall: 8rem; --scale-center: 1.3; --height-expanded: 70; --speed-scrolling: 400ms; --speed-enlargement: 300ms">'));
+      'style="--height-overall: 8rem; --scale-center: 1.3; --height-expanded: 70; --speed-scrolling: 400ms; --speed-enlargement: 300ms; --font-size-text: 0.8">'));
   });
 });
 
@@ -1381,7 +1403,7 @@ describe("a site with its own hero and overlay", () => {
   // The hero or the overlay of a page, or nothing, and the components of such a region in their order.
   const region = async (path, name) => (await page(path)).match(new RegExp(`<aside class="${name}"[\\s\\S]*?</aside>`))?.[0] ?? "";
   const components = html => [...html.matchAll(/<(component-[a-z]+) /g)].map(match => match[1]);
-  // The headings of the starter's texts of the hero and of the overlay, by region and language: their title first.
+  // The headings of the starter's cards of the hero and of the overlay, by region and language: their title first.
   const headings = { hero: {}, overlay: {} };
 
   before(async () => {
@@ -1391,8 +1413,8 @@ describe("a site with its own hero and overlay", () => {
     config = await readFile(configFile, "utf8");
     for (const name of ["hero", "overlay"]) {
       for (const language of ["en", "de"]) {
-        const { title, headings: texts } = await starterText(language, `${name}Texts.md`);
-        headings[name][language] = [`<h3>${title}</h3>`, ...texts.map(text => `<h4>${text}</h4>`)];
+        const { title, headings: cards } = await starterText(language, `${name}Cards.md`);
+        headings[name][language] = [`<h3>${title}</h3>`, ...cards.map(card => `<h4>${card}</h4>`)];
       }
     }
   });
@@ -1414,10 +1436,10 @@ describe("a site with its own hero and overlay", () => {
   }
   const block = name => `\`\`\`{{${name}}}\n\`\`\`\n`;
 
-  test("shows the components of hero.md and of overlay.md in their order, named by a paragraph or by a block, and the texts that are switched on", async () => {
+  test("shows the components of hero.md and of overlay.md in their order, named by a paragraph or by a block, and the cards that are switched on", async () => {
     await writeRegions(`{{componentFlower}}\n\n${block("componentGallery")}`, block("componentGallery"));
-    await buildWith(`  hero: { texts: false },
-  overlay: { showOn: { home: true, book: false }, texts: true },`);
+    await buildWith(`  hero: { cards: false },
+  overlay: { showOn: { home: true, book: false }, cards: true },`);
     const hero = await region("en/index.html", "hero");
     assert.deepEqual(components(hero), ["component-flower", "component-gallery"]);
     assert.ok(hero.includes("<h3></h3>"));
@@ -1434,9 +1456,9 @@ describe("a site with its own hero and overlay", () => {
     }
   });
 
-  test("leaves out a hero and an overlay without a component and without texts", async () => {
+  test("leaves out a hero and an overlay without a component and without cards", async () => {
     await writeRegions("", "");
-    await buildWith("  hero: { texts: false },\n  overlay: { texts: false },");
+    await buildWith("  hero: { cards: false },\n  overlay: { cards: false },");
     for (const path of ["en/index.html", "de/index.html", "en/pages/about/index.html", "de/posts/index.html"]) {
       const html = await page(path);
       // The regions follow the content of the page, which may show components of its own.
@@ -1447,7 +1469,7 @@ describe("a site with its own hero and overlay", () => {
     }
   });
 
-  test("shows the texts alone without settings, the overlay on every kind of page", async () => {
+  test("shows the cards alone without settings, the overlay on every kind of page", async () => {
     await buildWith("");
     const hero = await region("de/index.html", "hero");
     assert.deepEqual(components(hero), []);
@@ -1459,13 +1481,13 @@ describe("a site with its own hero and overlay", () => {
     }
   });
 
-  test("gives the overlay the components and the texts of the hero if synchroniseHeroOverlay is true", async () => {
+  test("gives the overlay the components and the cards of the hero if synchroniseHeroOverlay is true", async () => {
     await writeRegions(block("componentFlower"), block("componentSlider") + block("componentGallery"));
-    await buildWith(`  hero: { texts: true },
-  overlay: { showOn: { post: false }, texts: false },
+    await buildWith(`  hero: { cards: true },
+  overlay: { showOn: { post: false }, cards: false },
   synchroniseHeroOverlay: true,`);
     const hero = await region("en/index.html", "hero");
-    // From the first component to the end of the texts, the overlay is the hero.
+    // From the first component to the end of the cards, the overlay is the hero.
     const parts = html => html.slice(html.indexOf("<link "), html.lastIndexOf("</div>"));
     for (const path of ["en/index.html", "en/pages/about/index.html", "en/tags/index.html"]) {
       const overlay = await region(path, "overlay");
@@ -1478,7 +1500,7 @@ describe("a site with its own hero and overlay", () => {
     assert.equal(await region(`en/posts/${englishPost.slug}/index.html`, "overlay"), "");
   });
 
-  test("places a block above or below the texts, with settings of its own, and hides one in a comment", async () => {
+  test("places a block above or below the cards, with settings of its own, and hides one in a comment", async () => {
     // A comment hides a block up to a line of --> alone, not up to the arrow of a diagram; within a block, it is text.
     const hero = block("componentGallery") +
       "<!--\n```{{componentMermaid}}\nflowchart LR\n  a --> b\n```\n-->\n" +
@@ -1489,8 +1511,8 @@ describe("a site with its own hero and overlay", () => {
     for (const language of ["en", "de"]) {
       const html = await page(`${language}/index.html`);
       const content = await region(`${language}/index.html`, "hero");
-      assert.ok(content.indexOf("<component-gallery ") < content.indexOf('class="region-texts"'));
-      assert.ok(content.indexOf('class="region-texts"') < content.indexOf("<component-slider "));
+      assert.ok(content.indexOf("<component-gallery ") < content.indexOf('class="region-cards"'));
+      assert.ok(content.indexOf('class="region-cards"') < content.indexOf("<component-slider "));
       assert.ok(content.indexOf("<component-slider ") < content.indexOf("<component-flower "));
       assert.deepEqual(components(content), ["component-gallery", "component-slider", "component-flower"]);
       assert.ok(content.includes("<li>\n<h3>One</h3>\n<!--\nkept\n-->"));
@@ -1566,7 +1588,7 @@ export default ({ languageKey }) => { appendFileSync(${JSON.stringify(calls)}, l
       await writeRegions("```{{componentGallery}}\n---\nregionPosition: below\n---\n```\n", "");
       await writeFile(template, written.replace("{{componentsBelow}}", ""));
       await refused(`Cannot build with ${join("templates", "hero.html")}: it lacks {{componentsBelow}}, which shows the components that ` +
-        `${join("_content", "de", "hero.md")} places below the texts.\nAdd the placeholder to the template.\n`);
+        `${join("_content", "de", "hero.md")} places below the cards.\nAdd the placeholder to the template.\n`);
     } finally {
       await writeFile(template, written);
     }
@@ -1627,7 +1649,10 @@ export default ({ settings, languageKey, escapeHtml, refuse }) => {
       '```{{notice}}\n---\ntitle: Block & <own>\nlevel: low\nhours: ["8", "12"]\n---\n\nOpen on *Sunday*.\n```\n\n' +
       "```{{notice}}\n```\n\n```{{notice}}\n---\n---\n```\n\n~~~{{notice}}\n---\nhours:\n  - 1\n  - 2\n---\n~~~\n\n```{{missing}}\ntext\n```\n");
     await writeFile(join(site, "_content", "de", "pages", "blocks.md"), "---\ntitle: Blöcke\n---\n\n" +
-      "```{{componentFlower}}\n---\npetals: 3\ncolourSystem: complementary\nfontSizeText: 80%\n---\n\n### Eins\n\nText.\n\n### Zwei\n```\n");
+      "```{{componentFlower}}\n---\npetals: 3\ncolourSystem: complementary\nfontSizeText: 80%\n---\n\n### Eins\n\nText.\n\n### Zwei\n```\n\n" +
+      "```{{componentGallery}}\n---\nfontSizeText: 90%\n---\n\n- ![Sonne](/assets/img/gallery/sunrise.svg) Ein *Text*\n\n" +
+      "- ![Wellen](/assets/img/gallery/waves.svg)\n\n- ![Ringe](/assets/img/gallery/rings.svg)\n\n  Ein Absatz\n\n" +
+      "- ![Dünen](/assets/img/gallery/dunes.svg) Text\n\n  und mehr\n```\n");
     const result = run(["build"], site);
     assert.equal(result.status, 0, result.stderr);
   });
@@ -1675,6 +1700,19 @@ export default ({ settings, languageKey, escapeHtml, refuse }) => {
     assert.deepEqual([...flower.matchAll(/style="--angle: ([\d.]+)deg" aria-label="([^"]+)" disabled>/g)].map(match => match.slice(1)),
       [["0", "Blütenblatt 1"], ["120", "Blütenblatt 2"], ["240", "Blütenblatt 3"]]);
     assert.deepEqual([...flower.matchAll(/<li>\n<h3>([^<]+)<\/h3>/g)].map(match => match[1]), ["Eins", "Zwei"]);
+  });
+
+  test("gives an image of the gallery the text that follows it in its list item as its caption, unless more than a text follows", async () => {
+    const html = await page("de/pages/blocks/index.html");
+    const gallery = html.slice(html.indexOf("<component-gallery "), html.indexOf("</component-gallery>"));
+    assert.match(gallery, /^<component-gallery [^>]+; --font-size-text: 0\.9">/);
+    const image = (name, description) => `<img loading="lazy" src="/assets/img/gallery/${name}.svg" alt="${description}">`;
+    assert.ok(gallery.includes(`<ul>\n<li><figure>${image("sunrise", "Sonne")}<figcaption>Ein <em>Text</em></figcaption></figure></li>\n` +
+      `<li><p>${image("waves", "Wellen")}</p>\n</li>\n` +
+      `<li><figure>${image("rings", "Ringe")}<figcaption>Ein Absatz</figcaption></figure></li>\n` +
+      `<li><p>${image("dunes", "Dünen")} Text</p>\n<p>und mehr</p>\n</li>\n</ul>`));
+    // The text of the image in the centre appears on the line below the strip.
+    assert.ok(gallery.endsWith('</div>\n  <p class="text"></p>\n'));
   });
 
   test("refuses a setting that its data file refuses, in blyss.config.js and in a block, a front matter that it cannot read and the name of a former variant, and keeps the previous output", async () => {
@@ -1741,8 +1779,8 @@ export default ({ settings, source, texts, refuse }) => {
       '```{{componentMermaid}}\n---\nlibrary: /mermaid.mjs?v=1&x="y"\n---\n\ngraph TD\n```\n');
     // Formulas are read in every text: in that of a component and in those of the hero.
     await writeFile(join(site, sliderText), `${await readFile(join(site, sliderText), "utf8")}\nA formula $s$.\n`);
-    const heroTexts = join(site, "_content", "en", "heroTexts.md");
-    await writeFile(heroTexts, `${await readFile(heroTexts, "utf8")}\n#### Formula\n\nA formula $h$.\n`);
+    const heroCards = join(site, "_content", "en", "heroCards.md");
+    await writeFile(heroCards, `${await readFile(heroCards, "utf8")}\n#### Formula\n\nA formula $h$.\n`);
     const result = run(["build"], site);
     assert.equal(result.status, 0, result.stderr);
   });
@@ -1912,8 +1950,8 @@ describe("a site with the callouts, the figures and the formulas of MyST", () =>
       `---\ntitle: Direktiven\ntranslationKey: directives\n---\n\n:::{note}\nText.\n:::\n\n${fence}{seealso}\nMehr.\n${fence}\n`);
     // A text of the hero is no page, but its callout is titled in its language as well; its formula has no number,
     // and its {ref} is no reference.
-    const heroTexts = join(site, "_content", "de", "heroTexts.md");
-    await writeFile(heroTexts, `${await readFile(heroTexts, "utf8")}\n#### Hinweisbox\n\n:::{tip}\nIm Hero.\n:::\n\n` +
+    const heroCards = join(site, "_content", "de", "heroCards.md");
+    await writeFile(heroCards, `${await readFile(heroCards, "utf8")}\n#### Hinweisbox\n\n:::{tip}\nIm Hero.\n:::\n\n` +
       "#### Formel\n\n$$\n\\begin{equation} E \\end{equation}\n$$\n\nKein Verweis: {ref}`formel`.\n");
     await writeFile(join(site, labelled), labels);
     await writeFile(join(site, "_content", "de", "pages", "labels.md"),
@@ -2052,8 +2090,8 @@ describe("a site with the callouts, the figures and the formulas of MyST", () =>
   });
 
   test("refuses a label that is no name, stands twice, names nothing or belongs to no page, a link without a text that is no reference to an element with something to show, and a figure without an image", async () => {
-    const heroTexts = join("_content", "en", "heroTexts.md");
-    const hero = await readFile(join(site, heroTexts), "utf8");
+    const heroCards = join("_content", "en", "heroCards.md");
+    const hero = await readFile(join(site, heroCards), "utf8");
     const link = "[The figure](#fig-logo)";
     for (const [file, original, search, replacement, message] of [
       [labelled, labels, ":label: fig-logo", ":label: fig logo", 'its label "fig logo" must be a name of letters, digits, hyphens, underscores, full stops and colons, such as "fig-harbour"\\.\\n$'],
@@ -2081,7 +2119,7 @@ describe("a site with the callouts, the figures and the formulas of MyST", () =>
       [labelled, labels, ":class: dropdown", ":class: drop.down", 'its \\{note\\} directive cannot use class "drop\\.down", which must be the names of classes, ' +
         'each of letters, digits, hyphens and underscores, such as "dropdown"\\.\\n$'],
       [labelled, labels, ":open:", ":open: maybe", 'its \\{warning\\} directive cannot use open "maybe", which must be true or false\\.\\n$'],
-      [heroTexts, hero, hero, `${hero}\n#### Figure\n\n:::{figure} /assets/img/logo.svg\n:label: hero\n:::\n`, "its \\{figure\\} directive has a label or a number, " +
+      [heroCards, hero, hero, `${hero}\n#### Figure\n\n:::{figure} /assets/img/logo.svg\n:label: hero\n:::\n`, "its \\{figure\\} directive has a label or a number, " +
         "but only the text of a page, of a post or of a doc has labels and numbers\\.\\n$"]
     ]) {
       assert.ok(original.includes(search), search);
@@ -2142,8 +2180,9 @@ describe("invalid content", () => {
   const page = join("_content", "en", "pages", "about", "index.md");
   const about = join("_content", "en", "pages", "about.md");
   const post = join("_content", "en", "posts", "symbols.md");
-  const hero = join("_content", "en", "heroTexts.md");
-  const overlay = join("_content", "en", "overlayTexts.md");
+  const hero = join("_content", "en", "heroCards.md");
+  const overlay = join("_content", "en", "overlayCards.md");
+  const former = join("_content", "en", "overlayTexts.md");
   const fragment = join("_content", "en", "my-hero.md");
   const text = join("_content", "en", "components", "componentSlyderHero.md");
   const variant = join("_content", "en", "components", "componentSliderHero.md");
@@ -2185,19 +2224,21 @@ describe("invalid content", () => {
       `Cannot build ${dated}: its datePublished "10.11.2026" is not a date.\n${notADate}`],
     ["a doc whose dateModified names a day that its month lacks", modified, "---\ntitle: Modified\ndateModified: 2026-02-30\n---\n",
       `Cannot build ${modified}: its dateModified "2026-02-30" is not a date.\n${notADate}`],
-    ["hero texts whose title is a list", hero, "---\ntitle:\n  - Why\n---\n\n#### Text\n\nText.\n",
+    ["hero cards whose title is a list", hero, "---\ntitle:\n  - Why\n---\n\n#### Card\n\nText.\n",
       `Cannot build ${hero}: its title holds a list or a group of fields, but it is a text.\nWrite the text on the line of the field.\n`],
-    ["hero texts with content before their first #### heading", hero, "Introduction.\n\n#### Text\n\nText.\n",
-      `Cannot build ${hero}: each of its texts starts with a #### heading, but there is content before the first one.\n`],
-    ["overlay texts with content before their first #### heading", overlay, "---\ntitle: Texts\n---\n\n## Text\n\n#### Text\n",
-      `Cannot build ${overlay}: each of its texts starts with a #### heading, but there is content before the first one.\n`],
-    ["hero texts using an old ### heading", hero, "### Old\n\nText.\n",
-      `Cannot build ${hero}: its region texts use a ### heading.\nChange each ### heading to #### to start a text below the region's title.\n`],
-    ["overlay texts using an old ### heading after a section", overlay, "#### New\n\nText.\n\n### Old\n",
-      `Cannot build ${overlay}: its region texts use a ### heading.\nChange each ### heading to #### to start a text below the region's title.\n`],
+    ["hero cards with content before their first #### heading", hero, "Introduction.\n\n#### Card\n\nText.\n",
+      `Cannot build ${hero}: each of its cards starts with a #### heading, but there is content before the first one.\n`],
+    ["overlay cards with content before their first #### heading", overlay, "---\ntitle: Cards\n---\n\n## Text\n\n#### Card\n",
+      `Cannot build ${overlay}: each of its cards starts with a #### heading, but there is content before the first one.\n`],
+    ["hero cards using an old ### heading", hero, "### Old\n\nText.\n",
+      `Cannot build ${hero}: its cards use a ### heading.\nChange each ### heading to #### to start a card below the region's title.\n`],
+    ["overlay cards using an old ### heading after a card", overlay, "#### New\n\nText.\n\n### Old\n",
+      `Cannot build ${overlay}: its cards use a ### heading.\nChange each ### heading to #### to start a card below the region's title.\n`],
+    ["overlay cards in a file with their former name", former, "---\ntitle: Cards\n---\n\n#### Card\n\nText.\n",
+      `Cannot build ${former}: the cards of the overlay are those of overlayCards.md now.\nRename the file to overlayCards.md.\n`],
     ["a fragment whose name templates cannot use", fragment, "---\ntitle: Mine\n---\n",
       `Cannot build ${fragment}: templates use its name in placeholders, so it must start with a Latin letter and contain ` +
-      "only Latin letters and digits, such as heroTexts.md.\n"],
+      "only Latin letters and digits, such as heroCards.md.\n"],
     ["a text for a component that does not exist", text, "---\ntitle: Slider\n---\n",
       `Cannot build ${text}: there is no component "componentSlyderHero" in components/.\n`],
     ["the text of a former variant of a component", variant, "---\ntitle: Old slider\n---\n",
@@ -2334,8 +2375,11 @@ describe("invalid configuration", () => {
       ['paddingOverlay: "1rem"', 'paddingOverlay: "1em"', `layout.paddingOverlay "1em": ${length} "2vmin"`],
       ['alignOverlay: "centerExtra"', 'alignOverlay: "centerLeft"',
         'layout.alignOverlay "centerLeft": it must be "centerExtra", "left" or "center"'],
-      ["texts: true // all texts of _content/<language>/heroTexts.md", "texts: 1 // all texts of _content/<language>/heroTexts.md",
-        "hero.texts 1: it must be true (on) or false (off)"],
+      ["cards: true // all cards of _content/<language>/heroCards.md", "cards: 1 // all cards of _content/<language>/heroCards.md",
+        "hero.cards 1: it must be true (on) or false (off)"],
+      ["cards: true // all cards of _content/<language>/overlayCards.md", "texts: true // the former name of cards",
+        `overlay.texts: the setting is overlay.cards now, which switches the cards of ${join("_content", "<language>", "overlayCards.md")} ` +
+        "on and off.\nRename the setting to cards"],
       ["post: true,", "posts: true,",
         'overlay.showOn.posts: there is no kind of page "posts", only "home", "page", "post", "book", "list" and "not-found"'],
       ["home: false,", "home: 0,", "overlay.showOn.home 0: it must be true (on) or false (off)"],
@@ -2356,6 +2400,8 @@ describe("invalid configuration", () => {
         'it must be a duration in ms or s, such as "400ms"'],
       ['animationSpeedImgEnlargement: "300ms"', "animationSpeedImgEnlargement: 300", 'components.componentGallery.animationSpeedImgEnlargement 300: ' +
         'it must be a duration in ms or s, such as "400ms"'],
+      ['fontSizeText: "80%"', 'fontSizeText: "0%"', 'components.componentGallery.fontSizeText "0%": ' +
+        'it must be a percentage of the default text size above 0%, such as "80%"'],
       ["petals: 4", "petals: 2", "components.componentFlower.petals 2: it must be a whole number from 3 to 24"],
       ['colourSystem: "triadic"', 'colourSystem: "tetradic"', 'components.componentFlower.colourSystem "tetradic": it must be "complementary" or "triadic"'],
       ["colourBaseHue: 202", "colourBaseHue: 361", "components.componentFlower.colourBaseHue 361: it must be a hue from 0 to 360, such as 202"],
@@ -2407,10 +2453,11 @@ describe("a website without a directory or a template", () => {
   });
 
   test("names a placeholder that a template cannot fill, in the template of a page, of a region and of the document, and keeps the previous output", async () => {
-    // A misspelt placeholder, a label, which only document.html and the regions have, a placeholder of another template
-    // and the content of hero.md, which shows the components of the hero and is no fragment.
-    for (const [name, placeholder, unknown] of [["document.html", "{{pageTitle}}", "{{pageTitel}}"], ["page.html", "{{title}}", "{{postsLabel}}"],
-      ["overlay.html", "{{texts}}", "{{bookToc}}"], ["hero.html", "{{textsTitle}}", "{{heroContent}}"]]) {
+    // A misspelt placeholder, a label, which only document.html and the regions have, a placeholder of another template,
+    // the content of hero.md, which shows the components of the hero and is no fragment, and the former name of {{cards}}.
+    for (const [name, placeholder, unknown, advice = "Correct its name or remove it."] of [["document.html", "{{pageTitle}}", "{{pageTitel}}"],
+      ["page.html", "{{title}}", "{{postsLabel}}"], ["overlay.html", "{{cards}}", "{{bookToc}}"], ["hero.html", "{{cardsTitle}}", "{{heroContent}}"],
+      ["hero.html", "{{cards}}", "{{texts}}", "It is {{cards}} now: rename it."]]) {
       const file = join(site, "templates", name);
       const template = await readFile(file, "utf8");
       assert.ok(template.includes(placeholder), placeholder);
@@ -2418,7 +2465,7 @@ describe("a website without a directory or a template", () => {
       try {
         const result = run(["build"], site);
         assert.equal(result.status, 1, name);
-        assert.equal(result.stderr, `Cannot build with ${join("templates", name)}: there is no placeholder ${unknown}.\nCorrect its name or remove it.\n`);
+        assert.equal(result.stderr, `Cannot build with ${join("templates", name)}: there is no placeholder ${unknown}.\n${advice}\n`);
         assert.ok((await stat(join(site, "public", "en", "index.html"))).isFile());
       } finally {
         await writeFile(file, template);

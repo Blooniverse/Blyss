@@ -318,7 +318,7 @@ body:has(> .overlay) { padding-bottom: calc(var(--site-margin) + 2rem); } /* lea
   background-color: var(--color202black);
   margin-bottom: 0.3em; 
 }
-:where(.hero-panel, #overlay) .region-texts h4 {
+:where(.hero-panel, #overlay) .region-cards h4 {
   display: block; 
   margin: 0 0 .3em;
   padding: 0;
@@ -328,30 +328,30 @@ body:has(> .overlay) { padding-bottom: calc(var(--site-margin) + 2rem); } /* lea
   background: none;
 }
 :where(.hero-panel, #overlay) h3 { margin-top: 0; font-size: 1.17em; letter-spacing: inherit; line-height: inherit; text-wrap: inherit; }
-:is(.hero-panel, #overlay) h3:empty { display: none; } /* such as the title of the texts when there is none */
+:is(.hero-panel, #overlay) h3:empty { display: none; } /* such as the title of the cards when there is none */
 /* The components of the hero and of the overlay follow each other; each brings its own styles from components/.
-   Those below the texts of a region keep their distance above themselves. */
+   Those below the cards of a region keep their distance above themselves. */
 .component { margin: 0 0 1rem; }
-.region-texts ~ .component { margin-block: 1rem 0; }
-/* The texts of heroTexts.md and of overlayTexts.md, side by side in as many columns as fit, each in full length. */
-.region-texts {
+.region-cards ~ .component { margin-block: 1rem 0; }
+/* The cards of heroCards.md and of overlayCards.md, side by side in as many columns as fit, each in full length. */
+.region-cards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
   gap: 1rem;
   font-size: .8rem;
 }
-.region-texts:not(:has(> div)) { display: none; } /* without texts */
-.region-texts > div { padding: .5rem .75rem; border: 1px solid var(--card-border); border-radius: var(--radius); background: var(--card); }
-.region-texts > div > :last-child { margin-bottom: 0; }
-:where(.hero-panel, #overlay) .region-texts h4 { margin: 0 0 .3em; font-size: 1.1em; line-height: 1.2; }
+.region-cards:not(:has(> div)) { display: none; } /* without cards */
+.region-cards > div { padding: .5rem .75rem; border: 1px solid var(--card-border); border-radius: var(--radius); background: var(--card); }
+.region-cards > div > :last-child { margin-bottom: 0; }
+:where(.hero-panel, #overlay) .region-cards h4 { margin: 0 0 .3em; font-size: 1.1em; line-height: 1.2; }
 
 /* layout.alignHero and layout.alignOverlay align the hero and the overlay: "center" centers all of it, "centerExtra"
-   all but its texts, which stay left-aligned with their headings, and "left" none of it. A component is centered
+   all but its cards, which stay left-aligned with their headings, and "left" none of it. A component is centered
    where the text around it is: in such a hero or overlay and in a centered page. */
 :is([data-align-hero="center"], [data-align-hero="centerExtra"]) .hero-panel,
 :is([data-align-overlay="center"], [data-align-overlay="centerExtra"]) #overlay { text-align: center; }
-[data-align-hero="centerExtra"] .hero-panel .region-texts,
-[data-align-overlay="centerExtra"] #overlay .region-texts { text-align: start; }
+[data-align-hero="centerExtra"] .hero-panel .region-cards,
+[data-align-overlay="centerExtra"] #overlay .region-cards { text-align: start; }
 [data-align="center"] .page .component,
 :is([data-align-hero="center"], [data-align-hero="centerExtra"]) .hero-panel .component,
 :is([data-align-overlay="center"], [data-align-overlay="centerExtra"]) #overlay .component { margin-inline: auto; }
