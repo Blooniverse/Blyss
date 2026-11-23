@@ -3,8 +3,9 @@
 
 name: Node.js build & test CI workflow
 
-# Runs for a pull request to main: when it is opened or reopened, when its branch gets new commits ("synchronize")
-# and when it is merged. A commit made directly on main starts no run; neither does one with [skip ci] in its message.
+# Runs for a pull request to main: when it is opened or reopened and when its branch gets new commits ("synchronize").
+# Runs for main after every push to it, the merge of a pull request or a commit made directly on main, unless only
+# the files below have changed. A commit with [skip ci] in its message starts no run.
 on:
   push:
     branches: [ "main" ]
@@ -16,15 +17,13 @@ on:
       - "starters/lean/gitignore"
   pull_request:
     branches: [ "main" ]
-    types: [ "opened", "synchronize", "reopened", "closed" ]
+    types: [ "opened", "synchronize", "reopened" ]
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
 jobs:
   build:
-    if: github.event.action != 'closed' || github.event.pull_request.merged == true
-
     runs-on: ubuntu-latest
 
     strategy:
