@@ -8,15 +8,16 @@ Blyss is a lean static-site generator: it turns Markdown into a multilingual web
 
 ## Chapters
 
-1. [Installation and commands](/en/book/installation/): create, build and serve a website.
-2. [Configuration and languages](/en/book/configuration/): the settings of `blyss.config.js`, among them the languages.
-3. [Templates and the lean theme](/en/book/templates/): the HTML around the content, the layout, the hero and the overlay.
-4. [Components](/en/book/components/): reusable elements such as the slider, the gallery and the diagrams.
-5. [Writing](/en/book/writing/): docs, pages and posts, their translations and Markdown beyond plain text.
-6. [Deployment and SEO](/en/book/deployment/): what to replace before publishing, and how to host the website.
-7. [Developing Blyss](/en/book/development/): work on the engine and on its starter.
+1. [Markdown and more](/en/book/markdown-and-more/): the syntax of Markdown, and what Blyss adds to it.
+2. [Installation and commands](/en/book/installation/): create, build and serve a website.
+3. [Configuration and languages](/en/book/configuration/): the settings of `blyss.config.js`, among them the languages.
+4. [Templates and the lean theme](/en/book/templates/): the HTML around the content, the layout, the hero and the overlay.
+5. [Components](/en/book/components/): reusable elements such as the slider, the gallery and the diagrams.
+6. [Writing](/en/book/writing/): docs, pages and posts, their translations and Markdown beyond plain text.
+7. [Deployment and SEO](/en/book/deployment/): what to replace before publishing, and how to host the website.
+8. [Developing Blyss](/en/book/development/): work on the engine and on its starter.
 
-Chapters 1 to 4 and 6 serve those who set up and design a website, chapter 5 its authors and chapter 7 the contributors to Blyss.
+Chapters 2 to 5 and 7 serve those who set up and design a website, chapters 1 and 6 its authors and chapter 8 the contributors to Blyss.
 
 ## About this documentation
 
