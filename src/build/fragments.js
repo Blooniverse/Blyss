@@ -6,7 +6,8 @@ import { escapeHtml } from "./render.js";
 // A Markdown file directly in _content/<language>/, such as heroTexts.md, is a fragment: it is not published, but every
 // page of its language can show it in document.html as {{<name>Title}} and {{<name>Content}}. Returns these values by
 // language, empty for a language that lacks a fragment of another one. heroTexts.md and overlayTexts.md also hold the
-// texts of the hero and of the overlay (see regions.js). languages are those of site.languages.
+// texts of the hero and of the overlay (see regions.js); hero.md and overlay.md beside them are no fragments, but
+// show the components of these regions. languages are those of site.languages.
 export function renderFragments(projectDir, fragments, languages) {
   const valuesByLanguage = new Map(Object.keys(languages).map(languageKey => [languageKey, {}]));
   for (const { name } of fragments) {

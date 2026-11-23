@@ -22,7 +22,9 @@ tags: [Blyss, Markdown]
 The front matter follows these rules:
 
 - Each field stands on a line of its own as `key: value`, and its value on that line: a text of several lines, which YAML starts with `>` or `|`, stops the build.
-- A value may stand in quotes, as in `title: "Blyss: an introduction"`.
+- A field without a value holds what the lines below it hold: a list, whose items start with `- `, or a group of fields, indented deeper than the field. The [settings of a component](/en/book/components/#blocks) use this, and `tags` can be such a list.
+- A line that is neither a field nor an item of a list stops the build, and so does a field that stands twice; a line that starts with `#` is a comment.
+- A value may stand in quotes, as in `title: "Blyss: an introduction"`. In a list, quotes keep a text with a colon from being read as a field: `- "Blyss: an introduction"`.
 - `datePublished` and `dateModified` are dates such as `2026-11-10`, or with their time as in `2026-11-10T09:30:00+01:00`; any other value stops the build.
 - `translationKey` links a page to its [translations](/en/book/writing/translations/) in the other languages.
 
@@ -86,5 +88,6 @@ Markdown directly in `_content/<language>/`, such as `heroTexts.md`, is a fragme
 - `templates/document.html` can display its front-matter title and body as `{{<name>Title}}` and `{{<name>Content}}`.
 - In a language that lacks the file, they are empty.
 - Fragment names start with a Latin letter and contain only Latin letters and digits.
+- The fragments `heroTexts.md` and `overlayTexts.md` also hold the texts of the [hero and the overlay](/en/book/templates/#hero-and-overlay). `hero.md` and `overlay.md` beside them are no fragments: they show the [components](/en/book/components/#components-of-the-hero-and-the-overlay) of these regions.
 
-A paragraph consisting only of `{{<name>}}` displays a component or variant. A fenced [component block](/en/book/components/#blocks) gives one occurrence its own text and settings. See [Markdown spice](/en/book/writing/markdown-spice/) for formulas, footnotes, highlighted code, task lists, callouts, figures and diagrams.
+A paragraph consisting only of `{{<name>}}` displays a component. A fenced [component block](/en/book/components/#blocks) gives one occurrence its own text and settings. See [Markdown spice](/en/book/writing/markdown-spice/) for formulas, footnotes, highlighted code, task lists, callouts, figures and diagrams.

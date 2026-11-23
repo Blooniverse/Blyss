@@ -13,7 +13,7 @@
 // and task lists, highlighted code, formulas, callouts, images and figures, footnotes, labels, numbers and
 // references. It draws Mermaid diagrams itself. It does not support other components, {{recentPosts}} and front
 // matter, which it shows as they are written. In the browser, code is highlighted in the languages that
-// highlight.js calls common, and the message of an error is that of the build, in English.
+// highlight.js calls common.
 export const renderer = true;
 
 const themes = ["default", "neutral", "dark", "forest", "base"];
@@ -24,11 +24,11 @@ const defaults = {
   editor: "Markdown",
   result: "Result",
   reset: "Reset",
-  loading: "Loading the renderer …",
-  unavailable: "The live preview cannot be loaded. The examples still show their results.",
-  failed: "This text cannot be shown.",
-  diagramFailed: "This diagram cannot be shown.",
-  diagramUnavailable: "Mermaid cannot be loaded, so the diagram stays code."
+  loading: "Loading the preview …",
+  unavailable: "The preview is unavailable. Reset an example to see its result.",
+  failed: "The preview still shows the previous version: something in the text isn't finished yet.",
+  diagramFailed: "The preview still shows the previous version: something in the diagram isn't finished yet.",
+  diagramUnavailable: "The diagram cannot be drawn right now, so it stays code."
 };
 
 // The note and the examples of a text.

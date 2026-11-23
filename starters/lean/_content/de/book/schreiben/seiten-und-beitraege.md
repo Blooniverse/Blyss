@@ -25,7 +25,9 @@ Ein erster Absatz.
 Für das Front Matter gilt:
 
 - Jedes Feld steht als `key: value` in einer eigenen Zeile, und sein Wert in dieser Zeile: Ein Text über mehrere Zeilen, den YAML mit `>` oder `|` beginnt, stoppt den Build.
-- Ein Wert darf in Anführungszeichen stehen, etwa `title: "Blyss: eine Einführung"`.
+- Ein Feld ohne Wert enthält, was die Zeilen darunter enthalten: eine Liste, deren Einträge mit `- ` beginnen, oder eine Gruppe von Feldern, tiefer eingerückt als das Feld. Die [Einstellungen einer Komponente](/de/book/komponenten/#blöcke-pro-verwendung) nutzen dies, und `tags` kann eine solche Liste sein.
+- Eine Zeile, die weder ein Feld noch ein Listeneintrag ist, stoppt den Build, ebenso ein Feld, das zweimal vorkommt; eine Zeile, die mit `#` beginnt, ist ein Kommentar.
+- Ein Wert darf in Anführungszeichen stehen, etwa `title: "Blyss: eine Einführung"`. In einer Liste verhindern sie, dass ein Text mit Doppelpunkt als Feld gelesen wird: `- "Blyss: eine Einführung"`.
 - `datePublished` und `dateModified` sind Daten wie `2026-11-10`, auch mit Uhrzeit wie `2026-11-10T09:30:00+01:00`; jeder andere Wert stoppt den Build.
 - `translationKey` verknüpft eine Seite mit ihren [Übersetzungen](/de/book/schreiben/uebersetzungen/) in den anderen Sprachen.
 
@@ -83,9 +85,9 @@ Markdown-Dateien direkt in `_content/<Sprache>/`, etwa `heroTexts.md`, sind Frag
 - `templates/document.html` kann deren Titel und Text mit `{{heroTextsTitle}}` und `{{heroTextsContent}}` einfügen.
 - Der Dateiname muss mit einem lateinischen Buchstaben beginnen und darf nur lateinische Buchstaben und Ziffern enthalten.
 - Fehlt die Datei in einer Sprache, sind ihre Platzhalter dort leer.
-- Hero- und Overlay-Texte haben zusätzlich die unter [Vorlagen](/de/book/vorlagen/) beschriebene Funktion.
+- Die Fragmente `heroTexts.md` und `overlayTexts.md` enthalten zugleich die Texte von [Hero und Overlay](/de/book/vorlagen/#hero-und-overlay). `hero.md` und `overlay.md` daneben sind keine Fragmente: Sie zeigen die [Komponenten](/de/book/komponenten/#komponenten-in-hero-und-overlay) dieser Bereiche.
 
-Ein Absatz, der nur aus dem Namen einer Komponente oder Variante in doppelten geschweiften Klammern besteht, zeigt sie an; ein [Block](/de/book/komponenten/#blöcke-pro-verwendung) gibt einer einzelnen Verwendung eigene Texte und Einstellungen. Formeln, Fußnoten, hervorgehobenen Code, Aufgabenlisten, Hinweisboxen, Abbildungen und Diagramme zeigt [Markdown-Würze](/de/book/schreiben/markdown-wuerze/).
+Ein Absatz, der nur aus dem Namen einer Komponente in doppelten geschweiften Klammern besteht, zeigt sie an; ein [Block](/de/book/komponenten/#blöcke-pro-verwendung) gibt einer einzelnen Verwendung eigene Texte und Einstellungen. Formeln, Fußnoten, hervorgehobenen Code, Aufgabenlisten, Hinweisboxen, Abbildungen und Diagramme zeigt [Markdown-Würze](/de/book/schreiben/markdown-wuerze/).
 
 ## Fehlerseite
 

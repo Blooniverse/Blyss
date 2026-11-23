@@ -85,15 +85,16 @@ Formulas use the local Temml stylesheet and font in `static/assets/temml/`, with
 - The hero follows home-page content.
 - The overlay is a bottom bar whose button opens a panel. Close it with its button, Escape or an outside click; the browser's Popover API does this without JavaScript.
 
-The `hero`, `overlay` and `synchroniseHeroOverlay` comments in `blyss.config.js` explain the switches, ordering, page kinds and synchronization. Beyond them:
+`_content/<language>/hero.md` and `overlay.md` show the [components of a region](/en/book/components/#components-of-the-hero-and-the-overlay), above or below its texts. The `hero`, `overlay` and `synchroniseHeroOverlay` comments in `blyss.config.js` explain the switches of the texts, the page kinds and the synchronization. Beyond them:
 
-- A region without enabled content is omitted.
+- A region without a component and without texts is omitted.
 - `overlay.showOn` applies to page kinds, not individual pages; an unnamed kind is enabled.
 - Layout settings still apply separately when the regions are synchronized.
 
 Region templates can use these placeholders:
 
-- `{{components}}`: the components of the region that are switched on.
+- `{{components}}`: the components above the texts of the region.
+- `{{componentsBelow}}`: the components below them; a template without the placeholder of a place that a file uses stops the build.
 - `{{textsTitle}}` and `{{texts}}`: the heading and the texts of the region.
 - The document placeholders other than the two region placeholders.
 

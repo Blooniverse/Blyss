@@ -4,11 +4,11 @@ examples: Beispiele
 editor: Markdown
 result: Ergebnis
 reset: Zurücksetzen
-loading: Der Renderer wird geladen …
-unavailable: Die Live-Vorschau lässt sich nicht laden. Die Beispiele zeigen weiterhin ihre Ergebnisse.
-failed: Dieser Text lässt sich nicht darstellen. Blyss meldet, wie beim Build:
-diagramFailed: Dieses Diagramm lässt sich nicht darstellen. Mermaid meldet:
-diagramUnavailable: Mermaid lässt sich nicht laden, das Diagramm bleibt deshalb Code.
+loading: Die Vorschau wird geladen …
+unavailable: Die Vorschau ist nicht verfügbar. Setzen Sie ein Beispiel zurück, um sein Ergebnis zu sehen.
+failed: Die Vorschau zeigt noch die vorige Fassung: Etwas im Text ist noch nicht fertig.
+diagramFailed: Die Vorschau zeigt noch die vorige Fassung: Etwas im Diagramm ist noch nicht fertig.
+diagramUnavailable: Das Diagramm lässt sich gerade nicht zeichnen und bleibt deshalb Code.
 ---
 
 Notiz: Limitierte Demonstration. Eingaben werden gefiltert und bleiben lokal im Browser.

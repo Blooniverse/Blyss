@@ -1,5 +1,5 @@
-// Checks the gallery's settings, those of a block or of components.componentGalleryHero, componentGalleryOverlay and
-// so on in blyss.config.js, and prepares the values of its template. heightCenter becomes the factor by which the
+// Checks the gallery's settings, those of a block or of components.componentGallery in blyss.config.js, and prepares
+// the values of its template. heightCenter becomes the factor by which the
 // image in the centre grows, and heightExpanded the height in percent of the screen's to which a click or a touch
 // expands it.
 const length = /^\d*\.?\d+(?:px|rem|vw|vh|vmin|vmax)$/i;

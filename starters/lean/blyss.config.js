@@ -5,8 +5,8 @@
 //   1. site                    the name, the URL, the publisher and the languages
 //   2. pagination              the length of the lists of posts
 //   3. layout                  the margin, the paddings and the alignments
-//   4. hero                    the parts of the hero of the home pages
-//   5. overlay                 the pages and the parts of the overlay
+//   4. hero                    the texts of the hero of the home pages
+//   5. overlay                 the pages and the texts of the overlay
 //   6. synchroniseHeroOverlay  the overlay as a copy of the hero
 //   7. components              the settings of each component
 //   8. directories             the directories of the website
@@ -135,19 +135,16 @@ export default {
     alignOverlay: "centerExtra" // or "left" or "center" (as above, with the text boxes of overlayTexts.md), which aligns the content of the overlay
   },
 
-  // 4. Hero: the region below the content of the home pages (templates/hero.html). Each of its parts is switched on
-  // (true) or off (false); a hero without a part that is switched on is not shown at all.
+  // 4. Hero: the region below the content of the home pages (templates/hero.html). It shows the components of
+  // _content/<language>/hero.md, each with its settings, and its texts, which are switched on (true) or off (false)
+  // here; a hero without a component and without texts is not shown at all.
   hero: {
-    components: { // its variants of the components from components/, in this order
-      componentSliderHero: false,
-      componentGalleryHero: false,
-      componentFlowerHero: false
-    },
     texts: true // all texts of _content/<language>/heroTexts.md, with their title
   },
 
-  // 5. Overlay: the bar at the bottom of the window whose button opens a panel (templates/overlay.html). It has its
-  // own parts, switched on (true) or off (false) like those of the hero, and is not shown without one either.
+  // 5. Overlay: the bar at the bottom of the window whose button opens a panel (templates/overlay.html). It shows
+  // the components of _content/<language>/overlay.md and its own texts, like the hero, and is not shown without them
+  // either.
   overlay: {
     showOn: { // the kinds of pages that have the overlay: the three content types, then the other kinds
       page: true, // the pages in _content/<language>/pages/
@@ -157,38 +154,24 @@ export default {
       list: true, // the archive and the tag pages
       "not-found": true // the "not found" pages
     },
-    components: { // its variants of the components from components/, in this order
-      componentSliderOverlay: true,
-      componentGalleryOverlay: false,
-      componentFlowerOverlay: false
-    },
     texts: true // all texts of _content/<language>/overlayTexts.md, with their title
   },
 
-  // 6. Synchronisation: true makes the overlay a copy of the hero. The overlay then shows hero.components, the hero's
-  // variants with their settings and texts, and, if hero.texts is true, the texts of heroTexts.md, whatever
-  // overlay.components and overlay.texts say; overlayTexts.md is not used, and overlay.showOn still applies.
+  // 6. Synchronisation: true makes the overlay a copy of the hero. The overlay then shows the components of hero.md
+  // and, if hero.texts is true, the texts of heroTexts.md, whatever overlay.md and overlay.texts say; overlayTexts.md
+  // is not used, and overlay.showOn still applies.
   synchroniseHeroOverlay: false,
 
-  // 7. Components: the settings of the components in components/<name>/. The slider, the gallery and the flower each
-  // have a variant for the hero, <name>Hero, and one for the overlay, <name>Overlay, each with settings of its own
-  // and with its texts in _content/<language>/components/<variant>.md. Templates, pages and posts show a variant by
-  // its name, like a component. Each duration is a time in ms or s. The diagrams and the live demo follow below.
+  // 7. Components: the settings of the components in components/<name>/, whose texts are in
+  // _content/<language>/components/<name>.md. They apply wherever a template or the Markdown of a page shows a
+  // component by its name. A block gives a single one settings and a text of its own, as those of hero.md and of
+  // overlay.md do for the hero and the overlay. Each duration is a time in ms or s. The diagrams and the live demo
+  // follow below.
   components: {
     // The slider runs through the whole numbers from start to end. Each step marks a value on the way and has a
-    // description in every language; change, add or remove steps as you like.
-    componentSliderHero: {
-      start: 1,
-      end: 10000,
-      steps: [
-        { value:     1, description: { en: "A Start", de: "Ein Anfang" } },
-        { value:  2500, description: { en: "A Quarter", de: "Ein Viertel" } },
-        { value:  5000, description: { en: "A Half", de: "Die Hälfte" } },
-        { value:  7500, description: { en: "Three Quarters", de: "Drei Viertel" } },
-        { value: 10000, description: { en: "And Full", de: "Und Voll" } }
-      ]
-    },
-    componentSliderOverlay: { // the overlay's slider, with the same kind of settings
+    // description in every language; change, add or remove steps as you like. In a block, which belongs to one
+    // language, a description can be a text alone.
+    componentSlider: {
       start: 1,
       end: 10000,
       steps: [
@@ -201,23 +184,16 @@ export default {
     },
     // The gallery shows the images that its text lists, side by side, and enlarges the image in its centre, which a
     // click or a touch expands further.
-    componentGalleryHero: {
+    componentGallery: {
       heightOverall: "8rem", // the height of the images: a CSS length in px, rem, vw, vh, vmin or vmax
       heightCenter: "140%", // the height of the image in the centre: a percentage of heightOverall, from 100% up
       heightExpanded: "70%", // the height of the image in the centre after a click or a touch: a percentage of the height of the screen, up to 100%
       animationSpeedScrolling: "400ms", // the time an arrow takes to bring the next image to the centre
       animationSpeedImgEnlargement: "300ms" // the time the image in the centre takes to grow and to expand
     },
-    componentGalleryOverlay: { // the overlay's gallery, with the same kind of settings
-      heightOverall: "8rem",
-      heightCenter: "140%",
-      heightExpanded: "70%",
-      animationSpeedScrolling: "400ms",
-      animationSpeedImgEnlargement: "300ms"
-    },
     // The flower loses a petal at each click or touch: the petal twirls, falls to the ground and fades there, while
     // its text appears. The texts of the petals are those of its text file: the first for the first petal, and so on.
-    componentFlowerHero: {
+    componentFlower: {
       petals: 4, // the number of petals, from 3 to 24
       colourSystem: "triadic", // or "complementary": the colours of the petals, the centre and the stem, derived from colourBaseHue
       colourBaseHue: 202, // the hue of the base colour, that of the petals: an angle on the HSL colour wheel, from 0 to 360
@@ -226,16 +202,6 @@ export default {
       animationSpeedFading: "4s", // the time a fallen petal takes to fade
       opacityFallen: "20%", // what remains visible of a fallen petal: a percentage from 1% to 100%
       fontSizeText: "60%" // the size of the texts of the petals: a percentage of the default text size
-    },
-    componentFlowerOverlay: { // the overlay's flower, with the same kind of settings
-      petals: 4,
-      colourSystem: "triadic",
-      colourBaseHue: 202,
-      animationSpeedFalling: "3s",
-      animationSpeedText: "3s",
-      animationSpeedFading: "4s",
-      opacityFallen: "20%",
-      fontSizeText: "60%"
     },
     // The diagrams show the fenced code blocks in their languages: mermaid, flowchart or flow, and vega-lite. The
     // browser draws them with the libraries below, which it loads from these URLs when a page shows such a diagram.

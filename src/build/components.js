@@ -3,7 +3,7 @@ import { basename, join, relative } from "node:path";
 import { pathToFileURL } from "node:url";
 import { BlyssError } from "../errors.js";
 import { publishRenderer, readRenderer } from "./browser.js";
-import { parseFrontMatter } from "./front-matter.js";
+import { readFrontMatter } from "./front-matter.js";
 import { renderDocument, renderMarkdown } from "./markdown.js";
 import { applyTemplate, escapeHtml, labelValues } from "./render.js";
 import { basePathOf, refuse } from "./settings.js";
@@ -17,17 +17,19 @@ function scalars(values = {}) {
 }
 
 // The front matter of a block sets settings of its component: a value that is JSON, such as 5, true or [1, 2], is
-// taken as such, and any other value as a text, without the quotes around it.
+// taken as such, and any other value as a text, without the quotes around it. So are the values of a list and of a
+// group of fields, which hold a setting such as the steps of the slider.
 function settingsOf({ written, metadata }) {
   const typed = (value, text) => {
+    if (Array.isArray(value)) return value.map((item, index) => typed(item, text[index]));
+    if (typeof value === "object") return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, typed(item, text[key])]));
     try {
       return JSON.parse(value);
     } catch {
       return text;
     }
   };
-  return Object.fromEntries(Object.entries(written).map(([key, value]) =>
-    [key, Array.isArray(value) ? value.map((item, index) => typed(item, metadata[key][index])) : typed(value, metadata[key])]));
+  return typed(written, metadata);
 }
 
 // A component's optional data file checks its settings and returns further values for its template. It can also name
@@ -59,19 +61,14 @@ async function importData(file, location) {
   return { data, languages, renderer };
 }
 
-// The variants of every component, by the suffix of their names: one for each region.
-const variants = { Hero: "hero", Overlay: "overlay" };
-
 // A name that starts with a dot or an underscore marks what the browser does not need, such as a module that a data
 // file imports, notes or the files of an editor: such a file or directory of a component is not published, wherever
 // it lies in the directory of the component, and such a directory beside the components is no component.
 const isPublished = file => !/^[._]/.test(basename(file));
 
 // A component is a directory components/<name>/ with a template, <name>.html, which {{<name>}} shows in the templates
-// of the website and in its Markdown. It has a variant for each region, <name>Hero and <name>Overlay: the same
-// component under another name, with settings and a text of its own, so that the hero and the overlay can show it
-// differently. Below, <name> is the name of the component or of a variant of it. The placeholders of that template
-// are, each replacing an earlier one of its name:
+// of the website and in its Markdown. The placeholders of that template are, each replacing an earlier one of its
+// name:
 // - {{basePath}}: the path below which the website is hosted, for the URLs that the component writes outside href
 //   and src, which get that path by themselves (see withBasePath in build.js); the data file receives it as well;
 // - {{<key>Label}}: the labels of the page's language;
@@ -81,14 +78,14 @@ const isPublished = file => !/^[._]/.test(basename(file));
 //   texts that its ### headings start;
 // - {{id}}: unique on the page, for the ids of its elements.
 // In Markdown, a fenced code block with {{<name>}} as its language is an instance of the component with a text and
-// settings of its own, which the block holds in place of that file and of blyss.config.js (see valuesOf below).
+// settings of its own, which the block holds in place of that file and of blyss.config.js (see valuesOf below). The
+// hero and the overlay show the components of hero.md and of overlay.md in this way (see regions.js).
 // A component whose data file names languages shows the fenced code blocks in these languages, each as an instance
 // with the code as its text. Its text is code wherever it comes from: {{content}} is that code, escaped for HTML.
 // A component whose data file asks for the renderer has it at /components/blyss-renderer/, where a script of the
 // component finds the modules that read Markdown, to read in the browser what a visitor writes there.
-// Every other file of the directory, such as a stylesheet or a script, is published at /components/<name>/ under the
-// name of the component, which its variants share, unless its name or that of one of its directories starts with a
-// dot or an underscore (see isPublished above).
+// Every other file of the directory, such as a stylesheet or a script, is published at /components/<name>/, unless
+// its name or that of one of its directories starts with a dot or an underscore (see isPublished above).
 export async function loadComponents(projectDir, config, directory, texts) {
   const location = relative(projectDir, directory);
   const entries = await readdir(directory, { withFileTypes: true }).catch(error => {
@@ -98,19 +95,13 @@ export async function loadComponents(projectDir, config, directory, texts) {
   const components = new Map();
   const languages = new Map(); // the component that shows the code blocks of each language
   let inBrowser = false; // whether a component asks for the renderer of Blyss in the browser
-  // In this order, a component comes before any directory whose name starts with the component's name. A directory
-  // whose name starts with a dot or an underscore is no component: it can hold what the data files of several
-  // components import.
+  // Sorted names make the build independent of the file system. A directory whose name starts with a dot or an
+  // underscore is no component: it can hold what the data files of several components import.
   for (const name of entries.filter(entry => entry.isDirectory() && isPublished(entry.name)).map(entry => entry.name).sort()) {
     const path = join(directory, name);
     if (!/^[a-zA-Z][a-zA-Z0-9]*$/.test(name)) {
       throw new BlyssError(`Cannot build ${join(location, name)}: templates use its name as a placeholder, so it must start with a ` +
         "Latin letter and contain only Latin letters and digits, such as componentSlider.");
-    }
-    if (components.has(name)) {
-      const { base, region } = components.get(name);
-      throw new BlyssError(`Cannot build ${join(location, name)}: ${name} is the name of the ${region}'s variant of ${base}, ` +
-        "so the component needs another name.");
     }
     const template = await readFile(join(path, `${name}.html`), "utf8").catch(error => {
       if (error.code !== "ENOENT") throw error;
@@ -125,21 +116,24 @@ export async function loadComponents(projectDir, config, directory, texts) {
       languages.set(language, name);
     }
     const code = shown.length > 0;
-    components.set(name, { path, template, data, code, values: {}, errors: {} });
-    for (const [suffix, region] of Object.entries(variants)) {
-      components.set(`${name}${suffix}`, { base: name, region, path, template, data, code, values: {}, errors: {} });
-    }
+    components.set(name, { path, template, data, code, values: {} });
   }
 
   // The renderer of Blyss for the browser, if a component asks for it.
   const renderer = inBrowser ? await readRenderer() : undefined;
 
-  // What is wrong with the name of a component or a variant, if anything.
-  function unknown(name) {
-    if (components.has(name)) return "";
-    const base = Object.keys(variants).map(suffix => name.endsWith(suffix) && name.slice(0, -suffix.length)).find(Boolean);
-    return `there is no component "${name}"${base ? ` or "${base}"` : ""} in ${location}/`;
+  // A component used to have a variant for the hero and one for the overlay, <name>Hero and <name>Overlay, which
+  // hero.md and overlay.md have replaced: what to write instead of such a name, if name is one.
+  function former(name) {
+    const [, component] = /^(.+)(?:Hero|Overlay)$/.exec(name) ?? [];
+    return components.has(component) && !components.has(name)
+      ? `${name} was a variant of ${component}, and components have no variants any more.\nWrite ${component} instead: ` +
+        "a block gives it a text and settings of its own, also in hero.md and overlay.md"
+      : "";
   }
+
+  // What is wrong with the name of a component, if anything.
+  const unknown = name => (components.has(name) ? "" : former(name) || `there is no component "${name}" in ${location}/`);
 
   const settings = config.components ?? {};
   const basePath = basePathOf(config);
@@ -150,25 +144,20 @@ export async function loadComponents(projectDir, config, directory, texts) {
     if (unknown(name)) throw new BlyssError(`Cannot build ${relative(projectDir, sourceFile)}: ${unknown(name)}.`);
   }
 
-  // The values of a component's template in a language: for the component's text or, given a block in the Markdown
-  // of file, for that block. The front matter of a block adds to that of the component's text and sets settings in
-  // place of blyss.config.js, and its Markdown, if it has any, replaces that of the component's text. A block that
-  // is the code of one of the component's languages is taken as it is, without front matter.
-  async function valuesOf(name, languageKey, block, file, isCode) {
+  // What a block in the Markdown of file holds for its component: front matter and Markdown. A block that is the
+  // code of one of the component's languages is taken as it is, without front matter.
+  const read = (name, block, file, isCode) => (isCode ? { metadata: {}, written: {}, markdown: block }
+    : readFrontMatter(`${block}\n`, file, `the front matter of its {{${name}}} block`));
+
+  // The values of a component's template in a language: for the component's text or, given what a block in the
+  // Markdown of file holds, for that block. The front matter of a block adds to that of the component's text and
+  // sets settings in place of blyss.config.js, and its Markdown, if it has any, replaces that of the component's
+  // text.
+  async function valuesOf(name, languageKey, own, file) {
     const text = texts.find(text => text.name === name && text.languageKey === languageKey);
-    let own = { metadata: {}, written: {}, markdown: "" };
-    if (isCode) {
-      own.markdown = block;
-    } else if (block !== undefined) {
-      try {
-        own = parseFrontMatter(`${block}\n`);
-      } catch (error) {
-        throw new BlyssError(`Cannot build ${file}: the front matter of its {{${name}}} block lacks its closing ---.`, { cause: error });
-      }
-    }
-    const metadata = { ...text?.metadata, ...own.metadata };
-    const [markdown, origin] = own.markdown.trim() ? [own.markdown, file] : [text?.markdown ?? "", text && relative(projectDir, text.sourceFile)];
-    const ownSettings = { ...settings[name], ...settingsOf(own) };
+    const metadata = { ...text?.metadata, ...own?.metadata };
+    const [markdown, origin] = own?.markdown.trim() ? [own.markdown, file] : [text?.markdown ?? "", text && relative(projectDir, text.sourceFile)];
+    const ownSettings = { ...settings[name], ...(own && settingsOf(own)) };
     const { data, code } = components.get(name);
     const { labels } = config.site.languages[languageKey];
     const content = code ? escapeHtml(markdown.replace(/^\n+|\s+$/g, "")) : renderMarkdown(markdown, origin, labels);
@@ -183,7 +172,7 @@ export async function loadComponents(projectDir, config, directory, texts) {
         frontMatter: metadata, escapeHtml, basePath, labels,
         // Reads a text like that of a page, of a post or of a doc, as the renderer does in the browser.
         renderDocument: text => renderDocument(text, origin ?? join(location, name), labels),
-        refuse: (setting, value, requirement) => (block === undefined
+        refuse: (setting, value, requirement) => (own === undefined
           ? refuse(`components.${name}.${setting}`, value, requirement)
           : new BlyssError(`Cannot build ${file}: its {{${name}}} block cannot use ${setting} ${JSON.stringify(value)}, ` +
             `which must be ${requirement}.`))
@@ -191,40 +180,34 @@ export async function loadComponents(projectDir, config, directory, texts) {
     };
   }
 
-  // The values of every language are prepared at once, so that invalid settings stop the build before it writes. A
-  // variant without settings in blyss.config.js may lack those that its component needs: its error waits until a page
-  // shows the variant, which still happens before the build writes.
-  for (const [name, { base, values, errors }] of components) {
+  // The values of every language are prepared at once, so that invalid settings stop the build before it writes.
+  for (const [name, { values }] of components) {
     for (const languageKey of Object.keys(config.site.languages)) {
-      try {
-        values[languageKey] = await valuesOf(name, languageKey);
-      } catch (error) {
-        if (!base || Object.hasOwn(settings, name)) throw error;
-        errors[languageKey] = error;
-      }
+      values[languageKey] = await valuesOf(name, languageKey);
     }
   }
 
   return {
     unknown,
+    former,
     languages,
+    read,
+    valuesOf,
     // The placeholders of one page in a language: {{<name>}} shows a component, counted for its {{id}}. Called with
     // a block in the Markdown of file, such a placeholder resolves to the component with the values of that block,
-    // which is code of one of the component's languages if isCode is true.
+    // which is code of one of the component's languages if isCode is true. Called with the values that valuesOf
+    // made of a block, as for the blocks of a region, it shows the component with these.
     placeholders(languageKey, file) {
-      return Object.fromEntries([...components].map(([name, { template, values, errors }]) => {
+      return Object.fromEntries([...components].map(([name, { template, values }]) => {
         let count = 0;
         const render = own => applyTemplate(template, { ...own, id: `${name}-${++count}` });
-        const shown = () => {
-          if (Object.hasOwn(errors, languageKey)) throw errors[languageKey];
-          return render(values[languageKey]);
-        };
-        return [name, (block, isCode) => (block === undefined ? shown() : valuesOf(name, languageKey, block, file, isCode).then(render))];
+        return [name, (block, isCode) => (typeof block === "string"
+          ? valuesOf(name, languageKey, read(name, block, file, isCode), file).then(render)
+          : render(block ?? values[languageKey]))];
       }));
     },
     async publish(publicDirectory) {
-      for (const [name, { path, base }] of components) {
-        if (base) continue;
+      for (const [name, { path }] of components) {
         for (const file of await readdir(path)) {
           if (file === `${name}.html` || file === `${name}.data.js` || !isPublished(file)) continue;
           await cp(join(path, file), join(publicDirectory, "components", name, file), { recursive: true, filter: isPublished });

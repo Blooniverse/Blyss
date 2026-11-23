@@ -4,11 +4,11 @@ examples: Examples
 editor: Markdown
 result: Result
 reset: Reset
-loading: Loading the renderer …
-unavailable: The live preview cannot be loaded. The examples still show their results.
-failed: This text cannot be shown. Blyss says, as its build would:
-diagramFailed: This diagram cannot be shown. Mermaid says:
-diagramUnavailable: Mermaid cannot be loaded, so the diagram stays code.
+loading: Loading the preview …
+unavailable: The preview is unavailable. Reset an example to see its result.
+failed: The preview still shows the previous version: something in the text isn't finished yet.
+diagramFailed: The preview still shows the previous version: something in the diagram isn't finished yet.
+diagramUnavailable: The diagram cannot be drawn right now, so it stays code.
 ---
 
 Note: Limited demonstration. Input is filtered and stays local in your browser.

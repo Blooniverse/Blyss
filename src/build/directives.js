@@ -1,5 +1,5 @@
 import { BlyssError } from "../errors.js";
-import { parseFrontMatter } from "./front-matter.js";
+import { readFrontMatter } from "./front-matter.js";
 import { escapeHtml } from "./html.js";
 import { listOf } from "./settings.js";
 
@@ -208,11 +208,10 @@ function partsOf(content, name, file) {
   let options = {};
   let body = content;
   if (content.startsWith("---\n")) {
-    try {
-      ({ metadata: options, markdown: body } = parseFrontMatter(content));
-    } catch (error) {
-      throw new BlyssError(`Cannot build ${file}: the options of its {${name}} directive lack their closing ---.`, { cause: error });
-    }
+    ({ metadata: options, markdown: body } = readFrontMatter(content, file, `the options of its {${name}} directive`, "lack their"));
+    // A front matter can hold a list or a group of fields, but an option is a text.
+    const [nested, value] = Object.entries(options).find(([, value]) => typeof value !== "string") ?? [];
+    if (nested !== undefined) throw refuse({ name, file }, nested, value, "a text on the line of the option");
   } else {
     const lines = content.split("\n");
     let count = 0;

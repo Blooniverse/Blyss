@@ -8,7 +8,7 @@ The overlay waits as a bar at the bottom of the window. `overlay.showOn` in `bly
 
 #### Its own content
 
-These texts come from `_content/en/overlayTexts.md`, and `overlay.components` switches the components above them on or off: the overlay's variants, such as `componentSliderOverlay`, each with settings and texts of its own. The hero of the home pages has its own texts, switches and variants.
+These texts come from `_content/en/overlayTexts.md`, and the components above them from `_content/en/overlay.md`, which gives each its settings and can place it below the texts as well. The hero of the home pages has files of its own.
 
 #### Or a copy of the hero
 

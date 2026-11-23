@@ -1,6 +1,6 @@
 ---
 title: Komponenten
-description: Komponenten entwickeln, Varianten und individuelle Blöcke verwenden sowie Diagrammbibliotheken selbst hosten.
+description: Komponenten entwickeln, individuelle Blöcke verwenden sowie Diagrammbibliotheken selbst hosten.
 order: 4
 translationKey: book-components
 ---
@@ -77,23 +77,49 @@ const html = withBasePath(renderDocument(markdown, "this text", labels), basePat
 
 Der Renderer umfasst rund 1 MB JavaScript; ein Skript sollte ihn erst laden, wenn es ihn braucht. Er wird unter der Lizenz von Blyss, der GPL-3.0, veröffentlicht, zusammen mit den Lizenzen von marked, Temml und highlight.js. Ohne eine solche Komponente veröffentlicht eine Website ihn nicht. Die Live-Demo auf den Startseiten des Starters verwendet ihn: Entfernen Sie `{{componentLiveDemo}}` aus `pages/index.md`, um auf sie zu verzichten.
 
-## Varianten
+## Komponenten in Hero und Overlay
 
-Jede Komponente hat die Varianten `<name>Hero` und `<name>Overlay`. Sie teilen Vorlage, Datendatei, CSS und Skript der Komponente, aber nicht deren Texte oder Einstellungen. Legen Sie beispielsweise `componentSliderHero.md` und `componentSliderOverlay.md` in den jeweiligen Sprachverzeichnissen an und konfigurieren Sie `components.componentSliderHero` und `components.componentSliderOverlay` getrennt. Ihre IDs tragen den jeweiligen Variantennamen. Ein Komponentenverzeichnis darf nicht wie die Variante einer anderen Komponente heißen.
+`_content/<Sprache>/hero.md` und `overlay.md` zeigen die Komponenten der beiden [Bereiche](/de/book/vorlagen/#hero-und-overlay), wie eine Seite sie zeigt:
 
-Der Starter enthält Slider, Galerie und Blume:
+- Jede Komponente der Website kann dort stehen, auch die Diagramme und die Live-Demo.
+- Ein Absatz `{{<name>}}` zeigt eine Komponente unverändert; ein [Block](#blöcke-pro-verwendung) gibt ihr eigene Einstellungen und einen eigenen Text.
+- Die Komponenten erscheinen in der Reihenfolge der Datei, die nichts anderes enthält.
+- `regionPosition: below` im Front Matter eines Blocks stellt ihn unter die Texte des Bereichs; die Vorgabe ist `above`.
+- Eine Zeile `<!--` über einer Komponente und eine Zeile `-->` darunter blenden sie aus, was immer sie enthält: Die Pfeile eines Diagramms beenden einen solchen Kommentar nicht. Die Dateien des Starters enthalten so jede seiner Komponenten, mit den Einstellungen einer einzelnen.
+- Jede Sprache hat eigene Dateien; ein Bereich kann sich also zwischen den Sprachen unterscheiden.
 
-- Ihre Einstellungen und Vorgaben stehen kommentiert in `blyss.config.js`.
-- Ihre Texte liegen in den entsprechenden Variantendateien; Galeriebilder liegen unter `static/assets/img/gallery/`.
-- `hero.components` und `overlay.components` können Komponenten oder Varianten einschalten.
-- Eine Variante ohne benötigte Einstellungen schlägt erst fehl, wenn sie ohne geeigneten Block verwendet wird.
+Zum Beispiel ein Slider unter den Texten des deutschen Overlays:
+
+````markdown
+```{{componentSlider}}
+---
+title: Fortschritt
+regionPosition: below
+start: 0
+end: 10
+steps:
+  - value: 5
+    description: Halbzeit
+---
+
+Wie weit sind Sie?
+```
+````
+
+Eine Einstellung, die ein Block auslässt, stammt aus `components.componentSlider` in `blyss.config.js`; die Blöcke des Starters überlassen ihr die Bibliotheken der Diagramme. Die Beschreibung eines Schritts ist hier ein Text, weil die Datei zu einer Sprache gehört; in `blyss.config.js` ist sie ein Objekt mit einem Text für jede Sprache.
+
+Frühere Websites schalteten die Komponenten eines Bereichs mit `hero.components` und `overlay.components` ein und aus und nannten sie `<name>Hero` und `<name>Overlay`. Der Build stoppt bei jedem dieser Namen und nennt, was stattdessen zu schreiben ist:
+
+1. Nennen Sie jede Komponente eines Bereichs in `hero.md` oder `overlay.md`, in einem Block mit den Einstellungen und dem Text ihrer früheren Variante.
+2. Benennen Sie die Einstellungen und Texte, die Seiten weiterhin zeigen, in `components.<name>` und `components/<name>.md` um, und schreiben Sie `{{<name>}}` statt `{{<name>Hero}}` und `{{<name>Overlay}}`.
+3. Ergänzen Sie in eigenen Bereichsvorlagen `{{componentsBelow}}` unter `{{texts}}`.
 
 ## Blöcke pro Verwendung
 
 Ein freistehender Codeblock mit dem Komponentenplatzhalter als Sprache erzeugt eine eigene Instanz:
 
 ````markdown
-```{{componentGalleryHero}}
+```{{componentGallery}}
 ---
 title: Unsere Reise
 heightOverall: 12rem
@@ -108,6 +134,7 @@ Für einen Block gilt:
 
 - Das optionale Front Matter ergänzt die Felder der Textdatei und ersetzt gleichnamige Felder; es überschreibt zugleich gleichnamige Einstellungen aus `blyss.config.js`.
 - JSON-Werte wie `5`, `true` oder `[1, 2]` werden entsprechend gelesen, andere als Text.
+- Ein Feld ohne Wert enthält die Liste oder die Gruppe von Feldern in den Zeilen darunter, wie die `steps` des Sliders oben; siehe [Front Matter](/de/book/schreiben/seiten-und-beitraege/#front-matter-und-urls).
 - Der Markdown-Text ersetzt den der Textdatei; fehlt er, bleibt dieser erhalten.
 - Ein leerer Block verwendet die Komponente unverändert.
 - Innerhalb einer Liste, eines Zitats oder einer Direktive bleibt der Block Code.
