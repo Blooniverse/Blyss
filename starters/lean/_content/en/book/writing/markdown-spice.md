@@ -77,32 +77,82 @@ check(no)->fix->write
 
 ### Charts
 
-The language `vega-lite` shows a [Vega-Lite](https://vega.github.io/vega-lite/) chart from its specification in JSON:
+The language `vega-lite` shows a [Vega-Lite](https://vega.github.io/vega-lite/) chart from its specification in JSON. This [Seattle weather example](https://vega.github.io/vega-lite/examples/interactive_seattle_weather.html) loads a CSV from Vega-Lite: drag across the dates to filter the bars, or click a weather type to filter the points.
 
 ```vega-lite
 {
-  "description": "Posts per month as bars",
-  "width": "container",
-  "height": 160,
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+  "title": "Seattle Weather, 2012-2015",
   "data": {
-    "values": [
-      { "month": "Aug", "posts": 2 },
-      { "month": "Sep", "posts": 5 },
-      { "month": "Oct", "posts": 3 },
-      { "month": "Nov", "posts": 7 }
-    ]
+    "url": "https://vega.github.io/vega-lite/examples/data/seattle-weather.csv"
   },
-  "mark": "bar",
-  "encoding": {
-    "x": { "field": "month", "type": "nominal", "sort": null, "title": "Month", "axis": { "labelAngle": 0 } },
-    "y": { "field": "posts", "type": "quantitative", "title": "Posts" }
-  }
-}
-```
-
-```vega-lite
-{
-  "description": "2nd chart added by Github Copilot"
+  "vconcat": [
+    {
+      "encoding": {
+        "color": {
+          "condition": {
+            "param": "brush",
+            "title": "Weather",
+            "field": "weather",
+            "type": "nominal",
+            "scale": {
+              "domain": ["sun", "fog", "drizzle", "rain", "snow"],
+              "range": ["#e7ba52", "#a7a7a7", "#aec7e8", "#1f77b4", "#9467bd"]
+            }
+          },
+          "value": "lightgray"
+        },
+        "size": {
+          "title": "Precipitation",
+          "field": "precipitation",
+          "scale": { "domain": [-1, 50] },
+          "type": "quantitative"
+        },
+        "x": {
+          "field": "date",
+          "timeUnit": "monthdate",
+          "title": "Date",
+          "axis": { "format": "%b" }
+        },
+        "y": {
+          "title": "Maximum Daily Temperature (C)",
+          "field": "temp_max",
+          "scale": { "domain": [-5, 40] },
+          "type": "quantitative"
+        }
+      },
+      "width": 600,
+      "height": 300,
+      "mark": "point",
+      "params": [
+        { "name": "brush", "select": { "type": "interval", "encodings": ["x"] } }
+      ],
+      "transform": [{ "filter": { "param": "click" } }]
+    },
+    {
+      "encoding": {
+        "color": {
+          "condition": {
+            "param": "click",
+            "field": "weather",
+            "scale": {
+              "domain": ["sun", "fog", "drizzle", "rain", "snow"],
+              "range": ["#e7ba52", "#a7a7a7", "#aec7e8", "#1f77b4", "#9467bd"]
+            }
+          },
+          "value": "lightgray"
+        },
+        "x": { "aggregate": "count" },
+        "y": { "title": "Weather", "field": "weather" }
+      },
+      "width": 600,
+      "mark": "bar",
+      "params": [
+        { "name": "click", "select": { "type": "point", "encodings": ["color"] } }
+      ],
+      "transform": [{ "filter": { "param": "brush" } }]
+    }
+  ]
 }
 ```
 
