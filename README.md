@@ -71,7 +71,7 @@ Website            │
 
 
 ## Quick start
-
+Requirements: Node.js 24 or newer and npm.
 ```bash
 npx @blooniverse/blyss init my-site   # copy the bundled starter into my-site/
 cd my-site
