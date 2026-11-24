@@ -112,14 +112,6 @@ npm start       # preview locally at http://localhost:3000
 Run `npm test` to rebuild the starter and execute the test suite.
 Treat `public/` as generated output; make changes in the source or starter.
 
-### Releasing
-
-Versions are published to [npm](https://www.npmjs.com/package/@blooniverse/blyss) by the workflow `.github/workflows/cd-prod-publish-npm.yml` through [trusted publishing](https://docs.npmjs.com/trusted-publishers), without an npm token and with provenance:
-
-1. Set `version` in `package.json` and date its section in `CHANGELOG.md`.
-2. Publish a GitHub release whose tag is that version with a leading `v`, such as `v1.0.1`.
-3. Approve the deployment of the `npm` environment; the workflow tests, then publishes.
-
 
 ## Documentation
 
