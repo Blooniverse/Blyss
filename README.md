@@ -85,16 +85,21 @@ npm start                             # serve public/ on localhost:3000
 
 ## Installation
 
-To add Blyss to an existing website instead:
+To add Blyss to an existing Blyss website instead, one with a `blyss.config.js`, `_content/`, `templates/`, `components/` and `static/` beside its `package.json`:
 
 ```bash
 npm install @blooniverse/blyss
 ```
 
+Then add the scripts `"build": "blyss build"` and `"start": "blyss serve"` to its `package.json`. A new website is best started with `blyss init`, which copies all of these.
 
-## Development
+> [!WARNING]
+> Run the commands through `npm run`, or `npx blyss` inside a website that has Blyss installed. Elsewhere, `npx blyss` runs `blyss`, an unrelated npm package; the full name `npx @blooniverse/blyss` always runs Blyss.
 
-Requires Node.js 24 or newer.
+
+## Development (contributors)
+
+Working on Blyss itself requires Node.js 24 or newer.
 
 ```bash
 git clone https://github.com/Blooniverse/Blyss.git
@@ -106,6 +111,14 @@ npm start       # preview locally at http://localhost:3000
 
 Run `npm test` to rebuild the starter and execute the test suite.
 Treat `public/` as generated output; make changes in the source or starter.
+
+### Releasing
+
+Versions are published to [npm](https://www.npmjs.com/package/@blooniverse/blyss) by the workflow `.github/workflows/cd-prod-publish-npm.yml` through [trusted publishing](https://docs.npmjs.com/trusted-publishers), without an npm token and with provenance:
+
+1. Set `version` in `package.json` and date its section in `CHANGELOG.md`.
+2. Publish a GitHub release whose tag is that version with a leading `v`, such as `v1.0.1`.
+3. Approve the deployment of the `npm` environment; the workflow tests, then publishes.
 
 
 ## Documentation

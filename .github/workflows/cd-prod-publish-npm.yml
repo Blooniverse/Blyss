@@ -1,0 +1,65 @@
+# Publishes @blooniverse/blyss to npm through trusted publishing (OIDC): no npm token is stored, and npm adds provenance.
+# For more information see: https://docs.npmjs.com/trusted-publishers
+#
+# One-time setup, after the first version has been published by hand:
+#   1. On npmjs.com, in the package's settings under "Trusted Publisher", choose GitHub Actions with
+#      organization "Blooniverse", repository "Blyss", workflow "cd-prod-publish-npm.yml", environment "npm",
+#      and allow `npm publish`.
+#   2. In the repository's settings, create the environment "npm" with yourself as required reviewer.
+#   3. On npmjs.com, set the package's publishing access to "Require two-factor authentication and disallow tokens".
+
+name: npm publish CD workflow
+
+# Runs when a GitHub release is published. Its tag must be the version in package.json with a leading "v", such as v1.0.1.
+on:
+  release:
+    types: [ "published" ]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: npm-publish
+  cancel-in-progress: false
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: npm
+    permissions:
+      contents: read
+      id-token: write # lets npm exchange the workflow's OIDC token for a short-lived publish token
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        persist-credentials: false
+    # No dependency cache: a release builds from a clean installation.
+    - name: Use Node.js 24.x
+      uses: actions/setup-node@v4
+      with:
+        node-version: 24.x
+        registry-url: "https://registry.npmjs.org"
+    - name: Check the tag and the npm version
+      env:
+        TAG: ${{ github.event.release.tag_name }}
+      run: |
+        version="$(node -p "require('./package.json').version")"
+        if [ "$TAG" != "v$version" ]; then
+          echo "::error::The tag $TAG does not match v$version in package.json."
+          exit 1
+        fi
+        # Trusted publishing needs npm 11.5.1 or newer.
+        node -e '
+          const [major, minor, patch] = process.argv[1].split(".").map(Number);
+          if (major < 11 || (major === 11 && (minor < 5 || (minor === 5 && patch < 1)))) {
+            console.error(`::error::npm ${process.argv[1]} is too old for trusted publishing; 11.5.1 or newer is needed.`);
+            process.exit(1);
+          }' "$(npm --version)"
+    - run: npm ci
+    - run: npm test
+    - name: Publish to npm
+      run: npm publish
