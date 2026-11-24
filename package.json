@@ -1,7 +1,7 @@
 {
   "name": "@blooniverse/blyss",
   "version": "1.0.1",
-  "description": "A lean multilingual Markdown transformer and static-site server.",
+  "description": "Blyss is a lean, local-first Markdown++ SSG (static site generator) and dependency free Node.js server. ",
   "keywords": [
     "static-site-generator",
     "ssg",
