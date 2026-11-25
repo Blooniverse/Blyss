@@ -243,5 +243,9 @@ export default {
   },
 
   // 9. Server
-  server: { fallbackPort: 3000 }
+  server: {
+    hostBind: "127.0.0.1",
+    fallbackPort: 3000
+  }
+  
 };
