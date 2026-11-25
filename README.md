@@ -110,7 +110,7 @@ npm start       # preview locally at http://localhost:3000
 ```
 
 Run `npm test` to rebuild the starter and execute the test suite.
-Run `scripts/test-package.sh [path/to/website]` to pack Blyss and build a new website, and optionally a copy of an existing one, with that package, as users get it (needs Bash).
+Run `scripts/local-testing-package.sh [path/to/website]` to pack Blyss and build a new website, and optionally a copy of an existing one, with that package, as users get it (needs Bash).
 Treat `public/` as generated output; make changes in the source or starter.
 
 
