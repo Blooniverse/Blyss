@@ -79,8 +79,13 @@ printf 'Package tarball: %s\n' "$tarball"
 # Installs the tarball into the website in the current folder, builds the website and checks the result.
 #   npm install <tarball>   installs Blyss from the tarball instead of from npmjs.com, as if it had been published.
 #                           --no-save and --package-lock=false leave package.json and package-lock.json unchanged.
-#   npx --no-install blyss  runs the Blyss just installed. Without --no-install, npx could download "blyss" from
-#                           npmjs.com instead: an unrelated package with the same short name.
+#   npx --no-install blyss  runs the `blyss` command of the Blyss just installed. Two different tools, despite
+#                           the similar names: npm installs packages, npx runs a command that a package provides.
+#                           --no-install forbids npx to download anything: without it, npx could fetch "blyss"
+#                           from npmjs.com, an unrelated package with the same short name.
+#                           Why not `npm run build`, as users do? That runs whatever "build" means in the website's
+#                           package.json: in the starter it is just `blyss build`, but an existing website may
+#                           add steps of its own, or have no "build" at all. npx runs Blyss itself, nothing else.
 # The checks: Blyss is a real copy from the tarball (test ! -L: not a link to this repository), and the build
 # made no public/index.html, which Blyss must never create (the server redirects / to a language instead).
 install_and_build() {
