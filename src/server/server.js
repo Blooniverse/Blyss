@@ -1,10 +1,11 @@
 import { open, stat } from "node:fs/promises";
 import { createServer } from "node:http";
+import { isIPv6 } from "node:net";
 import nodePath, { extname, join } from "node:path";
 import { pipeline } from "node:stream";
 import { languagesOf } from "../build/languages.js";
 import { resolvePaths, within } from "../build/paths.js";
-import { assertSite, basePathOf } from "../build/settings.js";
+import { assertSite, basePathOf, refuse } from "../build/settings.js";
 import { contentTypeFor } from "./mime-types.js";
 
 const isFile = path => stat(path).then(info => info.isFile(), () => false);
@@ -36,9 +37,26 @@ async function sendFile(response, status, filePath) {
   pipeline(file.createReadStream(), response, () => {});
 }
 
-export function serve(projectDir, config) {
+// The address and port to listen on: a command-line option, then the environment variable, then blyss.config.js.
+// An empty environment variable counts as unset, as in a compose.yaml that passes on a variable that is not set.
+export function listenAddress(config, options = {}, env = process.env) {
+  const hostBind = options.hostBind ?? (env.BLYSS_HOSTBIND || undefined) ?? config.server?.hostBind ?? "127.0.0.1";
+  if (typeof hostBind !== "string" || !hostBind.trim()) {
+    throw refuse("server.hostBind", hostBind, 'an address to listen on, such as "127.0.0.1" or "0.0.0.0"');
+  }
+  const port = options.port ?? (Number(env.PORT) || (config.server?.fallbackPort ?? 3000));
+  return { hostBind, port };
+}
+
+// The address to open in a browser: an address that stands for every interface is reached through localhost.
+function urlOf(hostBind, port) {
+  const host = ["0.0.0.0", "::"].includes(hostBind) ? "localhost" : isIPv6(hostBind) ? `[${hostBind}]` : hostBind;
+  return `http://${host}:${port}/`;
+}
+
+export function serve(projectDir, config, options = {}) {
   assertSite(config);
-  const port = Number(process.env.PORT) || (config.server?.fallbackPort ?? 3000);
+  const { hostBind, port } = listenAddress(config, options);
   const { publicDirectory } = resolvePaths(projectDir, config);
   const { defaultLanguage } = languagesOf(config);
   // A website below a path, such as /docs for https://example.com/docs/, is served below that path, as on its host.
@@ -92,11 +110,14 @@ export function serve(projectDir, config) {
     console.error(error.code === "EADDRINUSE"
       ? `Cannot serve on port ${port}: the port is already in use.\n` +
         `Stop the program that uses it, or set the environment variable PORT to another port, such as ${port + 1}.`
-      : `Cannot serve on port ${port}: ${error.message}`);
+      : error.code === "EADDRNOTAVAIL" || error.code === "ENOTFOUND"
+        ? `Cannot serve on ${hostBind}: this computer has no such address.\n` +
+          "Set BLYSS_HOSTBIND or server.hostBind to one of its addresses, such as 127.0.0.1."
+        : `Cannot serve on ${hostBind}, port ${port}: ${error.message}`);
     process.exitCode = 1;
   });
-  server.listen(port, "0.0.0.0", async () => {
-    console.log(`Blyss is serving ${config.directories.public}/ on port ${port}`);
+  server.listen(port, hostBind, async () => {
+    console.log(`Blyss is serving ${config.directories.public}/ on port ${port} of ${hostBind}: ${urlOf(hostBind, port)}`);
     if (!await isBuilt()) console.error(unbuilt);
   });
   return server;

@@ -22,7 +22,27 @@ npm start
 - Er leitet `/` mit HTTP 302 zur eingestellten Standardsprache weiter.
 - Er leitet ein Verzeichnis ohne abschließenden Schrägstrich, etwa `/de`, zu `/de/` weiter.
 
-`PORT` bestimmt den Port, sonst gilt `server.fallbackPort` aus `blyss.config.js`.
+Der Server lauscht auf `127.0.0.1`, sodass nur dieser Computer ihn erreicht. Er nimmt jeweils die erste gesetzte Angabe:
+
+| | Adresse | Port |
+| --- | --- | --- |
+| Befehlszeile | `--hostbind <adresse>` | `--port <zahl>` |
+| Umgebungsvariable | `BLYSS_HOSTBIND` | `PORT` |
+| `blyss.config.js` | `server.hostBind` | `server.fallbackPort` |
+| Standard | `127.0.0.1` | `3000` |
+
+Eine leere Umgebungsvariable gilt als nicht gesetzt. `0.0.0.0` lauscht in allen Netzen, sodass auch andere Geräte den Server erreichen.
+
+In einem Container, etwa von Docker oder Podman, ist `127.0.0.1` der Container selbst: Anfragen des Hosts bleiben dann ohne Antwort („Empty reply from server“). Setzen Sie im Container `BLYSS_HOSTBIND=0.0.0.0` und überlassen Sie es der Portzuordnung, wer sich verbindet; `127.0.0.1:3000:3000` in `compose.yaml` lässt nur den Host zu:
+
+```yaml
+services:
+  dev:
+    environment:
+      - BLYSS_HOSTBIND=0.0.0.0
+    ports:
+      - "127.0.0.1:3000:3000"
+```
 
 ## Befehle
 
@@ -30,7 +50,7 @@ npm start
 npx @blooniverse/blyss init [verzeichnis]  # den Starter kopieren
 npm run build                              # blyss build: directories.public erzeugen
 npm run build:drafts                       # blyss build --drafts: mit den Entwürfen erzeugen
-npm start                                  # blyss serve: auf PORT oder server.fallbackPort ausliefern
+npm start                                  # blyss serve: auf 127.0.0.1, Port 3000 ausliefern
 ```
 
 Führen Sie `npm run build`, `npm run build:drafts` und `npm start` im Wurzelverzeichnis der Website aus, in dem `blyss.config.js` liegt: Sie rufen `blyss build` und `blyss serve` des Blyss auf, das `npm install` in die Website gelegt hat. Schreiben Sie für `init` den vollen Namen `npx @blooniverse/blyss`: Außerhalb einer solchen Website lädt `npx blyss` ein fremdes npm-Paket namens `blyss`.
@@ -39,7 +59,8 @@ Die Befehle nehmen diese Argumente entgegen:
 
 - `blyss build --drafts` erstellt auch die [Entwürfe](/de/book/schreiben/seiten-und-beitraege/#entwürfe), die jeder andere Build auslässt.
 - `blyss --help` listet die Befehle auf, und `blyss --version` zeigt die Version von Blyss.
-- `build` nimmt nur `--drafts` entgegen, `init` nur sein Verzeichnis und `serve` kein Argument: Jedes andere Argument beendet den Befehl mit einer Meldung.
+- `blyss serve --hostbind <adresse> --port <zahl>` liefert auf einer anderen Adresse oder einem anderen Port aus.
+- `build` nimmt nur `--drafts` entgegen, `init` nur sein Verzeichnis und `serve` nur `--hostbind` und `--port`: Jedes andere Argument beendet den Befehl mit einer Meldung.
 
 `init` legt eine Website so an:
 
