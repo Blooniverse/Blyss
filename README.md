@@ -113,7 +113,7 @@ Working on Blyss itself requires Node.js 24 or newer.
 ```bash
 git clone https://github.com/Blooniverse/Blyss.git
 cd Blyss
-npm ci
+npm clean-install
 npm run build   # render starters/lean/ into public/
 npm start       # preview locally at http://localhost:3000
 ```
