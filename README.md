@@ -109,9 +109,9 @@ npm run build   # render starters/lean/ into public/
 npm start       # preview locally at http://localhost:3000
 ```
 
-Run `npm test` to rebuild the starter and execute the test suite.
-Run `scripts/local-testing-package.sh [path/to/website]` to pack Blyss and build a new website, and optionally a copy of an existing one, with that package, as users get it (needs Bash).
-Treat `public/` as generated output; make changes in the source or starter.
+- Run `npm test` to rebuild the starter and execute the test suite.
+- Run `scripts/local-testing-package.sh [path/to/website]` to pack Blyss and build a temporary website with that package, as users get it (needs Bash). Option: a copy of an existing website.
+- Treat `public/` as generated output; make changes in the source or starter.
 
 
 ## Documentation
