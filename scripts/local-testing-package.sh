@@ -2,8 +2,8 @@
 # Tests the npm package of Blyss as its users get it: packs it, then builds websites with the packed tarball.
 #
 # Usage, from the root of the Blyss repository:
-#   scripts/test-package.sh                         Test A only
-#   scripts/test-package.sh ../my-website           Test A and Test B
+#   scripts/local-testing-package.sh                         Test A only
+#   scripts/local-testing-package.sh ../my-website           Test A and Test B
 #
 #   Test A  creates a throwaway website with `blyss init` and builds it.
 #   Test B  (only with a path) builds a copy of an existing Blyss website; the website itself is left untouched.
