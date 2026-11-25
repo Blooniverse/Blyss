@@ -85,13 +85,22 @@ npm start                             # serve public/ on localhost:3000
 
 ## Installation
 
-To add Blyss to an existing Blyss website instead, one with a `blyss.config.js`, `_content/`, `templates/`, `components/` and `static/` beside its `package.json`:
+A new website is best started with `blyss init` (see Quick start above), which creates all of its files.
+
+To add Blyss to an existing website instead, that website must already contain the files of a Blyss website, as `blyss init` creates them. Next to its `package.json`, it has:
+
+- `blyss.config.js`, the settings;
+- `_content/`, the pages, posts, docs and texts;
+- `templates/` and `components/`, the layout;
+- `static/`, the images, stylesheets and other files copied unchanged.
+
+The command below adds none of these. It only installs the Blyss engine into `node_modules/` and lists it under `dependencies` in `package.json`:
 
 ```bash
 npm install @blooniverse/blyss
 ```
 
-Then add the scripts `"build": "blyss build"` and `"start": "blyss serve"` to its `package.json`. A new website is best started with `blyss init`, which copies all of these.
+Then add the scripts `"build": "blyss build"` and `"start": "blyss serve"` to `package.json` by hand, so that `npm run build` and `npm start` work.
 
 > [!WARNING]
 > Run the commands through `npm run`, or `npx blyss` inside a website that has Blyss installed. Elsewhere, `npx blyss` runs `blyss`, an unrelated npm package; the full name `npx @blooniverse/blyss` always runs Blyss.
