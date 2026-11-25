@@ -117,3 +117,9 @@ if [ -n "$website" ]; then
 fi
 
 printf 'Blyss package tests passed.\n'
+
+# Root may read every file, so `npm test` skips its tests of unreadable files when run as root (as in some
+# containers). Normal users and the CI workflow run them.
+if [ "$(id -u)" -eq 0 ]; then
+  printf 'Note: running as root, so npm test skipped its tests of unreadable files; CI runs them.\n'
+fi
