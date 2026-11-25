@@ -23,7 +23,7 @@ title: Warum Blyss
 - **AIO und SEO**: Semantischer RDF-Graph (in JSON-LD) und eine klassische sitemap.xml.
 
 #### Lokale Kontrolle und Cybersicherheit
-- **Local-first und Git-basiert**: Volle Kontrolle für Entwickler und Autoren.
+- **Local-first**: Volle Kontrolle für Entwickler und Autoren. Ideal für Git-basierte Workflows.
 > [!IMPORTANT]
 > - **Cybersicherheit**:
 >     - 0 (NULL) Abhängigkeiten im Node.js-Server!
