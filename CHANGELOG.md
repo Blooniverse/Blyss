@@ -4,6 +4,13 @@
 
 ### Breaking changes
 
+- **Address of the local server**: `blyss serve` listens on `127.0.0.1`
+  instead of `0.0.0.0`, so other devices in the network no longer reach it.
+  `--hostbind`, the environment variable `BLYSS_HOSTBIND` or
+  `server.hostBind` in `blyss.config.js` name another address; `--port`
+  names the port before `PORT`. In a container, such as one of Docker or
+  Podman, set `BLYSS_HOSTBIND=0.0.0.0`: on `127.0.0.1`, the host's requests
+  get no answer.
 - **Components of the hero and of the overlay**: `hero.md` and `overlay.md`
   in `_content/<language>/` show them. `hero.components`,
   `overlay.components` and the variants `<name>Hero` and `<name>Overlay` are

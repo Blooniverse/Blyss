@@ -10,7 +10,7 @@
 //   6. synchroniseHeroOverlay  the overlay as a copy of the hero
 //   7. components              the settings of each component
 //   8. directories             the directories of the website
-//   9. server                  the port of the local server
+//   9. server                  the address and port of the local server
 export default {
   // 1. Site
   site: {
@@ -244,7 +244,10 @@ export default {
 
   // 9. Server
   server: {
+    // The address that blyss serve listens on: 127.0.0.1 only for this computer, 0.0.0.0 for every network, as a
+    // container needs. --hostbind and the environment variable BLYSS_HOSTBIND come first.
     hostBind: "127.0.0.1",
+    // The port, unless --port or the environment variable PORT names another.
     fallbackPort: 3000
   }
   

@@ -11,7 +11,7 @@ import { readRenderer } from "../src/build/browser.js";
 import { parseFrontMatter } from "../src/build/front-matter.js";
 import { escapeHtml } from "../src/build/html.js";
 import { parseTags } from "../src/build/lists.js";
-import { fileFor } from "../src/server/server.js";
+import { fileFor, listenAddress } from "../src/server/server.js";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 const cli = join(root, "bin", "blyss.js");
@@ -198,7 +198,8 @@ describe("blyss", () => {
   test("refuses a missing or unknown command and arguments of build and serve, and names the commands", async () => {
     const cwd = await emptyDirectory("commands");
     for (const [args, problem] of [[[], "Blyss needs a command."], [["bild"], "Unknown command: bild"],
-      [["build", "now"], "Unexpected argument: now"], [["serve", "--port", "4000"], "Unexpected argument: --port"]]) {
+      [["build", "now"], "Unexpected argument: now"], [["serve", "--verbose"], "Unexpected argument: --verbose"], [["serve", "--port"], "--port needs a value."],
+      [["serve", "--port", "http"], 'Cannot use --port "http".'], [["serve", "--hostbind", " "], 'Cannot use --hostbind " ".']]) {
       const result = run(args, cwd);
       assert.equal(result.status, 1, args.join(" "));
       assert.ok(result.stderr.startsWith(`${problem}\nUsage: blyss init [directory] `), result.stderr);
@@ -640,6 +641,45 @@ describe("blyss serve", () => {
       }
     });
     assert.equal(stderr, "");
+  });
+
+  test("listens on 127.0.0.1 unless an option, BLYSS_HOSTBIND or server.hostBind names another address", () => {
+    const config = { server: { hostBind: "192.168.1.2", fallbackPort: 4000 } };
+    assert.deepEqual(listenAddress({}, {}, {}), { hostBind: "127.0.0.1", port: 3000 });
+    assert.deepEqual(listenAddress(config, {}, {}), { hostBind: "192.168.1.2", port: 4000 });
+    // An empty variable, as a compose.yaml passes on for one that is not set, counts as unset.
+    assert.deepEqual(listenAddress(config, {}, { BLYSS_HOSTBIND: "", PORT: "" }), { hostBind: "192.168.1.2", port: 4000 });
+    assert.deepEqual(listenAddress(config, {}, { BLYSS_HOSTBIND: "0.0.0.0", PORT: "5000" }), { hostBind: "0.0.0.0", port: 5000 });
+    assert.deepEqual(listenAddress(config, { hostBind: "::1", port: 6000 }, { BLYSS_HOSTBIND: "0.0.0.0", PORT: "5000" }),
+      { hostBind: "::1", port: 6000 });
+    assert.throws(() => listenAddress({ server: { hostBind: 127 } }, {}, {}), /^BlyssError: Cannot use server\.hostBind 127: /);
+  });
+
+  test("takes its address and port from the command line before the environment", { timeout: 15_000 }, async () => {
+    const port = await freePort();
+    const server = spawn(process.execPath, [cli, "serve", "--hostbind", "127.0.0.1", "--port", String(port)],
+      { cwd: site, env: { ...process.env, BLYSS_HOSTBIND: "0.0.0.0", PORT: "1" } });
+    const exited = once(server, "exit");
+    try {
+      let stdout = "";
+      for await (const chunk of server.stdout) {
+        stdout += chunk;
+        if (stdout.includes("\n")) break;
+      }
+      assert.equal(stdout, `Blyss is serving public/ on port ${port} of 127.0.0.1: http://127.0.0.1:${port}/\n`);
+      assert.equal((await fetch(`http://127.0.0.1:${port}/`, { redirect: "manual" })).status, 302);
+    } finally {
+      server.kill();
+    }
+    await exited;
+  });
+
+  test("names an address that the computer does not have without a stack trace", () => {
+    // 192.0.2.1 is reserved for documentation, so no computer has it.
+    const result = spawnSync(process.execPath, [cli, "serve", "--hostbind", "192.0.2.1"], { cwd: site, encoding: "utf8" });
+    assert.equal(result.status, 1);
+    assert.equal(result.stderr, "Cannot serve on 192.0.2.1: this computer has no such address.\n" +
+      "Set BLYSS_HOSTBIND or server.hostBind to one of its addresses, such as 127.0.0.1.\n");
   });
 
   test("names a port that is in use without a stack trace", { timeout: 15_000 }, async () => {
