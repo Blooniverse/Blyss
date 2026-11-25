@@ -37,7 +37,7 @@ Blyss is a lean, local-first SSG (static site generator) for Markdown++. Ships w
 > - **Cybersecurity**:
 >     - 0 (ZERO) dependencies in the Node.js server!
 >     - 3 (THREE) dependencies in the SSG engine: `highlight.js`, `marked`, `temml` (nor any further dependencies)!
-> - **Local-first & Git-based**: Full control for devs & authors.
+> - **Local-first**: Full control for devs & authors. Ideal for Git-based workflows.
 
 
 ## Simple local workflow
