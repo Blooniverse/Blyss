@@ -1,4 +1,5 @@
 import { BlyssError } from "../errors.js";
+import { dateAdvice, isDate } from "./dates.js";
 import { readFrontMatter } from "./front-matter.js";
 import { escapeHtml } from "./html.js";
 import { listOf } from "./settings.js";
@@ -197,7 +198,34 @@ function math(directive) {
   return { type: "blockMath", latex: body, display: true, file, ...labelOf(directive) };
 }
 
-const handlers = { ...Object.fromEntries(["admonition", ...kinds].map(kind => [kind, admonition])), image: picture, figure: picture, math };
+// A turn of a text that several authors write in turns, such as a post that a person starts, an agent extends and
+// the person answers: by tells whether a human or an agent wrote it, author names the one who did and date tells
+// when. The label of a language for its kind, contributionHuman or contributionAgent, introduces it.
+const authors = ["human", "agent"];
+
+function contribution(directive, lexer) {
+  const { argument, options, body, file, labels } = directive;
+  assertOptions(directive, ["by", "author", "date", "label"]);
+  const { by, author, date } = options;
+  if (argument) {
+    throw new BlyssError(`Cannot build ${file}: its {contribution} directive has ${JSON.stringify(argument)} after its name, ` +
+      "but its options name who wrote it, as in :by: agent and :author: Claude.");
+  }
+  if (by === undefined) {
+    throw new BlyssError(`Cannot build ${file}: its {contribution} directive lacks the option by, which tells who wrote it: ` +
+      ":by: human or :by: agent.");
+  }
+  if (!authors.includes(by)) throw refuse(directive, "by", by, listOf(authors));
+  if (author !== undefined && !author.trim()) throw refuse(directive, "author", author, "a name, such as \"Claude\"");
+  if (date !== undefined && !isDate(date)) throw refuse(directive, "date", date, `a date.\n${dateAdvice}`);
+  if (!body) throw new BlyssError(`Cannot build ${file}: its {contribution} directive has no text.`);
+  const word = labels[by === "human" ? "contributionHuman" : "contributionAgent"];
+  return { type: "contribution", by, author: author?.trim(), date, word, label: labelOf(directive).label, tokens: blocksOf(lexer, body) };
+}
+
+const handlers = {
+  ...Object.fromEntries(["admonition", ...kinds].map(kind => [kind, admonition])), image: picture, figure: picture, math, contribution
+};
 
 const named = `[ \\t]*\\{[ \\t]*(${Object.keys(handlers).join("|")})[ \\t]*\\}`;
 const opening = new RegExp(`^( {0,3})(\`{3,}|:{3,})${named}([^\\n]*)(?:\\n|$)`);
@@ -272,6 +300,16 @@ const renderers = {
     return `<figure${idOf(label)}${classOf([...(images.length ? ["subfigures"] : []), ...aligned])}>\n` +
       `${url === undefined ? parts.join("") : `${image(url, alt)}\n`}${text ? `<figcaption>\n${text}</figcaption>\n` : ""}</figure>\n`;
   },
+  // A contribution starts with its kind, its author and its date; the stylesheet of the website tells the kinds apart
+  // by their classes, contribution-human and contribution-agent.
+  contribution(token) {
+    const { by, author, date, word, label } = token;
+    const who = `<span class="contribution-by">${escapeHtml(word)}</span>` +
+      (author ? ` <span class="contribution-author">${escapeHtml(author)}</span>` : "");
+    const when = date ? ` <time datetime="${escapeHtml(date)}">${escapeHtml(date)}</time>` : "";
+    return `<section class="contribution contribution-${by}"${idOf(label)}>\n<p class="contribution-meta">${who}${when}</p>\n` +
+      `${this.parser.parse(token.tokens)}</section>\n`;
+  },
   // A block with a label that is no heading, callout, figure or formula, which have ids of their own, stands
   // within an element with that id, which the tokens around it open and close: its own token stays where a page
   // finds the block of a component (see renderBody in render.js).
@@ -279,7 +317,7 @@ const renderers = {
 };
 
 // The tokens that take a label as their own id.
-const labelling = ["heading", "admonition", "figure", "blockMath"];
+const labelling = ["heading", "admonition", "figure", "blockMath", "contribution"];
 const html = text => ({ type: "html", block: true, raw: "", text });
 // (label)= on a line of its own, which names the block below it.
 const target = / {0,3}\(([^()\s]+)\)=[ \t]*(?:\n+|$)/.source;

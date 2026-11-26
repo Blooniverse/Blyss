@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 
 // The modules of the renderer by their paths in src/: markdown.js and what it imports. They are published as they
 // are, so that the browser gets the same HTML for the same text; only libraries.js is written for the browser.
-const modules = ["errors.js", "build/directives.js", "build/front-matter.js", "build/html.js", "build/markdown.js", "build/settings.js"];
+const modules = ["errors.js", "build/dates.js", "build/directives.js", "build/front-matter.js", "build/html.js", "build/markdown.js", "build/settings.js"];
 
 // The entry of the renderer: what a script may rely on, whatever the modules behind it are.
 const entry = version => `// The renderer of Blyss ${version} for the browser: it reads Markdown like the build of the website that publishes it.

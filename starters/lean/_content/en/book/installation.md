@@ -34,16 +34,22 @@ npx @blooniverse/blyss init [directory]  # copy the starter
 npm run build                            # blyss build: generate directories.public
 npm run build:drafts                     # blyss build --drafts: generate it with the drafts
 npm start                                # blyss serve: serve it on 127.0.0.1, port 3000
+npm run dev                              # blyss serve --watch --drafts: rebuild and reload on each change
+npm run check                            # blyss check: check everything without writing
+npx blyss new post "A title"             # create a draft: a page, a post or a doc
 ```
 
-Run `npm run build`, `npm run build:drafts` and `npm start` from the website root, where `blyss.config.js` lives: they call `blyss build` and `blyss serve` of the Blyss that `npm install` put into the website. For `init`, write the full name `npx @blooniverse/blyss`: outside such a website, `npx blyss` fetches an unrelated npm package named `blyss`.
+Run these commands from the website root, where `blyss.config.js` lives: they call the Blyss that `npm install` put into the website. For `init`, write the full name `npx @blooniverse/blyss`: outside such a website, `npx blyss` fetches an unrelated npm package named `blyss`.
 
 The commands take these arguments:
 
+- `blyss new <page|post|doc> "<title>"` creates a [draft](/en/book/writing/pages-and-posts/#drafts) in the default language, with a front matter that the build accepts, and never replaces a file. `--lang <key>` chooses another language, `--slug <slug>` another file name and `--key <translationKey>` makes it the translation of a page in another language. Posts are named after their date, as in `261126-a-title.md`.
+- `blyss check` builds everything, the drafts included, without writing: it reports every broken file at once, then the pages that lack a `translationKey` or a translation. `--json` prints the report for a script or an AI agent. It ends with the exit code 1 if a build would fail.
 - `blyss build --drafts` builds the [drafts](/en/book/writing/pages-and-posts/#drafts) as well, which every other build leaves out.
 - `blyss --help` lists the commands and `blyss --version` shows the version of Blyss.
 - `blyss serve --hostbind <address> --port <number>` serves on another address or port.
-- `build` takes no argument but `--drafts`, `init` none but its directory and `serve` none but `--hostbind` and `--port`: any other argument ends the command with a message.
+- `blyss serve --watch` builds, then rebuilds on each change of the content, the templates, the components, the static files or `blyss.config.js`, and reloads the open pages. A failed build shows its message on the page. `--drafts` builds the drafts as well.
+- Any other argument ends a command with a message.
 
 `build` and `serve` require `blyss.config.js`. `serve` does not build: for a website without `public/`, it says so and answers every request with "404 Not Found". The dependency-free server answers `GET` and `HEAD` requests:
 

@@ -1,7 +1,7 @@
 import { BlyssError } from "../errors.js";
 import { escapeHtml } from "./html.js";
 import { createJsonLd, renderJsonLd } from "./json-ld.js";
-import { lexDocument, renderInlineTokens, renderTokens } from "./markdown.js";
+import { contributionsOf, lexDocument, renderInlineTokens, renderTokens } from "./markdown.js";
 import { renderAlternateLinks, renderLanguageSwitcher } from "./translations.js";
 
 export { escapeHtml };
@@ -105,7 +105,7 @@ export function componentOf(token, languages) {
 // the ids of the templates, which no label of the text can be. In a doc, the headings get ids (see
 // identifyHeadings), which are returned with the headings.
 async function renderBody(record, file, records, components, languages, former, takenIds, isBook) {
-  if (record.type === "list") return { html: record.html, headings: [] };
+  if (record.type === "list") return { html: record.html, headings: [], contributions: [] };
   const { tokens, ids } = lexDocument(record.markdown, file, record.languageConfig.labels);
   for (const id of ids) {
     if (takenIds.has(id)) {
@@ -124,7 +124,7 @@ async function renderBody(record, file, records, components, languages, former, 
     }
   }
   const headings = isBook ? identifyHeadings(tokens, takenIds) : [];
-  return { html: renderTokens(tokens), headings };
+  return { html: renderTokens(tokens), headings, contributions: contributionsOf(tokens) };
 }
 
 // The kinds of pages: "home" is the index page of a language, "list" an archive or tag page. Templates can style each
@@ -198,7 +198,7 @@ export async function renderRecord({ record, file, templates, templateFile = nam
     robots: record.notFound ? '  <meta name="robots" content="noindex">' : "",
     canonicalUrl: escapeHtml(record.canonicalUrl),
     alternateLinks: renderAlternateLinks(record, translationIndex, site.defaultLanguage),
-    jsonLd: renderJsonLd(createJsonLd({ site, record })),
+    jsonLd: renderJsonLd(createJsonLd({ site, record, contributions: body.contributions })),
     languageKey: escapeHtml(record.languageKey),
     kind,
     languageSwitcher: site.languageSwitcher ? renderLanguageSwitcher(record, translationIndex, site) : "",

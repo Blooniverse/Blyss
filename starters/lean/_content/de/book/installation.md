@@ -51,16 +51,22 @@ npx @blooniverse/blyss init [verzeichnis]  # den Starter kopieren
 npm run build                              # blyss build: directories.public erzeugen
 npm run build:drafts                       # blyss build --drafts: mit den Entwürfen erzeugen
 npm start                                  # blyss serve: auf 127.0.0.1, Port 3000 ausliefern
+npm run dev                                # blyss serve --watch --drafts: bei jeder Änderung neu erstellen und laden
+npm run check                              # blyss check: alles prüfen, ohne zu schreiben
+npx blyss new post --lang de "Ein Titel"   # einen Entwurf anlegen: Seite, Beitrag oder Dokument
 ```
 
-Führen Sie `npm run build`, `npm run build:drafts` und `npm start` im Wurzelverzeichnis der Website aus, in dem `blyss.config.js` liegt: Sie rufen `blyss build` und `blyss serve` des Blyss auf, das `npm install` in die Website gelegt hat. Schreiben Sie für `init` den vollen Namen `npx @blooniverse/blyss`: Außerhalb einer solchen Website lädt `npx blyss` ein fremdes npm-Paket namens `blyss`.
+Führen Sie diese Befehle im Wurzelverzeichnis der Website aus, in dem `blyss.config.js` liegt: Sie rufen das Blyss auf, das `npm install` in die Website gelegt hat. Schreiben Sie für `init` den vollen Namen `npx @blooniverse/blyss`: Außerhalb einer solchen Website lädt `npx blyss` ein fremdes npm-Paket namens `blyss`.
 
 Die Befehle nehmen diese Argumente entgegen:
 
+- `blyss new <page|post|doc> "<titel>"` legt einen [Entwurf](/de/book/schreiben/seiten-und-beitraege/#entwürfe) in der Standardsprache an, mit einem Front Matter, den der Build annimmt, und ersetzt nie eine Datei. `--lang <schlüssel>` wählt eine andere Sprache, `--slug <slug>` einen anderen Dateinamen, und `--key <translationKey>` macht ihn zur Übersetzung einer Seite in einer anderen Sprache. Beiträge tragen ihr Datum im Namen, etwa `261126-ein-titel.md`.
+- `blyss check` erstellt alles samt Entwürfen, ohne zu schreiben: Es meldet jede fehlerhafte Datei auf einmal, dann die Seiten ohne `translationKey` oder ohne Übersetzung. `--json` gibt den Bericht für ein Skript oder einen KI-Agenten aus. Es endet mit dem Exit-Code 1, wenn ein Build scheitern würde.
 - `blyss build --drafts` erstellt auch die [Entwürfe](/de/book/schreiben/seiten-und-beitraege/#entwürfe), die jeder andere Build auslässt.
 - `blyss --help` listet die Befehle auf, und `blyss --version` zeigt die Version von Blyss.
 - `blyss serve --hostbind <adresse> --port <zahl>` liefert auf einer anderen Adresse oder einem anderen Port aus.
-- `build` nimmt nur `--drafts` entgegen, `init` nur sein Verzeichnis und `serve` nur `--hostbind` und `--port`: Jedes andere Argument beendet den Befehl mit einer Meldung.
+- `blyss serve --watch` erstellt die Website und danach bei jeder Änderung der Inhalte, Templates, Komponenten, statischen Dateien oder von `blyss.config.js` neu und lädt die geöffneten Seiten neu. Ein gescheiterter Build zeigt seine Meldung auf der Seite. `--drafts` erstellt auch die Entwürfe.
+- Jedes andere Argument beendet einen Befehl mit einer Meldung.
 
 `init` legt eine Website so an:
 
@@ -68,7 +74,7 @@ Die Befehle nehmen diese Argumente entgegen:
 - Ein fehlendes Verzeichnis wird angelegt, ein vorhandenes muss leer sein; ein Verzeichnis, das nur `.git` enthält, gilt als leer, sodass `git init` vorausgehen darf.
 - Es überschreibt nie vorhandene Dateien und bietet kein `--force`; bei einem Kopierfehler entfernt es nur selbst angelegte Dateien und Verzeichnisse.
 - Es installiert keine Pakete, initialisiert kein Git, erstellt oder startet die Website nicht und verwendet selbst kein Netzwerk. `npx` und `npm install` können hingegen Pakete herunterladen.
-- Die erzeugte `package.json` trägt den Namen des Verzeichnisses, hängt von der ausgeführten Blyss-Version ab und bietet `npm run build`, `npm run build:drafts` und `npm start`.
+- Die erzeugte `package.json` trägt den Namen des Verzeichnisses, hängt von der ausgeführten Blyss-Version ab und bietet `npm run build`, `npm run build:drafts`, `npm run check`, `npm run dev` und `npm start`.
 
 Ohne `blyss.config.js` brechen `build` und `serve` ab und empfehlen `init`. `serve` erstellt die Website nicht: Fehlt `public/`, meldet der Server das und beantwortet jede Anfrage mit „404 Not Found“.
 

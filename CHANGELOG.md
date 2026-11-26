@@ -4,6 +4,10 @@
 
 ### Breaking changes
 
+- **Package exports**: `package.json` declares `exports`, so a script imports
+  Blyss as `@blooniverse/blyss` (`build`, `prepare`, `check`,
+  `createContent`, `serve` and others, see `src/index.js`) and no longer
+  reaches into `src/` by the path of a module.
 - **Address of the local server**: `blyss serve` listens on `127.0.0.1`
   instead of `0.0.0.0`, so other devices in the network no longer reach it.
   `--hostbind`, the environment variable `BLYSS_HOSTBIND` or
@@ -153,6 +157,27 @@
 
 ### New features
 
+- **Co-authoring with AI agents**: the directive `{contribution}`, with
+  `:by: human` or `:by: agent`, `:author:` and `:date:`, shows each turn of a
+  text that a human and an agent write together, attributed and dated; the
+  JSON-LD names the authors as `contributor`. The labels
+  `contributionHuman` and `contributionAgent` name the kinds.
+- **blyss check** builds everything, the drafts included, without writing,
+  and reports every broken file at once, then pages without a
+  `translationKey` or a translation; `--json` prints the report for
+  scripts and agents. The build reports every broken file at once as well;
+  an error that repeats for every page is reported once.
+- **blyss new** `<page|post|doc>` `"<title>"` creates a draft with a valid
+  front matter, in a language of `--lang`, with `--slug` and `--key`, and
+  never replaces a file.
+- **blyss serve --watch** rebuilds on each change and reloads the open pages;
+  a failed build shows its message on the page. `--drafts` serves the
+  drafts.
+- **Starter for agents**: `AGENTS.md` tells an AI agent how to work on the
+  website; `_authoring/` holds the style guide, the glossary and briefs,
+  which the build never reads; `npm run check` and `npm run dev` join the
+  scripts, and the workflow `ci-dev-check-content.yml` checks each pull
+  request.
 - **Components of a region**: a block in `hero.md` or `overlay.md` gives a
   component settings and a text of its own. `regionPosition` places it
   `above` or `below` the cards, and a comment hides it.

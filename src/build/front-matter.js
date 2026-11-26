@@ -127,6 +127,9 @@ export function readFrontMatter(source, file, what = "its front matter", lacks =
   } catch (error) {
     if (!(error instanceof FrontMatterError)) throw error;
     const problem = error.line ? `line ${error.line} of ${what} ${error.problem}` : `${what} ${lacks} closing ---.`;
-    throw new BlyssError(`Cannot build ${file}: ${problem}`, { cause: error });
+    const failure = new BlyssError(`Cannot build ${file}: ${problem}`, { cause: error });
+    // The front matter of a file starts on its first line, so that its lines are those of the file.
+    if (error.line && what === "its front matter") failure.line = error.line;
+    throw failure;
   }
 }

@@ -27,6 +27,9 @@ Blyss is a lean, local-first SSG (static site generator) for Markdown++. Ships w
     - **Compatibility**: [Marktext.me](https://marktext.me), [Obsidian.md](https://obsidian.md), etc.
 - **Authoring with 3 content types**: book doc, page, post.
     - `draft: true` in Frontmatter.
+    - `blyss new` creates drafts, `blyss check [--json]` checks the whole website at once, `blyss serve --watch` rebuilds and reloads.
+- **Co-authoring with AI agents**: Human and agent turns as attributed, dated `{contribution}` blocks; `AGENTS.md` and `_authoring/` in the starter; JSON-LD `contributor`s.
+- **Library API**: `import { build, check, createContent } from "@blooniverse/blyss"`.
     - In-browser content editing via: [Decap CMS](https://decapcms.org/) or [Tina](https://tina.io/).
 - **Themeable**: Blyss comes with a lean starter.
 - **Composable**: Markdown components and their fragments can be used anywhere.

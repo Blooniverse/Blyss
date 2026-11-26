@@ -6,6 +6,8 @@
   "scripts": {
     "build": "blyss build",
     "build:drafts": "blyss build --drafts",
+    "check": "blyss check",
+    "dev": "blyss serve --watch --drafts",
     "start": "blyss serve"
   },
   "dependencies": {

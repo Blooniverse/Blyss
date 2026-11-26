@@ -174,6 +174,13 @@ function walk(tokens, visit) {
   }
 }
 
+// The contributions of the tokens of a text, in its order: the turns of its authors (see directives.js).
+export function contributionsOf(tokens) {
+  const found = [];
+  walk(tokens, token => { if (token.type === "contribution") found.push(token); });
+  return found;
+}
+
 // The formulas on lines of their own of a page, of a post or of a doc share one sequence of numbers, in the order
 // in which the page shows them: texts are its text and those of its footnotes. A formula that is to be numbered (see
 // labelDocument in directives.js) shows its number beside it, as \tag does, unless it has a tag of its own. The

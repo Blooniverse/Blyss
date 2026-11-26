@@ -67,6 +67,8 @@ export default {
           seealso: "See also",
           tip: "Tip",
           warning: "Warning",
+          contributionHuman: "Human", // the kinds of the authors of a {contribution}
+          contributionAgent: "AI agent",
           overlay: "Overlay",
           hero: "Highlights",
           close: "Close",
@@ -112,6 +114,8 @@ export default {
           seealso: "Siehe auch",
           tip: "Tipp",
           warning: "Warnung",
+          contributionHuman: "Mensch",
+          contributionAgent: "KI-Agent",
           overlay: "Overlay",
           hero: "Highlights",
           close: "Schließen",
