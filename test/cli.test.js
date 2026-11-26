@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
-import { spawn, spawnSync } from "node:child_process";
+import { fork, spawn, spawnSync } from "node:child_process";
 import { once } from "node:events";
+import { mkdirSync, renameSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { chmod, cp, mkdir, mkdtemp, readdir, readFile, realpath, rename, rm, stat, writeFile } from "node:fs/promises";
 import { connect, createServer } from "node:net";
 import { tmpdir } from "node:os";
@@ -154,6 +155,32 @@ async function freePort() {
   probe.close();
   await once(probe, "close");
   return port;
+}
+
+// Waits until check holds, as for what a watching server does in its own time; what names it in the failure.
+async function until(check, what) {
+  const end = Date.now() + 20_000;
+  while (!await check()) {
+    assert.ok(Date.now() < end, `Waited in vain for ${typeof what === "function" ? what() : what}.`);
+    await new Promise(resolve => setTimeout(resolve, 50));
+  }
+}
+
+// Runs check with the base URL of blyss serve --watch for site, once its first build is done, and with a function
+// that returns what the server has written by then; then stops the server. env adds to the environment of the server.
+async function whileWatching(site, check, env = {}) {
+  const port = await freePort();
+  const server = spawn(process.execPath, [cli, "serve", "--watch", "--port", String(port)], { cwd: site, env: { ...process.env, ...env } });
+  const exited = once(server, "exit");
+  let output = "";
+  for (const stream of [server.stdout, server.stderr]) stream.on("data", chunk => { output += chunk; });
+  try {
+    await until(() => output.includes("Rebuilt:"), () => `the first build of blyss serve --watch, which wrote: ${output}`);
+    await check(`http://127.0.0.1:${port}`, () => output);
+  } finally {
+    server.kill();
+    await exited;
+  }
 }
 
 // Runs check with the base URL of blyss serve for site, then stops the server; returns what it wrote to stderr.
@@ -2651,17 +2678,20 @@ describe("co-authoring with agents", () => {
     await writeFile(join(site, turns), "---\ntitle: Turns\ndatePublished: 2026-11-26\ntranslationKey: turns\n---\n\n" +
       contribution(":by: human\n:author: Ada\n:date: 2026-11-26", "A question.") + "\n(answer)=\n" +
       contribution(":by: agent\n:author: Claude\n:date: 2026-11-27", "An *answer*.") + "\n" +
-      contribution(":by: human", "Thanks, see [the answer](#answer)."));
+      contribution(":by: human", "Thanks, see [the answer](#answer)[^remark].") +
+      // A turn in a footnote that the page shows, and one in a footnote that nothing refers to.
+      "\n[^remark]: A remark.\n\n" + contribution(":by: agent\n:author: Robin", "A turn in a footnote.").replace(/^(?=.)/gm, "    ") +
+      "\n[^unused]: Unused.\n\n" + contribution(":by: agent\n:author: Ghost", "A turn that is not shown.").replace(/^(?=.)/gm, "    "));
     const result = run(["build"], site);
     assert.equal(result.status, 0, result.stderr);
     const html = await readFile(join(site, "public", "en", "posts", "turns", "index.html"), "utf8");
     const sections = [...html.matchAll(/<section class="contribution contribution-(human|agent)"[^>]*>/g)];
-    assert.deepEqual(sections.map(([, by]) => by), ["human", "agent", "human"]);
+    assert.deepEqual(sections.map(([, by]) => by), ["human", "agent", "human", "agent"]);
     assert.match(sections[1][0], /id="answer"/);
     assert.match(html, /<span class="contribution-author">Claude<\/span> <time datetime="2026-11-27">2026-11-27<\/time><\/p>\n<p>An <em>answer<\/em>.<\/p>/);
     const page = jsonLdOf(html)["@graph"].find(node => node.contributor);
     assert.deepEqual(page.contributor.map(({ "@type": type, name }) => [type, name]),
-      [["Person", "Ada"], ["SoftwareApplication", "Claude"], [undefined, undefined]]);
+      [["Person", "Ada"], ["SoftwareApplication", "Claude"], [undefined, undefined], ["SoftwareApplication", "Robin"]]);
     assert.ok(page.contributor[2]["@id"]);
   });
 
@@ -2692,6 +2722,16 @@ describe("co-authoring with agents", () => {
       assert.equal(unattributed.errors[0].file, turns);
       assert.match(unattributed.errors[0].message, /its \{contribution\} directive lacks the option by/);
       await assert.rejects(stat(join(site, "public")), { code: "ENOENT" });
+      await rm(join(site, turns));
+      // A fault in a template is that of the template, once, and of none of the pages that are rendered with it.
+      const template = join("templates", "document.html");
+      const document = await readFile(join(site, template), "utf8");
+      await writeFile(join(site, template), document.replace("{{pageTitle}}", "{{pageTitel}}"));
+      try {
+        assert.deepEqual(JSON.parse(run(["check", "--json"], site).stdout).errors.map(error => error.file), [template]);
+      } finally {
+        await writeFile(join(site, template), document);
+      }
     } finally {
       for (const file of [broken, undecided, turns]) await rm(join(site, file), { force: true });
     }
@@ -2702,36 +2742,327 @@ describe("co-authoring with agents", () => {
 
   test("blyss serve --watch rebuilds on a change and tells the page to reload, and --drafts needs --watch", async () => {
     assert.match(run(["serve", "--drafts"], site).stderr, /--watch/);
-    const port = await freePort();
-    const server = spawn(process.execPath, [cli, "serve", "--watch", "--port", String(port)], { cwd: site });
-    const exited = once(server, "exit");
-    let stdout = "";
-    const printed = text => new Promise((resolve, reject) => {
-      const look = () => { if (stdout.includes(text)) resolve(); };
-      server.stdout.on("data", chunk => { stdout += chunk; look(); });
-      look();
-      exited.then(() => reject(new Error(`blyss serve exited early: ${stdout}`)));
-    });
+    const watched = join(site, "_content", "en", "pages", "watched.md");
     try {
-      await printed("Rebuilt:");
-      const html = await (await fetch(`http://127.0.0.1:${port}/en/`)).text();
-      assert.match(html, /\/__blyss\/events[\s\S]*<\/script>\n<\/body>/);
-      const events = await fetch(`http://127.0.0.1:${port}/__blyss/events`);
-      assert.match(events.headers.get("content-type"), /^text\/event-stream/);
-      const reader = events.body.getReader();
-      const seen = (async () => {
-        let text = "";
-        while (!/event: built/.test(text)) text += new TextDecoder().decode((await reader.read()).value);
-      })();
-      await writeFile(join(site, "_content", "en", "pages", "watched.md"), "---\ntitle: Watched\n---\n\nText.\n");
-      await seen;
-      assert.match(await (await fetch(`http://127.0.0.1:${port}/en/pages/watched/`)).text(), /Watched/);
-      await reader.cancel();
+      await whileWatching(site, async base => {
+        const html = await (await fetch(`${base}/en/`)).text();
+        assert.match(html, /\/__blyss\/events[\s\S]*<\/script>\n<\/body>/);
+        // A request for the headers of the events ends with them: the next one on its connection is answered.
+        const answers = await new Promise((resolve, reject) => {
+          const socket = connect(Number(new URL(base).port), "127.0.0.1", () => {
+            socket.write("HEAD /__blyss/events HTTP/1.1\r\nHost: localhost\r\n\r\nGET /en/ HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n");
+          });
+          let received = "";
+          socket.setEncoding("utf8").on("data", chunk => { received += chunk; }).on("end", () => resolve(received)).on("error", reject);
+          socket.setTimeout(5000, () => socket.destroy(new Error(`A request got no answer: ${received}`)));
+        });
+        assert.equal(answers.match(/^HTTP\/1\.1 200 /gm)?.length, 2, answers);
+        const events = await fetch(`${base}/__blyss/events`);
+        assert.match(events.headers.get("content-type"), /^text\/event-stream/);
+        const reader = events.body.getReader();
+        const seen = (async () => {
+          let text = "";
+          while (!/event: built/.test(text)) text += new TextDecoder().decode((await reader.read()).value);
+        })();
+        await writeFile(watched, "---\ntitle: Watched\n---\n\nText.\n");
+        await seen;
+        assert.match(await (await fetch(`${base}/en/pages/watched/`)).text(), /Watched/);
+        await reader.cancel();
+      });
     } finally {
-      server.kill();
-      await exited;
-      await rm(join(site, "_content", "en", "pages", "watched.md"), { force: true });
+      await rm(watched, { force: true });
     }
+  });
+
+  test("blyss serve --watch follows its configuration, a module that it imports and a source directory that appears", async () => {
+    // A website whose configuration takes the names of its output directory and of that of its static files from
+    // a module, which it imports in a form that only Node reads as an import. It names more to Node, none of which
+    // is to cause a build: a module in a comment, one in the output directory, which every build deletes, and that
+    // directory itself. The website lies below a directory named node_modules, as a starter that is served where
+    // it is installed: its own modules are watched all the same.
+    const watched = join(sandbox, "node_modules", "watched");
+    assert.equal(run(["init", watched], sandbox).status, 0);
+    await rename(join(watched, "blyss.config.js"), join(watched, "site.config.js"));
+    await writeFile(join(watched, "blyss.config.js"), 'import site from "./site.config.js";\n// import "./settings/example.js";\n' +
+      "const { output, files } = await import(`./settings/${\"names\"}.js`);\nawait import(`./${output}/none.js`).catch(() => {});\n" +
+      "import.meta.resolve(`./${output}`);\n\n" +
+      "export default { ...site, directories: { ...site.directories, public: output, static: files } };\n");
+    const names = (output, files) => writeFile(join(watched, "settings", "names.js"),
+      `export const output = ${JSON.stringify(output)};\nexport const files = ${JSON.stringify(files)};\n`);
+    await mkdir(join(watched, "settings"));
+    await names("public", "static");
+    await writeFile(join(watched, "static", "original.txt"), "Original.\n");
+    const exists = path => stat(join(watched, path)).then(() => true, () => false);
+    // As under node --watch, Node itself names the modules of each build on the channel on which the build tells
+    // what its configuration says: the server takes only what Blyss tells.
+    const underWatchMode = { WATCH_REPORT_DEPENDENCIES: "1" };
+    await whileWatching(watched, async (base, written) => {
+      const answers = async path => (await fetch(base + path)).status === 200;
+      const wait = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds));
+      const builds = () => written().split("Rebuilt:").length;
+      // A change is built once, and nothing else is: no build causes the next, and neither the module of the
+      // comment nor the one in the output directory causes one as it appears.
+      const first = builds();
+      await writeFile(join(watched, "static", "more.txt"), "More.\n");
+      await until(() => builds() > first, "the build of static/, which has changed");
+      await writeFile(join(watched, "settings", "example.js"), "export default 1;\n");
+      await writeFile(join(watched, "public", "none.js"), "export default 1;\n");
+      await wait(1500);
+      assert.equal(builds(), first + 1, written());
+      assert.ok(await answers("/more.txt"));
+      // The imported module alone changes: the website is built into the directory that it names now, and served from it.
+      await names("out", "files");
+      await until(() => exists(join("out", "sitemap.xml")), "a build into out/");
+      await rm(join(watched, "public"), { recursive: true });
+      await until(() => answers("/"), "the server to serve out/");
+      // The directory of the static files that it names now is watched, though it is missing yet.
+      await mkdir(join(watched, "files"));
+      await writeFile(join(watched, "files", "late.txt"), "Late.\n");
+      await until(() => answers("/late.txt"), "the build of files/, which was missing");
+      // That directory, once it is empty, is replaced by another one at once, which only the directory above it
+      // tells: the new one is watched, not the one that is gone, so that a file in it causes a build.
+      await rm(join(watched, "files", "late.txt"));
+      await until(async () => !await answers("/late.txt"), "the build of files/, which is empty");
+      mkdirSync(join(watched, "files.new"));
+      try {
+        renameSync(join(watched, "files.new"), join(watched, "files"));
+      } catch {
+        // Windows renames no directory onto another: the old one goes first.
+        rmSync(join(watched, "files"), { recursive: true });
+        renameSync(join(watched, "files.new"), join(watched, "files"));
+      }
+      await wait(500);
+      await writeFile(join(watched, "files", "anew.txt"), "Anew.\n");
+      await until(() => answers("/anew.txt"), "the build of files/, which was replaced");
+      // So is the directory of the imported module: the module of the new one counts, which names static/ again,
+      // whatever the watching of the directory that is gone tells last.
+      renameSync(join(watched, "settings"), join(watched, "settings.away"));
+      mkdirSync(join(watched, "settings"));
+      writeFileSync(join(watched, "settings", "names.js"), 'export const output = "out";\nexport const files = "static";\n');
+      await until(() => answers("/original.txt"), "the build with the module of settings/, which was made anew");
+      // That directory holds the output directory as well, which each build changes. It goes with all that it
+      // holds and is made anew together with the module. No more is known than that it has gone, and then that it
+      // is there again: both count, as the module is no longer what the last build has read.
+      const settled = join("settings", "out", "sitemap.xml");
+      writeFileSync(join(watched, "settings", "names.js"), 'export const output = "settings/out";\nexport const files = "files";\n');
+      await until(() => exists(settled), "a build into settings/out/");
+      const failures = () => written().split("was not rebuilt").length;
+      const failed = failures();
+      rmSync(join(watched, "settings"), { recursive: true });
+      await until(() => failures() > failed, "the build that fails without the module of settings/");
+      mkdirSync(join(watched, "settings"));
+      writeFileSync(join(watched, "settings", "names.js"), 'export const output = "settings/out";\nexport const files = "files";\n');
+      await until(() => exists(settled), "the build once settings/ is there again");
+      // Another directory takes its place at once, complete with another module, which names static/ again: no
+      // file appears in it afterwards, and it counts likewise.
+      mkdirSync(join(watched, "settings.new"));
+      writeFileSync(join(watched, "settings.new", "names.js"), 'export const output = "settings/out";\nexport const files = "static";\n');
+      renameSync(join(watched, "settings"), join(watched, "settings.old"));
+      renameSync(join(watched, "settings.new"), join(watched, "settings"));
+      await until(() => answers("/original.txt"), "the build with the module of settings/, which was replaced");
+    }, underWatchMode);
+    assert.ok(!await exists("public"));
+  });
+
+  test("blyss serve --watch follows a link on the way to a module, once it leads elsewhere", { skip: process.platform === "win32" && "Windows lets only some users make a link" }, async () => {
+    // Node names the file that it has found for a module, and no link on the way to it. Here the configuration
+    // imports one module that is a link to a file, and another one from a directory that is a link to a link to a
+    // directory: each link is pointed elsewhere in turn, while no file changes.
+    const site = join(sandbox, "linked");
+    assert.equal(run(["init", site], sandbox).status, 0);
+    await rename(join(site, "blyss.config.js"), join(site, "site.config.js"));
+    for (const [directory, file, text] of [["names", "first.js", "First"], ["names", "second.js", "Second"], ["here", "place.js", "Here"], ["there", "place.js", "There"]]) {
+      await mkdir(join(site, directory), { recursive: true });
+      await writeFile(join(site, directory, file), `export default ${JSON.stringify(text)};\n`);
+    }
+    const link = (to, path) => {
+      symlinkSync(to, `${path}.new`);
+      renameSync(`${path}.new`, path);
+    };
+    link("first.js", join(site, "names", "current.js"));
+    link("here", join(site, "now"));
+    link("now", join(site, "places"));
+    await writeFile(join(site, "blyss.config.js"), `import site from "./site.config.js";
+import name from "./names/current.js";
+import place from "./places/place.js";
+
+export default { ...site, site: { ...site.site, name: name + " " + place } };
+`);
+    await whileWatching(site, async base => {
+      const shows = text => async () => (await (await fetch(`${base}/en/`)).text()).includes(text);
+      assert.ok(await shows("First Here")());
+      link("second.js", join(site, "names", "current.js"));
+      await until(shows("Second Here"), "the build with the file that the link leads to now");
+      link("there", join(site, "now"));
+      await until(shows("Second There"), "the build with the directory that the link behind the link leads to now");
+      link("here", join(site, "places"));
+      await until(shows("Second Here"), "the build with the directory that the link leads to now");
+    });
+  });
+
+  test("a build tells a watching server what its configuration says, then the modules that it imports or looks for in vain", async () => {
+    // What Node resolves is told, in whatever form it is imported, and no module of a comment. A module that is
+    // missing is told as the file that it would be. For import, that is the file of a path, of a path from the root
+    // and of a name that package.json maps. For require, it is the file that package.json maps a name to, here by
+    // a pattern and for require alone, and for a path the file with its extension, the index of a directory and
+    // the main of a package. In such a path and in main, # is part of a name, as paths are no URLs. A module that
+    // Node finds through a link is told as that link as well, here for require, which adds the extension, and as
+    // no other file that require would take for the path. A link that leads nowhere is told with the file that
+    // is missing at its end, and a file that is missing below a link in a directory which is a link with both
+    // links and with the file where they lead to.
+    const links = process.platform !== "win32";
+    const site = join(sandbox, "telling");
+    await mkdir(join(site, "packaged"), { recursive: true });
+    await writeFile(join(site, "package.json"), JSON.stringify({ type: "module",
+      imports: { "#aliased": "./aliased.js", "#mapped/*": { require: "./mapped/*.cjs", default: "./mapped/*.js" } } }));
+    await writeFile(join(site, "packaged", "package.json"), JSON.stringify({ main: "lib/names#main" }));
+    await writeFile(join(site, "present.js"), "export default 1;\n");
+    if (links) {
+      for (const [to, link] of [["present.js", "linked.js"], ["nowhere.js", "dangling.js"], ["packaged", "through"], ["../elsewhere", join("packaged", "inner")]]) {
+        symlinkSync(to, join(site, link));
+      }
+    }
+    await writeFile(join(site, "build.js"), `import { createRequire } from "node:module";
+      import { tellServer } from ${JSON.stringify(pathToFileURL(join(root, "src", "server", "watch.js")).href)};
+      const require = createRequire(import.meta.url);
+      await tellServer(async () => ({ sources: [] }), async () => {
+        process.send({ building: true });
+        await import(\`./\${"present"}.js\`);
+        // import "./comment.js";
+        await import("./missing.js").catch(() => {});
+        await import(${JSON.stringify(pathToFileURL(join(site, "absolute.js")).pathname)}).catch(() => {});
+        await import("#aliased").catch(() => {});
+        await import("./dangling.js").catch(() => {});
+        await import("./through/inner/absent.js").catch(() => {});
+        for (const path of ["./required", "./packaged", "./named#local", "#mapped/names", "./linked"]) try { require(path); } catch {}
+      });
+    `);
+    const build = fork(join(site, "build.js"), { cwd: site, silent: true });
+    // Under node --test --watch, Node itself names modules on this channel: what Blyss tells is marked as its own.
+    const messages = [];
+    const [files] = await Promise.all([new Promise(resolve => build.on("message", message => {
+      if (message?.blyss || message?.building) messages.push(message);
+      if (message?.blyss?.files) resolve(message.blyss.files);
+    })), once(build, "exit")]);
+    // The configuration is told before the build, so that its sources are watched while the build reads them, and
+    // the modules after it, each with its version.
+    assert.deepEqual(messages.slice(0, 2), [{ blyss: { served: { sources: [] } } }, { building: true }]);
+    assert.equal(messages.length, 3);
+    const told = files.map(([file]) => relative(site, file));
+    for (const file of ["present.js", "missing.js", "absolute.js", "aliased.js", "required.js", join("required", "index.js"),
+      join("packaged", "lib", "names#main.js"), "named#local.js", join("mapped", "names.cjs")]) {
+      assert.ok(told.includes(file), `${file} is not among ${told.join(", ")}`);
+    }
+    for (const file of ["comment.js", "named.js", join("packaged", "lib", "names.js"), join("mapped", "names.js")]) assert.ok(!told.includes(file), file);
+    if (links) {
+      assert.deepEqual(told.filter(file => /^(linked|dangling|nowhere|through|elsewhere)/.test(file)),
+        ["dangling.js", "nowhere.js", join("through", "inner"), "through", join("elsewhere", "absent.js"), "linked.js"]);
+    }
+  });
+
+  // The server learns of a module once the build that imports it first has ended. Here that build, and no other,
+  // changes the module after it has read it, as an editor may while a build runs: only a build has process.send.
+  // One more build makes up for that, and no further one, as the module is watched by then. In the second case,
+  // that build goes on while a static file changes as well, which is watched: one more build is due for both.
+  for (const [name, what, meanwhile] of [
+    ["changing", " if a module has changed since a build read it, before it was watched", ""],
+    ["lasting", ", and not twice, if a watched file has changed during that build as well",
+      'writeFileSync(new URL("./static/changed.txt", import.meta.url), "Changed.\\n");\n  await new Promise(resolve => setTimeout(resolve, 500));']
+  ]) {
+    test(`blyss serve --watch builds once more${what}`, async () => {
+      const site = join(sandbox, name);
+      assert.equal(run(["init", site], sandbox).status, 0);
+      await rename(join(site, "blyss.config.js"), join(site, "site.config.js"));
+      await mkdir(join(site, "settings"));
+      await writeFile(join(site, "settings", "name.js"), 'export const name = "Before";\n');
+      await writeFile(join(site, "blyss.config.js"), `import { existsSync, writeFileSync } from "node:fs";
+import site from "./site.config.js";
+import { name } from "./settings/name.js";
+
+const done = new URL("./done", import.meta.url);
+if (process.send && !existsSync(done)) {
+  writeFileSync(done, "");
+  writeFileSync(new URL("./settings/name.js", import.meta.url), 'export const name = "Afterwards";\\n');
+  ${meanwhile}
+}
+
+export default { ...site, site: { ...site.site, name } };
+`);
+      await whileWatching(site, async (base, written) => {
+        const builds = () => written().split("Rebuilt:").length - 1;
+        await until(() => builds() > 1, "one more build");
+        assert.match(await (await fetch(`${base}/en/`)).text(), /Afterwards/);
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        assert.equal(builds(), 2, written());
+      });
+    });
+  }
+
+  test("a build ends once the server that runs it has gone, and does not start if it has gone before", { timeout: 20_000 }, async () => {
+    const site = join(sandbox, "gone");
+    await mkdir(site);
+    const watch = JSON.stringify(pathToFileURL(join(root, "src", "server", "watch.js")).href);
+    await writeFile(join(site, "build.mjs"), `import { tellServer } from ${watch};
+      await tellServer(async () => undefined, () => new Promise(resolve => { process.send({ building: true }); setTimeout(resolve, 60_000); }));
+    `);
+    const build = fork(join(site, "build.mjs"), { cwd: site, silent: true });
+    try {
+      await new Promise(resolve => build.on("message", told => { if (told?.building) resolve(); }));
+      build.disconnect();
+      await once(build, "exit");
+    } finally {
+      build.kill();
+    }
+    // A server may go while the build is still loading its modules: here the build starts only after that.
+    await writeFile(join(site, "late.mjs"), `import { writeFileSync } from "node:fs";
+      import { tellServer } from ${watch};
+      const start = () => tellServer(async () => undefined, async () => writeFileSync("built", ""));
+      if (process.connected) process.once("disconnect", start);
+      else start();
+    `);
+    const late = fork(join(site, "late.mjs"), { cwd: site, silent: true });
+    try {
+      late.disconnect();
+      await once(late, "exit");
+    } finally {
+      late.kill();
+    }
+    await assert.rejects(stat(join(site, "built")), { code: "ENOENT" });
+  });
+
+  test("a build that another program runs with a channel is a build like any other", async () => {
+    // Only a server says in the environment of a build that it runs it. A process manager, say, gets no message
+    // on its channel, and its build goes on once it has closed the channel, as to let the build run on its own.
+    // The watch mode of Node is no such program: it has each process tell its modules on the channel, which fails
+    // once the channel is closed.
+    const site = join(sandbox, "managed");
+    assert.equal(run(["init", site], sandbox).status, 0);
+    const env = { ...process.env, WATCH_REPORT_DEPENDENCIES: "" };
+    for (const closes of [false, true]) {
+      await rm(join(site, "public"), { recursive: true, force: true });
+      const build = fork(cli, ["build"], { cwd: site, env, silent: true });
+      const messages = [];
+      build.on("message", message => { if (message?.blyss) messages.push(message); });
+      if (closes) build.disconnect();
+      const [code] = await once(build, "exit");
+      assert.equal(code, 0);
+      assert.ok((await stat(join(site, "public", "sitemap.xml"))).isFile());
+      assert.deepEqual(messages, []);
+    }
+  });
+
+  test("a watching server that closes lets its running build end first", async () => {
+    await rm(join(site, "public"), { recursive: true, force: true });
+    // The first build runs while the server closes; the sitemap is the last file that a build writes.
+    const script = `
+      import { existsSync } from "node:fs";
+      import { loadConfig, serve } from ${JSON.stringify(pathToFileURL(join(root, "src", "index.js")).href)};
+      const server = serve(process.cwd(), await loadConfig(process.cwd()), { watch: true, port: ${await freePort()} });
+      server.on("listening", () => server.close(() => console.log("closed with its sitemap:", existsSync("public/sitemap.xml"))));
+    `;
+    const result = spawnSync(process.execPath, ["--input-type=module", "--eval", script], { cwd: site, encoding: "utf8", timeout: 60_000 });
+    assert.equal(result.status, 0, result.stderr);
+    assert.match(result.stdout, /closed with its sitemap: true\n$/);
   });
 
   test("reports watcher errors in the terminal and to connected pages", () => {
@@ -2749,7 +3080,8 @@ describe("co-authoring with agents", () => {
       syncBuiltinESMExports();
       const { rebuildOnChange } = await import(${JSON.stringify(pathToFileURL(join(root, "src", "server", "watch.js")).href)});
       const results = [];
-      const stop = rebuildOnChange(process.cwd(), ["_content"], "blyss.config.js", { onBuilt: result => results.push(result) });
+      const stop = rebuildOnChange(process.cwd(), { sources: ["_content"], publicDirectory: "public" }, "blyss.config.js",
+        { onBuilt: result => results.push(result) });
       watchers[0].emit("error", new Error("watch unavailable"));
       stop();
       console.log(JSON.stringify(results));

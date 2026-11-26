@@ -6,7 +6,8 @@ import { loadConfig } from "../src/config.js";
 import { BlyssError } from "../src/errors.js";
 import { init } from "../src/init/init.js";
 import { createContent, kinds } from "../src/new/new.js";
-import { serve } from "../src/server/server.js";
+import { serve, servedOf } from "../src/server/server.js";
+import { forServer, tellServer } from "../src/server/watch.js";
 
 const [command, ...args] = process.argv.slice(2);
 const projectDir = process.cwd();
@@ -101,7 +102,12 @@ if ([command, ...args].some(arg => arg === "--help" || arg === "-h")) {
     if (!report.ok) process.exitCode = 1;
   }).catch(error => fail("Check", error));
 } else if (command === "build") {
-  build(projectDir, "./blyss.config.js", { drafts: Boolean(parsed.options.drafts) }).catch(error => fail("Build", error));
+  const run = () => build(projectDir, "./blyss.config.js", { drafts: Boolean(parsed.options.drafts) });
+  // blyss serve --watch runs each of its builds as this command, in a process of its own, and says so in the
+  // environment of that process: such a build tells the server what the configuration says by now and which
+  // modules it has imported (see src/server/watch.js).
+  const built = process.env[forServer] && process.send ? tellServer(async () => servedOf(projectDir, await loadConfig(projectDir)), run) : run();
+  built.catch(error => fail("Build", error));
 } else {
   loadConfig(projectDir).then(config => serve(projectDir, config, parsed.options)).catch(error => fail("Serve", error));
 }

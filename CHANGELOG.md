@@ -170,9 +170,12 @@
 - **blyss new** `<page|post|doc>` `"<title>"` creates a draft with a valid
   front matter, in a language of `--lang`, with `--slug` and `--key`, and
   never replaces a file.
-- **blyss serve --watch** rebuilds on each change and reloads the open pages;
-  a failed build shows its message on the page. `--drafts` serves the
-  drafts.
+- **blyss serve --watch** rebuilds on each change of the sources, of
+  `blyss.config.js` and of a module that it or the data file of a component
+  imports, and reloads the open pages; a failed build shows its message on
+  the page. `--drafts` serves the drafts. The server follows a changed
+  configuration, also to other directories, and a source directory that
+  appears later.
 - **Starter for agents**: `AGENTS.md` tells an AI agent how to work on the
   website; `_authoring/` holds the style guide, the glossary and briefs,
   which the build never reads; `npm run check` and `npm run dev` join the

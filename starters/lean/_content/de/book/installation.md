@@ -65,7 +65,7 @@ Die Befehle nehmen diese Argumente entgegen:
 - `blyss build --drafts` erstellt auch die [Entwürfe](/de/book/schreiben/seiten-und-beitraege/#entwürfe), die jeder andere Build auslässt.
 - `blyss --help` listet die Befehle auf, und `blyss --version` zeigt die Version von Blyss.
 - `blyss serve --hostbind <adresse> --port <zahl>` liefert auf einer anderen Adresse oder einem anderen Port aus.
-- `blyss serve --watch` erstellt die Website und danach bei jeder Änderung der Inhalte, Templates, Komponenten, statischen Dateien oder von `blyss.config.js` neu und lädt die geöffneten Seiten neu. Ein gescheiterter Build zeigt seine Meldung auf der Seite. `--drafts` erstellt auch die Entwürfe.
+- `blyss serve --watch` erstellt die Website und danach bei jeder Änderung der Inhalte, Templates, Komponenten, statischen Dateien, von `blyss.config.js` oder eines Moduls, das sie oder die Datendatei einer Komponente importiert, neu und lädt die geöffneten Seiten neu. Ein gescheiterter Build zeigt seine Meldung auf der Seite. `--drafts` erstellt auch die Entwürfe. Eine geänderte Konfiguration gilt ab dem nächsten gelungenen Build, auch für die Verzeichnisse, die der Server überwacht und ausliefert; nur Adresse und Port verlangen einen Neustart des Servers.
 - Jedes andere Argument beendet einen Befehl mit einer Meldung.
 
 `init` legt eine Website so an:
