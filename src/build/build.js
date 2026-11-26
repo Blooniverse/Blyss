@@ -60,7 +60,9 @@ function assertDates(file, metadata) {
 
 // Runs work for each item and returns its results. The errors of Blyss that it throws for an item are gathered and
 // thrown together, each with the file that it names, once every item has run: a website with several faulty files
-// names them all at once. Any other error stops at once. Sequential work runs for one item after the other.
+// names them all at once. That file is the one of the item, unless the error has one of its own, as that of a
+// template has (see applyTemplate in render.js). Any other error stops at once. Sequential work runs for one item
+// after the other.
 async function eachChecked(items, fileOf, work, { sequential = false } = {}) {
   const settled = [];
   if (!sequential) settled.push(...await Promise.allSettled(items.map(work)));

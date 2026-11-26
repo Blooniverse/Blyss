@@ -156,6 +156,32 @@ async function freePort() {
   return port;
 }
 
+// Waits until check holds, as for what a watching server does in its own time; what names it in the failure.
+async function until(check, what) {
+  const end = Date.now() + 20_000;
+  while (!await check()) {
+    assert.ok(Date.now() < end, `Waited in vain for ${typeof what === "function" ? what() : what}.`);
+    await new Promise(resolve => setTimeout(resolve, 50));
+  }
+}
+
+// Runs check with the base URL of blyss serve --watch for site, once its first build is done, then stops the server.
+// env adds to the environment of the server.
+async function whileWatching(site, check, env = {}) {
+  const port = await freePort();
+  const server = spawn(process.execPath, [cli, "serve", "--watch", "--port", String(port)], { cwd: site, env: { ...process.env, ...env } });
+  const exited = once(server, "exit");
+  let output = "";
+  for (const stream of [server.stdout, server.stderr]) stream.on("data", chunk => { output += chunk; });
+  try {
+    await until(() => output.includes("Rebuilt:"), () => `the first build of blyss serve --watch, which wrote: ${output}`);
+    await check(`http://127.0.0.1:${port}`);
+  } finally {
+    server.kill();
+    await exited;
+  }
+}
+
 // Runs check with the base URL of blyss serve for site, then stops the server; returns what it wrote to stderr.
 async function whileServing(site, check) {
   const port = await freePort();
@@ -2651,17 +2677,20 @@ describe("co-authoring with agents", () => {
     await writeFile(join(site, turns), "---\ntitle: Turns\ndatePublished: 2026-11-26\ntranslationKey: turns\n---\n\n" +
       contribution(":by: human\n:author: Ada\n:date: 2026-11-26", "A question.") + "\n(answer)=\n" +
       contribution(":by: agent\n:author: Claude\n:date: 2026-11-27", "An *answer*.") + "\n" +
-      contribution(":by: human", "Thanks, see [the answer](#answer)."));
+      contribution(":by: human", "Thanks, see [the answer](#answer)[^remark].") +
+      // A turn in a footnote that the page shows, and one in a footnote that nothing refers to.
+      "\n[^remark]: A remark.\n\n" + contribution(":by: agent\n:author: Robin", "A turn in a footnote.").replace(/^(?=.)/gm, "    ") +
+      "\n[^unused]: Unused.\n\n" + contribution(":by: agent\n:author: Ghost", "A turn that is not shown.").replace(/^(?=.)/gm, "    "));
     const result = run(["build"], site);
     assert.equal(result.status, 0, result.stderr);
     const html = await readFile(join(site, "public", "en", "posts", "turns", "index.html"), "utf8");
     const sections = [...html.matchAll(/<section class="contribution contribution-(human|agent)"[^>]*>/g)];
-    assert.deepEqual(sections.map(([, by]) => by), ["human", "agent", "human"]);
+    assert.deepEqual(sections.map(([, by]) => by), ["human", "agent", "human", "agent"]);
     assert.match(sections[1][0], /id="answer"/);
     assert.match(html, /<span class="contribution-author">Claude<\/span> <time datetime="2026-11-27">2026-11-27<\/time><\/p>\n<p>An <em>answer<\/em>.<\/p>/);
     const page = jsonLdOf(html)["@graph"].find(node => node.contributor);
     assert.deepEqual(page.contributor.map(({ "@type": type, name }) => [type, name]),
-      [["Person", "Ada"], ["SoftwareApplication", "Claude"], [undefined, undefined]]);
+      [["Person", "Ada"], ["SoftwareApplication", "Claude"], [undefined, undefined], ["SoftwareApplication", "Robin"]]);
     assert.ok(page.contributor[2]["@id"]);
   });
 
@@ -2692,6 +2721,16 @@ describe("co-authoring with agents", () => {
       assert.equal(unattributed.errors[0].file, turns);
       assert.match(unattributed.errors[0].message, /its \{contribution\} directive lacks the option by/);
       await assert.rejects(stat(join(site, "public")), { code: "ENOENT" });
+      await rm(join(site, turns));
+      // A fault in a template is that of the template, once, and of none of the pages that are rendered with it.
+      const template = join("templates", "document.html");
+      const document = await readFile(join(site, template), "utf8");
+      await writeFile(join(site, template), document.replace("{{pageTitle}}", "{{pageTitel}}"));
+      try {
+        assert.deepEqual(JSON.parse(run(["check", "--json"], site).stdout).errors.map(error => error.file), [template]);
+      } finally {
+        await writeFile(join(site, template), document);
+      }
     } finally {
       for (const file of [broken, undecided, turns]) await rm(join(site, file), { force: true });
     }
@@ -2702,36 +2741,81 @@ describe("co-authoring with agents", () => {
 
   test("blyss serve --watch rebuilds on a change and tells the page to reload, and --drafts needs --watch", async () => {
     assert.match(run(["serve", "--drafts"], site).stderr, /--watch/);
-    const port = await freePort();
-    const server = spawn(process.execPath, [cli, "serve", "--watch", "--port", String(port)], { cwd: site });
-    const exited = once(server, "exit");
-    let stdout = "";
-    const printed = text => new Promise((resolve, reject) => {
-      const look = () => { if (stdout.includes(text)) resolve(); };
-      server.stdout.on("data", chunk => { stdout += chunk; look(); });
-      look();
-      exited.then(() => reject(new Error(`blyss serve exited early: ${stdout}`)));
-    });
+    const watched = join(site, "_content", "en", "pages", "watched.md");
     try {
-      await printed("Rebuilt:");
-      const html = await (await fetch(`http://127.0.0.1:${port}/en/`)).text();
-      assert.match(html, /\/__blyss\/events[\s\S]*<\/script>\n<\/body>/);
-      const events = await fetch(`http://127.0.0.1:${port}/__blyss/events`);
-      assert.match(events.headers.get("content-type"), /^text\/event-stream/);
-      const reader = events.body.getReader();
-      const seen = (async () => {
-        let text = "";
-        while (!/event: built/.test(text)) text += new TextDecoder().decode((await reader.read()).value);
-      })();
-      await writeFile(join(site, "_content", "en", "pages", "watched.md"), "---\ntitle: Watched\n---\n\nText.\n");
-      await seen;
-      assert.match(await (await fetch(`http://127.0.0.1:${port}/en/pages/watched/`)).text(), /Watched/);
-      await reader.cancel();
+      await whileWatching(site, async base => {
+        const html = await (await fetch(`${base}/en/`)).text();
+        assert.match(html, /\/__blyss\/events[\s\S]*<\/script>\n<\/body>/);
+        // A request for the headers of the events ends with them: the next one on its connection is answered.
+        const answers = await new Promise((resolve, reject) => {
+          const socket = connect(Number(new URL(base).port), "127.0.0.1", () => {
+            socket.write("HEAD /__blyss/events HTTP/1.1\r\nHost: localhost\r\n\r\nGET /en/ HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n");
+          });
+          let received = "";
+          socket.setEncoding("utf8").on("data", chunk => { received += chunk; }).on("end", () => resolve(received)).on("error", reject);
+          socket.setTimeout(5000, () => socket.destroy(new Error(`A request got no answer: ${received}`)));
+        });
+        assert.equal(answers.match(/^HTTP\/1\.1 200 /gm)?.length, 2, answers);
+        const events = await fetch(`${base}/__blyss/events`);
+        assert.match(events.headers.get("content-type"), /^text\/event-stream/);
+        const reader = events.body.getReader();
+        const seen = (async () => {
+          let text = "";
+          while (!/event: built/.test(text)) text += new TextDecoder().decode((await reader.read()).value);
+        })();
+        await writeFile(watched, "---\ntitle: Watched\n---\n\nText.\n");
+        await seen;
+        assert.match(await (await fetch(`${base}/en/pages/watched/`)).text(), /Watched/);
+        await reader.cancel();
+      });
     } finally {
-      server.kill();
-      await exited;
-      await rm(join(site, "_content", "en", "pages", "watched.md"), { force: true });
+      await rm(watched, { force: true });
     }
+  });
+
+  test("blyss serve --watch follows its configuration, a file that it imports and a source directory that appears", async () => {
+    // A website whose configuration takes the names of its output directory and of that of its static files from
+    // another file.
+    const watched = join(sandbox, "watched");
+    assert.equal(run(["init", watched], sandbox).status, 0);
+    await rename(join(watched, "blyss.config.js"), join(watched, "site.config.js"));
+    await writeFile(join(watched, "blyss.config.js"), 'import site from "./site.config.js";\nimport { output, files } from "./settings/names.js";\n\n' +
+      "export default { ...site, directories: { ...site.directories, public: output, static: files } };\n");
+    const names = (output, files) => writeFile(join(watched, "settings", "names.js"),
+      `export const output = ${JSON.stringify(output)};\nexport const files = ${JSON.stringify(files)};\n`);
+    await mkdir(join(watched, "settings"));
+    await names("public", "static");
+    const exists = path => stat(join(watched, path)).then(() => true, () => false);
+    // As under node --watch, Node itself names the modules of each build on the channel on which the build tells
+    // what its configuration says: the server takes only what Blyss tells.
+    const underWatchMode = { WATCH_REPORT_DEPENDENCIES: "1" };
+    await whileWatching(watched, async base => {
+      const answers = async path => (await fetch(base + path)).status === 200;
+      // The imported file alone changes: the website is built into the directory that it names now, and served from it.
+      await names("out", "files");
+      await until(() => exists(join("out", "sitemap.xml")), "a build into out/");
+      await rm(join(watched, "public"), { recursive: true });
+      await until(() => answers("/"), "the server to serve out/");
+      // The directory of the static files that it names now is watched, though it is missing yet.
+      await mkdir(join(watched, "files"));
+      await writeFile(join(watched, "files", "late.txt"), "Late.\n");
+      await until(() => answers("/late.txt"), "the build of files/, which was missing");
+    }, underWatchMode);
+    assert.ok(!await exists("public"));
+  });
+
+  test("a watching server that closes lets its running build end first", async () => {
+    await rm(join(site, "public"), { recursive: true, force: true });
+    // The first build runs while the server closes; the sitemap is the last file that a build writes.
+    const script = `
+      import { existsSync } from "node:fs";
+      import { loadConfig, serve } from ${JSON.stringify(pathToFileURL(join(root, "src", "index.js")).href)};
+      const server = serve(process.cwd(), await loadConfig(process.cwd()), { watch: true, port: ${await freePort()} });
+      server.on("listening", () => server.close(() => console.log("closed with its sitemap:", existsSync("public/sitemap.xml"))));
+    `;
+    const result = spawnSync(process.execPath, ["--input-type=module", "--eval", script], { cwd: site, encoding: "utf8", timeout: 60_000 });
+    assert.equal(result.status, 0, result.stderr);
+    assert.match(result.stdout, /closed with its sitemap: true\n$/);
   });
 
   test("reports watcher errors in the terminal and to connected pages", () => {

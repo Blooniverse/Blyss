@@ -90,13 +90,27 @@ function urlOf(hostBind, port) {
   return `http://${host}:${port}/`;
 }
 
-// With the option watch, the server builds the website first and again whenever its sources change, each time with
-// its drafts if the option drafts is set, and the pages that it sends reload after each build.
-export function serve(projectDir, config, options = {}) {
+// What the server takes from the configuration of a website: the directory of its output, with its name in the
+// configuration, the path below which it is served, also as a request names it, the language of /, and the
+// directories of its sources, which blyss serve --watch watches. The configuration is checked in the order of a
+// build, which so stops at the same fault.
+export function servedOf(projectDir, config) {
   assertSite(config);
+  const { defaultLanguage } = languagesOf(config);
+  const { publicDirectory, ...sources } = resolvePaths(projectDir, config);
+  // A website below a path, such as /docs for https://example.com/docs/, is served below that path, as on its host.
+  const basePath = basePathOf(config);
+  return { publicDirectory, publicName: config.directories.public, basePath, base: decodeURIComponent(basePath), defaultLanguage,
+    sources: Object.values(sources) };
+}
+
+// With the option watch, the server builds the website first and again whenever its sources change, each time with
+// its drafts if the option drafts is set, and the pages that it sends reload after each build. Each build reads the
+// configuration afresh (see watch.js): once it succeeds, the server serves what the configuration names by then,
+// but for the address and the port, which it listens on from its start.
+export function serve(projectDir, config, options = {}) {
+  let served = servedOf(projectDir, config);
   const { hostBind, port } = listenAddress(config, options);
-  const paths = resolvePaths(projectDir, config);
-  const { publicDirectory } = paths;
   const watching = Boolean(options.watch);
   // The pages that wait for the next build, and how the last one went.
   const listeners = new Set();
@@ -104,13 +118,9 @@ export function serve(projectDir, config, options = {}) {
   const tell = (response, { ok, message }) => response.write(ok ? "event: built\ndata: {}\n\n" : `event: failed\ndata: ${JSON.stringify(message)}\n\n`);
   const send = (response, status, filePath) =>
     (watching && extname(filePath) === ".html" ? sendPage(response, status, filePath) : sendFile(response, status, filePath));
-  const { defaultLanguage } = languagesOf(config);
-  // A website below a path, such as /docs for https://example.com/docs/, is served below that path, as on its host.
-  const basePath = basePathOf(config);
-  const base = decodeURIComponent(basePath);
   // A website that was never built has no output directory: the server says so, in the terminal and in the browser.
-  const unbuilt = `There is no ${config.directories.public}/ yet. Build the website first: npm run build`;
-  const isBuilt = () => stat(publicDirectory).then(info => info.isDirectory(), () => false);
+  const unbuilt = publicName => `There is no ${publicName}/ yet. Build the website first: npm run build`;
+  const isBuilt = publicDirectory => stat(publicDirectory).then(info => info.isDirectory(), () => false);
   const server = createServer(async (request, response) => {
     // The server reads files and changes nothing, so it answers only the requests that read.
     if (request.method !== "GET" && request.method !== "HEAD") {
@@ -118,11 +128,18 @@ export function serve(projectDir, config, options = {}) {
       response.end();
       return;
     }
+    // A request is answered with what is served when it arrives, also if a build replaces that meanwhile.
+    const { publicDirectory, publicName, basePath, base, defaultLanguage } = served;
     try {
       const requestUrl = new URL(request.url ?? "/", "http://localhost");
       let pathname = decodeURIComponent(requestUrl.pathname);
       if (watching && pathname === events) {
         response.writeHead(200, { "Content-Type": "text/event-stream", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" });
+        // A request for the headers alone ends with them: only a page that listens keeps its connection.
+        if (request.method === "HEAD") {
+          response.end();
+          return;
+        }
         // A page that opens after a failed build shows its problems at once.
         if (!lastBuild.ok) tell(response, lastBuild);
         else response.write(": watching\n\n");
@@ -156,7 +173,7 @@ export function serve(projectDir, config, options = {}) {
       // Like static hosts, answer every missing file with the generated 404.html, if there is one.
       await send(response, 404, join(publicDirectory, "404.html")).catch(async () => {
         response.writeHead(404, { "Content-Type": "text/plain; charset=utf-8", "X-Content-Type-Options": "nosniff" });
-        response.end(await isBuilt() ? "404 Not Found" : `404 Not Found\n\n${unbuilt}\n`);
+        response.end(await isBuilt(publicDirectory) ? "404 Not Found" : `404 Not Found\n\n${unbuilt(publicName)}\n`);
       });
     }
   });
@@ -172,30 +189,29 @@ export function serve(projectDir, config, options = {}) {
     process.exitCode = 1;
   });
   server.listen(port, hostBind, async () => {
-    console.log(`Blyss is serving ${config.directories.public}/ on port ${port} of ${hostBind}: ${urlOf(hostBind, port)}`);
+    console.log(`Blyss is serving ${served.publicName}/ on port ${port} of ${hostBind}: ${urlOf(hostBind, port)}`);
     if (watching) {
       console.log(`Blyss is watching the sources of the website and rebuilds it${options.drafts ? " with its drafts" : ""} after each change.`);
-      const { componentsDirectory, contentDirectory, staticDirectory, templatesDirectory } = paths;
-      const stop = rebuildOnChange(projectDir, [contentDirectory, templatesDirectory, componentsDirectory, staticDirectory],
-        resolve(projectDir, "blyss.config.js"), {
-          drafts: options.drafts,
-          onBuilt: result => {
-            lastBuild = result;
-            for (const response of listeners) tell(response, result);
-          }
-        });
-      stopWatching = stop;
-    } else if (!await isBuilt()) {
-      console.error(unbuilt);
+      stopWatching = rebuildOnChange(projectDir, served.sources, resolve(projectDir, "blyss.config.js"), {
+        drafts: options.drafts,
+        onBuilt: result => {
+          if (result.ok && result.served) served = result.served;
+          lastBuild = result;
+          for (const response of listeners) tell(response, result);
+        }
+      });
+    } else if (!await isBuilt(served.publicDirectory)) {
+      console.error(unbuilt(served.publicName));
     }
   });
-  // The pages that wait for a build keep their connections open, which would keep the server from closing.
-  let stopWatching = () => {};
+  // The pages that wait for a build keep their connections open, which would keep the server from closing. A build
+  // that is running ends before the callback learns that the server has closed: nothing writes the output after that.
+  let stopWatching = () => Promise.resolve();
   const close = server.close.bind(server);
   server.close = callback => {
-    stopWatching();
+    const stopped = stopWatching();
     for (const response of listeners) response.end();
-    return close(callback);
+    return close(error => stopped.then(() => callback?.(error)));
   };
   return server;
 }

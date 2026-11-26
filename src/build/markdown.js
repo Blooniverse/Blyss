@@ -174,13 +174,6 @@ function walk(tokens, visit) {
   }
 }
 
-// The contributions of the tokens of a text, in its order: the turns of its authors (see directives.js).
-export function contributionsOf(tokens) {
-  const found = [];
-  walk(tokens, token => { if (token.type === "contribution") found.push(token); });
-  return found;
-}
-
 // The formulas on lines of their own of a page, of a post or of a doc share one sequence of numbers, in the order
 // in which the page shows them: texts are its text and those of its footnotes. A formula that is to be numbered (see
 // labelDocument in directives.js) shows its number beside it, as \tag does, unless it has a tag of its own. The
@@ -200,10 +193,12 @@ function numberFormulas(texts) {
   for (const text of texts) walk(text, number);
 }
 
-// The tokens of the text of a page, a post or a doc, which alone has footnotes, labels, numbers and references, and
-// the ids of its labelled elements. The footnotes are numbered in the order of their first references and follow
-// the text as a list, each with links back to its references. Their ids, fn:1 and fnref:1, differ from those of
-// headings, which have no colon, and no label can be one of them. labels are those of the text's language.
+// The tokens of the text of a page, a post or a doc, which alone has footnotes, labels, numbers and references, the
+// ids of its labelled elements and its contributions, the turns of its authors (see directives.js), in the order in
+// which the page shows them: those of its text, then those of its footnotes. The footnotes are numbered in the
+// order of their first references and follow the text as a list, each with links back to its references. Their ids,
+// fn:1 and fnref:1, differ from those of headings, which have no colon, and no label can be one of them. labels are
+// those of the text's language.
 export function lexDocument(markdown, file, labels) {
   const tokens = read(file, labels, () => documents.lexer(markdown), true);
   const defined = new Map();
@@ -228,7 +223,9 @@ export function lexDocument(markdown, file, labels) {
   numberFormulas(shown);
   referDocument(shown, targets, file);
   const ids = [...targets.keys()];
-  if (!notes.length) return { tokens, ids };
+  const contributions = [];
+  for (const text of shown) walk(text, token => { if (token.type === "contribution") contributions.push(token); });
+  if (!notes.length) return { tokens, ids, contributions };
   const items = notes.map(({ number, references, tokens: text }) => {
     const back = references.map(({ id }, count) =>
       `<a href="#${id}" role="doc-backlink" aria-label="${escapeHtml(labels.backToText)}">↩︎${count ? `<sup>${count + 1}</sup>` : ""}</a>`).join(" ");
@@ -238,7 +235,7 @@ export function lexDocument(markdown, file, labels) {
   });
   tokens.push({ type: "html", block: true, raw: "",
     text: `<section class="footnotes" role="doc-endnotes" aria-label="${escapeHtml(labels.footnotes)}">\n<ol>\n${items.join("\n")}\n</ol>\n</section>\n` });
-  return { tokens, ids };
+  return { tokens, ids, contributions };
 }
 
 // The HTML of a text that is read like that of a page, of a post or of a doc, with its footnotes, labels, numbers

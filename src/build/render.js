@@ -1,21 +1,22 @@
 import { BlyssError } from "../errors.js";
 import { escapeHtml } from "./html.js";
 import { createJsonLd, renderJsonLd } from "./json-ld.js";
-import { contributionsOf, lexDocument, renderInlineTokens, renderTokens } from "./markdown.js";
+import { lexDocument, renderInlineTokens, renderTokens } from "./markdown.js";
 import { renderAlternateLinks, renderLanguageSwitcher } from "./translations.js";
 
 export { escapeHtml };
 
 // A value can be a function, which is called for each of its placeholders. file names a template of the website:
 // one of its placeholders that has no value, as a misspelt one, stops the build instead of leaving a gap in the
-// pages; renamed tells the name that such a placeholder has now, if it had another one. Without file, as for the
-// template of a component, whose values depend on its texts, such a placeholder is empty.
+// pages, with an error whose file is that template and not the page that was rendered with it; renamed tells the
+// name that such a placeholder has now, if it had another one. Without file, as for the template of a component,
+// whose values depend on its texts, such a placeholder is empty.
 export function applyTemplate(template, values, file, renamed = {}) {
   return template.replace(/{{([a-zA-Z][a-zA-Z0-9]*)}}/g, (placeholder, key) => {
     if (!Object.hasOwn(values, key)) {
       if (!file) return "";
-      throw new BlyssError(`Cannot build with ${file}: there is no placeholder ${placeholder}.\n` +
-        (Object.hasOwn(renamed, key) ? `It is {{${renamed[key]}}} now: rename it.` : "Correct its name or remove it."));
+      throw Object.assign(new BlyssError(`Cannot build with ${file}: there is no placeholder ${placeholder}.\n` +
+        (Object.hasOwn(renamed, key) ? `It is {{${renamed[key]}}} now: rename it.` : "Correct its name or remove it.")), { file });
     }
     const value = values[key];
     return (typeof value === "function" ? value() : value) ?? "";
@@ -106,7 +107,7 @@ export function componentOf(token, languages) {
 // identifyHeadings), which are returned with the headings.
 async function renderBody(record, file, records, components, languages, former, takenIds, isBook) {
   if (record.type === "list") return { html: record.html, headings: [], contributions: [] };
-  const { tokens, ids } = lexDocument(record.markdown, file, record.languageConfig.labels);
+  const { tokens, ids, contributions } = lexDocument(record.markdown, file, record.languageConfig.labels);
   for (const id of ids) {
     if (takenIds.has(id)) {
       throw new BlyssError(`Cannot build ${file}: its label "${id}" is the id of an element of its templates, so it needs another name.`);
@@ -124,7 +125,7 @@ async function renderBody(record, file, records, components, languages, former, 
     }
   }
   const headings = isBook ? identifyHeadings(tokens, takenIds) : [];
-  return { html: renderTokens(tokens), headings, contributions: contributionsOf(tokens) };
+  return { html: renderTokens(tokens), headings, contributions };
 }
 
 // The kinds of pages: "home" is the index page of a language, "list" an archive or tag page. Templates can style each

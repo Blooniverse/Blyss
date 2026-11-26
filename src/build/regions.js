@@ -159,8 +159,8 @@ export async function arrangeRegions(projectDir, config, templates, templateFile
       if (templates[name] === undefined || !key.startsWith(`${source}/`)) continue;
       const place = Object.keys(places).find(place => byPlace[place].length && !templates[name].includes(places[place]));
       if (place) {
-        throw new BlyssError(`Cannot build with ${templateFile(name)}: it lacks ${places[place]}, which shows the components that ` +
-          `${file} places ${place} the cards.\nAdd the placeholder to the template.`);
+        throw Object.assign(new BlyssError(`Cannot build with ${templateFile(name)}: it lacks ${places[place]}, which shows the ` +
+          `components that ${file} places ${place} the cards.\nAdd the placeholder to the template.`), { file: templateFile(name) });
       }
     }
   }
