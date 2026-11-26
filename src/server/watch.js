@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { existsSync, statSync, watch } from "node:fs";
+import { existsSync, readFileSync, statSync, watch } from "node:fs";
 import { registerHooks } from "node:module";
 import { dirname, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -18,42 +18,43 @@ function identityOf(path) {
 }
 
 // Watches a directory, with all that it holds if recursive, and calls changed with the path of what has changed in
-// it, if that is known. While the directory is missing, such as static/ of a website without static files, the
-// nearest one above it is watched for it: that the directory appears is a change, and so is that it goes. A
-// directory that another one has replaced, as when it is removed and made anew at once, is watched anew: where a
-// directory is watched by its number, as on Linux, the one that was removed would be watched on, in vain. failed
-// learns of a directory that cannot be watched. Returns a function that stops watching.
+// it, or without one if any of it may have changed. While the directory is missing, such as static/ of a website
+// without static files, the nearest one above it is watched for it: that the directory appears is such a change,
+// and so is that it goes. So is that another directory has replaced it, as when it is removed and made anew at
+// once: where a directory is watched by its number, as on Linux, the one that was removed would be watched on, in
+// vain. The directory above it tells that reliably, so that it is watched as well, for nothing else. failed learns
+// of a directory that cannot be watched. Returns a function that stops watching.
 function observe(directory, recursive, changed, failed) {
-  let watcher;
+  let watchers = [];
   let target;
   let identity;
   // Watches anew if the directory has appeared, has gone or has been replaced since it is watched, and tells so.
   const follow = () => {
     if (nearest(directory) === target && identityOf(target) === identity) return false;
+    const existed = target === directory;
     attach();
+    if (existed || target === directory) changed();
     return true;
+  };
+  const start = (path, options, heard) => {
+    const watcher = watch(path, options, heard);
+    watcher.on("error", error => { if (!follow()) failed(path, error); });
+    watchers.push(watcher);
   };
   // What is watched may go, or the directory appear, before the watching starts: it is looked for once more then.
   // The identity is taken first: a directory that is replaced after that is found to be another at its next event.
   function attach() {
     do {
-      watcher?.close();
-      watcher = undefined;
+      for (const watcher of watchers.splice(0)) watcher.close();
       target = nearest(directory);
       identity = identityOf(target);
       try {
-        watcher = watch(target, { recursive: recursive && target === directory }, (event, name) => {
+        start(target, { recursive: recursive && target === directory }, (event, name) => {
           const existed = target === directory;
           follow();
-          // A change in the directory, also in one that has replaced it, or the directory has appeared or has gone.
           if (existed && target === directory) changed(name ? resolve(directory, name) : undefined);
-          else if (existed !== (target === directory)) changed();
         });
-        watcher.on("error", error => {
-          const existed = target === directory;
-          if (!follow()) failed(target, error);
-          else if (existed !== (target === directory)) changed();
-        });
+        if (target === directory && dirname(directory) !== directory) start(dirname(directory), {}, follow);
       } catch (error) {
         if (error.code !== "ENOENT" || nearest(directory) === target) {
           failed(target, error);
@@ -63,7 +64,7 @@ function observe(directory, recursive, changed, failed) {
     } while (nearest(directory) !== target);
   }
   attach();
-  return () => watcher?.close();
+  return () => { for (const watcher of watchers.splice(0)) watcher.close(); };
 }
 
 // Runs build in the process that rebuildOnChange below has started for it, and tells that server afterwards, also if
@@ -71,9 +72,14 @@ function observe(directory, recursive, changed, failed) {
 // - served, what the configuration says by now, as the function of that name returns it (see servedOf in
 //   server.js), unless the configuration is faulty;
 // - files, the modules that the build has imported or looked for: blyss.config.js with those that it imports and
-//   those of the data files of the components, also one that is missing. Node names each as it resolves it, in
-//   whatever form it is imported, so that no comment and no text is taken for a module.
+//   those of the data files of the components. Node names each as it resolves it, in whatever form it is
+//   imported, so that no comment and no text is taken for a module. A module that is missing is told as well, so
+//   that the website is built once it appears: the file that Node names in its error or, for require, which names
+//   none, each file that it would take for a path (see "All together" in the documentation of the modules of Node).
+// Once the server has gone, the build stops: it would write on beside the build of a server that is started anew.
 export async function tellServer(served, build) {
+  const gone = () => process.exit();
+  process.once("disconnect", gone);
   const files = new Set();
   const note = url => {
     try {
@@ -89,13 +95,21 @@ export async function tellServer(served, build) {
         note(resolved.url);
         return resolved;
       } catch (error) {
-        // A module that is missing is watched for, so that the website is built once it appears: the file that a
-        // path or a URL names and, for require, which tells so by the code of its error, each file that it would
-        // take for that name.
-        if (/^(?:\.{0,2}\/|file:)/.test(specifier) && URL.canParse(specifier, context.parentURL)) {
+        if (typeof error?.url === "string") {
+          note(error.url);
+        } else if (error?.code === "MODULE_NOT_FOUND" && /^(?:\.{0,2}\/|file:)/.test(specifier) && URL.canParse(specifier, context.parentURL)) {
+          // The file of that path, also with an extension, or in the directory of that path the file that its
+          // package.json names as main, likewise, or index.
           const { href } = new URL(specifier, context.parentURL);
-          const ends = error?.code === "MODULE_NOT_FOUND" ? ["", ".js", ".json", ".node", "/index.js", "/index.json", "/index.node", "/package.json"] : [""];
-          for (const end of ends) note(href + end);
+          const paths = [href];
+          try {
+            const { main } = JSON.parse(readFileSync(new URL(`${href}/package.json`), "utf8"));
+            if (typeof main === "string") paths.push(new URL(main, `${href}/`).href);
+          } catch {
+            // There is no package.json, or none that tells.
+          }
+          note(`${href}/package.json`);
+          for (const path of paths) for (const end of ["", ".js", ".json", ".node", "/index.js", "/index.json", "/index.node"]) note(path + end);
         }
         throw error;
       }
@@ -106,6 +120,7 @@ export async function tellServer(served, build) {
     told = await served();
     await build();
   } finally {
+    process.off("disconnect", gone);
     process.send({ files: [...files], served: told }, () => {});
   }
 }
@@ -123,7 +138,6 @@ export function rebuildOnChange(projectDir, served, configFile, { drafts = false
   const configuration = resolve(projectDir, configFile);
   let sources = served.sources.map(directory => resolve(projectDir, directory));
   let output = resolve(projectDir, served.publicDirectory);
-  let files = new Set([configuration]);
   let child;
   let pending = false;
   let timer;
@@ -139,14 +153,21 @@ export function rebuildOnChange(projectDir, served, configFile, { drafts = false
     onBuilt({ ok: false, message });
   };
 
+  // The modules that are watched: the file of the configuration and those that a build has told, but none in the
+  // output directory, nor that directory itself, and none in node_modules of the website. Every build deletes the
+  // output directory and writes it anew, so that each build would cause the next.
+  const watchable = file => !within(output, file) && !relative(projectDir, file).split(sep).includes("node_modules");
+  const modulesOf = told => new Set([configuration, ...told.filter(watchable)]);
+  let files = modulesOf([]);
+
   // What is watched, by directory: those of the sources, each with all that it holds, and those of the modules
-  // elsewhere, each for these files alone, as editors replace a file rather than change it. No module is watched
-  // in the output directory, which every build deletes and writes anew, so that each build would cause the next, and
-  // none in node_modules. A directory that is no longer one of them is no longer watched.
+  // elsewhere, each for these files alone, as editors replace a file rather than change it. In a directory that
+  // holds the output directory, such as that of blyss.config.js, only the change of a module counts, not one of
+  // which no more is known: a build causes such a change as well. A directory that is no longer one of them is no
+  // longer watched.
   const watched = new Map();
   const arrange = () => {
-    const modules = [...files].filter(file => !within(output, file) && !file.split(sep).includes("node_modules") &&
-      !sources.some(directory => within(directory, file)));
+    const modules = [...files].filter(file => !sources.some(directory => within(directory, file)));
     const wanted = new Map([...sources.map(directory => [directory, true]), ...modules.map(file => [dirname(file), false])]
       .map(([directory, recursive]) => [JSON.stringify([directory, recursive]), { directory, recursive }]));
     for (const [key, stop] of watched) {
@@ -156,7 +177,8 @@ export function rebuildOnChange(projectDir, served, configFile, { drafts = false
     }
     for (const [key, { directory, recursive }] of wanted) {
       if (watched.has(key)) continue;
-      watched.set(key, observe(directory, recursive, path => { if (recursive || !path || files.has(path)) schedule(); }, failed));
+      const counts = path => (path ? recursive || files.has(path) : !within(directory, output));
+      watched.set(key, observe(directory, recursive, path => { if (counts(path)) schedule(); }, failed));
     }
   };
 
@@ -170,20 +192,20 @@ export function rebuildOnChange(projectDir, served, configFile, { drafts = false
       { cwd: projectDir, stdio: ["ignore", "pipe", "pipe", "ipc"] });
     let stdout = "";
     let stderr = "";
-    let served;
+    let told;
     child.stdout.on("data", chunk => { stdout += chunk; });
     child.stderr.on("data", chunk => { stderr += chunk; });
     // What the build tells is watched at once, also if the build has failed: a change to it mends the build. Under
     // node --watch, Node itself names the modules of the build on this channel: such a message is none of Blyss.
     child.on("message", message => {
       if (!Array.isArray(message?.files)) return;
-      ({ served } = message);
+      told = message.served;
       if (stopped) return;
-      files = new Set([configuration, ...message.files]);
-      if (served) {
-        sources = served.sources;
-        output = served.publicDirectory;
+      if (told) {
+        sources = told.sources;
+        output = told.publicDirectory;
       }
+      files = modulesOf(message.files);
       arrange();
     });
     child.on("close", code => {
@@ -192,7 +214,7 @@ export function rebuildOnChange(projectDir, served, configFile, { drafts = false
       if (code === 0) {
         // Of all that the build says, the last line sums it up.
         console.log(`Rebuilt: ${stdout.trim().split("\n").at(-1)}`);
-        onBuilt({ ok: true, served });
+        onBuilt({ ok: true, served: told });
       } else {
         console.error(`${stderr.trim()}\nThe website was not rebuilt: it keeps its previous build until the next change.`);
         onBuilt({ ok: false, message: stderr.trim() });

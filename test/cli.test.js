@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { fork, spawn, spawnSync } from "node:child_process";
 import { once } from "node:events";
-import { mkdirSync, rmSync } from "node:fs";
+import { mkdirSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { chmod, cp, mkdir, mkdtemp, readdir, readFile, realpath, rename, rm, stat, writeFile } from "node:fs/promises";
 import { connect, createServer } from "node:net";
 import { tmpdir } from "node:os";
@@ -2776,30 +2776,40 @@ describe("co-authoring with agents", () => {
 
   test("blyss serve --watch follows its configuration, a module that it imports and a source directory that appears", async () => {
     // A website whose configuration takes the names of its output directory and of that of its static files from
-    // a module, which it imports in a form that only Node reads as an import. It names two more modules: one in
-    // a comment, and one in the output directory, which every build deletes.
-    const watched = join(sandbox, "watched");
+    // a module, which it imports in a form that only Node reads as an import. It names more to Node, none of which
+    // is to cause a build: a module in a comment, one in the output directory, which every build deletes, and that
+    // directory itself. The website lies below a directory named node_modules, as a starter that is served where
+    // it is installed: its own modules are watched all the same.
+    const watched = join(sandbox, "node_modules", "watched");
     assert.equal(run(["init", watched], sandbox).status, 0);
     await rename(join(watched, "blyss.config.js"), join(watched, "site.config.js"));
     await writeFile(join(watched, "blyss.config.js"), 'import site from "./site.config.js";\n// import "./settings/example.js";\n' +
-      "const { output, files } = await import(`./settings/${\"names\"}.js`);\nawait import(`./${output}/none.js`).catch(() => {});\n\n" +
+      "const { output, files } = await import(`./settings/${\"names\"}.js`);\nawait import(`./${output}/none.js`).catch(() => {});\n" +
+      "import.meta.resolve(`./${output}`);\n\n" +
       "export default { ...site, directories: { ...site.directories, public: output, static: files } };\n");
     const names = (output, files) => writeFile(join(watched, "settings", "names.js"),
       `export const output = ${JSON.stringify(output)};\nexport const files = ${JSON.stringify(files)};\n`);
     await mkdir(join(watched, "settings"));
     await names("public", "static");
+    await writeFile(join(watched, "static", "original.txt"), "Original.\n");
     const exists = path => stat(join(watched, path)).then(() => true, () => false);
     // As under node --watch, Node itself names the modules of each build on the channel on which the build tells
     // what its configuration says: the server takes only what Blyss tells.
     const underWatchMode = { WATCH_REPORT_DEPENDENCIES: "1" };
     await whileWatching(watched, async (base, written) => {
       const answers = async path => (await fetch(base + path)).status === 200;
-      // Neither the module of the comment nor the one in the output directory is watched: none causes a build.
-      const builds = written().split("Rebuilt:").length;
+      const wait = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds));
+      const builds = () => written().split("Rebuilt:").length;
+      // A change is built once, and nothing else is: no build causes the next, and neither the module of the
+      // comment nor the one in the output directory causes one as it appears.
+      const first = builds();
+      await writeFile(join(watched, "static", "more.txt"), "More.\n");
+      await until(() => builds() > first, "the build of static/, which has changed");
       await writeFile(join(watched, "settings", "example.js"), "export default 1;\n");
       await writeFile(join(watched, "public", "none.js"), "export default 1;\n");
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      assert.equal(written().split("Rebuilt:").length, builds, written());
+      await wait(1500);
+      assert.equal(builds(), first + 1, written());
+      assert.ok(await answers("/more.txt"));
       // The imported module alone changes: the website is built into the directory that it names now, and served from it.
       await names("out", "files");
       await until(() => exists(join("out", "sitemap.xml")), "a build into out/");
@@ -2809,38 +2819,78 @@ describe("co-authoring with agents", () => {
       await mkdir(join(watched, "files"));
       await writeFile(join(watched, "files", "late.txt"), "Late.\n");
       await until(() => answers("/late.txt"), "the build of files/, which was missing");
-      // That directory is removed and made anew at once: the new one is watched, not the one that is gone.
-      rmSync(join(watched, "files"), { recursive: true });
-      mkdirSync(join(watched, "files"));
+      // That directory, once it is empty, is replaced by another one at once, which only the directory above it
+      // tells: the new one is watched, not the one that is gone, so that a file in it causes a build.
+      await rm(join(watched, "files", "late.txt"));
       await until(async () => !await answers("/late.txt"), "the build of files/, which is empty");
+      mkdirSync(join(watched, "files.new"));
+      try {
+        renameSync(join(watched, "files.new"), join(watched, "files"));
+      } catch {
+        // Windows renames no directory onto another: the old one goes first.
+        rmSync(join(watched, "files"), { recursive: true });
+        renameSync(join(watched, "files.new"), join(watched, "files"));
+      }
+      await wait(500);
       await writeFile(join(watched, "files", "anew.txt"), "Anew.\n");
-      await until(() => answers("/anew.txt"), "the build of files/, which was made anew");
+      await until(() => answers("/anew.txt"), "the build of files/, which was replaced");
+      // So is the directory of the imported module: the module of the new one counts, which names static/ again,
+      // whatever the watching of the directory that is gone tells last.
+      renameSync(join(watched, "settings"), join(watched, "settings.away"));
+      mkdirSync(join(watched, "settings"));
+      writeFileSync(join(watched, "settings", "names.js"), 'export const output = "out";\nexport const files = "static";\n');
+      await until(() => answers("/original.txt"), "the build with the module of settings/, which was made anew");
     }, underWatchMode);
     assert.ok(!await exists("public"));
   });
 
   test("a build tells a watching server the modules that it imports, and those that it looks for in vain", async () => {
-    // What Node resolves is told, in whatever form it is imported; for a module that is missing, the file that an
-    // import names and each file that require would take.
+    // What Node resolves is told, in whatever form it is imported, and no module of a comment. For a module that is
+    // missing, the file that it would be is told: that of a path, of a path from the root and of an alias of
+    // package.json, and for require the file with its extension, the index of a directory and the main of a package.
     const site = join(sandbox, "telling");
-    await mkdir(site);
+    await mkdir(join(site, "packaged"), { recursive: true });
+    await writeFile(join(site, "package.json"), JSON.stringify({ type: "module", imports: { "#aliased": "./aliased.js" } }));
+    await writeFile(join(site, "packaged", "package.json"), JSON.stringify({ main: "lib/names" }));
     await writeFile(join(site, "present.js"), "export default 1;\n");
     await writeFile(join(site, "build.js"), `import { createRequire } from "node:module";
       import { tellServer } from ${JSON.stringify(pathToFileURL(join(root, "src", "server", "watch.js")).href)};
+      const require = createRequire(import.meta.url);
       await tellServer(async () => ({ sources: [] }), async () => {
         await import(\`./\${"present"}.js\`);
         // import "./comment.js";
         await import("./missing.js").catch(() => {});
         await import(${JSON.stringify(pathToFileURL(join(site, "absolute.js")).pathname)}).catch(() => {});
-        try { createRequire(import.meta.url)("./required"); } catch {}
+        await import("#aliased").catch(() => {});
+        for (const path of ["./required", "./packaged"]) try { require(path); } catch {}
       });
     `);
     const build = fork(join(site, "build.js"), { cwd: site, silent: true });
-    const [[message]] = await Promise.all([once(build, "message"), once(build, "exit")]);
+    // Under node --test --watch, Node itself names modules on this channel: what Blyss tells has files.
+    const [message] = await Promise.all([new Promise(resolve => build.on("message", told => { if (told?.files) resolve(told); })), once(build, "exit")]);
     assert.deepEqual(message.served, { sources: [] });
-    const told = message.files.map(file => relative(site, file)).filter(file => !file.startsWith("..")).sort();
-    assert.deepEqual(told, ["absolute.js", "missing.js", "present.js", "required", "required.js", "required.json", "required.node",
-      join("required", "index.js"), join("required", "index.json"), join("required", "index.node"), join("required", "package.json")].sort());
+    const told = message.files.map(file => relative(site, file));
+    for (const file of ["present.js", "missing.js", "absolute.js", "aliased.js", "required.js", join("required", "index.js"),
+      join("packaged", "lib", "names.js")]) {
+      assert.ok(told.includes(file), `${file} is not among ${told.join(", ")}`);
+    }
+    assert.ok(!told.includes("comment.js"), told.join(", "));
+  });
+
+  test("a build ends once the server that runs it has gone", { timeout: 20_000 }, async () => {
+    const site = join(sandbox, "gone");
+    await mkdir(site);
+    await writeFile(join(site, "build.mjs"), `import { tellServer } from ${JSON.stringify(pathToFileURL(join(root, "src", "server", "watch.js")).href)};
+      await tellServer(async () => undefined, () => new Promise(resolve => { process.send({ building: true }); setTimeout(resolve, 60_000); }));
+    `);
+    const build = fork(join(site, "build.mjs"), { cwd: site, silent: true });
+    try {
+      await new Promise(resolve => build.on("message", told => { if (told?.building) resolve(); }));
+      build.disconnect();
+      await once(build, "exit");
+    } finally {
+      build.kill();
+    }
   });
 
   test("a watching server that closes lets its running build end first", async () => {

@@ -93,7 +93,7 @@ function urlOf(hostBind, port) {
 // What the server takes from the configuration of a website: the directory of its output, with its name in the
 // configuration, the path below which it is served, also as a request names it, the language of /, and the
 // directories of its sources, which blyss serve --watch watches. The configuration is checked in the order of a
-// build, which so stops at the same fault.
+// build, which so stops at the same fault; only a path that cannot be decoded is a fault to the server alone.
 export function servedOf(projectDir, config) {
   assertSite(config);
   const { defaultLanguage } = languagesOf(config);
