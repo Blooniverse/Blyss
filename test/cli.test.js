@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { fork, spawn, spawnSync } from "node:child_process";
 import { once } from "node:events";
-import { mkdirSync, renameSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, renameSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { chmod, cp, mkdir, mkdtemp, readdir, readFile, realpath, rename, rm, stat, writeFile } from "node:fs/promises";
 import { connect, createServer } from "node:net";
 import { tmpdir } from "node:os";
@@ -2864,18 +2864,64 @@ describe("co-authoring with agents", () => {
     assert.ok(!await exists("public"));
   });
 
+  test("blyss serve --watch follows a link on the way to a module, once it leads elsewhere", { skip: process.platform === "win32" && "Windows lets only some users make a link" }, async () => {
+    // Node names the file that it has found for a module, and no link on the way to it. Here the configuration
+    // imports one module that is a link to a file, and another one from a directory that is a link to a link to a
+    // directory: each link is pointed elsewhere in turn, while no file changes.
+    const site = join(sandbox, "linked");
+    assert.equal(run(["init", site], sandbox).status, 0);
+    await rename(join(site, "blyss.config.js"), join(site, "site.config.js"));
+    for (const [directory, file, text] of [["names", "first.js", "First"], ["names", "second.js", "Second"], ["here", "place.js", "Here"], ["there", "place.js", "There"]]) {
+      await mkdir(join(site, directory), { recursive: true });
+      await writeFile(join(site, directory, file), `export default ${JSON.stringify(text)};\n`);
+    }
+    const link = (to, path) => {
+      symlinkSync(to, `${path}.new`);
+      renameSync(`${path}.new`, path);
+    };
+    link("first.js", join(site, "names", "current.js"));
+    link("here", join(site, "now"));
+    link("now", join(site, "places"));
+    await writeFile(join(site, "blyss.config.js"), `import site from "./site.config.js";
+import name from "./names/current.js";
+import place from "./places/place.js";
+
+export default { ...site, site: { ...site.site, name: name + " " + place } };
+`);
+    await whileWatching(site, async base => {
+      const shows = text => async () => (await (await fetch(`${base}/en/`)).text()).includes(text);
+      assert.ok(await shows("First Here")());
+      link("second.js", join(site, "names", "current.js"));
+      await until(shows("Second Here"), "the build with the file that the link leads to now");
+      link("there", join(site, "now"));
+      await until(shows("Second There"), "the build with the directory that the link behind the link leads to now");
+      link("here", join(site, "places"));
+      await until(shows("Second Here"), "the build with the directory that the link leads to now");
+    });
+  });
+
   test("a build tells a watching server what its configuration says, then the modules that it imports or looks for in vain", async () => {
     // What Node resolves is told, in whatever form it is imported, and no module of a comment. A module that is
     // missing is told as the file that it would be. For import, that is the file of a path, of a path from the root
     // and of a name that package.json maps. For require, it is the file that package.json maps a name to, here by
     // a pattern and for require alone, and for a path the file with its extension, the index of a directory and
-    // the main of a package. In such a path and in main, # is part of a name, as paths are no URLs.
+    // the main of a package. In such a path and in main, # is part of a name, as paths are no URLs. A module that
+    // Node finds through a link is told as that link as well, here for require, which adds the extension, and as
+    // no other file that require would take for the path. A link that leads nowhere is told with the file that
+    // is missing at its end, and a file that is missing below a link in a directory which is a link with both
+    // links and with the file where they lead to.
+    const links = process.platform !== "win32";
     const site = join(sandbox, "telling");
     await mkdir(join(site, "packaged"), { recursive: true });
     await writeFile(join(site, "package.json"), JSON.stringify({ type: "module",
       imports: { "#aliased": "./aliased.js", "#mapped/*": { require: "./mapped/*.cjs", default: "./mapped/*.js" } } }));
     await writeFile(join(site, "packaged", "package.json"), JSON.stringify({ main: "lib/names#main" }));
     await writeFile(join(site, "present.js"), "export default 1;\n");
+    if (links) {
+      for (const [to, link] of [["present.js", "linked.js"], ["nowhere.js", "dangling.js"], ["packaged", "through"], ["../elsewhere", join("packaged", "inner")]]) {
+        symlinkSync(to, join(site, link));
+      }
+    }
     await writeFile(join(site, "build.js"), `import { createRequire } from "node:module";
       import { tellServer } from ${JSON.stringify(pathToFileURL(join(root, "src", "server", "watch.js")).href)};
       const require = createRequire(import.meta.url);
@@ -2886,7 +2932,9 @@ describe("co-authoring with agents", () => {
         await import("./missing.js").catch(() => {});
         await import(${JSON.stringify(pathToFileURL(join(site, "absolute.js")).pathname)}).catch(() => {});
         await import("#aliased").catch(() => {});
-        for (const path of ["./required", "./packaged", "./named#local", "#mapped/names"]) try { require(path); } catch {}
+        await import("./dangling.js").catch(() => {});
+        await import("./through/inner/absent.js").catch(() => {});
+        for (const path of ["./required", "./packaged", "./named#local", "#mapped/names", "./linked"]) try { require(path); } catch {}
       });
     `);
     const build = fork(join(site, "build.js"), { cwd: site, silent: true });
@@ -2906,6 +2954,10 @@ describe("co-authoring with agents", () => {
       assert.ok(told.includes(file), `${file} is not among ${told.join(", ")}`);
     }
     for (const file of ["comment.js", "named.js", join("packaged", "lib", "names.js"), join("mapped", "names.js")]) assert.ok(!told.includes(file), file);
+    if (links) {
+      assert.deepEqual(told.filter(file => /^(linked|dangling|nowhere|through|elsewhere)/.test(file)),
+        ["dangling.js", "nowhere.js", join("through", "inner"), "through", join("elsewhere", "absent.js"), "linked.js"]);
+    }
   });
 
   // The server learns of a module once the build that imports it first has ended. Here that build, and no other,
@@ -2946,10 +2998,11 @@ export default { ...site, site: { ...site.site, name } };
     });
   }
 
-  test("a build ends once the server that runs it has gone", { timeout: 20_000 }, async () => {
+  test("a build ends once the server that runs it has gone, and does not start if it has gone before", { timeout: 20_000 }, async () => {
     const site = join(sandbox, "gone");
     await mkdir(site);
-    await writeFile(join(site, "build.mjs"), `import { tellServer } from ${JSON.stringify(pathToFileURL(join(root, "src", "server", "watch.js")).href)};
+    const watch = JSON.stringify(pathToFileURL(join(root, "src", "server", "watch.js")).href);
+    await writeFile(join(site, "build.mjs"), `import { tellServer } from ${watch};
       await tellServer(async () => undefined, () => new Promise(resolve => { process.send({ building: true }); setTimeout(resolve, 60_000); }));
     `);
     const build = fork(join(site, "build.mjs"), { cwd: site, silent: true });
@@ -2959,6 +3012,42 @@ export default { ...site, site: { ...site.site, name } };
       await once(build, "exit");
     } finally {
       build.kill();
+    }
+    // A server may go while the build is still loading its modules: here the build starts only after that.
+    await writeFile(join(site, "late.mjs"), `import { writeFileSync } from "node:fs";
+      import { tellServer } from ${watch};
+      const start = () => tellServer(async () => undefined, async () => writeFileSync("built", ""));
+      if (process.connected) process.once("disconnect", start);
+      else start();
+    `);
+    const late = fork(join(site, "late.mjs"), { cwd: site, silent: true });
+    try {
+      late.disconnect();
+      await once(late, "exit");
+    } finally {
+      late.kill();
+    }
+    await assert.rejects(stat(join(site, "built")), { code: "ENOENT" });
+  });
+
+  test("a build that another program runs with a channel is a build like any other", async () => {
+    // Only a server says in the environment of a build that it runs it. A process manager, say, gets no message
+    // on its channel, and its build goes on once it has closed the channel, as to let the build run on its own.
+    // The watch mode of Node is no such program: it has each process tell its modules on the channel, which fails
+    // once the channel is closed.
+    const site = join(sandbox, "managed");
+    assert.equal(run(["init", site], sandbox).status, 0);
+    const env = { ...process.env, WATCH_REPORT_DEPENDENCIES: "" };
+    for (const closes of [false, true]) {
+      await rm(join(site, "public"), { recursive: true, force: true });
+      const build = fork(cli, ["build"], { cwd: site, env, silent: true });
+      const messages = [];
+      build.on("message", message => { if (message?.blyss) messages.push(message); });
+      if (closes) build.disconnect();
+      const [code] = await once(build, "exit");
+      assert.equal(code, 0);
+      assert.ok((await stat(join(site, "public", "sitemap.xml"))).isFile());
+      assert.deepEqual(messages, []);
     }
   });
 

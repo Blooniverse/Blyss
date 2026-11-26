@@ -1,11 +1,15 @@
 import { spawn } from "node:child_process";
-import { existsSync, readFileSync, statSync, watch } from "node:fs";
+import { existsSync, lstatSync, readFileSync, readlinkSync, realpathSync, statSync, watch } from "node:fs";
 import { registerHooks } from "node:module";
 import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { within } from "../build/paths.js";
 
 const cli = fileURLToPath(new URL("../../bin/blyss.js", import.meta.url));
+
+// The variable of the environment by which a server tells a build that it runs it. Another program may run
+// blyss build with a channel of its own, as a process manager does: that build is one like any other.
+export const forServer = "BLYSS_TELL_SERVER";
 
 // The nearest directory that exists: path itself or, while it is missing, the first of those above it.
 const nearest = path => (existsSync(path) || dirname(path) === path ? path : nearest(dirname(path)));
@@ -85,19 +89,11 @@ function observe(directory, recursive, changed, failed) {
 // The file of a URL, if it names one.
 const fileOf = url => (url.startsWith("file:") ? [fileURLToPath(url)] : []);
 
-// The files that a module which Node has looked for in vain may be: the website is built once one of them appears.
-// - For import, the error names the file.
-// - For require, the error names none. If a package.json maps the name to a file, the error has the path of that
-//   package.json, and the first line of its message is the name of the file and nothing more. Else the name is a
-//   path as it is written, and no URL: a # or a ? is part of the name of a file. require takes the file of that
-//   path, also with an extension, or in the directory of that path the file that its package.json names as main,
-//   likewise, or index (see "All together" in the documentation of the modules of Node). A name that is no path,
-//   as that of a package, is not followed.
-function missingOf(specifier, parentURL, error) {
-  if (typeof error.url === "string") return fileOf(error.url);
-  if (error.code !== "MODULE_NOT_FOUND") return [];
-  const [, mapped = ""] = (typeof error.path === "string" && /^Cannot find module '(.*)'$/m.exec(error.message)) || [];
-  if (isAbsolute(mapped)) return [mapped];
+// The files that require takes for a name that is a path: the file of that path, also with an extension, or in the
+// directory of that path the file that its package.json names as main, likewise, or index (see "All together" in
+// the documentation of the modules of Node). The path counts as it is written, and is no URL: a # or a ? is part
+// of the name of a file. A name that is no path, as that of a package, has none.
+function requiredOf(specifier, parentURL) {
   if (!/^\.{1,2}(?:[/\\]|$)/.test(specifier) && !isAbsolute(specifier)) return [];
   const path = resolve(dirname(fileURLToPath(parentURL)), specifier);
   const paths = [path];
@@ -111,6 +107,54 @@ function missingOf(specifier, parentURL, error) {
   return [join(path, "package.json"), ...paths.flatMap(base => ends.map(end => base + end))];
 }
 
+// The files that a module which Node has looked for in vain may be: the website is built once one of them appears.
+// For import, the error names the file. For require, the error names none: if a package.json maps the name to a
+// file, the error has the path of that package.json, and the first line of its message is the name of the file
+// and nothing more; else they are the files that require takes for a path.
+function missingOf(specifier, parentURL, error) {
+  if (typeof error.url === "string") return fileOf(error.url);
+  if (error.code !== "MODULE_NOT_FOUND") return [];
+  const [, mapped = ""] = (typeof error.path === "string" && /^Cannot find module '(.*)'$/m.exec(error.message)) || [];
+  return isAbsolute(mapped) ? [mapped] : requiredOf(specifier, parentURL);
+}
+
+// True for a path at which a link is; false also for one that is missing, or below a file.
+function isLink(path) {
+  try {
+    return lstatSync(path).isSymbolicLink();
+  } catch {
+    return false;
+  }
+}
+
+// The links on the way of a path, followed by the path that they lead to, at which nothing need be: the file and
+// each directory above it may be a link, and so may those of the path that such a link leads to.
+function followLinks(path, links = []) {
+  const found = [];
+  for (let current = path; dirname(current) !== current; current = dirname(current)) {
+    if (!links.includes(current) && isLink(current)) found.push(current);
+  }
+  try {
+    // The lowest link is followed: the path that it leads to is below no link of this path, which are all found.
+    const [lowest] = found;
+    if (lowest) return followLinks(join(resolve(realpathSync(dirname(lowest)), readlinkSync(lowest)), relative(lowest, path)), [...links, ...found]);
+  } catch {
+    // That link has gone meanwhile: no more is known of the way.
+  }
+  return [...links, ...found, path];
+}
+
+// The links that lead to a file which Node has found for a name. Node names the file itself, and no link on the
+// way to it, such as a current.js that is a link to the settings in use: once that link leads to another file, the
+// website is another one, though no file has changed. If the name is a path, the links are on the way of that
+// path: of its file for import, which reads the path as a URL, and of the files that require takes for it. None
+// is looked for if one of these is the file itself, as it is for nearly every name: no link leads to it then.
+function linksTo(file, specifier, parentURL) {
+  const imported = /^(?:\.{0,2}\/|file:)/.test(specifier) && URL.canParse(specifier, parentURL) ? fileOf(new URL(specifier, parentURL).href) : [];
+  const paths = imported.includes(file) ? imported : [...imported, ...requiredOf(specifier, parentURL)];
+  return paths.includes(file) ? [] : paths.flatMap(path => followLinks(path).slice(0, -1));
+}
+
 // Runs build in the process that rebuildOnChange below has started for it, and tells that server
 // - served, what the configuration says by now, as the function of that name returns it (see servedOf in
 //   server.js), before the build: the server watches the sources that it names from then on;
@@ -118,11 +162,15 @@ function missingOf(specifier, parentURL, error) {
 //   are blyss.config.js with those that it imports and those of the data files of the components. Node names each
 //   as it resolves it, in whatever form it is imported, so that no comment and no text is taken for a module. Each
 //   is told with its version by then, which is before Node reads it: the server learns of a module only after the
-//   build has read it, and so finds out whether it has changed meanwhile. A module that is missing is told as the
-//   files that it may be (see missingOf above).
-// Once the server has gone, the build stops: it would write on beside the build of a server that is started anew.
+//   build has read it, and so finds out whether it has changed meanwhile. With a module that Node has found
+//   through links, these are told (see linksTo above). A module that is missing is told as the files that it may
+//   be (see missingOf above), each with the links on its way and the path that they lead to: such a file may be
+//   a link that leads nowhere.
+// Once the server has gone, the build stops, and it does not start if the server has gone before: it would write
+// beside the build of a server that is started anew.
 export async function tellServer(served, build) {
   const gone = () => process.exit();
+  if (!process.connected) gone();
   process.once("disconnect", gone);
   const files = new Map();
   const note = paths => {
@@ -138,10 +186,11 @@ export async function tellServer(served, build) {
       try {
         resolved = nextResolve(specifier, context);
       } catch (error) {
-        note(() => missingOf(specifier, context.parentURL, error));
+        note(() => missingOf(specifier, context.parentURL, error).flatMap(path => followLinks(path)));
         throw error;
       }
       note(() => fileOf(resolved.url));
+      note(() => fileOf(resolved.url).flatMap(file => linksTo(file, specifier, context.parentURL)));
       return resolved;
     }
   });
@@ -224,8 +273,9 @@ export function rebuildOnChange(projectDir, served, configFile, { drafts = false
     }
     // This build reads all that has changed until now: no further one is due for that.
     clearTimeout(timer);
+    // The environment tells the build that a server runs it, which it is to tell (see tellServer above).
     child = spawn(process.execPath, [cli, "build", ...(drafts ? ["--drafts"] : [])],
-      { cwd: projectDir, stdio: ["ignore", "pipe", "pipe", "ipc"] });
+      { cwd: projectDir, env: { ...process.env, [forServer]: "1" }, stdio: ["ignore", "pipe", "pipe", "ipc"] });
     let stdout = "";
     let stderr = "";
     let told;
