@@ -192,7 +192,7 @@ export function serve(projectDir, config, options = {}) {
     console.log(`Blyss is serving ${served.publicName}/ on port ${port} of ${hostBind}: ${urlOf(hostBind, port)}`);
     if (watching) {
       console.log(`Blyss is watching the sources of the website and rebuilds it${options.drafts ? " with its drafts" : ""} after each change.`);
-      stopWatching = rebuildOnChange(projectDir, served.sources, resolve(projectDir, "blyss.config.js"), {
+      stopWatching = rebuildOnChange(projectDir, served, resolve(projectDir, "blyss.config.js"), {
         drafts: options.drafts,
         onBuilt: result => {
           if (result.ok && result.served) served = result.served;

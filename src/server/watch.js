@@ -1,36 +1,14 @@
 import { spawn } from "node:child_process";
-import { existsSync, readFileSync, watch } from "node:fs";
-import { dirname, relative, resolve } from "node:path";
-import { fileURLToPath, pathToFileURL } from "node:url";
+import { existsSync, watch } from "node:fs";
+import { registerHooks } from "node:module";
+import { dirname, relative, resolve, sep } from "node:path";
+import { fileURLToPath } from "node:url";
+import { within } from "../build/paths.js";
 
 const cli = fileURLToPath(new URL("../../bin/blyss.js", import.meta.url));
 
 // The nearest directory that exists: path itself or, while it is missing, the first of those above it.
 const nearest = path => (existsSync(path) || dirname(path) === path ? path : nearest(dirname(path)));
-
-// The files of a configuration: file with what it imports by a relative path, such as a configuration that it
-// extends, and with what the modules among these import in turn. One that is missing counts as well: it may appear.
-const imported = /\b(?:from|import)\s*(?:\(\s*)?(["'])(\.{1,2}\/[^"'\n]+)\1/g;
-function configurationFiles(file, found = new Set()) {
-  if (found.has(file)) return found;
-  found.add(file);
-  let source = "";
-  try {
-    if (/\.[cm]?[jt]s$/.test(file)) source = readFileSync(file, "utf8");
-  } catch {
-    // A module that cannot be read imports nothing.
-  }
-  for (const [, , specifier] of source.matchAll(imported)) {
-    let module;
-    try {
-      module = fileURLToPath(new URL(specifier, pathToFileURL(file)));
-    } catch {
-      continue; // it names no file, as with a % that starts no escape: the build tells
-    }
-    configurationFiles(module, found);
-  }
-  return found;
-}
 
 // Watches a directory, with all that it holds if recursive, and calls changed with the path of what has changed in
 // it, if that is known. While the directory is missing, such as static/ of a website without static files, the
@@ -70,18 +48,58 @@ function observe(directory, recursive, changed, failed) {
   return () => watcher?.close();
 }
 
-// Builds the website now and whenever one of its sources changes: a file in one of directories, such as _content/,
-// or a file of its configuration (see configurationFiles above). Each build runs as blyss build in a process of
-// its own, which reads the configuration afresh and tells what it says by now (see bin/blyss.js): the directories
-// of the sources that it names are watched from then on, in place of directories. Changes that follow each other
-// within a moment cause one build, and a change during a build causes another one after it. onBuilt learns how
-// each build went: { ok: true, served } with what the build has told, or { ok: false, message } with what it wrote
-// to stderr. Returns a function that stops watching and starts no further build; a build that is running is not
-// interrupted, which would leave a part of the output: the promise that the function returns resolves once it ends.
-export function rebuildOnChange(projectDir, directories, configFile, { drafts = false, onBuilt = () => {} } = {}) {
+// Runs build in the process that rebuildOnChange below has started for it, and tells that server afterwards, also if
+// the build fails:
+// - served, what the configuration says by now, as the function of that name returns it (see servedOf in
+//   server.js), unless the configuration is faulty;
+// - files, the modules that the build has imported or looked for: blyss.config.js with those that it imports and
+//   those of the data files of the components, also one that is missing. Node names each as it resolves it, in
+//   whatever form it is imported, so that no comment and no text is taken for a module.
+export async function tellServer(served, build) {
+  const files = new Set();
+  const note = url => {
+    try {
+      if (url.startsWith("file:")) files.add(fileURLToPath(url));
+    } catch {
+      // It names no file, which Node tells itself.
+    }
+  };
+  registerHooks({
+    resolve(specifier, context, nextResolve) {
+      try {
+        const resolved = nextResolve(specifier, context);
+        note(resolved.url);
+        return resolved;
+      } catch (error) {
+        // A module that is missing is watched for, so that the website is built once it appears.
+        if (/^(?:\.{1,2}\/|file:)/.test(specifier) && URL.canParse(specifier, context.parentURL)) note(new URL(specifier, context.parentURL).href);
+        throw error;
+      }
+    }
+  });
+  let told;
+  try {
+    told = await served();
+    await build();
+  } finally {
+    process.send({ files: [...files], served: told }, () => {});
+  }
+}
+
+// Builds the website now and whenever one of its sources changes: a file in a directory of the sources of served
+// (see servedOf in server.js), such as _content/, the file of the configuration, or a module that a build has
+// imported from elsewhere, such as one that the configuration imports. Each build runs as blyss build in a process
+// of its own, which reads the configuration afresh and tells what it says by now and which modules it has imported
+// (see tellServer above): these are watched from then on. Changes that follow each other within a moment cause one
+// build, and a change during a build causes another one after it. onBuilt learns how each build went:
+// { ok: true, served } with what the build has told, or { ok: false, message } with what it wrote to stderr.
+// Returns a function that stops watching and starts no further build; a build that is running is not interrupted,
+// which would leave a part of the output: the promise that the function returns resolves once it ends.
+export function rebuildOnChange(projectDir, served, configFile, { drafts = false, onBuilt = () => {} } = {}) {
   const configuration = resolve(projectDir, configFile);
-  let sources = directories.map(directory => resolve(projectDir, directory));
-  let files = new Set();
+  let sources = served.sources.map(directory => resolve(projectDir, directory));
+  let output = resolve(projectDir, served.publicDirectory);
+  let files = new Set([configuration]);
   let child;
   let pending = false;
   let timer;
@@ -97,13 +115,15 @@ export function rebuildOnChange(projectDir, directories, configFile, { drafts = 
     onBuilt({ ok: false, message });
   };
 
-  // What is watched, by directory: those of the sources, each with all that it holds, and those of the files of
-  // the configuration, each for these files alone, as editors replace a file rather than change it. A directory
-  // that is no longer one of them is no longer watched.
+  // What is watched, by directory: those of the sources, each with all that it holds, and those of the modules
+  // elsewhere, each for these files alone, as editors replace a file rather than change it. No module is watched
+  // in the output directory, which every build deletes and writes anew, so that each build would cause the next, and
+  // none in node_modules. A directory that is no longer one of them is no longer watched.
   const watched = new Map();
   const arrange = () => {
-    files = configurationFiles(configuration);
-    const wanted = new Map([...sources.map(directory => [directory, true]), ...[...files].map(file => [dirname(file), false])]
+    const modules = [...files].filter(file => !within(output, file) && !file.split(sep).includes("node_modules") &&
+      !sources.some(directory => within(directory, file)));
+    const wanted = new Map([...sources.map(directory => [directory, true]), ...modules.map(file => [dirname(file), false])]
       .map(([directory, recursive]) => [JSON.stringify([directory, recursive]), { directory, recursive }]));
     for (const [key, stop] of watched) {
       if (wanted.has(key)) continue;
@@ -122,8 +142,6 @@ export function rebuildOnChange(projectDir, directories, configFile, { drafts = 
       pending = true;
       return;
     }
-    // The configuration may import other files by now.
-    arrange();
     child = spawn(process.execPath, [cli, "build", ...(drafts ? ["--drafts"] : [])],
       { cwd: projectDir, stdio: ["ignore", "pipe", "pipe", "ipc"] });
     let stdout = "";
@@ -131,13 +149,17 @@ export function rebuildOnChange(projectDir, directories, configFile, { drafts = 
     let served;
     child.stdout.on("data", chunk => { stdout += chunk; });
     child.stderr.on("data", chunk => { stderr += chunk; });
-    // The sources that the build names are watched at once, so that a change to them mends a build that fails.
-    // Under node --watch, Node itself names the modules of the build on this channel: such a message is none of Blyss.
+    // What the build tells is watched at once, also if the build has failed: a change to it mends the build. Under
+    // node --watch, Node itself names the modules of the build on this channel: such a message is none of Blyss.
     child.on("message", message => {
-      if (!message?.served) return;
+      if (!Array.isArray(message?.files)) return;
       ({ served } = message);
       if (stopped) return;
-      sources = served.sources;
+      files = new Set([configuration, ...message.files]);
+      if (served) {
+        sources = served.sources;
+        output = served.publicDirectory;
+      }
       arrange();
     });
     child.on("close", code => {
@@ -158,6 +180,7 @@ export function rebuildOnChange(projectDir, directories, configFile, { drafts = 
     });
   }
 
+  arrange();
   rebuild();
   return () => {
     stopped = true;

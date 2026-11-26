@@ -48,7 +48,7 @@ The commands take these arguments:
 - `blyss build --drafts` builds the [drafts](/en/book/writing/pages-and-posts/#drafts) as well, which every other build leaves out.
 - `blyss --help` lists the commands and `blyss --version` shows the version of Blyss.
 - `blyss serve --hostbind <address> --port <number>` serves on another address or port.
-- `blyss serve --watch` builds, then rebuilds on each change of the content, the templates, the components, the static files or `blyss.config.js`, with the files that it imports by a relative path, and reloads the open pages. A failed build shows its message on the page. `--drafts` builds the drafts as well. A changed configuration applies from the next build that succeeds, also to the directories that the server watches and serves; only the address and the port need the server to start anew.
+- `blyss serve --watch` builds, then rebuilds on each change of the content, the templates, the components, the static files, `blyss.config.js` or a module that it or the data file of a component imports, and reloads the open pages. A failed build shows its message on the page. `--drafts` builds the drafts as well. A changed configuration applies from the next build that succeeds, also to the directories that the server watches and serves; only the address and the port need the server to start anew.
 - Any other argument ends a command with a message.
 
 `build` and `serve` require `blyss.config.js`. `serve` does not build: for a website without `public/`, it says so and answers every request with "404 Not Found". The dependency-free server answers `GET` and `HEAD` requests:

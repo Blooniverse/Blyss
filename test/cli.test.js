@@ -165,8 +165,8 @@ async function until(check, what) {
   }
 }
 
-// Runs check with the base URL of blyss serve --watch for site, once its first build is done, then stops the server.
-// env adds to the environment of the server.
+// Runs check with the base URL of blyss serve --watch for site, once its first build is done, and with a function
+// that returns what the server has written by then; then stops the server. env adds to the environment of the server.
 async function whileWatching(site, check, env = {}) {
   const port = await freePort();
   const server = spawn(process.execPath, [cli, "serve", "--watch", "--port", String(port)], { cwd: site, env: { ...process.env, ...env } });
@@ -175,7 +175,7 @@ async function whileWatching(site, check, env = {}) {
   for (const stream of [server.stdout, server.stderr]) stream.on("data", chunk => { output += chunk; });
   try {
     await until(() => output.includes("Rebuilt:"), () => `the first build of blyss serve --watch, which wrote: ${output}`);
-    await check(`http://127.0.0.1:${port}`);
+    await check(`http://127.0.0.1:${port}`, () => output);
   } finally {
     server.kill();
     await exited;
@@ -2773,13 +2773,15 @@ describe("co-authoring with agents", () => {
     }
   });
 
-  test("blyss serve --watch follows its configuration, a file that it imports and a source directory that appears", async () => {
+  test("blyss serve --watch follows its configuration, a module that it imports and a source directory that appears", async () => {
     // A website whose configuration takes the names of its output directory and of that of its static files from
-    // another file.
+    // a module, which it imports in a form that only Node reads as an import. It names two more modules: one in
+    // a comment, and one in the output directory, which every build deletes.
     const watched = join(sandbox, "watched");
     assert.equal(run(["init", watched], sandbox).status, 0);
     await rename(join(watched, "blyss.config.js"), join(watched, "site.config.js"));
-    await writeFile(join(watched, "blyss.config.js"), 'import site from "./site.config.js";\nimport { output, files } from "./settings/names.js";\n\n' +
+    await writeFile(join(watched, "blyss.config.js"), 'import site from "./site.config.js";\n// import "./settings/example.js";\n' +
+      "const { output, files } = await import(`./settings/${\"names\"}.js`);\nawait import(`./${output}/none.js`).catch(() => {});\n\n" +
       "export default { ...site, directories: { ...site.directories, public: output, static: files } };\n");
     const names = (output, files) => writeFile(join(watched, "settings", "names.js"),
       `export const output = ${JSON.stringify(output)};\nexport const files = ${JSON.stringify(files)};\n`);
@@ -2789,9 +2791,15 @@ describe("co-authoring with agents", () => {
     // As under node --watch, Node itself names the modules of each build on the channel on which the build tells
     // what its configuration says: the server takes only what Blyss tells.
     const underWatchMode = { WATCH_REPORT_DEPENDENCIES: "1" };
-    await whileWatching(watched, async base => {
+    await whileWatching(watched, async (base, written) => {
       const answers = async path => (await fetch(base + path)).status === 200;
-      // The imported file alone changes: the website is built into the directory that it names now, and served from it.
+      // Neither the module of the comment nor the one in the output directory is watched: none causes a build.
+      const builds = written().split("Rebuilt:").length;
+      await writeFile(join(watched, "settings", "example.js"), "export default 1;\n");
+      await writeFile(join(watched, "public", "none.js"), "export default 1;\n");
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      assert.equal(written().split("Rebuilt:").length, builds, written());
+      // The imported module alone changes: the website is built into the directory that it names now, and served from it.
       await names("out", "files");
       await until(() => exists(join("out", "sitemap.xml")), "a build into out/");
       await rm(join(watched, "public"), { recursive: true });
@@ -2833,7 +2841,8 @@ describe("co-authoring with agents", () => {
       syncBuiltinESMExports();
       const { rebuildOnChange } = await import(${JSON.stringify(pathToFileURL(join(root, "src", "server", "watch.js")).href)});
       const results = [];
-      const stop = rebuildOnChange(process.cwd(), ["_content"], "blyss.config.js", { onBuilt: result => results.push(result) });
+      const stop = rebuildOnChange(process.cwd(), { sources: ["_content"], publicDirectory: "public" }, "blyss.config.js",
+        { onBuilt: result => results.push(result) });
       watchers[0].emit("error", new Error("watch unavailable"));
       stop();
       console.log(JSON.stringify(results));
