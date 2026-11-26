@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
-import { spawn, spawnSync } from "node:child_process";
+import { fork, spawn, spawnSync } from "node:child_process";
 import { once } from "node:events";
+import { mkdirSync, rmSync } from "node:fs";
 import { chmod, cp, mkdir, mkdtemp, readdir, readFile, realpath, rename, rm, stat, writeFile } from "node:fs/promises";
 import { connect, createServer } from "node:net";
 import { tmpdir } from "node:os";
@@ -2808,8 +2809,38 @@ describe("co-authoring with agents", () => {
       await mkdir(join(watched, "files"));
       await writeFile(join(watched, "files", "late.txt"), "Late.\n");
       await until(() => answers("/late.txt"), "the build of files/, which was missing");
+      // That directory is removed and made anew at once: the new one is watched, not the one that is gone.
+      rmSync(join(watched, "files"), { recursive: true });
+      mkdirSync(join(watched, "files"));
+      await until(async () => !await answers("/late.txt"), "the build of files/, which is empty");
+      await writeFile(join(watched, "files", "anew.txt"), "Anew.\n");
+      await until(() => answers("/anew.txt"), "the build of files/, which was made anew");
     }, underWatchMode);
     assert.ok(!await exists("public"));
+  });
+
+  test("a build tells a watching server the modules that it imports, and those that it looks for in vain", async () => {
+    // What Node resolves is told, in whatever form it is imported; for a module that is missing, the file that an
+    // import names and each file that require would take.
+    const site = join(sandbox, "telling");
+    await mkdir(site);
+    await writeFile(join(site, "present.js"), "export default 1;\n");
+    await writeFile(join(site, "build.js"), `import { createRequire } from "node:module";
+      import { tellServer } from ${JSON.stringify(pathToFileURL(join(root, "src", "server", "watch.js")).href)};
+      await tellServer(async () => ({ sources: [] }), async () => {
+        await import(\`./\${"present"}.js\`);
+        // import "./comment.js";
+        await import("./missing.js").catch(() => {});
+        await import(${JSON.stringify(pathToFileURL(join(site, "absolute.js")).pathname)}).catch(() => {});
+        try { createRequire(import.meta.url)("./required"); } catch {}
+      });
+    `);
+    const build = fork(join(site, "build.js"), { cwd: site, silent: true });
+    const [[message]] = await Promise.all([once(build, "message"), once(build, "exit")]);
+    assert.deepEqual(message.served, { sources: [] });
+    const told = message.files.map(file => relative(site, file)).filter(file => !file.startsWith("..")).sort();
+    assert.deepEqual(told, ["absolute.js", "missing.js", "present.js", "required", "required.js", "required.json", "required.node",
+      join("required", "index.js"), join("required", "index.json"), join("required", "index.node"), join("required", "package.json")].sort());
   });
 
   test("a watching server that closes lets its running build end first", async () => {

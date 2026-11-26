@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { existsSync, watch } from "node:fs";
+import { existsSync, statSync, watch } from "node:fs";
 import { registerHooks } from "node:module";
 import { dirname, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -10,32 +10,50 @@ const cli = fileURLToPath(new URL("../../bin/blyss.js", import.meta.url));
 // The nearest directory that exists: path itself or, while it is missing, the first of those above it.
 const nearest = path => (existsSync(path) || dirname(path) === path ? path : nearest(dirname(path)));
 
+// What tells the directory at a path from one that has replaced it there: its number, which the next directory may
+// get again, and the time of its birth.
+function identityOf(path) {
+  const { ino, birthtimeNs } = statSync(path, { bigint: true, throwIfNoEntry: false }) ?? {};
+  return `${ino} ${birthtimeNs}`;
+}
+
 // Watches a directory, with all that it holds if recursive, and calls changed with the path of what has changed in
 // it, if that is known. While the directory is missing, such as static/ of a website without static files, the
-// nearest one above it is watched for it: that the directory appears is a change, and so is that it goes. failed
+// nearest one above it is watched for it: that the directory appears is a change, and so is that it goes. A
+// directory that another one has replaced, as when it is removed and made anew at once, is watched anew: where a
+// directory is watched by its number, as on Linux, the one that was removed would be watched on, in vain. failed
 // learns of a directory that cannot be watched. Returns a function that stops watching.
 function observe(directory, recursive, changed, failed) {
   let watcher;
   let target;
-  // True if the directory has appeared or has gone since it is watched, after which the watching follows it.
-  const moved = () => {
-    if (nearest(directory) === target) return false;
-    const existed = target === directory;
+  let identity;
+  // Watches anew if the directory has appeared, has gone or has been replaced since it is watched, and tells so.
+  const follow = () => {
+    if (nearest(directory) === target && identityOf(target) === identity) return false;
     attach();
-    if (existed !== (target === directory)) changed();
     return true;
   };
   // What is watched may go, or the directory appear, before the watching starts: it is looked for once more then.
+  // The identity is taken first: a directory that is replaced after that is found to be another at its next event.
   function attach() {
     do {
       watcher?.close();
       watcher = undefined;
       target = nearest(directory);
+      identity = identityOf(target);
       try {
         watcher = watch(target, { recursive: recursive && target === directory }, (event, name) => {
-          if (!moved() && target === directory) changed(name ? resolve(directory, name) : undefined);
+          const existed = target === directory;
+          follow();
+          // A change in the directory, also in one that has replaced it, or the directory has appeared or has gone.
+          if (existed && target === directory) changed(name ? resolve(directory, name) : undefined);
+          else if (existed !== (target === directory)) changed();
         });
-        watcher.on("error", error => { if (!moved()) failed(target, error); });
+        watcher.on("error", error => {
+          const existed = target === directory;
+          if (!follow()) failed(target, error);
+          else if (existed !== (target === directory)) changed();
+        });
       } catch (error) {
         if (error.code !== "ENOENT" || nearest(directory) === target) {
           failed(target, error);
@@ -59,7 +77,7 @@ export async function tellServer(served, build) {
   const files = new Set();
   const note = url => {
     try {
-      if (url.startsWith("file:")) files.add(fileURLToPath(url));
+      if (url.startsWith("file:")) files.add(resolve(fileURLToPath(url)));
     } catch {
       // It names no file, which Node tells itself.
     }
@@ -71,8 +89,14 @@ export async function tellServer(served, build) {
         note(resolved.url);
         return resolved;
       } catch (error) {
-        // A module that is missing is watched for, so that the website is built once it appears.
-        if (/^(?:\.{1,2}\/|file:)/.test(specifier) && URL.canParse(specifier, context.parentURL)) note(new URL(specifier, context.parentURL).href);
+        // A module that is missing is watched for, so that the website is built once it appears: the file that a
+        // path or a URL names and, for require, which tells so by the code of its error, each file that it would
+        // take for that name.
+        if (/^(?:\.{0,2}\/|file:)/.test(specifier) && URL.canParse(specifier, context.parentURL)) {
+          const { href } = new URL(specifier, context.parentURL);
+          const ends = error?.code === "MODULE_NOT_FOUND" ? ["", ".js", ".json", ".node", "/index.js", "/index.json", "/index.node", "/package.json"] : [""];
+          for (const end of ends) note(href + end);
+        }
         throw error;
       }
     }
