@@ -13,8 +13,8 @@ on:
       - ".gitignore"
       - "README.md"
       - "CHANGELOG.md"
-      - "starters/lean/README.md"
-      - "starters/lean/gitignore"
+      - "starters/lean/_authoring/**"
+      - "starters/lean/_content/**"
   pull_request:
     branches: [ "main" ]
     types: [ "opened", "synchronize", "reopened" ]
