@@ -89,6 +89,16 @@ function observe(directory, recursive, changed, failed) {
 // The file of a URL, if it names one.
 const fileOf = url => (url.startsWith("file:") ? [fileURLToPath(url)] : []);
 
+// The file that import takes for a name that is a path, which it reads as a URL. A path of require need be none,
+// as one with a % that starts no escape: it has no such file.
+function importedOf(specifier, parentURL) {
+  try {
+    return /^(?:\.{0,2}\/|file:)/.test(specifier) ? fileOf(new URL(specifier, parentURL).href) : [];
+  } catch {
+    return [];
+  }
+}
+
 // The files that require takes for a name that is a path: the file of that path, also with an extension, or in the
 // directory of that path the file that its package.json names as main, likewise, or index (see "All together" in
 // the documentation of the modules of Node). The path counts as it is written, and is no URL: a # or a ? is part
@@ -134,14 +144,21 @@ function followLinks(path, links = []) {
   for (let current = path; dirname(current) !== current; current = dirname(current)) {
     if (!links.includes(current) && isLink(current)) found.push(current);
   }
+  const [lowest] = found;
+  let all = [...links, ...found];
+  let end = path;
   try {
-    // The lowest link is followed: the path that it leads to is below no link of this path, which are all found.
-    const [lowest] = found;
-    if (lowest) return followLinks(join(resolve(realpathSync(dirname(lowest)), readlinkSync(lowest)), relative(lowest, path)), [...links, ...found]);
+    // Each link leads to a path with links of its own, and the lowest one to where this path ends.
+    for (const link of found.toReversed()) {
+      const target = resolve(realpathSync(dirname(link)), readlinkSync(link));
+      const way = followLinks(link === lowest ? join(target, relative(link, path)) : target, all);
+      all = way.slice(0, -1);
+      if (link === lowest) end = way.at(-1);
+    }
   } catch {
-    // That link has gone meanwhile: no more is known of the way.
+    // A link has gone meanwhile: no more is known of the way.
   }
-  return [...links, ...found, path];
+  return [...all, end];
 }
 
 // The links that lead to a file which Node has found for a name. Node names the file itself, and no link on the
@@ -150,7 +167,7 @@ function followLinks(path, links = []) {
 // path: of its file for import, which reads the path as a URL, and of the files that require takes for it. None
 // is looked for if one of these is the file itself, as it is for nearly every name: no link leads to it then.
 function linksTo(file, specifier, parentURL) {
-  const imported = /^(?:\.{0,2}\/|file:)/.test(specifier) && URL.canParse(specifier, parentURL) ? fileOf(new URL(specifier, parentURL).href) : [];
+  const imported = importedOf(specifier, parentURL);
   const paths = imported.includes(file) ? imported : [...imported, ...requiredOf(specifier, parentURL)];
   return paths.includes(file) ? [] : paths.flatMap(path => followLinks(path).slice(0, -1));
 }

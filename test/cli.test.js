@@ -2909,7 +2909,8 @@ export default { ...site, site: { ...site.site, name: name + " " + place } };
     // Node finds through a link is told as that link as well, here for require, which adds the extension, and as
     // no other file that require would take for the path. A link that leads nowhere is told with the file that
     // is missing at its end, and a file that is missing below a link in a directory which is a link with both
-    // links and with the file where they lead to.
+    // links, with the link on the way that the upper one leads, and with the file where they lead to. A path of
+    // require with a % in it, which is no URL, is told with its link as well.
     const links = process.platform !== "win32";
     const site = join(sandbox, "telling");
     await mkdir(join(site, "packaged"), { recursive: true });
@@ -2918,7 +2919,8 @@ export default { ...site, site: { ...site.site, name: name + " " + place } };
     await writeFile(join(site, "packaged", "package.json"), JSON.stringify({ main: "lib/names#main" }));
     await writeFile(join(site, "present.js"), "export default 1;\n");
     if (links) {
-      for (const [to, link] of [["present.js", "linked.js"], ["nowhere.js", "dangling.js"], ["packaged", "through"], ["../elsewhere", join("packaged", "inner")]]) {
+      for (const [to, link] of [["present.js", "linked.js"], ["present.js", "50%.js"], ["nowhere.js", "dangling.js"], [".", "detour"],
+        [join("detour", "packaged"), "through"], ["../elsewhere", join("packaged", "inner")]]) {
         symlinkSync(to, join(site, link));
       }
     }
@@ -2934,7 +2936,7 @@ export default { ...site, site: { ...site.site, name: name + " " + place } };
         await import("#aliased").catch(() => {});
         await import("./dangling.js").catch(() => {});
         await import("./through/inner/absent.js").catch(() => {});
-        for (const path of ["./required", "./packaged", "./named#local", "#mapped/names", "./linked"]) try { require(path); } catch {}
+        for (const path of ["./required", "./packaged", "./named#local", "#mapped/names", "./linked", "./50%"]) try { require(path); } catch {}
       });
     `);
     const build = fork(join(site, "build.js"), { cwd: site, silent: true });
@@ -2955,8 +2957,8 @@ export default { ...site, site: { ...site.site, name: name + " " + place } };
     }
     for (const file of ["comment.js", "named.js", join("packaged", "lib", "names.js"), join("mapped", "names.js")]) assert.ok(!told.includes(file), file);
     if (links) {
-      assert.deepEqual(told.filter(file => /^(linked|dangling|nowhere|through|elsewhere)/.test(file)),
-        ["dangling.js", "nowhere.js", join("through", "inner"), "through", join("elsewhere", "absent.js"), "linked.js"]);
+      assert.deepEqual(told.filter(file => /^(linked|50%|dangling|nowhere|through|detour|elsewhere)/.test(file)),
+        ["dangling.js", "nowhere.js", join("through", "inner"), "through", "detour", join("elsewhere", "absent.js"), "linked.js", "50%.js"]);
     }
   });
 
