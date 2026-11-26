@@ -18,12 +18,13 @@ function identityOf(path) {
 }
 
 // Watches a directory, with all that it holds if recursive, and calls changed with the path of what has changed in
-// it, or without one if any of it may have changed. While the directory is missing, such as static/ of a website
-// without static files, the nearest one above it is watched for it: that the directory appears is such a change,
-// and so is that it goes. So is that another directory has replaced it, as when it is removed and made anew at
-// once: where a directory is watched by its number, as on Linux, the one that was removed would be watched on, in
-// vain. The directory above it tells that reliably, so that it is watched as well, for nothing else. failed learns
-// of a directory that cannot be watched. Returns a function that stops watching.
+// it, or without one if no more is known than that some of it may have changed. While the directory is missing,
+// such as static/ of a website without static files, the nearest one above it is watched for it: that the directory
+// appears is a change of the directory itself, and so is that it goes. That another directory has replaced it, as
+// when it is removed and made anew at once, is a change of which no more is known: where a directory is watched by
+// its number, as on Linux, the one that was removed would be watched on, in vain. The directory above it tells
+// that reliably, so that it is watched as well, for nothing else. failed learns of a directory that cannot be
+// watched. Returns a function that stops watching.
 function observe(directory, recursive, changed, failed) {
   let watchers = [];
   let target;
@@ -33,7 +34,8 @@ function observe(directory, recursive, changed, failed) {
     if (nearest(directory) === target && identityOf(target) === identity) return false;
     const existed = target === directory;
     attach();
-    if (existed || target === directory) changed();
+    if (existed !== (target === directory)) changed(directory);
+    else if (existed) changed();
     return true;
   };
   const start = (path, options, heard) => {
@@ -161,10 +163,10 @@ export function rebuildOnChange(projectDir, served, configFile, { drafts = false
   let files = modulesOf([]);
 
   // What is watched, by directory: those of the sources, each with all that it holds, and those of the modules
-  // elsewhere, each for these files alone, as editors replace a file rather than change it. In a directory that
-  // holds the output directory, such as that of blyss.config.js, only the change of a module counts, not one of
-  // which no more is known: a build causes such a change as well. A directory that is no longer one of them is no
-  // longer watched.
+  // elsewhere, each for these files alone, as editors replace a file rather than change it. That a directory
+  // appears or goes counts as well. A change of which no more is known counts too, but not in a directory that
+  // holds the output directory, such as that of blyss.config.js: a build may cause such a change itself. A
+  // directory that is no longer one of them is no longer watched.
   const watched = new Map();
   const arrange = () => {
     const modules = [...files].filter(file => !sources.some(directory => within(directory, file)));
@@ -177,7 +179,7 @@ export function rebuildOnChange(projectDir, served, configFile, { drafts = false
     }
     for (const [key, { directory, recursive }] of wanted) {
       if (watched.has(key)) continue;
-      const counts = path => (path ? recursive || files.has(path) : !within(directory, output));
+      const counts = path => (path ? recursive || path === directory || files.has(path) : !within(directory, output));
       watched.set(key, observe(directory, recursive, path => { if (counts(path)) schedule(); }, failed));
     }
   };

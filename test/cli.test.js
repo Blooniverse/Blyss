@@ -2840,6 +2840,18 @@ describe("co-authoring with agents", () => {
       mkdirSync(join(watched, "settings"));
       writeFileSync(join(watched, "settings", "names.js"), 'export const output = "out";\nexport const files = "static";\n');
       await until(() => answers("/original.txt"), "the build with the module of settings/, which was made anew");
+      // That directory holds the output directory as well, goes with all that it holds and is made anew together
+      // with the module: that it appears is a change, though nothing tells that the module does.
+      const settled = join("settings", "out", "sitemap.xml");
+      writeFileSync(join(watched, "settings", "names.js"), 'export const output = "settings/out";\nexport const files = "files";\n');
+      await until(() => exists(settled), "a build into settings/out/");
+      const failures = () => written().split("was not rebuilt").length;
+      const failed = failures();
+      rmSync(join(watched, "settings"), { recursive: true });
+      await until(() => failures() > failed, "the build that fails without the module of settings/");
+      mkdirSync(join(watched, "settings"));
+      writeFileSync(join(watched, "settings", "names.js"), 'export const output = "settings/out";\nexport const files = "files";\n');
+      await until(() => exists(settled), "the build once settings/ is there again");
     }, underWatchMode);
     assert.ok(!await exists("public"));
   });
