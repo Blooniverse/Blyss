@@ -83,7 +83,7 @@ printf 'Package tarball: %s\n' "$tarball"
 #                           the similar names: npm installs packages, npx runs a command that a package provides.
 #                           --no-install forbids npx to download anything: without it, npx could fetch "blyss"
 #                           from npmjs.com, an unrelated package with the same short name.
-#                           Why not `npm run build`, as users do? That runs whatever "build" means in the website's
+#                        !! Why not `npm run build`, as users do? That runs whatever "build" means in the website's
 #                           package.json: in the starter it is just `blyss build`, but an existing website may
 #                           add steps of its own, or have no "build" at all. npx runs Blyss itself, nothing else.
 # The checks: Blyss is a real copy from the tarball (test ! -L: not a link to this repository), and the build
