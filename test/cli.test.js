@@ -2840,8 +2840,9 @@ describe("co-authoring with agents", () => {
       mkdirSync(join(watched, "settings"));
       writeFileSync(join(watched, "settings", "names.js"), 'export const output = "out";\nexport const files = "static";\n');
       await until(() => answers("/original.txt"), "the build with the module of settings/, which was made anew");
-      // That directory holds the output directory as well, goes with all that it holds and is made anew together
-      // with the module: that it appears is a change, though nothing tells that the module does.
+      // That directory holds the output directory as well, which each build changes. It goes with all that it
+      // holds and is made anew together with the module. No more is known than that it has gone, and then that it
+      // is there again: both count, as the module is no longer what the last build has read.
       const settled = join("settings", "out", "sitemap.xml");
       writeFileSync(join(watched, "settings", "names.js"), 'export const output = "settings/out";\nexport const files = "files";\n');
       await until(() => exists(settled), "a build into settings/out/");
@@ -2852,42 +2853,98 @@ describe("co-authoring with agents", () => {
       mkdirSync(join(watched, "settings"));
       writeFileSync(join(watched, "settings", "names.js"), 'export const output = "settings/out";\nexport const files = "files";\n');
       await until(() => exists(settled), "the build once settings/ is there again");
+      // Another directory takes its place at once, complete with another module, which names static/ again: no
+      // file appears in it afterwards, and it counts likewise.
+      mkdirSync(join(watched, "settings.new"));
+      writeFileSync(join(watched, "settings.new", "names.js"), 'export const output = "settings/out";\nexport const files = "static";\n');
+      renameSync(join(watched, "settings"), join(watched, "settings.old"));
+      renameSync(join(watched, "settings.new"), join(watched, "settings"));
+      await until(() => answers("/original.txt"), "the build with the module of settings/, which was replaced");
     }, underWatchMode);
     assert.ok(!await exists("public"));
   });
 
-  test("a build tells a watching server the modules that it imports, and those that it looks for in vain", async () => {
-    // What Node resolves is told, in whatever form it is imported, and no module of a comment. For a module that is
-    // missing, the file that it would be is told: that of a path, of a path from the root and of an alias of
-    // package.json, and for require the file with its extension, the index of a directory and the main of a package.
+  test("a build tells a watching server what its configuration says, then the modules that it imports or looks for in vain", async () => {
+    // What Node resolves is told, in whatever form it is imported, and no module of a comment. A module that is
+    // missing is told as the file that it would be. For import, that is the file of a path, of a path from the root
+    // and of a name that package.json maps. For require, it is the file that package.json maps a name to, here by
+    // a pattern and for require alone, and for a path the file with its extension, the index of a directory and
+    // the main of a package. In such a path and in main, # is part of a name, as paths are no URLs.
     const site = join(sandbox, "telling");
     await mkdir(join(site, "packaged"), { recursive: true });
-    await writeFile(join(site, "package.json"), JSON.stringify({ type: "module", imports: { "#aliased": "./aliased.js" } }));
-    await writeFile(join(site, "packaged", "package.json"), JSON.stringify({ main: "lib/names" }));
+    await writeFile(join(site, "package.json"), JSON.stringify({ type: "module",
+      imports: { "#aliased": "./aliased.js", "#mapped/*": { require: "./mapped/*.cjs", default: "./mapped/*.js" } } }));
+    await writeFile(join(site, "packaged", "package.json"), JSON.stringify({ main: "lib/names#main" }));
     await writeFile(join(site, "present.js"), "export default 1;\n");
     await writeFile(join(site, "build.js"), `import { createRequire } from "node:module";
       import { tellServer } from ${JSON.stringify(pathToFileURL(join(root, "src", "server", "watch.js")).href)};
       const require = createRequire(import.meta.url);
       await tellServer(async () => ({ sources: [] }), async () => {
+        process.send({ building: true });
         await import(\`./\${"present"}.js\`);
         // import "./comment.js";
         await import("./missing.js").catch(() => {});
         await import(${JSON.stringify(pathToFileURL(join(site, "absolute.js")).pathname)}).catch(() => {});
         await import("#aliased").catch(() => {});
-        for (const path of ["./required", "./packaged"]) try { require(path); } catch {}
+        for (const path of ["./required", "./packaged", "./named#local", "#mapped/names"]) try { require(path); } catch {}
       });
     `);
     const build = fork(join(site, "build.js"), { cwd: site, silent: true });
-    // Under node --test --watch, Node itself names modules on this channel: what Blyss tells has files.
-    const [message] = await Promise.all([new Promise(resolve => build.on("message", told => { if (told?.files) resolve(told); })), once(build, "exit")]);
-    assert.deepEqual(message.served, { sources: [] });
-    const told = message.files.map(file => relative(site, file));
+    // Under node --test --watch, Node itself names modules on this channel: what Blyss tells is marked as its own.
+    const messages = [];
+    const [files] = await Promise.all([new Promise(resolve => build.on("message", message => {
+      if (message?.blyss || message?.building) messages.push(message);
+      if (message?.blyss?.files) resolve(message.blyss.files);
+    })), once(build, "exit")]);
+    // The configuration is told before the build, so that its sources are watched while the build reads them, and
+    // the modules after it, each with its version.
+    assert.deepEqual(messages.slice(0, 2), [{ blyss: { served: { sources: [] } } }, { building: true }]);
+    assert.equal(messages.length, 3);
+    const told = files.map(([file]) => relative(site, file));
     for (const file of ["present.js", "missing.js", "absolute.js", "aliased.js", "required.js", join("required", "index.js"),
-      join("packaged", "lib", "names.js")]) {
+      join("packaged", "lib", "names#main.js"), "named#local.js", join("mapped", "names.cjs")]) {
       assert.ok(told.includes(file), `${file} is not among ${told.join(", ")}`);
     }
-    assert.ok(!told.includes("comment.js"), told.join(", "));
+    for (const file of ["comment.js", "named.js", join("packaged", "lib", "names.js"), join("mapped", "names.js")]) assert.ok(!told.includes(file), file);
   });
+
+  // The server learns of a module once the build that imports it first has ended. Here that build, and no other,
+  // changes the module after it has read it, as an editor may while a build runs: only a build has process.send.
+  // One more build makes up for that, and no further one, as the module is watched by then. In the second case,
+  // that build goes on while a static file changes as well, which is watched: one more build is due for both.
+  for (const [name, what, meanwhile] of [
+    ["changing", " if a module has changed since a build read it, before it was watched", ""],
+    ["lasting", ", and not twice, if a watched file has changed during that build as well",
+      'writeFileSync(new URL("./static/changed.txt", import.meta.url), "Changed.\\n");\n  await new Promise(resolve => setTimeout(resolve, 500));']
+  ]) {
+    test(`blyss serve --watch builds once more${what}`, async () => {
+      const site = join(sandbox, name);
+      assert.equal(run(["init", site], sandbox).status, 0);
+      await rename(join(site, "blyss.config.js"), join(site, "site.config.js"));
+      await mkdir(join(site, "settings"));
+      await writeFile(join(site, "settings", "name.js"), 'export const name = "Before";\n');
+      await writeFile(join(site, "blyss.config.js"), `import { existsSync, writeFileSync } from "node:fs";
+import site from "./site.config.js";
+import { name } from "./settings/name.js";
+
+const done = new URL("./done", import.meta.url);
+if (process.send && !existsSync(done)) {
+  writeFileSync(done, "");
+  writeFileSync(new URL("./settings/name.js", import.meta.url), 'export const name = "Afterwards";\\n');
+  ${meanwhile}
+}
+
+export default { ...site, site: { ...site.site, name } };
+`);
+      await whileWatching(site, async (base, written) => {
+        const builds = () => written().split("Rebuilt:").length - 1;
+        await until(() => builds() > 1, "one more build");
+        assert.match(await (await fetch(`${base}/en/`)).text(), /Afterwards/);
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        assert.equal(builds(), 2, written());
+      });
+    });
+  }
 
   test("a build ends once the server that runs it has gone", { timeout: 20_000 }, async () => {
     const site = join(sandbox, "gone");
