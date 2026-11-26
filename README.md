@@ -77,7 +77,7 @@ npx @blooniverse/blyss init my-site   # copy the bundled starter into my-site/
 cd my-site
 npm install                           # install Blyss into the new website
 npm run build                         # generate public/
-npm start                             # serve public/ on localhost:3000
+npm start                             # serve public/ on localhost:3000 - via `blyss serve`
 ```
 
 `blyss init` only copies files. Installing dependencies, building and serving are separate steps.
@@ -115,7 +115,7 @@ git clone https://github.com/Blooniverse/Blyss.git
 cd Blyss
 npm clean-install
 npm run build   # render starters/lean/ into public/
-npm start       # preview locally at http://localhost:3000
+npm start       # preview public/ locally at http://localhost:3000 - via `blyss serve`
 ```
 
 - Run `npm test` to rebuild the starter and execute the test suite.
