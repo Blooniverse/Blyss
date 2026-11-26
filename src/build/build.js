@@ -1,7 +1,8 @@
 import { cp, mkdir, readFile, readdir, rm, stat, writeFile } from "node:fs/promises";
 import { basename, extname, join, relative, sep } from "node:path";
 import { loadConfig } from "../config.js";
-import { BlyssError } from "../errors.js";
+import { BlyssError, BlyssErrors } from "../errors.js";
+import { dateAdvice, isDate } from "./dates.js";
 import { loadComponents } from "./components.js";
 import { withBasePath } from "./html.js";
 import { createListRecords, parseTags } from "./lists.js";
@@ -49,22 +50,31 @@ function assertTexts(file, metadata, fields) {
     "Write the text on the line of the field.");
 }
 
-// A date as in 2026-11-10, or with its time as in 2026-11-10T09:30:00+01:00: the format of <time>, of JSON-LD and
-// of sitemap.xml, in which the posts are ordered as well.
-const w3cDate = /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:\d{2}))?$/;
-
 function assertDates(file, metadata) {
   for (const field of ["datePublished", "dateModified"]) {
     const date = metadata[field];
     if (date === undefined || date === "") continue;
-    // Date.parse reads the 30th of February as a day of March, so the day is compared with the one that it returns.
-    const isDate = typeof date === "string" && w3cDate.test(date) && !Number.isNaN(Date.parse(date)) &&
-      new Date(date.slice(0, 10)).toISOString().startsWith(date.slice(0, 10));
-    if (!isDate) {
-      throw new BlyssError(`Cannot build ${file}: its ${field} ${JSON.stringify(date)} is not a date.\n` +
-        "Write a date as 2026-11-10, or with its time as 2026-11-10T09:30:00+01:00.");
-    }
+    if (!isDate(date)) throw new BlyssError(`Cannot build ${file}: its ${field} ${JSON.stringify(date)} is not a date.\n${dateAdvice}`);
   }
+}
+
+// Runs work for each item and returns its results. The errors of Blyss that it throws for an item are gathered and
+// thrown together, each with the file that it names, once every item has run: a website with several faulty files
+// names them all at once. Any other error stops at once. Sequential work runs for one item after the other.
+async function eachChecked(items, fileOf, work, { sequential = false } = {}) {
+  const settled = [];
+  if (!sequential) settled.push(...await Promise.allSettled(items.map(work)));
+  else for (const item of items) settled.push(await work(item).then(value => ({ status: "fulfilled", value }), reason => ({ status: "rejected", reason })));
+  const failed = settled.filter(result => result.status === "rejected").map(({ reason }) => reason);
+  const unexpected = failed.find(error => !(error instanceof BlyssError));
+  if (unexpected) throw unexpected;
+  if (failed.length) {
+    settled.forEach((result, index) => { if (result.status === "rejected") result.reason.file ??= fileOf(items[index]); });
+    // An error of a template or of the configuration repeats for each page: it is reported once.
+    const distinct = [...new Map(failed.flatMap(error => error.errors ?? [error]).map(error => [error.message, error])).values()];
+    throw distinct.length === 1 ? distinct[0] : new BlyssErrors(distinct);
+  }
+  return settled.map(result => result.value);
 }
 
 // draft: true makes a page, a post or a doc a draft: the build leaves it out, as if its file did not exist, unless
@@ -88,7 +98,7 @@ async function discoverContent(projectDir, config, contentDirectory, locate, dra
   });
   // Sorted paths make the output independent of the filesystem.
   const files = found.sort();
-  return Promise.all(files.map(async sourceFile => {
+  return eachChecked(files, sourceFile => relative(projectDir, sourceFile), async sourceFile => {
     const file = relative(projectDir, sourceFile);
     const parts = relative(contentDirectory, sourceFile).split(sep);
     const [languageKey, section] = parts;
@@ -148,7 +158,7 @@ async function discoverContent(projectDir, config, contentDirectory, locate, dra
     if (type !== 'post' && filename === 'index') urlParts.pop();
     if (type === 'page' && !nested.length && filename === 'index') urlParts.pop();
     return { sourceFile, languageKey, languageConfig, type, metadata, markdown, tags, draft, ...locate(urlParts) };
-  }));
+  });
 }
 
 // Content records precede generated ones, so the first owner of a URL is always a content file.
@@ -183,8 +193,11 @@ function assertUniqueTranslations(projectDir, records) {
   }
 }
 
-// With drafts, the build includes the pages, posts and docs that draft: true leaves out of every other build.
-export async function build(projectDir, configPath = './blyss.config.js', { drafts = false } = {}) {
+// Reads, checks and renders the website without writing anything: what blyss build writes and blyss check checks.
+// With drafts, it includes the pages, posts and docs that draft: true leaves out of every other build. The errors
+// of the files are gathered (see eachChecked), those of the files of the content first: a page of a faulty website
+// would show the faults of other files.
+export async function prepare(projectDir, configPath = './blyss.config.js', { drafts = false } = {}) {
   const loaded = await loadConfig(projectDir, configPath);
   assertSite(loaded);
   // The whole build uses the checked languages, which have every label and a default language.
@@ -194,7 +207,6 @@ export async function build(projectDir, configPath = './blyss.config.js', { draf
   const layout = layoutOf(config);
   const basePath = basePathOf(config);
 
-  // Content is read and validated before the previous output is deleted.
   const readOptionalTemplate = name => readFile(join(templatesDirectory, name), 'utf8').catch(error => {
     if (error.code === 'ENOENT') return undefined;
     throw error;
@@ -234,21 +246,28 @@ export async function build(projectDir, configPath = './blyss.config.js', { draf
   const templates = { document, page, post, home, book };
   const translationIndex = indexTranslations(records, config.site.languages);
 
-  // Every page is rendered before the previous output is deleted, so that a block with settings that its component
-  // refuses, or a template with a placeholder that it lacks, stops the build in time.
-  const pages = [];
-  for (const record of records) {
-    const file = record.sourceFile && relative(projectDir, record.sourceFile);
+  // Every page is rendered before anything is written, so that a block with settings that its component refuses, or
+  // a template with a placeholder that it lacks, stops the build in time.
+  const fileOf = record => record.sourceFile && relative(projectDir, record.sourceFile);
+  const pages = await eachChecked(records, fileOf, async record => {
     const html = await renderRecord({
-      record, file, templates, templateFile, translationIndex, site: config.site, records: content, layout, regions, basePath,
+      record, file: fileOf(record), templates, templateFile, translationIndex, site: config.site, records: content, layout, regions, basePath,
       fragments: fragments.get(record.languageKey),
-      components: components.placeholders(record.languageKey, file),
+      components: components.placeholders(record.languageKey, fileOf(record)),
       languages: components.languages,
       former: components.former,
       book: books.placeholders(record)
     });
-    pages.push({ record, html: withBasePath(html, basePath) });
-  }
+    return { record, html: withBasePath(html, basePath) };
+  }, { sequential: true });
+  return { config, content, records, pages, leftOut, components, translationIndex, publicDirectory, staticDirectory };
+}
+
+// With drafts, the build includes the pages, posts and docs that draft: true leaves out of every other build.
+export async function build(projectDir, configPath = './blyss.config.js', { drafts = false } = {}) {
+  // Content is read, validated and rendered before the previous output is deleted.
+  const { config, records, pages, leftOut, components, translationIndex, publicDirectory, staticDirectory } =
+    await prepare(projectDir, configPath, { drafts });
 
   // Without a static directory, there are no files to copy.
   const hasStatic = await stat(staticDirectory).then(info => info.isDirectory(), error => {

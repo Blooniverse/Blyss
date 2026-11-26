@@ -33,7 +33,10 @@ const defaultLabels = {
   note: "Note",
   seealso: "See also",
   tip: "Tip",
-  warning: "Warning"
+  warning: "Warning",
+  // The kinds of the authors of a contribution (see directives.js).
+  contributionHuman: "Human",
+  contributionAgent: "AI agent"
 };
 
 const isObject = value => typeof value === "object" && value !== null && !Array.isArray(value);

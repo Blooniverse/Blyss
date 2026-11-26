@@ -1,12 +1,13 @@
-import { open, stat } from "node:fs/promises";
+import { open, readFile, stat } from "node:fs/promises";
 import { createServer } from "node:http";
 import { isIPv6 } from "node:net";
-import nodePath, { extname, join } from "node:path";
+import nodePath, { extname, join, resolve } from "node:path";
 import { pipeline } from "node:stream";
 import { languagesOf } from "../build/languages.js";
 import { resolvePaths, within } from "../build/paths.js";
 import { assertSite, basePathOf, refuse } from "../build/settings.js";
 import { contentTypeFor } from "./mime-types.js";
+import { rebuildOnChange } from "./watch.js";
 
 const isFile = path => stat(path).then(info => info.isFile(), () => false);
 
@@ -37,6 +38,41 @@ async function sendFile(response, status, filePath) {
   pipeline(file.createReadStream(), response, () => {});
 }
 
+// While the server watches the sources, each page that it sends listens to it for the builds (see serve below): it
+// reloads after a build and shows the problems of a build that failed, at its bottom, until the next one.
+const events = "/__blyss/events";
+const listener = `<script>
+(() => {
+  const source = new EventSource(${JSON.stringify(events)});
+  source.addEventListener("built", () => location.reload());
+  source.addEventListener("failed", event => {
+    let box = document.getElementById("blyss-build-problems");
+    if (!box) {
+      box = Object.assign(document.createElement("pre"), { id: "blyss-build-problems", role: "alert" });
+      box.style.cssText = "position:fixed;inset:auto 0 0 0;z-index:2147483647;max-height:50vh;overflow:auto;margin:0;" +
+        "padding:1em;background:#fff5f5;color:#8a1c1c;border-top:3px solid #c62828;font:14px/1.4 monospace;white-space:pre-wrap";
+      document.body.append(box);
+    }
+    box.textContent = JSON.parse(event.data);
+  });
+})();
+</script>
+`;
+
+// A page with the listener above at the end of its body.
+async function sendPage(response, status, filePath) {
+  const html = await readFile(filePath, "utf8");
+  const end = html.lastIndexOf("</body>");
+  const page = end < 0 ? html + listener : `${html.slice(0, end)}${listener}${html.slice(end)}`;
+  response.writeHead(status, {
+    "Content-Type": contentTypeFor(".html"),
+    "Content-Length": Buffer.byteLength(page),
+    "Cache-Control": "no-store",
+    "X-Content-Type-Options": "nosniff"
+  });
+  response.end(page);
+}
+
 // The address and port to listen on: a command-line option, then the environment variable, then blyss.config.js.
 // An empty environment variable counts as unset, as in a compose.yaml that passes on a variable that is not set.
 export function listenAddress(config, options = {}, env = process.env) {
@@ -54,10 +90,20 @@ function urlOf(hostBind, port) {
   return `http://${host}:${port}/`;
 }
 
+// With the option watch, the server builds the website first and again whenever its sources change, each time with
+// its drafts if the option drafts is set, and the pages that it sends reload after each build.
 export function serve(projectDir, config, options = {}) {
   assertSite(config);
   const { hostBind, port } = listenAddress(config, options);
-  const { publicDirectory } = resolvePaths(projectDir, config);
+  const paths = resolvePaths(projectDir, config);
+  const { publicDirectory } = paths;
+  const watching = Boolean(options.watch);
+  // The pages that wait for the next build, and how the last one went.
+  const listeners = new Set();
+  let lastBuild = { ok: true };
+  const tell = (response, { ok, message }) => response.write(ok ? "event: built\ndata: {}\n\n" : `event: failed\ndata: ${JSON.stringify(message)}\n\n`);
+  const send = (response, status, filePath) =>
+    (watching && extname(filePath) === ".html" ? sendPage(response, status, filePath) : sendFile(response, status, filePath));
   const { defaultLanguage } = languagesOf(config);
   // A website below a path, such as /docs for https://example.com/docs/, is served below that path, as on its host.
   const basePath = basePathOf(config);
@@ -75,6 +121,15 @@ export function serve(projectDir, config, options = {}) {
     try {
       const requestUrl = new URL(request.url ?? "/", "http://localhost");
       let pathname = decodeURIComponent(requestUrl.pathname);
+      if (watching && pathname === events) {
+        response.writeHead(200, { "Content-Type": "text/event-stream", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" });
+        // A page that opens after a failed build shows its problems at once.
+        if (!lastBuild.ok) tell(response, lastBuild);
+        else response.write(": watching\n\n");
+        listeners.add(response);
+        request.on("close", () => listeners.delete(response));
+        return;
+      }
       if (pathname === "/" || pathname === base || pathname === `${base}/`) {
         response.writeHead(302, {
           Location: `${basePath}/${defaultLanguage}/`
@@ -96,10 +151,10 @@ export function serve(projectDir, config, options = {}) {
         response.end();
         return;
       }
-      await sendFile(response, 200, filePath);
+      await send(response, 200, filePath);
     } catch {
       // Like static hosts, answer every missing file with the generated 404.html, if there is one.
-      await sendFile(response, 404, join(publicDirectory, "404.html")).catch(async () => {
+      await send(response, 404, join(publicDirectory, "404.html")).catch(async () => {
         response.writeHead(404, { "Content-Type": "text/plain; charset=utf-8", "X-Content-Type-Options": "nosniff" });
         response.end(await isBuilt() ? "404 Not Found" : `404 Not Found\n\n${unbuilt}\n`);
       });
@@ -118,7 +173,29 @@ export function serve(projectDir, config, options = {}) {
   });
   server.listen(port, hostBind, async () => {
     console.log(`Blyss is serving ${config.directories.public}/ on port ${port} of ${hostBind}: ${urlOf(hostBind, port)}`);
-    if (!await isBuilt()) console.error(unbuilt);
+    if (watching) {
+      console.log(`Blyss is watching the sources of the website and rebuilds it${options.drafts ? " with its drafts" : ""} after each change.`);
+      const { componentsDirectory, contentDirectory, staticDirectory, templatesDirectory } = paths;
+      const stop = rebuildOnChange(projectDir, [contentDirectory, templatesDirectory, componentsDirectory, staticDirectory],
+        resolve(projectDir, "blyss.config.js"), {
+          drafts: options.drafts,
+          onBuilt: result => {
+            lastBuild = result;
+            for (const response of listeners) tell(response, result);
+          }
+        });
+      stopWatching = stop;
+    } else if (!await isBuilt()) {
+      console.error(unbuilt);
+    }
   });
+  // The pages that wait for a build keep their connections open, which would keep the server from closing.
+  let stopWatching = () => {};
+  const close = server.close.bind(server);
+  server.close = callback => {
+    stopWatching();
+    for (const response of listeners) response.end();
+    return close(callback);
+  };
   return server;
 }

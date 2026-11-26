@@ -8,7 +8,12 @@ A bilingual website generated with [Blyss](https://github.com/Blooniverse/Blyss)
 npm install     # install Blyss
 npm run build   # generate public/
 npm start       # serve http://localhost:3000
+npm run dev     # serve with the drafts, rebuild and reload on each change
+npm run check   # check everything, the drafts included, without writing
+npx blyss new post "A title"   # create a draft
 ```
+
+Writing with an AI agent: see [`AGENTS.md`](AGENTS.md) and [`_authoring/`](_authoring/README.md).
 
 See [installation and commands](_content/en/book/installation.md) and [writing](_content/en/book/writing/index.md). `public/` is disposable: each build recreates it.
 

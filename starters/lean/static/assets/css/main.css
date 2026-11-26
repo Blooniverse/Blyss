@@ -152,6 +152,21 @@ mtd:has(> .tml-tag) { text-align: right; text-align: -webkit-right; }
 details.admonition > summary { cursor: pointer; }
 details.admonition:not([open]) > summary { margin-bottom: 0; }
 
+/* Contributions, :::{contribution}: the turns of a text that a human and an agent write together. Each starts with
+   its kind, its author and its date; a human's turn stands at the start with a blue line, an agent's is indented
+   and has an amber one, so that a reader follows who wrote what. */
+.contribution {
+  --by: var(--color202);
+  margin-bottom: .6em;
+  padding: .1em 0 .1em .75em;
+  border-left: .3em solid var(--by);
+  text-align: start;
+}
+.contribution-agent { --by: hsl(30 90% 30%); margin-left: 1.5em; background: var(--card); }
+.contribution-meta { font-size: .85em; color: var(--color202grey); }
+.contribution-by { font-weight: 700; color: var(--by); }
+.contribution > :last-child { margin-bottom: 0; }
+
 /* Images and figures, ```{image} and ```{figure}: their align sets one of these classes, without which they stand
    like the text around them. A figure shows its caption below its image, in smaller type. */
 .align-left { text-align: left; }

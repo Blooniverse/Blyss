@@ -185,7 +185,7 @@ describe("blyss", () => {
     for (const args of [["--help"], ["-h"], ["build", "--help"]]) {
       const result = run(args, sandbox);
       assert.equal(result.status, 0, args.join(" "));
-      assert.match(result.stdout, /^Usage: blyss init \[directory\] .+\n {7}blyss build .+\n {7}blyss serve .+\n {7}blyss --help .+\n {7}blyss --version .+\n$/);
+      assert.match(result.stdout, /^Usage: blyss init \[directory\] .+\n {7}blyss new .+\n {31}\S.+\n {7}blyss check .+\n {7}blyss build .+\n {7}blyss serve .+\n {31}\S.+\n {7}blyss --help .+\n {7}blyss --version .+\n$/);
       assert.equal(result.stderr, "");
     }
     for (const flag of ["--version", "-v"]) {
@@ -2578,5 +2578,192 @@ describe("missing configuration", () => {
     assert.equal(result.status, 1);
     assert.match(result.stderr, /^Build failed: Error \[ERR_MODULE_NOT_FOUND\]: Cannot find module .*missing\.js/);
     assert.doesNotMatch(result.stderr, /Blyss configuration not found/);
+  });
+});
+
+describe("co-authoring with agents", () => {
+  let site;
+  const turns = join("_content", "en", "posts", "turns.md");
+  const contribution = (options, text) => `:::{contribution}\n${options}\n${text}\n:::\n`;
+  const jsonLdOf = html => JSON.parse(html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)[1]);
+
+  before(async () => {
+    site = join(sandbox, "co-authoring");
+    assert.equal(run(["init", site], sandbox).status, 0);
+    await ensureBook(site);
+  });
+
+  test("blyss new creates a draft of each kind with a valid front matter, and never replaces a file", async () => {
+    const created = {};
+    for (const kind of ["page", "post", "doc"]) {
+      const result = run(["new", kind, "--lang", "de", `Grüße aus der Straße ${kind}`], site);
+      assert.equal(result.status, 0, result.stderr);
+      created[kind] = result.stdout.match(/^Created (\S+) as a draft/)[1];
+      const { metadata } = parseFrontMatter(await readFile(join(site, created[kind]), "utf8"), created[kind]);
+      assert.equal(metadata.title, `Grüße aus der Straße ${kind}`);
+      assert.equal(metadata.draft, "true");
+      assert.ok(metadata.translationKey);
+    }
+    assert.match(created.page, /^_content[\\/]de[\\/]pages[\\/]gruesse-aus-der-strasse-page\.md$/);
+    assert.match(created.post, /^_content[\\/]de[\\/]posts[\\/]\d{6}-gruesse-aus-der-strasse-post\.md$/);
+    assert.match(created.doc, /^_content[\\/]de[\\/]book[\\/]gruesse-aus-der-strasse-doc\.md$/);
+    const before = await readFile(join(site, created.page), "utf8");
+    const again = run(["new", "page", "--lang", "de", "Grüße aus der Straße page"], site);
+    assert.equal(again.status, 1);
+    assert.match(again.stderr, /the file exists already, and Blyss never replaces it/);
+    assert.equal(await readFile(join(site, created.page), "utf8"), before);
+    const translation = run(["new", "page", "--key", "gruesse-aus-der-strasse-page", "Greetings"], site);
+    assert.equal(translation.status, 0, translation.stderr);
+    assert.match(run(["new", "page", "--lang", "xx", "Title"], site).stderr, /site\.languages has no such language/);
+    assert.match(run(["new", "poem", "Title"], site).stderr, /needs the kind of the content/);
+    assert.match(run(["new", "post"], site).stderr, /blyss new post needs a title/);
+    const check = run(["check", "--json"], site);
+    assert.equal(check.status, 0, check.stderr);
+    const report = JSON.parse(check.stdout);
+    assert.ok(report.drafts.length >= 4);
+    const missing = key => report.translations.find(entry => entry.translationKey === key)?.missing;
+    assert.deepEqual(missing("gruesse-aus-der-strasse-page"), []);
+    assert.deepEqual(missing(parseFrontMatter(await readFile(join(site, created.post), "utf8"), created.post).metadata.translationKey), ["en"]);
+    for (const file of Object.values(created)) await rm(join(site, file));
+    await rm(join(site, "_content", "en", "pages", "greetings.md"));
+  });
+
+  test("the library rejects invalid post dates without creating files", async () => {
+    const { createContent } = await import("@blooniverse/blyss");
+    const content = join(site, "_content");
+    const before = (await listFiles(content)).sort();
+    for (const date of [null, 42, "not-a-date", "2026-02-30", "../../../../../tmp"]) {
+      await assert.rejects(createContent(site, { kind: "post", title: "Library date", date }),
+        { name: "BlyssError", message: /date/ });
+    }
+    assert.deepEqual((await listFiles(content)).sort(), before);
+    const file = await createContent(site, { kind: "post", title: "Library date", date: "2026-11-26T09:30:00+01:00" });
+    try {
+      assert.equal(basename(file), "261126-library-date.md");
+      const { metadata } = parseFrontMatter(await readFile(join(site, file), "utf8"), file);
+      assert.equal(metadata.datePublished, "2026-11-26T09:30:00+01:00");
+    } finally {
+      await rm(join(site, file));
+    }
+  });
+
+  test("renders the turns of a human and an agent, attributed, and names their authors as contributors", async () => {
+    await writeFile(join(site, turns), "---\ntitle: Turns\ndatePublished: 2026-11-26\ntranslationKey: turns\n---\n\n" +
+      contribution(":by: human\n:author: Ada\n:date: 2026-11-26", "A question.") + "\n(answer)=\n" +
+      contribution(":by: agent\n:author: Claude\n:date: 2026-11-27", "An *answer*.") + "\n" +
+      contribution(":by: human", "Thanks, see [the answer](#answer)."));
+    const result = run(["build"], site);
+    assert.equal(result.status, 0, result.stderr);
+    const html = await readFile(join(site, "public", "en", "posts", "turns", "index.html"), "utf8");
+    const sections = [...html.matchAll(/<section class="contribution contribution-(human|agent)"[^>]*>/g)];
+    assert.deepEqual(sections.map(([, by]) => by), ["human", "agent", "human"]);
+    assert.match(sections[1][0], /id="answer"/);
+    assert.match(html, /<span class="contribution-author">Claude<\/span> <time datetime="2026-11-27">2026-11-27<\/time><\/p>\n<p>An <em>answer<\/em>.<\/p>/);
+    const page = jsonLdOf(html)["@graph"].find(node => node.contributor);
+    assert.deepEqual(page.contributor.map(({ "@type": type, name }) => [type, name]),
+      [["Person", "Ada"], ["SoftwareApplication", "Claude"], [undefined, undefined]]);
+    assert.ok(page.contributor[2]["@id"]);
+  });
+
+  test("blyss check reports the problems of every file at once, with the line of a front matter, and writes nothing", async () => {
+    const broken = join("_content", "en", "posts", "broken.md");
+    const undecided = join("_content", "en", "posts", "undecided.md");
+    await writeFile(join(site, broken), "---\ntitle: Broken\ntitle: Twice\n---\n\nText.\n");
+    await writeFile(join(site, undecided), "---\ntitle: Undecided\ndraft: maybe\n---\n\nText.\n");
+    await rm(join(site, "public"), { recursive: true, force: true });
+    try {
+      const json = run(["check", "--json"], site);
+      assert.equal(json.status, 1);
+      const report = JSON.parse(json.stdout);
+      assert.equal(report.ok, false);
+      const byFile = Object.fromEntries(report.errors.map(error => [error.file, error]));
+      assert.deepEqual(Object.keys(byFile).sort(), [broken, undecided].sort());
+      assert.equal(byFile[broken].line, 3);
+      const text = run(["check"], site);
+      assert.equal(text.status, 1);
+      assert.match(text.stderr, /Blyss found 2 problem\(s\)\.\n$/);
+      const build = run(["build"], site);
+      assert.equal(build.status, 1);
+      assert.ok(build.stderr.includes(byFile[broken].message) && build.stderr.includes(byFile[undecided].message), build.stderr);
+      await rm(join(site, broken));
+      await rm(join(site, undecided));
+      await writeFile(join(site, turns), "---\ntitle: Turns\ntranslationKey: turns\n---\n\n" + contribution(":author: Ada", "No kind."));
+      const unattributed = JSON.parse(run(["check", "--json"], site).stdout);
+      assert.equal(unattributed.errors[0].file, turns);
+      assert.match(unattributed.errors[0].message, /its \{contribution\} directive lacks the option by/);
+      await assert.rejects(stat(join(site, "public")), { code: "ENOENT" });
+    } finally {
+      for (const file of [broken, undecided, turns]) await rm(join(site, file), { force: true });
+    }
+    const valid = run(["check"], site);
+    assert.equal(valid.status, 0, valid.stderr);
+    assert.match(valid.stdout, /^Blyss checked \d+ localized page\(s\): no problems/m);
+  });
+
+  test("blyss serve --watch rebuilds on a change and tells the page to reload, and --drafts needs --watch", async () => {
+    assert.match(run(["serve", "--drafts"], site).stderr, /--watch/);
+    const port = await freePort();
+    const server = spawn(process.execPath, [cli, "serve", "--watch", "--port", String(port)], { cwd: site });
+    const exited = once(server, "exit");
+    let stdout = "";
+    const printed = text => new Promise((resolve, reject) => {
+      const look = () => { if (stdout.includes(text)) resolve(); };
+      server.stdout.on("data", chunk => { stdout += chunk; look(); });
+      look();
+      exited.then(() => reject(new Error(`blyss serve exited early: ${stdout}`)));
+    });
+    try {
+      await printed("Rebuilt:");
+      const html = await (await fetch(`http://127.0.0.1:${port}/en/`)).text();
+      assert.match(html, /\/__blyss\/events[\s\S]*<\/script>\n<\/body>/);
+      const events = await fetch(`http://127.0.0.1:${port}/__blyss/events`);
+      assert.match(events.headers.get("content-type"), /^text\/event-stream/);
+      const reader = events.body.getReader();
+      const seen = (async () => {
+        let text = "";
+        while (!/event: built/.test(text)) text += new TextDecoder().decode((await reader.read()).value);
+      })();
+      await writeFile(join(site, "_content", "en", "pages", "watched.md"), "---\ntitle: Watched\n---\n\nText.\n");
+      await seen;
+      assert.match(await (await fetch(`http://127.0.0.1:${port}/en/pages/watched/`)).text(), /Watched/);
+      await reader.cancel();
+    } finally {
+      server.kill();
+      await exited;
+      await rm(join(site, "_content", "en", "pages", "watched.md"), { force: true });
+    }
+  });
+
+  test("reports watcher errors in the terminal and to connected pages", () => {
+    const script = `
+      import fs from "node:fs";
+      import { EventEmitter } from "node:events";
+      import { syncBuiltinESMExports } from "node:module";
+      const watchers = [];
+      fs.watch = () => {
+        const watcher = new EventEmitter();
+        watcher.close = () => {};
+        watchers.push(watcher);
+        return watcher;
+      };
+      syncBuiltinESMExports();
+      const { rebuildOnChange } = await import(${JSON.stringify(pathToFileURL(join(root, "src", "server", "watch.js")).href)});
+      const results = [];
+      const stop = rebuildOnChange(process.cwd(), ["_content"], "blyss.config.js", { onBuilt: result => results.push(result) });
+      watchers[0].emit("error", new Error("watch unavailable"));
+      stop();
+      console.log(JSON.stringify(results));
+    `;
+    const result = spawnSync(process.execPath, ["--input-type=module", "--eval", script], { cwd: site, encoding: "utf8" });
+    assert.equal(result.status, 0, result.stderr);
+    assert.match(result.stderr, /Cannot watch _content: watch unavailable/);
+    assert.deepEqual(JSON.parse(result.stdout), [{ ok: false, message: "Cannot watch _content: watch unavailable" }]);
+  });
+
+  test("is a library through the exports of its package", async () => {
+    const module = await import("@blooniverse/blyss");
+    for (const name of ["build", "check", "createContent", "serve", "BlyssError"]) assert.equal(typeof module[name], "function", name);
+    const report = await module.check(site);
+    assert.equal(report.ok, true);
   });
 });

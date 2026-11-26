@@ -24,6 +24,10 @@
   },
   "license": "GPL-3.0-only",
   "type": "module",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
   "bin": {
     "blyss": "bin/blyss.js"
   },
@@ -36,6 +40,8 @@
   ],
   "scripts": {
     "build": "node bin/blyss.js build",
+    "check": "node bin/blyss.js check",
+    "dev": "node bin/blyss.js serve --watch --drafts",
     "start": "node bin/blyss.js serve",
     "test": "npm run build && node --test test/*.test.js"
   },

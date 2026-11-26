@@ -2,7 +2,19 @@ function absoluteUrl(baseUrl, pathname = "/") {
   return new URL(pathname.replace(/^\//, ""), `${baseUrl.replace(/\/$/, "")}/`).href;
 }
 
-export function createJsonLd({ site, record }) {
+// The contributors of a page, once each: the authors of its contributions (see directives.js). A human without a name
+// is the publisher of the website; an agent is software, named as its contribution names it or by its kind.
+function contributorsOf(contributions, publisherId) {
+  const contributors = new Map();
+  for (const { by, author, word } of contributions) {
+    const contributor = by === "agent" ? { "@type": "SoftwareApplication", name: author || word }
+      : author ? { "@type": "Person", name: author } : { "@id": publisherId };
+    contributors.set(JSON.stringify(contributor), contributor);
+  }
+  return [...contributors.values()];
+}
+
+export function createJsonLd({ site, record, contributions = [] }) {
   const siteUrl = absoluteUrl(site.baseUrl, "/");
   const canonicalUrl = absoluteUrl(site.baseUrl, record.url);
   const publisherId = `${siteUrl}#publisher`;
@@ -48,6 +60,7 @@ export function createJsonLd({ site, record }) {
     if (record.tags?.length) page.keywords = record.tags.map(tag => tag.name);
     page.mainEntityOfPage = { "@id": pageId };
   }
+  if (contributions.length) page.contributor = contributorsOf(contributions, publisherId);
 
   return { "@context": "https://schema.org", "@graph": graph };
 }
