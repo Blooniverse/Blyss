@@ -27,10 +27,10 @@ Blyss is a lean, local-first SSG (static site generator) for Markdown++. Ships w
     - **Compatibility**: [Marktext.me](https://marktext.me), [Obsidian.md](https://obsidian.md), etc.
 - **Authoring with 3 content types**: book doc, page, post.
     - `draft: true` in Frontmatter.
-    - `blyss new` creates drafts, `blyss check [--json]` checks the whole website at once, `blyss serve --watch` rebuilds and reloads.
+    - In-browser content editing via: [Decap CMS](https://decapcms.org/) or [Tina](https://tina.io/).
+- **Live preview & checks**: Rebuild and reload on changes; check content including drafts, with JSON reports for agents and scripts.
 - **Co-authoring with AI agents**: Human and agent turns as attributed, dated `{contribution}` blocks; `AGENTS.md` and `_authoring/` in the starter; JSON-LD `contributor`s.
 - **Library API**: `import { build, check, createContent } from "@blooniverse/blyss"`.
-    - In-browser content editing via: [Decap CMS](https://decapcms.org/) or [Tina](https://tina.io/).
 - **Themeable**: Blyss comes with a lean starter.
 - **Composable**: Markdown components and their fragments can be used anywhere.
 - **Configurable**: Via blyss.config.js and component Markdown.
@@ -107,6 +107,27 @@ Then add the scripts `"build": "blyss build"` and `"start": "blyss serve"` to `p
 
 > [!WARNING]
 > Run the commands through `npm run`, or `npx blyss` inside a website that has Blyss installed. Elsewhere, `npx blyss` runs `blyss`, an unrelated npm package; the full name `npx @blooniverse/blyss` always runs Blyss.
+
+
+## Commands
+
+These are examples, not a sequence to run. After creating and installing a website as in Quick start, run the `npx blyss` commands from its root:
+
+```bash
+npx @blooniverse/blyss init my-site          # copy the starter
+npx blyss new post --lang en "A title"       # create a draft page, post or doc
+npx blyss check                              # check content, including drafts; also: npm run check
+npx blyss check --json                       # report results as JSON
+npx blyss build                              # generate public/; also: npm run build
+npx blyss build --drafts                     # include drafts; also: npm run build:drafts
+npx blyss serve                              # serve public/; also: npm start
+npx blyss serve --watch                      # rebuild and reload on changes
+npx blyss serve --watch --drafts             # include drafts; also: npm run dev
+npx blyss --help                             # list commands
+npx blyss --version                          # show the Blyss version
+```
+
+The `npm` scripts shown are included in the starter. For `new`, use `page`, `post` or `doc`; `--lang`, `--slug` and `--key` customize the draft. With `serve`, `--drafts` requires `--watch`. See [installation and commands](starters/lean/_content/en/book/installation.md) for details.
 
 
 ## Development (contributors)
