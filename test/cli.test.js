@@ -1499,13 +1499,13 @@ describe("a site with its own main navigation", () => {
     assert.equal(run(["init", site], sandbox).status, 0);
     const source = await readFile(join(site, "blyss.config.js"), "utf8");
     // A link without a label, to an archive with two pages, to a page without a German translation, to a draft, and
-    // to another website, with labels of the site's own.
+    // to another website, whose address lacks the // that a browser needs, with labels of the site's own.
     config = source.replace(block(source), `  mainNavigation: [
     { translationKey: "about" },
     { translationKey: "blyss:posts" },
     { translationKey: "faq" },
     { translationKey: "plans", label: "plans" },
-    { href: "https://github.com/Blooniverse/Blyss?tab=readme&lang=en", label: "source" }
+    { href: "https:github.com/Blooniverse/Blyss?tab=readme&lang=en", label: "source" }
   ],\n`).replace('about: "About",', 'about: "About", plans: "Plans", source: "Source",')
       .replace('about: "Über uns",', 'about: "Über uns", plans: "Pläne", source: "Quelltext",').replace("pageSize: 10", "pageSize: 1");
     assert.equal((config.match(/plans: "/g) ?? []).length, 2);

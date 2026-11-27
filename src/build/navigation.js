@@ -33,7 +33,8 @@ export function mainNavigationOf(config) {
     if ((label !== undefined || href !== undefined) && !labels.includes(label)) {
       throw refuse(`${setting}.label`, label, `the name of a label of site.languages, such as "home" or "posts"${href === undefined ? "" : ", for the text of the link"}`);
     }
-    return { translationKey, href, label };
+    // A browser reads an address such as https:example.com as a path of the website, so the link gets the parsed one.
+    return { translationKey, href: href === undefined ? undefined : new URL(href).href, label };
   });
 }
 
