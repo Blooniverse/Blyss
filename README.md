@@ -107,7 +107,7 @@ npm install @blooniverse/blyss
 Then add the scripts `"build": "blyss build"` and `"start": "blyss serve"` to `package.json` by hand, so that `npm run build` and `npm start` work.
 
 > [!WARNING]
-> Run the commands through `npm run`, or `npx blyss` inside a website that has Blyss installed. Elsewhere, `npx blyss` runs `blyss`, an unrelated npm package; the full name `npx @blooniverse/blyss` always runs Blyss.
+> Run the commands either through `npm run` or `npx blyss` **inside** a website that has Blyss installed. Elsewhere, `npx blyss` runs `blyss`, an unrelated npm package; the full name `npx @blooniverse/blyss` always runs Blyss.
 
 
 ## Commands
@@ -128,7 +128,10 @@ npx blyss --help                             # list commands
 npx blyss --version                          # show the Blyss version
 ```
 
-The `npm` scripts shown are included in the starter. For `new`, use `page`, `post` or `doc`; `--lang`, `--slug` and `--key` customize the draft. With `serve`, `--drafts` requires `--watch`. See [installation and commands](starters/lean/_content/en/book/installation.md) for details.
+The `npm` scripts shown are included in the starter.
+- For `new`, use `page`, `post` or `doc`; `--lang`, `--slug` and `--key` customize the draft.
+- With `serve`, `--drafts` requires `--watch`.
+- See [installation and commands](starters/lean/_content/en/book/installation.md) for details.
 
 
 ## Development (contributors)
