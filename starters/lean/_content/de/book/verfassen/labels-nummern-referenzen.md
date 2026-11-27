@@ -29,7 +29,7 @@ Für ein Label gelten diese Regeln:
 
 - **Form**: Es besteht aus Buchstaben, Ziffern, Bindestrichen, Unterstrichen, Punkten und Doppelpunkten und beginnt mit einem Buchstaben oder einer Ziffer, wie in `abb-ringe` oder `gl:flaeche`.
 - **Ein Element**: Es benennt ein Element seiner Seite. Der Build stoppt bei einem Label, das zweimal vorkommt, und bei einem, das die `id` eines Elements der Vorlagen oder einer Fußnote ist.
-- **Überschriften**: Eine Überschrift hat ihr Label als `id`, in einem Dokument anstelle [der ID aus ihrem Text](/de/book/verfassen/buch/navigation/#überschriften).
+- **Überschriften**: Eine Überschrift hat ihr Label als `id`, in einem Dokument anstelle [der ID aus ihrem Text](/de/book/verfassen/buecher/navigation/#überschriften).
 
 
 

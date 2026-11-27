@@ -11,7 +11,7 @@ The comments in `blyss.config.js` describe the starter's site, pagination, books
 
 - Paths in `directories` are relative to the website root.
 - `pagination.pageSize` must be a positive whole number.
-- `books` names the [books](/en/book/authoring/book/#several-books) of the website, `["book"]` by default.
+- `books` names the [books](/en/book/authoring/books/#several-books) of the website, `["book"]` by default.
 - `mainNavigation` lists the links of the top bar; see [Main navigation](#main-navigation).
 - Invalid configuration stops the build before the previous output is deleted.
 

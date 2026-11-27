@@ -1,7 +1,7 @@
 ---
 title: Seiten und Beiträge
 description: Seiten und Beiträge schreiben, mit ihrem Front Matter, ihren URLs, ihren Schlagwörtern und ihren Listen.
-order: 2
+order: 1
 translationKey: book-pages-and-posts
 ---
 
@@ -35,7 +35,7 @@ Blyss veröffentlicht Inhalte nach ihrem Verzeichnis:
 
 - Seiten in `_content/de/pages/` erscheinen unter `/de/pages/<slug>/`.
 - Beiträge in `_content/de/posts/` erscheinen unter `/de/posts/<slug>/`.
-- [Dokumente](/de/book/verfassen/buch/dokumente/) in `_content/de/book/` erscheinen unter `/de/book/`.
+- [Dokumente](/de/book/verfassen/buecher/dokumente/) in `_content/de/book/` erscheinen unter `/de/book/`.
 - `pages/index.md` wird zur Startseite `/de/`.
 - `pages/404.md` ist eine besondere [Fehlerseite](#fehlerseite).
 

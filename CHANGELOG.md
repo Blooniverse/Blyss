@@ -537,8 +537,8 @@
   configuration, templates and components, then those who run it, with
   installation and deployment, and last the contributors, with development.
   "Authoring", in `book/authoring/` and in German "Verfassen" in
-  `book/verfassen/`, holds the section "Book" with the docs "Docs",
-  the former "Getting started", and "Navigation", then "Pages and posts",
+  `book/verfassen/`, holds "Pages and posts", then the section "Books" with
+  the docs "Docs", the former "Getting started", and "Navigation", then
   the new doc "Translations", "Markdown spice", the former "Formulas,
   footnotes, code and diagrams", the new doc "Agentic co-authoring", which
   holds the turns of humans and agents, and the new doc "Labels and

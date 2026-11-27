@@ -12,7 +12,7 @@ Die Kommentare in `blyss.config.js` erklären die Einstellungen des Starters und
 Weitere Einstellungen:
 
 - `pagination.pageSize` legt die Anzahl der Beiträge je Archiv- und Schlagwortseite fest; der Standard ist 10, erlaubt sind positive ganze Zahlen.
-- `books` nennt die [Bücher](/de/book/verfassen/buch/#mehrere-bücher) der Website; der Standard ist `["book"]`.
+- `books` nennt die [Bücher](/de/book/verfassen/buecher/#mehrere-bücher) der Website; der Standard ist `["book"]`.
 - `mainNavigation` zählt die Links der Kopfleiste auf; siehe [Hauptnavigation](#hauptnavigation).
 - `layout` steuert Abstände und Ausrichtung; Hero und Overlay sowie ihre Schalter beschreibt [Vorlagen](/de/book/vorlagen/).
 - `components` enthält die Einstellungen einzelner Komponenten; ein [Block](/de/book/komponenten/) kann sie für eine einzelne Verwendung ersetzen.

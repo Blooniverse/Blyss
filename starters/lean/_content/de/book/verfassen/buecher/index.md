@@ -1,16 +1,16 @@
 ---
-title: Buch
-description: Die Dokumente einer Dokumentation und ihre Gliederung.
-order: 1
-translationKey: book-authoring-book
+title: Bücher
+description: Die Dokumente der Bücher einer Website und ihre Gliederung.
+order: 2
+translationKey: book-authoring-books
 ---
 
 Ein Buch ist die Dokumentation einer Website, wie diese hier. Seine Dokumente sind die Markdown-Dateien in `_content/<Sprache>/book/`, veröffentlicht unterhalb von `/<Sprache>/book/`. Anders als Seiten und Beiträge sind Dokumente in Abschnitte gegliedert, und Blyss verknüpft sie: durch eine Navigation, durch ein Inhaltsverzeichnis in jedem Dokument und durch Links zum vorherigen und zum nächsten Dokument. Eine Website kann [mehrere Bücher](#mehrere-bücher) haben.
 
-- [Dokumente](/de/book/verfassen/buch/dokumente/): ein Dokument oder einen Abschnitt hinzufügen und unter den anderen einordnen.
-- [Navigation](/de/book/verfassen/buch/navigation/): wie Blyss die Dokumente und ihre Überschriften verlinkt.
+- [Dokumente](/de/book/verfassen/buecher/dokumente/): ein Dokument oder einen Abschnitt hinzufügen und unter den anderen einordnen.
+- [Navigation](/de/book/verfassen/buecher/navigation/): wie Blyss die Dokumente und ihre Überschriften verlinkt.
 
-Dieser Abschnitt liegt in `_content/de/book/verfassen/buch/`: ein Abschnitt innerhalb des Abschnitts [Verfassen](/de/book/verfassen/).
+Dieser Abschnitt liegt in `_content/de/book/verfassen/buecher/`: ein Abschnitt innerhalb des Abschnitts [Verfassen](/de/book/verfassen/).
 
 ## Mehrere Bücher
 

@@ -7,7 +7,7 @@ translationKey: book-docs
 
 ## Ein Dokument hinzufügen
 
-Legen Sie eine Markdown-Datei in `_content/de/book/` an, etwa `mein-thema.md`. Blyss veröffentlicht sie unter `/de/book/mein-thema/` oder unter der URL ihres `slug` und nimmt sie in die Navigation auf. Ein Dokument eines [anderen Buchs](/de/book/verfassen/buch/#mehrere-bücher), etwa `guide`, liegt in dessen Verzeichnis, `_content/de/guide/`.
+Legen Sie eine Markdown-Datei in `_content/de/book/` an, etwa `mein-thema.md`. Blyss veröffentlicht sie unter `/de/book/mein-thema/` oder unter der URL ihres `slug` und nimmt sie in die Navigation auf. Ein Dokument eines [anderen Buchs](/de/book/verfassen/buecher/#mehrere-bücher), etwa `guide`, liegt in dessen Verzeichnis, `_content/de/guide/`.
 
 ### Front Matter
 
@@ -22,8 +22,8 @@ Der Button **Markdown kopieren** des Starters kopiert den geschriebenen Text ein
 
 ## Einen Abschnitt hinzufügen
 
-Ein Verzeichnis wie `_content/de/book/verfassen/` ist ein Abschnitt der Dokumentation. Seine `index.md` ist die Startseite des Abschnitts, und ihr Titel benennt den Abschnitt in der Navigation; das Feld `order` dieser Datei ordnet den Abschnitt ein. Ein Abschnitt kann weitere Abschnitte enthalten: Dieses Dokument liegt in `_content/de/book/verfassen/buch/`. Blyss bricht mit einer Fehlermeldung ab, wenn einem Verzeichnis mit Dokumenten seine `index.md` fehlt oder wenn diese Startseite ein Entwurf ist, ein Dokument ihres Abschnitts aber nicht.
+Ein Verzeichnis wie `_content/de/book/verfassen/` ist ein Abschnitt der Dokumentation. Seine `index.md` ist die Startseite des Abschnitts, und ihr Titel benennt den Abschnitt in der Navigation; das Feld `order` dieser Datei ordnet den Abschnitt ein. Ein Abschnitt kann weitere Abschnitte enthalten: Dieses Dokument liegt in `_content/de/book/verfassen/buecher/`. Blyss bricht mit einer Fehlermeldung ab, wenn einem Verzeichnis mit Dokumenten seine `index.md` fehlt oder wenn diese Startseite ein Entwurf ist, ein Dokument ihres Abschnitts aber nicht.
 
 ## Dokumente übersetzen
 
-Jede Sprache hat ihre eigenen Dokumente in `_content/<Sprache>/book/` und im Verzeichnis jedes weiteren Buchs. Wie überall teilen [Übersetzungen](/de/book/verfassen/uebersetzungen/) ihren `translationKey`, während sich die Namen ihrer Dateien und Verzeichnisse unterscheiden dürfen: Dieses Dokument ist auf Englisch `/en/book/authoring/book/docs/`.
+Jede Sprache hat ihre eigenen Dokumente in `_content/<Sprache>/book/` und im Verzeichnis jedes weiteren Buchs. Wie überall teilen [Übersetzungen](/de/book/verfassen/uebersetzungen/) ihren `translationKey`, während sich die Namen ihrer Dateien und Verzeichnisse unterscheiden dürfen: Dieses Dokument ist auf Englisch `/en/book/authoring/books/docs/`.

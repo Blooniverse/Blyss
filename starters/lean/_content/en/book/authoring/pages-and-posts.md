@@ -1,7 +1,7 @@
 ---
 title: Pages and posts
 description: Write pages and posts, with their front matter, their URLs, their tags and their lists.
-order: 2
+order: 1
 translationKey: book-pages-and-posts
 ---
 
@@ -32,7 +32,7 @@ Blyss publishes content by its directory in `_content/<language>/`:
 
 - Pages in `pages/` are published at `/<language>/pages/<slug>/`.
 - Posts in `posts/` are published at `/<language>/posts/<slug>/`.
-- [Docs](/en/book/authoring/book/docs/) in `book/` are published below `/<language>/book/`.
+- [Docs](/en/book/authoring/books/docs/) in `book/` are published below `/<language>/book/`.
 - `pages/index.md` is the home page at `/<language>/`, and its title and description are the heading and slogan.
 
 The slug is the name of the file without `.md`: `posts/261110-hello-world.md` is published at `/<language>/posts/261110-hello-world/`, so name the files of each language in that language. The front matter needs a `slug` only for another one, as in `slug: my-first-post`. A slug is one part of a URL, without `/`, `\`, `?` or `#`.

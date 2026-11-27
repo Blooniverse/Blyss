@@ -133,7 +133,7 @@ export default {
   // 3. Books: each name is a directory of docs in _content/<language>/ and the start of their URLs, as "book" is in
   // /en/book/. Each book has its own start page, index.md, its own navigation and its own links to the previous and the
   // next doc; blyss new doc puts a doc into the first book unless --book names another. Add a name, such as "guide",
-  // for a second book, and add its start page to mainNavigation; _content/en/book/authoring/book/index.md tells more.
+  // for a second book, and add its start page to mainNavigation; _content/en/book/authoring/books/index.md tells more.
   books: ["book"],
 
   // 4. Main navigation: the links of the top bar, in this order, which templates/document.html shows by the

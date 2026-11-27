@@ -7,7 +7,7 @@ translationKey: book-docs
 
 ## Adding a doc
 
-Create a Markdown file in `_content/en/book/`, such as `install.md`. Blyss publishes it at `/en/book/install/`, or at the URL of its `slug`, and adds it to the navigation. A doc of [another book](/en/book/authoring/book/#several-books), such as `guide`, lies in its directory, `_content/en/guide/`.
+Create a Markdown file in `_content/en/book/`, such as `install.md`. Blyss publishes it at `/en/book/install/`, or at the URL of its `slug`, and adds it to the navigation. A doc of [another book](/en/book/authoring/books/#several-books), such as `guide`, lies in its directory, `_content/en/guide/`.
 
 ### Front matter
 
@@ -22,8 +22,8 @@ The starter's **Copy Markdown** button copies a doc's authored body, preceded by
 
 ## Adding a section
 
-A directory, such as `_content/en/book/authoring/`, is a section of the documentation. Its `index.md` is the start page of the section, and its title names the section in the navigation; the `order` of this file places the section. A section can hold further sections: this doc lies in `_content/en/book/authoring/book/`. Blyss stops with an error if a directory with docs lacks its `index.md`, or if that start page is a draft while a doc of its section is not.
+A directory, such as `_content/en/book/authoring/`, is a section of the documentation. Its `index.md` is the start page of the section, and its title names the section in the navigation; the `order` of this file places the section. A section can hold further sections: this doc lies in `_content/en/book/authoring/books/`. Blyss stops with an error if a directory with docs lacks its `index.md`, or if that start page is a draft while a doc of its section is not.
 
 ## Translating docs
 
-Each language has its own docs in `_content/<language>/book/`, and in the directory of each further book. As elsewhere, [translations](/en/book/authoring/translations/) share their `translationKey`, while the names of their files and directories may differ: this doc is `/de/book/verfassen/buch/dokumente/` in German.
+Each language has its own docs in `_content/<language>/book/`, and in the directory of each further book. As elsewhere, [translations](/en/book/authoring/translations/) share their `translationKey`, while the names of their files and directories may differ: this doc is `/de/book/verfassen/buecher/dokumente/` in German.

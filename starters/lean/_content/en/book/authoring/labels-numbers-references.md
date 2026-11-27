@@ -29,7 +29,7 @@ A label follows these rules:
 
 - **Form**: it consists of letters, digits, hyphens, underscores, full stops and colons, and starts with a letter or a digit, as in `fig-rings` or `eq:area`.
 - **One element**: it names one element of its page. The build stops at a label that stands twice, and at one that is the `id` of an element of the templates or of a footnote.
-- **Headings**: a heading has its label as its `id`, in a doc in place of [the one from its text](/en/book/authoring/book/navigation/#headings).
+- **Headings**: a heading has its label as its `id`, in a doc in place of [the one from its text](/en/book/authoring/books/navigation/#headings).
 
 
 
