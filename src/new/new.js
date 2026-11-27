@@ -1,10 +1,11 @@
-import { mkdir, writeFile } from "node:fs/promises";
-import { dirname, join, relative } from "node:path";
+import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
+import { dirname, extname, join, relative, sep } from "node:path";
 import { loadConfig } from "../config.js";
 import { BlyssError } from "../errors.js";
 import { dateAdvice, isDate } from "../build/dates.js";
+import { parseFrontMatter } from "../build/front-matter.js";
 import { languagesOf } from "../build/languages.js";
-import { resolvePaths } from "../build/paths.js";
+import { isSystemFile, resolvePaths } from "../build/paths.js";
 import { booksOf } from "../build/settings.js";
 
 // The kinds of content that blyss new creates: pages and posts lie in pages/ and posts/ of _content/<language>/, docs in
@@ -30,12 +31,31 @@ function today(now = new Date()) {
   return [now.getFullYear(), now.getMonth() + 1, now.getDate()].map(part => String(part).padStart(2, "0")).join("-");
 }
 
+// The first file of the content, other than path, whose translationKey is key. A key that blyss new makes may be that
+// of another page: "Guide setup" in the book "book" and "Setup" in the book "book-guide" both make book-guide-setup.
+async function ownerOf(contentDirectory, key, path) {
+  const entries = await readdir(contentDirectory, { recursive: true, withFileTypes: true }).catch(error => {
+    if (error.code === "ENOENT") return [];
+    throw error;
+  });
+  const files = entries.filter(entry => entry.isFile() && extname(entry.name).toLowerCase() === ".md" && !isSystemFile(entry.name))
+    .map(entry => join(entry.parentPath, entry.name)).filter(file => file !== path).sort();
+  for (const file of files) {
+    try {
+      if (parseFrontMatter(await readFile(file, "utf8")).metadata.translationKey === key) return file;
+    } catch {
+      // A front matter that cannot be read is for blyss check to report.
+    }
+  }
+}
+
 // Creates the Markdown file of a page, a post or a doc as a draft, with a front matter that a build accepts, and
 // returns its path. language is a key of site.languages, the default language if omitted; book is one of books for a
 // doc, the first if omitted; slug names the file and the end of the URL, from the title if omitted; translationKey
 // links it to its translations: that of a page in another language, or a new one, which starts with the name of the
 // book for a doc, as in book-hello-world. The file and the translationKey of a post start with its date, as in
-// 261126-hello-world. An existing file is never replaced.
+// 261126-hello-world. Only translationKey links translations: a new one that another file has already is refused. An
+// existing file is never replaced.
 export async function createContent(projectDir, { kind, title, language, book, slug, translationKey, date = today() } = {}) {
   if (!kinds.includes(kind)) throw new BlyssError(`Cannot create a "${kind}": blyss new creates a page, a post or a doc.`);
   if (book !== undefined && kind !== "doc") {
@@ -71,6 +91,14 @@ export async function createContent(projectDir, { kind, title, language, book, s
   const key = translationKey ?? (kind === "doc" ? `${section}-${name}` : fileName);
   const { contentDirectory } = resolvePaths(projectDir, config);
   const path = join(contentDirectory, languageKey, section, `${fileName}.md`);
+  const owner = translationKey === undefined && await ownerOf(contentDirectory, key, path);
+  if (owner) {
+    const ownerFile = relative(projectDir, owner);
+    throw new BlyssError(`Cannot create ${relative(projectDir, path)}: its translationKey "${key}" is that of ${ownerFile} already.\n` +
+      (relative(contentDirectory, owner).split(sep)[0] === languageKey
+        ? "Give the new one a translationKey of its own with --key, or a slug of its own with --slug."
+        : `Give --key ${key} to make the new one the translation of ${ownerFile}, or give it a translationKey of its own with --key.`));
+  }
   const fields = [
     ["title", valueOf(cleanTitle)],
     ["description", '""'],

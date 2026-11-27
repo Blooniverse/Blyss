@@ -1341,7 +1341,7 @@ describe("a site with several books", () => {
     }
   });
 
-  test("blyss new puts a doc into the book of --book, the first by default, and blyss check names the option", async () => {
+  test("blyss new puts a doc into the book of --book, the first by default, which blyss check names, and reuses no translationKey", async () => {
     const created = { guide: join(guide, "hello-world.md"), book: join("_content", "en", "book", "first.md") };
     try {
       for (const [args, file, key] of [[["--book", "guide", "Hello World"], created.guide, "guide-hello-world"], [["First"], created.book, "book-first"]]) {
@@ -1355,12 +1355,20 @@ describe("a site with several books", () => {
       assert.equal(advice(created.book), 'blyss new doc --lang de --key book-first "<title>".');
       for (const [args, message] of [
         [["doc", "--book", "manual", "Title"], 'Cannot create a doc in the book "manual": books has no such book, only book, guide.\n'],
-        [["page", "--book", "guide", "Title"], 'Cannot create a page in the book "guide": a book holds docs, so --book is for blyss new doc.\n']
+        [["page", "--book", "guide", "Title"], 'Cannot create a page in the book "guide": a book holds docs, so --book is for blyss new doc.\n'],
+        [["page", "Guide Hello World"], `Cannot create ${join("_content", "en", "pages", "guide-hello-world.md")}: its translationKey ` +
+          `"guide-hello-world" is that of ${created.guide} already.\n` +
+          "Give the new one a translationKey of its own with --key, or a slug of its own with --slug.\n"],
+        [["doc", "--lang", "de", "--slug", "first", "Erste Schritte"], `Cannot create ${join("_content", "de", "book", "first.md")}: ` +
+          `its translationKey "book-first" is that of ${created.book} already.\n` +
+          `Give --key book-first to make the new one the translation of ${created.book}, or give it a translationKey of its own with --key.\n`]
       ]) {
         const result = run(["new", ...args], site);
         assert.equal(result.status, 1, args.join(" "));
         assert.equal(result.stderr, message);
       }
+      await assert.rejects(stat(join(site, "_content", "en", "pages", "guide-hello-world.md")), { code: "ENOENT" });
+      await assert.rejects(stat(join(site, "_content", "de", "book", "first.md")), { code: "ENOENT" });
     } finally {
       for (const file of Object.values(created)) await rm(join(site, file), { force: true });
     }

@@ -169,7 +169,8 @@
   an error that repeats for every page is reported once.
 - **blyss new** `<page|post|doc>` `"<title>"` creates a draft with a valid
   front matter, in a language of `--lang`, with `--slug` and `--key`, and
-  never replaces a file.
+  never replaces a file. Only `--key` links translations: without it, a
+  `translationKey` that another file has already is refused.
 - **blyss serve --watch** rebuilds on each change of the sources, of
   `blyss.config.js` and of a module that it or the data file of a component
   imports, and reloads the open pages; a failed build shows its message on
