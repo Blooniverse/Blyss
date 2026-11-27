@@ -1,7 +1,7 @@
 ---
 title: Konfiguration und Sprachen
 description: Website, Sprachen, Verzeichnisse und Darstellung konfigurieren.
-order: 3
+order: 2
 translationKey: book-configuration
 ---
 

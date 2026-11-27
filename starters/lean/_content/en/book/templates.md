@@ -1,7 +1,7 @@
 ---
 title: Templates and the lean theme
 description: Customize templates, layout, regions and fonts.
-order: 4
+order: 3
 translationKey: book-templates
 ---
 

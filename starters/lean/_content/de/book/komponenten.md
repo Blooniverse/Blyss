@@ -1,7 +1,7 @@
 ---
 title: Komponenten
 description: Komponenten entwickeln, individuelle Blöcke verwenden sowie Diagrammbibliotheken selbst hosten.
-order: 5
+order: 4
 translationKey: book-components
 ---
 

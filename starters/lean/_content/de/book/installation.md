@@ -1,7 +1,7 @@
 ---
 title: Installation und Einstieg
 description: Eine Website sicher anlegen, erstellen und lokal ansehen.
-order: 2
+order: 5
 translationKey: book-installation
 ---
 

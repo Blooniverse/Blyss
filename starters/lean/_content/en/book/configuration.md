@@ -1,7 +1,7 @@
 ---
 title: Configuration and languages
 description: Configure the website and add languages.
-order: 3
+order: 2
 translationKey: book-configuration
 ---
 

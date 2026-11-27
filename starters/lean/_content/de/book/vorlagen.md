@@ -1,7 +1,7 @@
 ---
 title: Vorlagen und Gestaltung
 description: HTML-Vorlagen, Layout, Hero, Overlay und Schriften anpassen.
-order: 4
+order: 3
 translationKey: book-templates
 ---
 

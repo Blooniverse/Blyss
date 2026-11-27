@@ -1,7 +1,7 @@
 ---
 title: Installation and commands
 description: Create, build and serve a Blyss website.
-order: 2
+order: 5
 translationKey: book-installation
 ---
 

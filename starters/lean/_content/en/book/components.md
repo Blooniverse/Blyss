@@ -1,7 +1,7 @@
 ---
 title: Components
 description: Use, configure and develop reusable components.
-order: 5
+order: 4
 translationKey: book-components
 ---
 
