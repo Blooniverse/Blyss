@@ -5,7 +5,7 @@ import { BlyssError, BlyssErrors } from "../errors.js";
 import { dateAdvice, isDate } from "./dates.js";
 import { loadComponents } from "./components.js";
 import { withBasePath } from "./html.js";
-import { createListRecords, parseTags, postsKey, tagKey, tagsKey } from "./lists.js";
+import { createListRecords, parseTags, postsKey, tagKey, tagsKey, trailOf } from "./lists.js";
 import { renderFragments } from "./fragments.js";
 import { readFrontMatter } from "./front-matter.js";
 import { languagesOf } from "./languages.js";
@@ -277,7 +277,7 @@ export async function prepare(projectDir, configPath = './blyss.config.js', { dr
       languages: components.languages,
       former: components.former,
       book: books.placeholders(record),
-      trail: books.trail(record)
+      trail: record.type === 'book' ? books.trail(record) : trailOf(record)
     });
     return { record, html: withBasePath(html, basePath) };
   }, { sequential: true });

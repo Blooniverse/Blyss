@@ -56,28 +56,31 @@ function pageSizeOf(config) {
 // Creates the post archive, the tag index and one page per tag for every language with content.
 // Tag pages share a translationKey across languages when their slugs match.
 // Like Hugo, long post lists are split into pages: the first keeps the list's URL, later ones add /page/<n>/.
+// The parent of a list or a post is the list above it, which its trail follows (see trailOf): the archive is above
+// its posts, the tags are above the page of each tag, and the first page of a list is above its further pages.
 export function createListRecords(config, records, locate) {
   const pageSize = pageSizeOf(config);
   const lists = [];
   for (const languageKey of new Set(records.map(record => record.languageKey))) {
     const languageConfig = config.site.languages[languageKey];
     const { labels } = languageConfig;
-    const addList = (urlParts, title, translationKey, html = "") => {
-      const list = { languageKey, languageConfig, type: "list", metadata: { title, translationKey }, html, ...locate(urlParts) };
+    const addList = (urlParts, title, translationKey, html = "", parent = undefined) => {
+      const list = { languageKey, languageConfig, type: "list", metadata: { title, translationKey }, html, parent, ...locate(urlParts) };
       lists.push(list);
       return list;
     };
-    const addPostLists = (urlParts, title, translationKey, posts) => {
+    const addPostLists = (urlParts, title, translationKey, posts, parent = undefined) => {
       const pages = [];
       for (let start = 0; start < posts.length || !pages.length; start += pageSize) {
         const number = pages.length + 1;
-        const list = number === 1 ? addList(urlParts, title, translationKey)
-          : addList([...urlParts, "page", String(number)], `${title} – ${labels.page} ${number}`, `${translationKey}/page/${number}`);
+        const list = number === 1 ? addList(urlParts, title, translationKey, "", parent)
+          : addList([...urlParts, "page", String(number)], `${title} – ${labels.page} ${number}`, `${translationKey}/page/${number}`, "", pages[0].list);
         pages.push({ list, posts: posts.slice(start, start + pageSize) });
       }
       pages.forEach(({ list, posts: listed }, index) => {
         list.html = renderList(listed.map(renderPostItem)) + renderPager(labels, pages[index - 1]?.list.url, pages[index + 1]?.list.url);
       });
+      return pages[0].list;
     };
 
     const posts = newestFirst(records.filter(record => record.type === "post" && record.languageKey === languageKey));
@@ -93,12 +96,16 @@ export function createListRecords(config, records, locate) {
     }
     const sortedTags = [...tags.values()].sort((left, right) => left.name.localeCompare(right.name, languageConfig.locale));
 
-    addPostLists([languageKey, "posts"], labels.posts, postsKey, posts);
-    addList([languageKey, "tags"], labels.tags, tagsKey, renderList(sortedTags.map(tag =>
+    const archive = addPostLists([languageKey, "posts"], labels.posts, postsKey, posts);
+    for (const post of posts) post.parent = archive;
+    const tagIndex = addList([languageKey, "tags"], labels.tags, tagsKey, renderList(sortedTags.map(tag =>
       `<a href="${escapeHtml(tag.url)}">${escapeHtml(tag.name)}</a> (${tag.posts.length})`)));
     for (const tag of sortedTags) {
-      addPostLists([languageKey, "tags", tag.slug], `${labels.tag}: ${tag.name}`, tagKey(tag.slug), tag.posts);
+      addPostLists([languageKey, "tags", tag.slug], `${labels.tag}: ${tag.name}`, tagKey(tag.slug), tag.posts, tagIndex);
     }
   }
   return lists;
 }
+
+// The lists above a post or a list, from the archive or the tags, and the post or the list itself.
+export const trailOf = record => record.parent ? [...trailOf(record.parent), record] : [record];
