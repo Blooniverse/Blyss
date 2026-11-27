@@ -27,6 +27,6 @@ Each book needs its own start page, `index.md`, and has its own navigation and i
 To add a book:
 
 1. Add its name to `books`.
-2. Create its start page in each language, such as `_content/en/guide/index.md`.
+2. Create its start page in each language, such as `_content/en/guide/index.md`, with a `translationKey` of its own, such as `guide`.
 3. Create its docs, such as with `npx blyss new doc --book guide "A title"`; without `--book`, `blyss new doc` puts a doc into the first book.
-4. Link the book in `templates/document.html`, as the starter links `/<language>/book/`. A label of each language in `site.languages`, such as `guide`, names it: its placeholder is guideLabel in double curly braces.
+4. Add the `translationKey` of its start page to [`mainNavigation`](/en/book/configuration/#main-navigation), as the starter adds `book`. A label of each language in `site.languages`, such as `guide`, can name the link; without one, it shows the title of the start page.

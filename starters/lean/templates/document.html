@@ -18,15 +18,7 @@
 <body data-kind="{{kind}}" data-align="{{layoutAlign}}" data-align-hero="{{layoutAlignHero}}" data-align-overlay="{{layoutAlignOverlay}}" style="--site-margin: {{layoutMargin}}; --hero-padding: {{layoutPaddingHero}}; --overlay-padding: {{layoutPaddingOverlay}}">
   <header class="site-bar">
     <a class="logo" href="/{{languageKey}}/"><img src="/assets/img/logo.svg" alt="Blyss" width="93" height="32"></a>
-    <nav aria-label="{{mainNavigationLabel}}">
-      <ul>
-        <li><a href="/{{languageKey}}/">{{homeLabel}}</a></li>
-        <li><a href="/{{languageKey}}/posts/">{{postsLabel}}</a></li>
-        <li><a href="/{{languageKey}}/tags/">{{tagsLabel}}</a></li>
-        <li><a href="/{{languageKey}}/book/">{{bookLabel}}</a></li>
-        <li><a href="/{{languageKey}}/pages/about/">{{aboutLabel}}</a></li>
-      </ul>
-    </nav>
+    {{mainNavigation}}
     <search><input type="search" aria-label="{{searchLabel}}" placeholder="{{searchLabel}}"></search>
     {{languageSwitcher}}
   </header>

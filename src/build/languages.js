@@ -3,6 +3,7 @@ import { listOf, refuse } from "./settings.js";
 
 // The labels of what Blyss generates itself, in English; the labels of a language can translate them.
 const defaultLabels = {
+  mainNavigation: "Main navigation",
   language: "Language",
   recentPosts: "Recent posts",
   posts: "Posts",

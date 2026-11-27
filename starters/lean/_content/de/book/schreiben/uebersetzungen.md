@@ -26,7 +26,7 @@ Innerhalb einer Sprache hat jede Seite ihren eigenen Schlüssel: Zwei Seiten ein
 
 Jede Sprache braucht:
 
-- `pages/index.md`, `pages/about.md` und `book/index.md`, ohne abweichenden Slug, denn die Navigation des Starters verlinkt die Startseite, die Seite „Über uns“ und die Startseite der Dokumentation;
+- `pages/index.md`, `pages/about.md` und `book/index.md` mit dem `translationKey` des Starters, `home`, `about` und `book`, denn darüber verlinkt die [Hauptnavigation](/de/book/konfiguration/#hauptnavigation) des Starters die Startseite, die Seite „Über uns“ und die Startseite der Dokumentation;
 - ihre eigene Fehlerseite, `pages/404.md`;
 - ihre eigenen Komponenten und Karten für [Hero und Overlay](/de/book/vorlagen/#hero-und-overlay) und ihre eigenen Texte für die [Komponenten](/de/book/komponenten/);
 - ihre eigenen Labels in `blyss.config.js`.

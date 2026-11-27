@@ -15,6 +15,7 @@ import { assertSite, basePathOf, booksOf, isBookName, layoutOf } from "./setting
 import { arrangeRegions } from "./regions.js";
 import { renderSitemap } from "./sitemap.js";
 import { arrangeBooks } from "./book.js";
+import { assertMainNavigation, mainNavigationOf } from "./navigation.js";
 import { indexTranslations } from "./translations.js";
 
 // The sections of _content/<language>/ that hold published content, and the type of their content: the pages, the
@@ -138,8 +139,9 @@ async function discoverContent(projectDir, config, contentDirectory, locate, dra
     const type = sections[section];
     const nested = parts.slice(2, -1);
     const draft = isDraft(file, metadata);
-    // Nothing else of a draft that is left out is checked: it may lack what a page needs.
-    if (draft && !drafts) return { sourceFile, type: 'draft' };
+    // Nothing else of a draft that is left out is checked: it may lack what a page needs. Its translationKey tells
+    // that a link of mainNavigation to it is no mistake.
+    if (draft && !drafts) return { sourceFile, type: 'draft', translationKey: metadata.translationKey };
     assertTexts(file, metadata, ["title", "description", "slug", "translationKey"]);
     assertDates(file, metadata);
     const tags = type === 'post' ? parseTags(metadata.tags, languageKey, file) : [];
@@ -211,6 +213,7 @@ export async function prepare(projectDir, configPath = './blyss.config.js', { dr
   const { componentsDirectory, contentDirectory, publicDirectory, staticDirectory, templatesDirectory } = resolvePaths(projectDir, config);
   const locate = createLocator(config, publicDirectory);
   const layout = layoutOf(config);
+  const mainNavigation = mainNavigationOf(config);
   const basePath = basePathOf(config);
 
   const readOptionalTemplate = name => readFile(join(templatesDirectory, name), 'utf8').catch(error => {
@@ -251,6 +254,7 @@ export async function prepare(projectDir, configPath = './blyss.config.js', { dr
   assertUniqueTranslations(projectDir, records);
   const templates = { document, page, post, home, book };
   const translationIndex = indexTranslations(records, config.site.languages);
+  assertMainNavigation(mainNavigation, translationIndex, discovered.filter(record => record.type === 'draft').map(record => record.translationKey));
 
   // Every page is rendered before anything is written, so that a block with settings that its component refuses, or
   // a template with a placeholder that it lacks, stops the build in time.
@@ -258,6 +262,7 @@ export async function prepare(projectDir, configPath = './blyss.config.js', { dr
   const pages = await eachChecked(records, fileOf, async record => {
     const html = await renderRecord({
       record, file: fileOf(record), templates, templateFile, translationIndex, site: config.site, records: content, layout, regions, basePath,
+      mainNavigation,
       fragments: fragments.get(record.languageKey),
       components: components.placeholders(record.languageKey, fileOf(record)),
       languages: components.languages,

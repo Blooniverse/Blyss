@@ -2,6 +2,7 @@ import { BlyssError } from "../errors.js";
 import { escapeHtml } from "./html.js";
 import { createJsonLd, renderJsonLd } from "./json-ld.js";
 import { lexDocument, renderInlineTokens, renderTokens } from "./markdown.js";
+import { renderMainNavigation } from "./navigation.js";
 import { renderAlternateLinks, renderLanguageSwitcher } from "./translations.js";
 
 export { escapeHtml };
@@ -148,10 +149,11 @@ function renderTags(record) {
 // renders it in the language of the record, and resolves to it for a block of the record's Markdown; languages
 // names the component that shows the code blocks of a language, and former tells what to write instead of a name
 // that no longer shows a component; regions tells which of the hero and the overlay the page shows (see
-// regions.js); book holds the navigation and the pager of a doc (see book.js); basePath is the path below which the
-// website is hosted, {{basePath}} in every template.
+// regions.js); book holds the navigation and the pager of a doc (see book.js); mainNavigation holds the links of the
+// top bar (see navigation.js); basePath is the path below which the website is hosted, {{basePath}} in every template.
 export async function renderRecord({ record, file, templates, templateFile = name => `${name}.html`, translationIndex, site, records = [],
-  layout, fragments = {}, components = {}, languages = new Map(), former = () => "", regions = { of: () => ({}) }, book = {}, basePath = "" }) {
+  layout, fragments = {}, components = {}, languages = new Map(), former = () => "", regions = { of: () => ({}) }, book = {},
+  mainNavigation = [], basePath = "" }) {
   const metadata = record.metadata;
   const title = metadata.title || site.name;
   const description = metadata.description || record.languageConfig.description;
@@ -202,6 +204,7 @@ export async function renderRecord({ record, file, templates, templateFile = nam
     jsonLd: renderJsonLd(createJsonLd({ site, record, contributions: body.contributions })),
     languageKey: escapeHtml(record.languageKey),
     kind,
+    mainNavigation: renderMainNavigation(record, mainNavigation, translationIndex),
     languageSwitcher: site.languageSwitcher ? renderLanguageSwitcher(record, translationIndex, site) : "",
     layoutMargin: escapeHtml(layout.margin),
     layoutPaddingHero: escapeHtml(layout.paddingHero),

@@ -353,6 +353,20 @@
   `blyss new doc --book <name>` creates a doc in another book than the
   first, and `blyss check` names the option when the translation of such a
   doc is missing.
+- **Main navigation**: `mainNavigation` in `blyss.config.js` lists the links
+  of the top bar, which `{{mainNavigation}}` in `document.html` shows; the
+  starter's template no longer writes them by hand. A link has a
+  `translationKey`, which links the page, post, doc or list of that key in
+  the language of each page, such as `blyss:posts` for the archive and
+  `blyss:tags` for the tags, or an `href` to another website. Its `label`
+  names a label of `site.languages`; without one, a link to a page shows its
+  title. A language without the page, or with a draft of it only, lacks the
+  link, and a `translationKey` that no page has stops the build. The link to
+  the current page has `aria-current="page"`, and one to a page that holds
+  it, such as the start page of its book, `aria-current="true"`. The new
+  label `mainNavigation` names the navigation and defaults to English. A
+  website without the setting has no such links, and a template that writes
+  them by hand keeps working.
 - **Formulas**: `$…$` within a text and `$$…$$` on lines of its own are
   LaTeX formulas, which Temml turns into MathML during the build; browsers
   show it without a script. They appear in every Markdown text: in pages,
