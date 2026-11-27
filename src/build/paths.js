@@ -9,6 +9,11 @@ export function within(parent, child, path = nodePath) {
   return fromParent !== ".." && !fromParent.startsWith(`..${path.sep}`) && !path.isAbsolute(fromParent);
 }
 
+// True for a file that an operating system writes into the folders that it shows, which is part of no website: the
+// .DS_Store of the Finder of macOS, the ._<name> that it puts beside a file on a volume without extended attributes,
+// and the Thumbs.db and desktop.ini of Windows. Blyss reads, copies, publishes and watches none of them.
+export const isSystemFile = file => /^(?:\.DS_Store|\._.+|Thumbs\.db|desktop\.ini)$/i.test(nodePath.basename(file));
+
 export function resolvePaths(projectDir, config) {
   const root = resolve(projectDir);
   // The website names its directories; only the one of the components has a default, and may be missing.

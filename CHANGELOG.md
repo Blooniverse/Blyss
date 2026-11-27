@@ -711,6 +711,17 @@
 - **Recent posts**: a `$` in the title of a post, as in `$&`, `$$` or `"$"`,
   no longer corrupts the list of `{{recentPosts}}`; the title is shown as it
   is instead of `{{recentPosts}}`, a single `$` or the text before the list.
+- **Files of the operating system**: the Finder of macOS writes `.DS_Store`
+  into each folder that it shows, and `._<name>` beside a file on a volume
+  without extended attributes; Windows writes `Thumbs.db` and `desktop.ini`.
+  `blyss build` published them from `static/` and read a `._<name>.md` in
+  `_content/` as a page, `blyss init` copied them from a clone of Blyss, and
+  `blyss serve --watch` rebuilt the website after each of them. Blyss now
+  leaves them out; other names that start with a dot, such as
+  `.well-known/` in `static/`, are still published.
+- **Tests in a terminal with colours**: `node --test` sets `FORCE_COLOR` for
+  the test files there, which coloured a truth value that a test compared as
+  text, so that the test failed.
 
 ## 0.5.0 — 2026-10-28
 
