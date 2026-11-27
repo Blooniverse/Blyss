@@ -36,11 +36,11 @@ Blyss is a lean, local-first SSG (static site generator) for Markdown++. Ships w
 - **Multilingual**: EN/DE are defaults — they can be extended.
 - **AIO & SEO**: Semantic RDF graph (in JSON-LD), plus a classic sitemap.xml.
 > [!IMPORTANT]
+> - **Local-first**: Full control for devs & authors. Ideal for Git-based workflows.
 > - **Cybersecurity**:
 >     - 0 (ZERO) dependencies in the Node.js server!
 >     - 3 (THREE) dependencies in the SSG engine: `highlight.js`, `marked`, `temml` (nor any further dependencies)!
-> - **Local-first**: Full control for devs & authors. Ideal for Git-based workflows.
-> - **Library API**: `import { build, check, createContent } from "@blooniverse/blyss"`.
+- **Library API**: `import { build, check, createContent } from "@blooniverse/blyss"`.
 - **Live preview & checks**: Rebuild and reload on changes; check content including drafts, with JSON reports for agents and scripts.
 
 
