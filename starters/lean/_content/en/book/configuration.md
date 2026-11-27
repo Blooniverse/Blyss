@@ -11,6 +11,7 @@ The comments in `blyss.config.js` describe the starter's site, pagination, layou
 
 - Paths in `directories` are relative to the website root.
 - `pagination.pageSize` must be a positive whole number.
+- `books` names the [books](/en/book/writing/book/#several-books) of the website, `["book"]` by default.
 - Invalid configuration stops the build before the previous output is deleted.
 
 The starter's placeholder name, public URL, publisher and language descriptions are marked `CHANGE BEFORE PRODUCTION`. `site.baseUrl` is used for canonical, alternate and JSON-LD URLs; with a path, as in `https://example.com/docs`, it places the website [below that path](/en/book/deployment/#below-a-path). See [Deployment](/en/book/deployment/) before publishing.
@@ -36,7 +37,7 @@ For example, to add French:
 
 1. Add `fr` to `site.languages`, with its label, locale, description and translated labels.
 2. Add French descriptions to the steps of `components.componentSlider`.
-3. Create `_content/fr/` like `_content/en/`, including `pages/index.md`, `pages/about.md`, `pages/404.md`, `book/index.md`, the region files `hero.md` and `overlay.md`, their cards `heroCards.md` and `overlayCards.md`, the component texts, and any posts and docs. Give [translations](/en/book/writing/translations/) the same `translationKey`.
+3. Create `_content/fr/` like `_content/en/`, including `pages/index.md`, `pages/about.md`, `pages/404.md`, the `index.md` of each book, such as `book/index.md`, the region files `hero.md` and `overlay.md`, their cards `heroCards.md` and `overlayCards.md`, the component texts, and any posts and docs. Give [translations](/en/book/writing/translations/) the same `translationKey`.
 4. Build. The language switcher and alternate links connect translations.
 
 To remove a language, remove its content directory, configuration entry and slider-step descriptions; change the default if necessary. With one language, hide the switcher if desired.

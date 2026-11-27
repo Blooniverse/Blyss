@@ -43,7 +43,7 @@ Run these commands from the website root, where `blyss.config.js` lives: they ca
 
 The commands take these arguments:
 
-- `blyss new <page|post|doc> "<title>"` creates a [draft](/en/book/writing/pages-and-posts/#drafts) in the default language, with a front matter that the build accepts, and never replaces a file. `--lang <key>` chooses another language, `--slug <slug>` another file name and `--key <translationKey>` makes it the translation of a page in another language. Posts are named after their date, as in `261126-a-title.md`.
+- `blyss new <page|post|doc> "<title>"` creates a [draft](/en/book/writing/pages-and-posts/#drafts) in the default language, with a front matter that the build accepts, and never replaces a file. `--lang <key>` chooses another language, `--slug <slug>` another file name and `--key <translationKey>` makes it the translation of a page in another language. `--book <name>` puts a doc into one of the other [books](/en/book/writing/book/#several-books); without it, a doc goes into the first. Posts are named after their date, as in `261126-a-title.md`.
 - `blyss check` builds everything, the drafts included, without writing: it reports every broken file at once, then the pages that lack a `translationKey` or a translation. `--json` prints the report for a script or an AI agent. It ends with the exit code 1 if a build would fail.
 - `blyss build --drafts` builds the [drafts](/en/book/writing/pages-and-posts/#drafts) as well, which every other build leaves out.
 - `blyss --help` lists the commands and `blyss --version` shows the version of Blyss.

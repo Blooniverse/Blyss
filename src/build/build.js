@@ -11,14 +11,15 @@ import { readFrontMatter } from "./front-matter.js";
 import { languagesOf } from "./languages.js";
 import { isSystemFile, resolvePaths } from "./paths.js";
 import { renderRecord } from "./render.js";
-import { assertSite, basePathOf, layoutOf } from "./settings.js";
+import { assertSite, basePathOf, booksOf, isBookName, layoutOf } from "./settings.js";
 import { arrangeRegions } from "./regions.js";
 import { renderSitemap } from "./sitemap.js";
 import { arrangeBooks } from "./book.js";
 import { indexTranslations } from "./translations.js";
 
-// The sections of _content/<language>/ that hold published content, and the type of their content.
-const sections = { pages: 'page', posts: 'post', book: 'book' };
+// The sections of _content/<language>/ that hold published content, and the type of their content: the pages, the
+// posts and the docs of each book that config.books names.
+const sectionsOf = books => ({ pages: 'page', posts: 'post', ...Object.fromEntries(books.map(book => [book, 'book'])) });
 
 async function findMarkdownFiles(directory) {
   const entries = await readdir(directory, { withFileTypes: true });
@@ -100,6 +101,7 @@ async function discoverContent(projectDir, config, contentDirectory, locate, dra
   });
   // Sorted paths make the output independent of the filesystem.
   const files = found.sort();
+  const sections = sectionsOf(config.books);
   return eachChecked(files, sourceFile => relative(projectDir, sourceFile), async sourceFile => {
     const file = relative(projectDir, sourceFile);
     const parts = relative(contentDirectory, sourceFile).split(sep);
@@ -128,9 +130,10 @@ async function discoverContent(projectDir, config, contentDirectory, locate, dra
         `${join(relative(projectDir, contentDirectory), languageKey, 'components')}.`);
     }
     if (!Object.hasOwn(sections, section)) {
-      const [pages, posts, book] = Object.keys(sections).map(name => join(relative(projectDir, contentDirectory), languageKey, name, sep));
+      const directories = Object.keys(sections).map(name => join(relative(projectDir, contentDirectory), languageKey, name, sep));
       throw new BlyssError(`Cannot build ${file}: there is no content section "${section}".\n` +
-        `Move the file into ${pages}, ${posts} or ${book}.`);
+        `Move the file into ${directories.slice(0, -1).join(", ")} or ${directories.at(-1)}` +
+        (isBookName(section) ? `, or add "${section}" to books to make it a book.` : "."));
     }
     const type = sections[section];
     const nested = parts.slice(2, -1);
@@ -153,13 +156,14 @@ async function discoverContent(projectDir, config, contentDirectory, locate, dra
           'of its directories contain no "/", "\\", "?" or "#" and are neither "." nor "..": set slug to a name such as "my-page".');
       }
     }
-    // Like their files, pages, posts and docs are published under /<language>/pages/, /<language>/posts/ and
-    // /<language>/book/; the index.md of a directory of pages or docs at the URL of the directory, except the home page,
-    // pages/index.md, at /<language>/.
+    // Like their files, pages, posts and docs are published under /<language>/pages/, /<language>/posts/ and the
+    // directory of their book, such as /<language>/book/; the index.md of a directory of pages or docs at the URL of
+    // the directory, except the home page, pages/index.md, at /<language>/.
     const urlParts = [languageKey, section, ...nested, slug];
     if (type !== 'post' && filename === 'index') urlParts.pop();
     if (type === 'page' && !nested.length && filename === 'index') urlParts.pop();
-    return { sourceFile, languageKey, languageConfig, type, metadata, markdown, tags, draft, ...locate(urlParts) };
+    return { sourceFile, languageKey, languageConfig, type, ...(type === 'book' ? { book: section } : {}),
+      metadata, markdown, tags, draft, ...locate(urlParts) };
   });
 }
 
@@ -202,8 +206,8 @@ function assertUniqueTranslations(projectDir, records) {
 export async function prepare(projectDir, configPath = './blyss.config.js', { drafts = false } = {}) {
   const loaded = await loadConfig(projectDir, configPath);
   assertSite(loaded);
-  // The whole build uses the checked languages, which have every label and a default language.
-  const config = { ...loaded, site: { ...loaded.site, ...languagesOf(loaded) } };
+  // The whole build uses the checked languages, which have every label and a default language, and the checked books.
+  const config = { ...loaded, site: { ...loaded.site, ...languagesOf(loaded) }, books: booksOf(loaded) };
   const { componentsDirectory, contentDirectory, publicDirectory, staticDirectory, templatesDirectory } = resolvePaths(projectDir, config);
   const locate = createLocator(config, publicDirectory);
   const layout = layoutOf(config);

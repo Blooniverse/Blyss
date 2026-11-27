@@ -10,8 +10,9 @@ function locate(error) {
 }
 
 // What the content still lacks, which does not stop a build: a page without a translationKey, which links it to no
-// translation, and a translationKey without a page in each language.
-function warningsOf(projectDir, content, languages) {
+// translation, and a translationKey without a page in each language. blyss new puts a doc into the first of books
+// unless --book names another.
+function warningsOf(projectDir, content, languages, books) {
   const warnings = [];
   const byKey = new Map();
   for (const record of content) {
@@ -21,7 +22,8 @@ function warningsOf(projectDir, content, languages) {
       warnings.push({ file, message: "It has no translationKey, which links a page to its translations." });
       continue;
     }
-    if (!byKey.has(key)) byKey.set(key, { kind: { book: "doc" }[record.type] ?? record.type, files: new Map() });
+    const kind = record.type !== "book" ? record.type : record.book === books[0] ? "doc" : `doc --book ${record.book}`;
+    if (!byKey.has(key)) byKey.set(key, { kind, files: new Map() });
     byKey.get(key).files.set(record.languageKey, file);
   }
   const translations = [];
@@ -49,7 +51,7 @@ export async function check(projectDir, configPath = "./blyss.config.js") {
     return { ok: false, errors, warnings: [], pages: 0, drafts: [], translations: [] };
   }
   const { config, content, records } = prepared;
-  const { warnings, translations } = warningsOf(projectDir, content, config.site.languages);
+  const { warnings, translations } = warningsOf(projectDir, content, config.site.languages, config.books);
   const drafts = content.filter(record => record.draft).map(record => relative(projectDir, record.sourceFile));
   return { ok: true, errors: [], warnings, pages: records.length, drafts, translations };
 }

@@ -7,7 +7,7 @@ translationKey: book-docs
 
 ## Adding a doc
 
-Create a Markdown file in `_content/en/book/`, such as `install.md`. Blyss publishes it at `/en/book/install/`, or at the URL of its `slug`, and adds it to the navigation.
+Create a Markdown file in `_content/en/book/`, such as `install.md`. Blyss publishes it at `/en/book/install/`, or at the URL of its `slug`, and adds it to the navigation. A doc of [another book](/en/book/writing/book/#several-books), such as `guide`, lies in its directory, `_content/en/guide/`.
 
 ### Front matter
 
@@ -26,4 +26,4 @@ A directory, such as `_content/en/book/writing/`, is a section of the documentat
 
 ## Translating docs
 
-Each language has its own docs in `_content/<language>/book/`. As elsewhere, [translations](/en/book/writing/translations/) share their `translationKey`, while the names of their files and directories may differ: this doc is `/de/book/schreiben/buch/dokumente/` in German.
+Each language has its own docs in `_content/<language>/book/`, and in the directory of each further book. As elsewhere, [translations](/en/book/writing/translations/) share their `translationKey`, while the names of their files and directories may differ: this doc is `/de/book/schreiben/buch/dokumente/` in German.

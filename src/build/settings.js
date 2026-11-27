@@ -17,6 +17,30 @@ export function assertSite(config) {
   }
 }
 
+// The directories of _content/<language>/ and the URLs below /<language>/ that are not those of a book.
+const reservedNames = ["pages", "posts", "tags", "components"];
+
+// The name of a book is a directory in _content/<language>/ and the start of its URLs, as "book" is in /en/book/.
+export const isBookName = name => typeof name === "string" && /^[a-z0-9][a-z0-9-]*$/.test(name) && !reservedNames.includes(name);
+
+// books lists the books of the website, each with docs, a navigation and a pager of its own; blyss new puts a doc
+// into the first unless told otherwise. Without the setting, the website has the one book "book".
+export function booksOf(config) {
+  const { books = ["book"] } = config;
+  if (!Array.isArray(books)) throw refuse("books", books, 'a list of the names of the books, such as ["book", "guide"]');
+  books.forEach((name, index) => {
+    if (reservedNames.includes(name)) {
+      throw new BlyssError(`Cannot use books[${index}] ${JSON.stringify(name)}: ${listOf(reservedNames, "and")} ` +
+        "are directories or URLs of their own, so a book needs another name.");
+    }
+    if (!isBookName(name)) {
+      throw refuse(`books[${index}]`, name, 'a name of lower-case Latin letters, digits and hyphens, such as "guide", since URLs use it as a directory');
+    }
+    if (books.indexOf(name) !== index) throw new BlyssError(`Cannot use books[${index}] ${JSON.stringify(name)}: books names each book once.`);
+  });
+  return [...books];
+}
+
 // The path below which the website is hosted: that of site.baseUrl without its final slash, such as /docs for
 // https://example.com/docs/, and nothing for a website at the root of its domain.
 export const basePathOf = config => new URL(config.site.baseUrl).pathname.replace(/\/+$/, "");

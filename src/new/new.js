@@ -5,9 +5,11 @@ import { BlyssError } from "../errors.js";
 import { dateAdvice, isDate } from "../build/dates.js";
 import { languagesOf } from "../build/languages.js";
 import { resolvePaths } from "../build/paths.js";
+import { booksOf } from "../build/settings.js";
 
-// The kinds of content that blyss new creates, each with its section in _content/<language>/.
-export const kinds = { page: "pages", post: "posts", doc: "book" };
+// The kinds of content that blyss new creates: pages and posts lie in pages/ and posts/ of _content/<language>/, docs in
+// the directory of their book.
+export const kinds = ["page", "post", "doc"];
 
 // The part of a URL that a title makes: Latin letters and digits, joined by hyphens, as in "hello-world" for
 // "Hello, World!". German umlauts keep their sound, as ä does in "ae".
@@ -29,12 +31,16 @@ function today(now = new Date()) {
 }
 
 // Creates the Markdown file of a page, a post or a doc as a draft, with a front matter that a build accepts, and
-// returns its path. language is a key of site.languages, the default language if omitted; slug names the file and
-// the end of the URL, from the title if omitted; translationKey links it to its translations: that of a page in
-// another language, or a new one. The file and the translationKey of a post start with its date, as in
+// returns its path. language is a key of site.languages, the default language if omitted; book is one of books for a
+// doc, the first if omitted; slug names the file and the end of the URL, from the title if omitted; translationKey
+// links it to its translations: that of a page in another language, or a new one, which starts with the name of the
+// book for a doc, as in book-hello-world. The file and the translationKey of a post start with its date, as in
 // 261126-hello-world. An existing file is never replaced.
-export async function createContent(projectDir, { kind, title, language, slug, translationKey, date = today() } = {}) {
-  if (!Object.hasOwn(kinds, kind)) throw new BlyssError(`Cannot create a "${kind}": blyss new creates a page, a post or a doc.`);
+export async function createContent(projectDir, { kind, title, language, book, slug, translationKey, date = today() } = {}) {
+  if (!kinds.includes(kind)) throw new BlyssError(`Cannot create a "${kind}": blyss new creates a page, a post or a doc.`);
+  if (book !== undefined && kind !== "doc") {
+    throw new BlyssError(`Cannot create a ${kind} in the book "${book}": a book holds docs, so --book is for blyss new doc.`);
+  }
   const cleanTitle = String(title ?? "").replace(/\s+/g, " ").trim();
   if (!cleanTitle) throw new BlyssError(`Cannot create a ${kind} without a title: write it after the kind, as in blyss new ${kind} "My title".`);
   if (kind === "post" && !isDate(date)) {
@@ -47,6 +53,12 @@ export async function createContent(projectDir, { kind, title, language, slug, t
     throw new BlyssError(`Cannot create a ${kind} in "${languageKey}": site.languages has no such language, ` +
       `only ${Object.keys(languages).join(", ")}.`);
   }
+  const books = kind === "doc" ? booksOf(config) : [];
+  const section = kind === "doc" ? book ?? books[0] : `${kind}s`;
+  if (kind === "doc" && !books.includes(section)) {
+    throw new BlyssError(books.length ? `Cannot create a doc in the book "${section}": books has no such book, only ${books.join(", ")}.`
+      : "Cannot create a doc: books names no book. Add one, such as \"book\".");
+  }
   const name = slug ?? slugOf(cleanTitle);
   if (!/^[a-z0-9][a-z0-9-]*$/.test(name)) {
     throw new BlyssError(`Cannot create a ${kind} with the slug "${name}": a slug consists of lower-case Latin letters, ` +
@@ -56,9 +68,9 @@ export async function createContent(projectDir, { kind, title, language, slug, t
     throw new BlyssError(`Cannot create a ${kind} with the translationKey "${translationKey}": a translationKey has no spaces.`);
   }
   const fileName = kind === "post" ? `${date.slice(2, 10).replaceAll("-", "")}-${name}` : name;
-  const key = translationKey ?? (kind === "doc" ? `book-${name}` : fileName);
+  const key = translationKey ?? (kind === "doc" ? `${section}-${name}` : fileName);
   const { contentDirectory } = resolvePaths(projectDir, config);
-  const path = join(contentDirectory, languageKey, kinds[kind], `${fileName}.md`);
+  const path = join(contentDirectory, languageKey, section, `${fileName}.md`);
   const fields = [
     ["title", valueOf(cleanTitle)],
     ["description", '""'],

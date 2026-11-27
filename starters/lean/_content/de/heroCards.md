@@ -14,6 +14,7 @@ title: Warum Blyss
 
 #### Inhalte erstellen
 - **3 Inhaltstypen**: Dokument, Seite, Beitrag.
+    - Beliebig viele Bücher, jedes mit eigener Navigation.
     - `draft: true` im Front Matter.
     - Inhalte im Browser bearbeiten mit [Decap CMS](https://decapcms.org/) oder [Tina](https://tina.io/).
 - **KI-Co-Authoring**: Wechsel von Mensch und Agent als zugeschriebene, datierte `{contribution}`-Blöcke.

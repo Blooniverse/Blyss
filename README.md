@@ -26,6 +26,7 @@ Blyss is a lean, local-first SSG (static site generator) for Markdown++. Ships w
     - **Footnotes**: `[^footnote]`
     - **Compatibility**: [Marktext.me](https://marktext.me), [Obsidian.md](https://obsidian.md), etc.
 - **Authoring with 3 content types**: book doc, page, post.
+    - Any number of books, each with its own navigation.
     - `draft: true` in Frontmatter.
     - In-browser content editing via: [Decap CMS](https://decapcms.org/) or [Tina](https://tina.io/).
 - **AI co-authoring**: Human and agent turns as attributed, dated `{contribution}` blocks.
@@ -129,7 +130,7 @@ npx blyss --version                          # show the Blyss version
 ```
 
 The `npm` scripts shown are included in the starter.
-- For `new`, use `page`, `post` or `doc`; `--lang`, `--slug` and `--key` customize the draft.
+- For `new`, use `page`, `post` or `doc`; `--book`, `--lang`, `--slug` and `--key` customize the draft.
 - With `serve`, `--drafts` requires `--watch`.
 - See [installation and commands](starters/lean/_content/en/book/installation.md) for details.
 

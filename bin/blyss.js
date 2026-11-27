@@ -12,8 +12,8 @@ import { forServer, tellServer } from "../src/server/watch.js";
 const [command, ...args] = process.argv.slice(2);
 const projectDir = process.cwd();
 const usage = `Usage: blyss init [directory]  copy the starter into a new or empty directory
-       blyss new <page|post|doc> [--lang <key>] [--slug <slug>] [--key <translationKey>] "<title>"
-                               create a draft with a valid front matter
+       blyss new <page|post|doc> [--book <name>] [--lang <key>] [--slug <slug>] [--key <translationKey>] "<title>"
+                               create a draft with a valid front matter; --book chooses the book of a doc
        blyss check [--json]    check the website with its drafts without writing anything
        blyss build [--drafts]  build the website, with --drafts also its drafts
        blyss serve [--hostbind <address>] [--port <number>] [--watch [--drafts]]
@@ -61,7 +61,7 @@ function parseArgs(args, { options = {}, switches = [], positional = 0 }) {
 const text = value => (value.trim() ? value : undefined);
 const commands = {
   init: { positional: 1 },
-  new: { positional: 2, options: { "--lang": ["language", text], "--slug": ["slug", text], "--key": ["translationKey", text] } },
+  new: { positional: 2, options: { "--book": ["book", text], "--lang": ["language", text], "--slug": ["slug", text], "--key": ["translationKey", text] } },
   check: { switches: ["--json"] },
   build: { switches: ["--drafts"] },
   serve: {
@@ -75,8 +75,8 @@ const commands = {
 const known = Object.hasOwn(commands, command);
 let parsed = known ? parseArgs(args, commands[command]) : {};
 if (command === "serve" && parsed.options?.drafts && !parsed.options.watch) parsed = { problem: "--drafts needs --watch: blyss serve builds nothing without it." };
-if (command === "new" && !parsed.problem && (!Object.hasOwn(kinds, parsed.rest[0]) || parsed.rest.length < 2)) {
-  parsed = { problem: Object.hasOwn(kinds, parsed.rest[0]) ? `blyss new ${parsed.rest[0]} needs a title.`
+if (command === "new" && !parsed.problem && (!kinds.includes(parsed.rest[0]) || parsed.rest.length < 2)) {
+  parsed = { problem: kinds.includes(parsed.rest[0]) ? `blyss new ${parsed.rest[0]} needs a title.`
     : "blyss new needs the kind of the content, page, post or doc, and its title." };
 }
 

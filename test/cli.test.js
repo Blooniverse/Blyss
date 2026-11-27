@@ -1259,6 +1259,114 @@ describe("a site with technical documentation", () => {
   });
 });
 
+describe("a site with several books", () => {
+  let site;
+  const page = path => readFile(join(site, "public", path, "index.html"), "utf8");
+  const part = (html, start, end) => html.slice(html.indexOf(start), html.indexOf(end, html.indexOf(start)) + end.length);
+  const guide = join("_content", "en", "guide");
+
+  before(async () => {
+    site = join(sandbox, "books");
+    assert.equal(run(["init", site], sandbox).status, 0);
+    const config = join(site, "blyss.config.js");
+    const source = await readFile(config, "utf8");
+    assert.ok(source.includes('books: ["book"],'));
+    await writeFile(config, source.replace('books: ["book"],', 'books: ["book", "guide"],'));
+    // Both books have a section "intro" with a doc "setup"; the guide has a German start page as well.
+    await rm(join(site, "_content", "en", "book"), { recursive: true, force: true });
+    for (const [file, frontMatter] of [
+      ["en/book/index.md", "title: Docs"],
+      ["en/book/intro/index.md", "title: Intro"],
+      ["en/book/intro/setup.md", "title: Setup"],
+      ["en/guide/index.md", "title: Guide\ntranslationKey: guide"],
+      ["en/guide/intro/index.md", "title: Intro\norder: 1"],
+      ["en/guide/intro/setup.md", "title: Setup"],
+      ["en/guide/later.md", "title: Later\norder: 2"],
+      ["de/guide/index.md", "title: Anleitung\ntranslationKey: guide"]
+    ]) {
+      await mkdir(dirname(join(site, "_content", file)), { recursive: true });
+      await writeFile(join(site, "_content", file), `---\n${frontMatter}\n---\n\nText.\n`);
+    }
+    const result = run(["build"], site);
+    assert.equal(result.status, 0, result.stderr);
+  });
+
+  test("gives each book its own navigation, also for sections and docs of the same names", async () => {
+    assert.equal(part(await page("en/guide/intro/setup"), '<nav aria-label="Documentation">', "</nav>"),
+      '<nav aria-label="Documentation">\n<ul>\n  <li><a href="/en/guide/">Guide</a></li>\n' +
+      '  <li><a href="/en/guide/intro/">Intro</a>\n    <ul>\n' +
+      '      <li><a href="/en/guide/intro/setup/" aria-current="page">Setup</a></li>\n    </ul>\n  </li>\n' +
+      '  <li><a href="/en/guide/later/">Later</a></li>\n</ul>\n</nav>');
+    assert.equal(part(await page("en/book/intro/setup"), '<nav aria-label="Documentation">', "</nav>"),
+      '<nav aria-label="Documentation">\n<ul>\n  <li><a href="/en/book/">Docs</a></li>\n' +
+      '  <li><a href="/en/book/intro/">Intro</a>\n    <ul>\n' +
+      '      <li><a href="/en/book/intro/setup/" aria-current="page">Setup</a></li>\n    </ul>\n  </li>\n</ul>\n</nav>');
+    assert.ok((await page("de/guide")).includes('<nav aria-label="Dokumentation">\n<ul>\n  <li><a href="/de/guide/" aria-current="page">Anleitung</a></li>\n</ul>\n</nav>'));
+  });
+
+  test("never links the last or the first doc of a book to a doc of another book", async () => {
+    const pager = (...links) => '<nav aria-label="Pagination">\n<ul>\n' + links.map(link => `  <li>${link}</li>\n`).join("") + "</ul>\n</nav>";
+    assert.equal(part(await page("en/book/intro/setup"), '<nav aria-label="Pagination">', "</nav>"),
+      pager('<a href="/en/book/intro/" rel="prev">Previous: Intro</a>'));
+    assert.equal(part(await page("en/guide"), '<nav aria-label="Pagination">', "</nav>"),
+      pager('<a href="/en/guide/intro/" rel="next">Next: Intro</a>'));
+    assert.equal(part(await page("en/guide/later"), '<nav aria-label="Pagination">', "</nav>"),
+      pager('<a href="/en/guide/intro/setup/" rel="prev">Previous: Setup</a>'));
+  });
+
+  test("publishes the docs of every book as docs, with their translations, in the sitemap", async () => {
+    const html = await page("en/guide/later");
+    assert.ok(html.includes('<body data-kind="book" '));
+    const graph = JSON.parse(html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)[1])["@graph"];
+    assert.equal(graph.find(node => node["@type"] === "TechArticle").url, "https://example.com/en/guide/later/");
+    assert.ok((await page("en/guide")).includes('<link rel="alternate" hreflang="de" href="https://example.com/de/guide/">'));
+    const sitemap = await readFile(join(site, "public", "sitemap.xml"), "utf8");
+    for (const url of ["en/guide/intro/setup/", "en/book/intro/setup/", "de/guide/"]) {
+      assert.ok(sitemap.includes(`<loc>https://example.com/${url}</loc>`), url);
+    }
+  });
+
+  test("names the start page that a section of another book lacks", async () => {
+    const doc = join(guide, "empty", "doc.md");
+    const index = join(guide, "empty", "index.md");
+    await mkdir(join(site, guide, "empty"));
+    try {
+      await writeFile(join(site, doc), "---\ntitle: Doc\n---\n");
+      const result = run(["build"], site);
+      assert.equal(result.status, 1);
+      assert.equal(result.stderr, `Cannot build ${doc}: there is no ${index}, the start page of its section.\n` +
+        `Add ${index}: its title names the section in the navigation.\n`);
+    } finally {
+      await rm(join(site, guide, "empty"), { recursive: true });
+    }
+  });
+
+  test("blyss new puts a doc into the book of --book, the first by default, and blyss check names the option", async () => {
+    const created = { guide: join(guide, "hello-world.md"), book: join("_content", "en", "book", "first.md") };
+    try {
+      for (const [args, file, key] of [[["--book", "guide", "Hello World"], created.guide, "guide-hello-world"], [["First"], created.book, "book-first"]]) {
+        const result = run(["new", "doc", ...args], site);
+        assert.equal(result.stdout, `Created ${file} as a draft: remove its line draft: true to publish it.\n`, result.stderr);
+        assert.match(await readFile(join(site, file), "utf8"), new RegExp(`^translationKey: ${key}$`, "m"));
+      }
+      const { warnings } = JSON.parse(run(["check", "--json"], site).stdout);
+      const advice = file => warnings.find(warning => warning.file === file)?.message.replace(/^.*, as in /, "");
+      assert.equal(advice(created.guide), 'blyss new doc --book guide --lang de --key guide-hello-world "<title>".');
+      assert.equal(advice(created.book), 'blyss new doc --lang de --key book-first "<title>".');
+      for (const [args, message] of [
+        [["doc", "--book", "manual", "Title"], 'Cannot create a doc in the book "manual": books has no such book, only book, guide.\n'],
+        [["page", "--book", "guide", "Title"], 'Cannot create a page in the book "guide": a book holds docs, so --book is for blyss new doc.\n']
+      ]) {
+        const result = run(["new", ...args], site);
+        assert.equal(result.status, 1, args.join(" "));
+        assert.equal(result.stderr, message);
+      }
+    } finally {
+      for (const file of Object.values(created)) await rm(join(site, file), { force: true });
+    }
+  });
+});
+
 describe("a site with drafts", () => {
   let site;
   const page = path => readFile(join(site, "public", path), "utf8");
@@ -2393,7 +2501,10 @@ describe("invalid content", () => {
       `Cannot build ${loose}: content lies in the directory of its language, such as ${english}.\n`],
     ["content outside the sections of a language", section, "---\ntitle: Intro\n---\n",
       `Cannot build ${section}: there is no content section "docs".\nMove the file into ${join(english, "pages", sep)}, ` +
-      `${join(english, "posts", sep)} or ${join(english, "book", sep)}.\n`],
+      `${join(english, "posts", sep)} or ${join(english, "book", sep)}, or add "docs" to books to make it a book.\n`],
+    ["content in a section whose name no book can have", join("_content", "en", "tags", "intro.md"), "---\ntitle: Intro\n---\n",
+      `Cannot build ${join("_content", "en", "tags", "intro.md")}: there is no content section "tags".\nMove the file into ` +
+      `${join(english, "pages", sep)}, ${join(english, "posts", sep)} or ${join(english, "book", sep)}.\n`],
     ["a doc in a directory without index.md", doc, "---\ntitle: Setup\n---\n",
       `Cannot build ${doc}: there is no ${sectionIndex}, the start page of its section.\n` +
       `Add ${sectionIndex}: its title names the section in the navigation.\n`],
@@ -2503,6 +2614,24 @@ describe("invalid configuration", () => {
           assert.equal(result.status, 1, `${command} with ${replacement}`);
           assert.equal(result.stderr, `Cannot use ${message}.\n`);
         }
+        assert.ok((await stat(join(site, "public", "en", "index.html"))).isFile());
+      });
+    }
+  });
+
+  test("refuses books that are not a list of distinct names that no other content or URL has", async () => {
+    for (const [replacement, message] of [
+      ['books: "guide",', 'books "guide": it must be a list of the names of the books, such as ["book", "guide"]'],
+      ['books: ["book", "My guide"],', 'books[1] "My guide": it must be a name of lower-case Latin letters, digits and hyphens, ' +
+        'such as "guide", since URLs use it as a directory'],
+      ['books: ["tags"],', 'books[0] "tags": "pages", "posts", "tags" and "components" are directories or URLs of their own, ' +
+        "so a book needs another name"],
+      ['books: ["book", "guide", "book"],', 'books[2] "book": books names each book once']
+    ]) {
+      await withConfig('books: ["book"],', replacement, async () => {
+        const result = run(["build"], site);
+        assert.equal(result.status, 1, replacement);
+        assert.equal(result.stderr, `Cannot use ${message}.\n`);
         assert.ok((await stat(join(site, "public", "en", "index.html"))).isFile());
       });
     }

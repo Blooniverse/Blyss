@@ -7,7 +7,7 @@ translationKey: book-docs
 
 ## Ein Dokument hinzufügen
 
-Legen Sie eine Markdown-Datei in `_content/de/book/` an, etwa `mein-thema.md`. Blyss veröffentlicht sie unter `/de/book/mein-thema/` oder unter der URL ihres `slug` und nimmt sie in die Navigation auf.
+Legen Sie eine Markdown-Datei in `_content/de/book/` an, etwa `mein-thema.md`. Blyss veröffentlicht sie unter `/de/book/mein-thema/` oder unter der URL ihres `slug` und nimmt sie in die Navigation auf. Ein Dokument eines [anderen Buchs](/de/book/schreiben/buch/#mehrere-bücher), etwa `guide`, liegt in dessen Verzeichnis, `_content/de/guide/`.
 
 ### Front Matter
 
@@ -26,4 +26,4 @@ Ein Verzeichnis wie `_content/de/book/schreiben/` ist ein Abschnitt der Dokument
 
 ## Dokumente übersetzen
 
-Jede Sprache hat ihre eigenen Dokumente in `_content/<Sprache>/book/`. Wie überall teilen [Übersetzungen](/de/book/schreiben/uebersetzungen/) ihren `translationKey`, während sich die Namen ihrer Dateien und Verzeichnisse unterscheiden dürfen: Dieses Dokument ist auf Englisch `/en/book/writing/book/docs/`.
+Jede Sprache hat ihre eigenen Dokumente in `_content/<Sprache>/book/` und im Verzeichnis jedes weiteren Buchs. Wie überall teilen [Übersetzungen](/de/book/schreiben/uebersetzungen/) ihren `translationKey`, während sich die Namen ihrer Dateien und Verzeichnisse unterscheiden dürfen: Dieses Dokument ist auf Englisch `/en/book/writing/book/docs/`.

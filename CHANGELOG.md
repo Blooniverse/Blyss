@@ -341,6 +341,17 @@
   type `TechArticle`; the archive, the tags and `{{recentPosts}}` leave them
   out. The new labels `book`, `onThisPage`, `previous` and `next` default
   to English.
+- **Several books**: `books` in `blyss.config.js` names the books of a
+  website, `["book"]` by default, so a website without the setting keeps its
+  one book. Each name is a directory of docs in `_content/<language>/` and
+  the start of their URLs, such as `/<language>/guide/`, with a start page,
+  a navigation and a pager of its own, which never lead into another book;
+  all books share `book.html`, the kind `book` and the JSON-LD type
+  `TechArticle`. A name consists of lower-case Latin letters, digits and
+  hyphens and is none of `pages`, `posts`, `tags` and `components`.
+  `blyss new doc --book <name>` creates a doc in another book than the
+  first, and `blyss check` names the option when the translation of such a
+  doc is missing.
 - **Formulas**: `$…$` within a text and `$$…$$` on lines of its own are
   LaTeX formulas, which Temml turns into MathML during the build; browsers
   show it without a script. They appear in every Markdown text: in pages,

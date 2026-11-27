@@ -6,7 +6,7 @@ This website is built with [Blyss](https://github.com/Blooniverse/Blyss), a stat
 
 | Path | Holds | You may |
 | --- | --- | --- |
-| `_content/<language>/pages/`, `posts/`, `book/` | Pages, posts and docs, one Markdown file each | Write |
+| `_content/<language>/pages/`, `posts/`, `book/` and each further book of `books` | Pages, posts and docs, one Markdown file each | Write |
 | `_content/<language>/*.md`, `components/` | Fragments of the templates and texts of components | Write if asked |
 | `_authoring/` | Briefs, the style guide and the glossary; never published | Read; write briefs if asked |
 | `templates/`, `components/`, `static/`, `blyss.config.js` | The design and the settings | Change only if asked |
@@ -19,6 +19,7 @@ The languages are the keys of `site.languages` in `blyss.config.js`, such as `en
 ```bash
 npx blyss new post --lang en "A title"   # also page or doc; creates a draft with a valid front matter
 npx blyss new post --lang de --key <translationKey> "Ein Titel"   # the translation of a page in another language
+npx blyss new doc --book <name> "A title"   # a doc in another book than the first of books in blyss.config.js
 npx blyss check --json                   # check everything, drafts included, without writing; exit code 1 on problems
 npm run dev                              # serve with drafts on http://localhost:3000, rebuild and reload on each change
 ```
