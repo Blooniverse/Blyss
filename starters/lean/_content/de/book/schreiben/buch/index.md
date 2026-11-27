@@ -22,7 +22,7 @@ books: ["book", "guide"],
 
 Jeder Name ist ein Verzeichnis in `_content/<Sprache>/` und der Anfang der URLs des Buchs: Die Dokumente in `_content/de/guide/` erscheinen unterhalb von `/de/guide/`. Ein Name besteht aus kleinen lateinischen Buchstaben, Ziffern und Bindestrichen und ist keiner von `pages`, `posts`, `tags` und `components`.
 
-Jedes Buch braucht eine eigene Startseite, `index.md`, und hat eine eigene Navigation und eigene Links zum vorherigen und zum nächsten Dokument, die nie in ein anderes Buch führen. Ansonsten gleichen sich alle Bücher: Ihre Dokumente verwenden `templates/book.html`, folgen `overlay.showOn.book` und erscheinen im JSON-LD als TechArticle.
+Jedes Buch braucht eine eigene Startseite, `index.md`, und hat eine eigene Navigation und eigene Links zum vorherigen und zum nächsten Dokument, die nie in ein anderes Buch führen. Im JSON-LD sind seine Dokumente Teil seiner Startseite, und ihre Breadcrumbs beginnen dort. Ansonsten gleichen sich alle Bücher: Ihre Dokumente verwenden `templates/book.html`, folgen `overlay.showOn.book` und erscheinen im JSON-LD als TechArticle.
 
 So fügen Sie ein Buch hinzu:
 

@@ -149,11 +149,12 @@ function renderTags(record) {
 // renders it in the language of the record, and resolves to it for a block of the record's Markdown; languages
 // names the component that shows the code blocks of a language, and former tells what to write instead of a name
 // that no longer shows a component; regions tells which of the hero and the overlay the page shows (see
-// regions.js); book holds the navigation and the pager of a doc (see book.js); mainNavigation holds the links of the
-// top bar (see navigation.js); basePath is the path below which the website is hosted, {{basePath}} in every template.
+// regions.js); book holds the navigation and the pager of a doc, and trail the start pages above it, from that of its
+// book, and the doc itself (see book.js); mainNavigation holds the links of the top bar (see navigation.js); basePath
+// is the path below which the website is hosted, {{basePath}} in every template.
 export async function renderRecord({ record, file, templates, templateFile = name => `${name}.html`, translationIndex, site, records = [],
   layout, fragments = {}, components = {}, languages = new Map(), former = () => "", regions = { of: () => ({}) }, book = {},
-  mainNavigation = [], basePath = "" }) {
+  trail = [], mainNavigation = [], basePath = "" }) {
   const metadata = record.metadata;
   const title = metadata.title || site.name;
   const description = metadata.description || record.languageConfig.description;
@@ -201,7 +202,7 @@ export async function renderRecord({ record, file, templates, templateFile = nam
     robots: record.notFound ? '  <meta name="robots" content="noindex">' : "",
     canonicalUrl: escapeHtml(record.canonicalUrl),
     alternateLinks: renderAlternateLinks(record, translationIndex, site.defaultLanguage),
-    jsonLd: renderJsonLd(createJsonLd({ site, record, contributions: body.contributions })),
+    jsonLd: renderJsonLd(createJsonLd({ site, record, contributions: body.contributions, trail })),
     languageKey: escapeHtml(record.languageKey),
     kind,
     mainNavigation: renderMainNavigation(record, mainNavigation, translationIndex),

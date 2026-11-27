@@ -16,7 +16,7 @@ Before you publish a website:
 For search engines, Blyss generates:
 
 - Canonical and `hreflang` links. The `x-default` alternate of a page is its translation in the default language.
-- Schema.org JSON-LD using `@graph`. In it, a post is a `BlogPosting` and a doc a `TechArticle`, each with its headline, its dates and the publisher of the website as its author.
+- Schema.org JSON-LD using `@graph`. In it, a post is a `BlogPosting` and a doc a `TechArticle`, each with its headline, its dates and the publisher of the website as its author. A doc is part (`isPartOf`) of the start page of its section, which is part of the start page above it, up to the start page of its book, which is part of the website; a `BreadcrumbList` leads from the start page of the book to the doc, as its navigation does.
 - `sitemap.xml`, which lists generated pages and their translations except 404 pages.
 
 ## Hosting

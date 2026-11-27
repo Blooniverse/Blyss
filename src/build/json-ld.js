@@ -14,13 +14,22 @@ function contributorsOf(contributions, publisherId) {
   return [...contributors.values()];
 }
 
-export function createJsonLd({ site, record, contributions = [] }) {
+const typeOf = record => record.metadata.type || { post: "BlogPosting", book: "TechArticle", list: "CollectionPage" }[record.type] || "WebPage";
+
+// trail names the records from the start page of a doc's book through the start pages of its sections to the doc
+// (see book.js). A doc is part of the start page above it, up to the start page of its book, which is part of the
+// website; a BreadcrumbList leads from the start page of the book to the doc. Other pages are part of the website.
+export function createJsonLd({ site, record, contributions = [], trail = [] }) {
   const siteUrl = absoluteUrl(site.baseUrl, "/");
   const canonicalUrl = absoluteUrl(site.baseUrl, record.url);
   const publisherId = `${siteUrl}#publisher`;
   const websiteId = `${siteUrl}#website`;
   const pageId = `${canonicalUrl}#webpage`;
-  const pageType = record.metadata.type || { post: "BlogPosting", book: "TechArticle", list: "CollectionPage" }[record.type] || "WebPage";
+  const urlOf = item => absoluteUrl(site.baseUrl, item.url);
+  const nameOf = item => item.metadata.title || site.name;
+  const above = trail.slice(0, -1);
+  // What the page at a depth below the start page of the book is part of; the start page itself is part of the website.
+  const partOf = depth => ({ "@id": depth ? `${urlOf(above[depth - 1])}#webpage` : websiteId });
 
   const graph = [
     {
@@ -38,16 +47,30 @@ export function createJsonLd({ site, record, contributions = [] }) {
       publisher: { "@id": publisherId }
     },
     {
-      "@type": pageType,
+      "@type": typeOf(record),
       "@id": pageId,
       url: canonicalUrl,
-      name: record.metadata.title || site.name,
+      name: nameOf(record),
       description: record.metadata.description || record.languageConfig.description,
       inLanguage: record.languageConfig.locale,
-      isPartOf: { "@id": websiteId },
+      isPartOf: partOf(above.length),
       publisher: { "@id": publisherId }
-    }
+    },
+    ...above.map((item, depth) => ({
+      "@type": typeOf(item),
+      "@id": `${urlOf(item)}#webpage`,
+      url: urlOf(item),
+      name: nameOf(item),
+      isPartOf: partOf(depth)
+    }))
   ];
+  if (above.length) {
+    graph.push({
+      "@type": "BreadcrumbList",
+      "@id": `${canonicalUrl}#breadcrumb`,
+      itemListElement: trail.map((item, index) => ({ "@type": "ListItem", position: index + 1, name: nameOf(item), item: urlOf(item) }))
+    });
+  }
 
   const page = graph[2];
   // Posts and docs are articles: they have a headline, an author, who is the publisher of the website, and dates, and

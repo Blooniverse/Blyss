@@ -16,7 +16,7 @@ Vor der Veröffentlichung:
 Für Suchmaschinen enthält die Website:
 
 - Canonical- und `hreflang`-Links in den Vorlagen. Die Alternative `x-default` einer Seite ist ihre Übersetzung in der Standardsprache.
-- Schema.org-JSON-LD mit einem `@graph` in den Vorlagen. Beiträge haben darin den Typ `BlogPosting` und Dokumente den Typ `TechArticle`, jeweils mit ihrer Überschrift, ihren Daten und dem Publisher der Website als Autor.
+- Schema.org-JSON-LD mit einem `@graph` in den Vorlagen. Beiträge haben darin den Typ `BlogPosting` und Dokumente den Typ `TechArticle`, jeweils mit ihrer Überschrift, ihren Daten und dem Publisher der Website als Autor. Ein Dokument ist Teil (`isPartOf`) der Startseite seines Abschnitts, die Teil der Startseite darüber ist, bis hin zur Startseite seines Buchs, die Teil der Website ist; eine `BreadcrumbList` führt wie seine Navigation von der Startseite des Buchs zum Dokument.
 - `sitemap.xml` mit den erzeugten Seiten, ihren Übersetzungslinks und `lastmod` aus `dateModified` oder `datePublished`, aber ohne 404-Seiten.
 
 Kontrollieren Sie URLs und strukturierte Daten nach dem Build.
