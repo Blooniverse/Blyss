@@ -276,7 +276,8 @@ export async function prepare(projectDir, configPath = './blyss.config.js', { dr
       components: components.placeholders(record.languageKey, fileOf(record)),
       languages: components.languages,
       former: components.former,
-      book: books.placeholders(record)
+      book: books.placeholders(record),
+      trail: books.trail(record)
     });
     return { record, html: withBasePath(html, basePath) };
   }, { sequential: true });

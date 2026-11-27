@@ -22,7 +22,7 @@ books: ["book", "guide"],
 
 Each name is a directory in `_content/<language>/` and the start of the book's URLs: the docs in `_content/en/guide/` are published below `/en/guide/`. A name consists of lower-case Latin letters, digits and hyphens, and is none of `pages`, `posts`, `tags` and `components`.
 
-Each book needs its own start page, `index.md`, and has its own navigation and its own links to the previous and the next doc, which never lead into another book. Otherwise all books are alike: their docs use `templates/book.html`, follow `overlay.showOn.book` and are described as TechArticle in the JSON-LD.
+Each book needs its own start page, `index.md`, and has its own navigation and its own links to the previous and the next doc, which never lead into another book. In the JSON-LD, its docs are part of its start page, and their breadcrumbs start there. Otherwise all books are alike: their docs use `templates/book.html`, follow `overlay.showOn.book` and are described as TechArticle in the JSON-LD.
 
 To add a book:
 

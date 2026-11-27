@@ -440,6 +440,11 @@ describe("a generated starter", () => {
       assert.doesNotMatch(html.replace(/<code\b[^>]*>[\s\S]*?<\/code>/g, ""), /{{\w+}}/, page);
       const jsonLd = JSON.parse(html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)[1]);
       assert.ok(Array.isArray(jsonLd["@graph"]), page);
+      // Every node that the graph refers to, such as the start page of a doc's book, is in it.
+      const ids = new Set(jsonLd["@graph"].map(node => node["@id"]));
+      const references = value => typeof value !== "object" || value === null ? []
+        : Object.keys(value).length === 1 && value["@id"] ? [value["@id"]] : Object.values(value).flatMap(references);
+      for (const id of references(jsonLd["@graph"])) assert.ok(ids.has(id), `${page}: ${id}`);
       // Only the not-found pages ask search engines to leave them out.
       assert.equal(html.includes('<meta name="robots" content="noindex">'), notFoundPages.includes(page), page);
     }
@@ -1262,6 +1267,28 @@ describe("a site with technical documentation", () => {
     assert.ok((await readFile(join(site, "public", "sitemap.xml"), "utf8")).includes("<loc>https://example.com/en/book/guides/shipping/</loc>"));
   });
 
+  test("makes each doc part of the start page above it, and leads from the start page of its book to it", async () => {
+    const graphOf = async path => JSON.parse((await page(path)).match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)[1])["@graph"];
+    const id = path => `https://example.com/${path}/#webpage`;
+    const graph = await graphOf("de/book/teil/unter/erst");
+    assert.deepEqual(graph.slice(2).map(node => [node["@type"], node["@id"], node.name, node.isPartOf?.["@id"]]), [
+      ["TechArticle", id("de/book/teil/unter/erst"), "Erst", id("de/book/teil/unter")],
+      ["TechArticle", id("de/book"), "Doku", "https://example.com/#website"],
+      ["TechArticle", id("de/book/teil"), "Teil", id("de/book")],
+      ["TechArticle", id("de/book/teil/unter"), "Unter", id("de/book/teil")],
+      ["BreadcrumbList", "https://example.com/de/book/teil/unter/erst/#breadcrumb", undefined, undefined]
+    ]);
+    assert.deepEqual(graph.at(-1).itemListElement, [["Doku", "de/book"], ["Teil", "de/book/teil"], ["Unter", "de/book/teil/unter"],
+      ["Erst", "de/book/teil/unter/erst"]].map(([name, path], index) =>
+      ({ "@type": "ListItem", position: index + 1, name, item: `https://example.com/${path}/` })));
+    // A doc with a slug of its own is listed at its URL.
+    assert.equal((await graphOf("en/book/guides/shipping")).at(-1).itemListElement[2].item, "https://example.com/en/book/guides/shipping/");
+    // The start page of a book is part of the website and has no BreadcrumbList, which needs two items.
+    const start = await graphOf("en/book");
+    assert.equal(start.length, 3);
+    assert.deepEqual(start[2].isPartOf, { "@id": "https://example.com/#website" });
+  });
+
   test("renders docs with page.html without templates/book.html", async () => {
     const template = join(site, "templates", "book.html");
     const source = await readFile(template, "utf8");
@@ -1338,6 +1365,10 @@ describe("a site with several books", () => {
     assert.ok(html.includes('<body data-kind="book" '));
     const graph = JSON.parse(html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)[1])["@graph"];
     assert.equal(graph.find(node => node["@type"] === "TechArticle").url, "https://example.com/en/guide/later/");
+    // A doc of a section with the name of a section of another book is part of its own book.
+    const setup = JSON.parse((await page("en/guide/intro/setup")).match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)[1])["@graph"];
+    assert.deepEqual(setup.at(-1).itemListElement.map(item => item.item),
+      ["en/guide/", "en/guide/intro/", "en/guide/intro/setup/"].map(path => `https://example.com/${path}`));
     assert.ok((await page("en/guide")).includes('<link rel="alternate" hreflang="de" href="https://example.com/de/guide/">'));
     const sitemap = await readFile(join(site, "public", "sitemap.xml"), "utf8");
     for (const url of ["en/guide/intro/setup/", "en/book/intro/setup/", "de/guide/"]) {

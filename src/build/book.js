@@ -77,6 +77,7 @@ export function arrangeBooks(projectDir, contentDirectory, records, drafts = [])
         `Add ${index}: its title names the section in the navigation.`);
     }
     section.children.push(doc);
+    doc.section = section;
   }
 
   const sequences = new Map();
@@ -104,6 +105,13 @@ export function arrangeBooks(projectDir, contentDirectory, records, drafts = [])
         bookNavigation: renderNavigation(roots.get(bookOf(record)), doc, labels),
         bookPager: renderPager(sequence[position - 1], sequence[position + 1], labels)
       };
+    },
+    // The records from the start page of a doc's book through the start pages of its sections to the doc, as its
+    // navigation nests them; empty on other pages.
+    trail(record) {
+      const trail = [];
+      for (let doc = docs.get(record); doc; doc = doc.section) trail.unshift(doc.record);
+      return trail;
     }
   };
 }
