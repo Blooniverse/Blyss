@@ -368,13 +368,17 @@
   The new label `mainNavigation` names the navigation and defaults to
   English. A website without the setting has no such links, and a template
   that writes them by hand keeps working.
-- **Docs as parts of their books**: in the JSON-LD, a doc is part
-  (`isPartOf`) of the start page of its section, which is part of the start
-  page above it, up to the start page of its book, which is part of the
-  website; the graph of a doc names these start pages. A `BreadcrumbList`
-  leads from the start page of the book to the doc, as the navigation of the
-  book does; the start page itself has none, as a breadcrumb trail needs two
-  items. Other pages stay part of the website.
+- **Docs as parts of their books, and breadcrumbs**: in the JSON-LD, a doc
+  is part (`isPartOf`) of the start page of its section, which is part of
+  the start page above it, up to the start page of its book, which is part
+  of the website; the graph of a doc names these start pages. A
+  `BreadcrumbList` leads from the start page of the book to the doc, as the
+  navigation of the book does, from the archive to a post, and from the
+  tags to the page of a tag; a further page of a list follows its first
+  page, such as Posts › Posts – Page 2. The start page of a book, the
+  archive and the tags have none, as a breadcrumb trail needs two items.
+  Posts, lists and other pages stay part of the website: a post is listed
+  in the archive, not part of it.
 - **Formulas**: `$…$` within a text and `$$…$$` on lines of its own are
   LaTeX formulas, which Temml turns into MathML during the build; browsers
   show it without a script. They appear in every Markdown text: in pages,
