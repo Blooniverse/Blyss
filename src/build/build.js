@@ -5,7 +5,7 @@ import { BlyssError, BlyssErrors } from "../errors.js";
 import { dateAdvice, isDate } from "./dates.js";
 import { loadComponents } from "./components.js";
 import { withBasePath } from "./html.js";
-import { createListRecords, parseTags } from "./lists.js";
+import { createListRecords, parseTags, tagKey } from "./lists.js";
 import { renderFragments } from "./fragments.js";
 import { readFrontMatter } from "./front-matter.js";
 import { languagesOf } from "./languages.js";
@@ -139,9 +139,17 @@ async function discoverContent(projectDir, config, contentDirectory, locate, dra
     const type = sections[section];
     const nested = parts.slice(2, -1);
     const draft = isDraft(file, metadata);
-    // Nothing else of a draft that is left out is checked: it may lack what a page needs. Its translationKey tells
-    // that a link of mainNavigation to it is no mistake.
-    if (draft && !drafts) return { sourceFile, type: 'draft', translationKey: metadata.translationKey };
+    // Nothing else of a draft that is left out is checked: it may lack what a page needs. The translationKeys that it
+    // would give its page and the pages of its tags tell that a link of mainNavigation to them is no mistake.
+    if (draft && !drafts) {
+      let tags = [];
+      try {
+        if (type === 'post') tags = parseTags(metadata.tags, languageKey, file);
+      } catch {
+        // Tags that a page cannot have stop the build of the draft only.
+      }
+      return { sourceFile, type: 'draft', translationKeys: [metadata.translationKey, ...tags.map(tag => tagKey(tag.slug))] };
+    }
     assertTexts(file, metadata, ["title", "description", "slug", "translationKey"]);
     assertDates(file, metadata);
     const tags = type === 'post' ? parseTags(metadata.tags, languageKey, file) : [];
@@ -254,7 +262,7 @@ export async function prepare(projectDir, configPath = './blyss.config.js', { dr
   assertUniqueTranslations(projectDir, records);
   const templates = { document, page, post, home, book };
   const translationIndex = indexTranslations(records, config.site.languages);
-  assertMainNavigation(mainNavigation, translationIndex, discovered.filter(record => record.type === 'draft').map(record => record.translationKey));
+  assertMainNavigation(mainNavigation, translationIndex, discovered.filter(record => record.type === 'draft').flatMap(record => record.translationKeys));
 
   // Every page is rendered before anything is written, so that a block with settings that its component refuses, or
   // a template with a placeholder that it lacks, stops the build in time.

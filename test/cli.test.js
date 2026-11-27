@@ -1498,13 +1498,16 @@ describe("a site with its own main navigation", () => {
     site = join(sandbox, "main-navigation");
     assert.equal(run(["init", site], sandbox).status, 0);
     const source = await readFile(join(site, "blyss.config.js"), "utf8");
-    // A link without a label, to an archive with two pages, to a page without a German translation, to a draft, and
-    // to another website, whose address lacks the // that a browser needs, with labels of the site's own.
+    // A link without a label, to an archive with two pages, to a page without a German translation, to a draft, to
+    // the page of a tag and to a page of the archive that only a draft post makes, and to another website, whose
+    // address lacks the // that a browser needs, with labels of the site's own.
     config = source.replace(block(source), `  mainNavigation: [
     { translationKey: "about" },
     { translationKey: "blyss:posts" },
     { translationKey: "faq" },
     { translationKey: "plans", label: "plans" },
+    { translationKey: "blyss:tags/roadmap" },
+    { translationKey: "blyss:posts/page/3" },
     { href: "https:github.com/Blooniverse/Blyss?tab=readme&lang=en", label: "source" }
   ],\n`).replace('about: "About",', 'about: "About", plans: "Plans", source: "Source",')
       .replace('about: "Über uns",', 'about: "Über uns", plans: "Pläne", source: "Quelltext",').replace("pageSize: 10", "pageSize: 1");
@@ -1512,6 +1515,8 @@ describe("a site with its own main navigation", () => {
     await writeFile(join(site, "blyss.config.js"), config);
     await writeFile(join(site, "_content", "en", "pages", "faq.md"), "---\ntitle: Questions & answers\ntranslationKey: faq\n---\n\nText.\n");
     await writeFile(join(site, "_content", "en", "pages", "plans.md"), "---\ntitle: Plans\ntranslationKey: plans\ndraft: true\n---\n\nText.\n");
+    await writeFile(join(site, "_content", "en", "posts", "roadmap.md"),
+      "---\ntitle: Roadmap\ndatePublished: 2026-12-01\ntags: Roadmap\ndraft: true\n---\n\nText.\n");
   });
 
   test("links the pages of each language in their order, by their labels or titles, and leaves out those it lacks", async () => {
@@ -1526,12 +1531,13 @@ describe("a site with its own main navigation", () => {
       "/en/pages/faq/ Questions &amp; answers", `${source} Source`]);
   });
 
-  test("links a draft for --drafts only", async () => {
+  test("links a draft, and the pages that only drafts make, for --drafts only", async () => {
     try {
       const result = run(["build", "--drafts"], site);
       assert.equal(result.status, 0, result.stderr);
       assert.deepEqual(await links("en/pages/about"), ['/en/pages/about/ aria-current="page" About', "/en/posts/ Posts",
-        "/en/pages/faq/ Questions &amp; answers", "/en/pages/plans/ Plans", "https://github.com/Blooniverse/Blyss?tab=readme&amp;lang=en Source"]);
+        "/en/pages/faq/ Questions &amp; answers", "/en/pages/plans/ Plans", "/en/tags/roadmap/ Tag: Roadmap", "/en/posts/page/3/ Posts – Page 3",
+        "https://github.com/Blooniverse/Blyss?tab=readme&amp;lang=en Source"]);
     } finally {
       assert.equal(run(["build"], site).status, 0);
     }
@@ -2747,8 +2753,12 @@ describe("invalid configuration", () => {
         'it must be the URL of another website, such as "https://github.com"'],
       ['[{ href: "https://example.com" }]', `mainNavigation[0].label undefined: ${label}, for the text of the link`],
       ['[{ translationKey: "home", label: "Home" }]', `mainNavigation[0].label "Home": ${label}`],
+      ['[{ translationKey: "blyss:tags/nope/page/2" }]', 'mainNavigation[0].translationKey "blyss:tags/nope/page/2": no page has it.\n' +
+        'Correct it or remove the link, or give this translationKey to a page; "blyss:posts" is the key of the archive, "blyss:tags" ' +
+        'that of the tags, and "blyss:tags/" followed by the slug of a tag that of its page'],
       ['[{ translationKey: "home" }, { translationKey: "abuot", label: "about" }]', 'mainNavigation[1].translationKey "abuot": no page has it.\n' +
-        'Correct it or remove the link, or give this translationKey to a page; "blyss:posts" and "blyss:tags" are the keys of the archive and of the tags']
+        'Correct it or remove the link, or give this translationKey to a page; "blyss:posts" is the key of the archive, "blyss:tags" ' +
+        'that of the tags, and "blyss:tags/" followed by the slug of a tag that of its page']
     ]) {
       await withConfig(block, `  mainNavigation: ${links},\n`, async () => {
         const result = run(["build"], site);

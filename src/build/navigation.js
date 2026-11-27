@@ -39,12 +39,16 @@ export function mainNavigationOf(config) {
 }
 
 // A translationKey that no page has, not even a draft that the build leaves out, is a mistake, such as a misspelt one.
-// draftKeys are the translationKeys of those drafts.
+// draftKeys are the translationKeys that those drafts would give their pages and the pages of their tags. A further
+// page of a list, such as "blyss:posts/page/2", comes and goes with the number of its posts: it is no mistake while
+// its list is none.
 export function assertMainNavigation(links, translationIndex, draftKeys) {
+  const known = key => translationIndex.has(key) || draftKeys.includes(key);
   links.forEach(({ translationKey }, index) => {
-    if (translationKey === undefined || translationIndex.has(translationKey) || draftKeys.includes(translationKey)) return;
+    if (translationKey === undefined || known(translationKey) || known(translationKey.replace(/^(blyss:.+)\/page\/\d+$/, "$1"))) return;
     throw new BlyssError(`Cannot use mainNavigation[${index}].translationKey "${translationKey}": no page has it.\n` +
-      'Correct it or remove the link, or give this translationKey to a page; "blyss:posts" and "blyss:tags" are the keys of the archive and of the tags.');
+      'Correct it or remove the link, or give this translationKey to a page; "blyss:posts" is the key of the archive, "blyss:tags" ' +
+      'that of the tags, and "blyss:tags/" followed by the slug of a tag that of its page.');
   });
 }
 

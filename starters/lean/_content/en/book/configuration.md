@@ -31,7 +31,7 @@ mainNavigation: [
 ],
 ```
 
-- A `translationKey` links the page, post or doc with that [translationKey](/en/book/writing/translations/) in the language of each page; `blyss:posts` and `blyss:tags` link the archive and the tags. A language without such a page, or with a draft only, lacks the link.
+- A `translationKey` links the page, post or doc with that [translationKey](/en/book/writing/translations/) in the language of each page; `blyss:posts` and `blyss:tags` link the archive and the tags, and `blyss:tags/` followed by the slug of a tag, such as `blyss:tags/markdown`, the page of that tag. A language without such a page, or with a draft only, lacks the link.
 - An `href` links another website.
 - `label` names a label of `site.languages`, such as `home`, which is the text of the link in each language; a label of your own, such as `github`, needs a text in each language. Without a label, a link to a page shows the title of that page; a link to another website needs one.
 - The link to the current page has `aria-current="page"`, and a link to a page that holds it, such as the start page of its book or the archive of the posts, has `aria-current="true"`. The home page holds every page, but is marked on itself only.

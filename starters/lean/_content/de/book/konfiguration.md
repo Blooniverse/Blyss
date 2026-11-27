@@ -39,7 +39,7 @@ mainNavigation: [
 ],
 ```
 
-- Ein `translationKey` verlinkt die Seite, den Beitrag oder das Dokument mit diesem [`translationKey`](/de/book/schreiben/uebersetzungen/) in der Sprache der jeweiligen Seite; `blyss:posts` und `blyss:tags` verlinken das Archiv und die Schlagwörter. Einer Sprache ohne eine solche Seite, oder nur mit einem Entwurf davon, fehlt der Link.
+- Ein `translationKey` verlinkt die Seite, den Beitrag oder das Dokument mit diesem [`translationKey`](/de/book/schreiben/uebersetzungen/) in der Sprache der jeweiligen Seite; `blyss:posts` und `blyss:tags` verlinken das Archiv und die Schlagwörter, `blyss:tags/` mit dem Slug eines Schlagworts, etwa `blyss:tags/markdown`, dessen Seite. Einer Sprache ohne eine solche Seite, oder nur mit einem Entwurf davon, fehlt der Link.
 - Eine `href` verlinkt eine andere Website.
 - `label` nennt ein Label aus `site.languages`, etwa `home`, das in jeder Sprache der Text des Links ist; ein eigenes Label wie `github` braucht einen Text in jeder Sprache. Ohne Label zeigt ein Link zu einer Seite deren Titel; ein Link zu einer anderen Website braucht eines.
 - Der Link zur aktuellen Seite erhält `aria-current="page"`, ein Link zu einer Seite, die sie enthält, etwa zur Startseite ihres Buchs oder zum Archiv der Beiträge, `aria-current="true"`. Die Startseite enthält jede Seite, wird aber nur auf sich selbst markiert.
