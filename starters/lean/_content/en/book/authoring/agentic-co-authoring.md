@@ -11,7 +11,7 @@ A text that a human and an AI agent write together shows who wrote what: each tu
 
 ## Turns of humans and agents
 
-`{contribution}` is a directive of Blyss's own, in the form of the [directives](/en/book/writing/markdown-spice/#directives) of MyST:
+`{contribution}` is a directive of Blyss's own, in the form of the [directives](/en/book/authoring/markdown-spice/#directives) of MyST:
 
 ````markdown
 :::{contribution}
@@ -45,7 +45,7 @@ One that keeps each language in Markdown files of its own.
 
 - `:by:` is required: `human` or `agent`. The labels `contributionHuman` and `contributionAgent` of the language name the kind.
 - `:author:` names the author and `:date:` dates the turn, as in `2026-11-26`.
-- A label, `(name)=` on the line above, lets another turn link to it; see [Labels and numbers](/en/book/writing/labels-numbers-references/#labels).
+- A label, `(name)=` on the line above, lets another turn link to it; see [Labels and numbers](/en/book/authoring/labels-numbers-references/#labels).
 - The JSON-LD of the page names the authors as its `contributor`: a human as a `Person`, an agent as a `SoftwareApplication`. A human without a name is the publisher of the website.
 
 
@@ -54,7 +54,7 @@ One that keeps each language in Markdown files of its own.
 
 The starter prepares a website for writing with agents, with files that Blyss neither reads nor publishes:
 
-- `AGENTS.md` tells an agent how to work on the website: to add its turns below the last one and never to change another, to keep a new page a [draft](/en/book/writing/pages-and-posts/#drafts) and to finish once [`npx blyss check --json`](/en/book/installation/#commands) reports `"ok": true`.
+- `AGENTS.md` tells an agent how to work on the website: to add its turns below the last one and never to change another, to keep a new page a [draft](/en/book/authoring/pages-and-posts/#drafts) and to finish once [`npx blyss check --json`](/en/book/installation/#commands) reports `"ok": true`.
 - `_authoring/` holds the material behind the pages: the style guide `style-guide.md`, the glossary `glossary.md` with the terms in every language, and in `briefs/` one brief per piece of content, the task that a human gives an agent.
 - `.github/workflows/ci-dev-check-content.yml` runs `blyss check` on every pull request, so that a turn that would break the build shows up there.
 

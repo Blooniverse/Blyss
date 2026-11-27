@@ -528,9 +528,11 @@
   shows its checkbox in place of its marker, as large as the text. Existing
   websites copy the rules for `input[type="checkbox"]` and the `--list-indent`
   of the lists from `static/assets/css/main.css`.
-- **Order of the starter's book**: the docs follow the way of a new website:
-  installation, configuration, templates, components, writing, deployment
-  and development. "Writing" holds the section "Book" with the docs "Docs",
+- **Order of the starter's book**: after "Markdown and more", the docs serve
+  the authors first, with "Authoring", then follow the way of a new website:
+  installation, configuration, templates, components, deployment and
+  development. "Authoring", in `book/authoring/` and in German "Verfassen" in
+  `book/verfassen/`, holds the section "Book" with the docs "Docs",
   the former "Getting started", and "Navigation", then "Pages and posts",
   the new doc "Translations", "Markdown spice", the former "Formulas,
   footnotes, code and diagrams", the new doc "Agentic co-authoring", which

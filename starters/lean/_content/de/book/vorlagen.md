@@ -1,7 +1,7 @@
 ---
 title: Vorlagen und Gestaltung
 description: HTML-Vorlagen, Layout, Hero, Overlay und Schriften anpassen.
-order: 3
+order: 4
 translationKey: book-templates
 ---
 
@@ -26,7 +26,7 @@ Die Inhaltsvorlagen kennen diese Platzhalter:
 - `{{content}}`: ihr Text.
 - `{{basePath}}`: der Pfad einer Website [unterhalb eines Pfads](/de/book/bereitstellung/#unterhalb-eines-pfads), sonst leer.
 - Die Platzhalter der [Komponenten](/de/book/komponenten/).
-- In `book.html` zusätzlich `{{bookNavigation}}`, `{{bookToc}}` und `{{bookPager}}`: Navigation, Inhaltsverzeichnis sowie vorheriges und nächstes Dokument. Außerhalb von Dokumenten sind sie leer. Mehr dazu unter [Navigation](/de/book/schreiben/buch/navigation/).
+- In `book.html` zusätzlich `{{bookNavigation}}`, `{{bookToc}}` und `{{bookPager}}`: Navigation, Inhaltsverzeichnis sowie vorheriges und nächstes Dokument. Außerhalb von Dokumenten sind sie leer. Mehr dazu unter [Navigation](/de/book/verfassen/buch/navigation/).
 - `{{bookMarkdownBase64}}`: der geschriebene Text eines Dokuments, mit dessen `title`, falls vorhanden, als vorangestellter Markdown-Überschrift, als UTF-8-Base64 kodiert; das Front Matter wird ausgelassen, und außerhalb von Dokumenten ist der Platzhalter leer. Der Starter verwendet ihn für den Button zum Kopieren, dessen Beschriftungen in `book.html` als `{{copyMarkdownLabel}}`, `{{markdownCopiedLabel}}`, `{{markdownCopyFailedLabel}}` und `{{markdownCopyUnavailableLabel}}` verfügbar sind.
 
 `document.html` kennt diese Platzhalter:

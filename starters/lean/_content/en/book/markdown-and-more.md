@@ -46,7 +46,7 @@ Blyss reads Markdown with [marked](https://marked.js.org/) and extends it with c
 
 ### Front matter
 
-Every file starts with front matter, as introduced by [Jekyll](https://jekyllrb.com/docs/front-matter/): lines of `key: value` between two lines of `---`, such as the `title`, the `description` and the `translationKey` that links the languages of a text. Blyss reads a simple subset of YAML: each field on a line of its own, with lists and groups of fields indented below a field without a value. See [Pages and posts](/en/book/writing/pages-and-posts/#front-matter-and-urls).
+Every file starts with front matter, as introduced by [Jekyll](https://jekyllrb.com/docs/front-matter/): lines of `key: value` between two lines of `---`, such as the `title`, the `description` and the `translationKey` that links the languages of a text. Blyss reads a simple subset of YAML: each field on a line of its own, with lists and groups of fields indented below a field without a value. See [Pages and posts](/en/book/authoring/pages-and-posts/#front-matter-and-urls).
 
 
 ### GitHub Flavored Markdown
@@ -91,4 +91,4 @@ The components of a website, such as the slider and the gallery, are what shortc
 
 ### Further reading
 
-[Markdown spice](/en/book/writing/markdown-spice/) shows each of these extensions at work, and [Labels, numbers, references](/en/book/writing/labels-numbers-references/) explains the numbering of figures and formulae.
+[Markdown spice](/en/book/authoring/markdown-spice/) shows each of these extensions at work, and [Labels, numbers, references](/en/book/authoring/labels-numbers-references/) explains the numbering of figures and formulae.

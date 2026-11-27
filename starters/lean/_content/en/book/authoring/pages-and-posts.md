@@ -26,13 +26,13 @@ The front matter follows these rules:
 - A line that is neither a field nor an item of a list stops the build, and so does a field that stands twice; a line that starts with `#` is a comment.
 - A value may stand in quotes, as in `title: "Blyss: an introduction"`. In a list, quotes keep a text with a colon from being read as a field: `- "Blyss: an introduction"`.
 - `datePublished` and `dateModified` are dates such as `2026-11-10`, or with their time as in `2026-11-10T09:30:00+01:00`; any other value stops the build.
-- `translationKey` links a page to its [translations](/en/book/writing/translations/) in the other languages.
+- `translationKey` links a page to its [translations](/en/book/authoring/translations/) in the other languages.
 
 Blyss publishes content by its directory in `_content/<language>/`:
 
 - Pages in `pages/` are published at `/<language>/pages/<slug>/`.
 - Posts in `posts/` are published at `/<language>/posts/<slug>/`.
-- [Docs](/en/book/writing/book/docs/) in `book/` are published below `/<language>/book/`.
+- [Docs](/en/book/authoring/book/docs/) in `book/` are published below `/<language>/book/`.
 - `pages/index.md` is the home page at `/<language>/`, and its title and description are the heading and slogan.
 
 The slug is the name of the file without `.md`: `posts/261110-hello-world.md` is published at `/<language>/posts/261110-hello-world/`, so name the files of each language in that language. The front matter needs a `slug` only for another one, as in `slug: my-first-post`. A slug is one part of a URL, without `/`, `\`, `?` or `#`.
@@ -43,7 +43,7 @@ The slug is the name of the file without `.md`: `posts/261110-hello-world.md` is
 - Link from it with absolute paths such as `/en/`, since a host can show it at any missing URL.
 - It is not in the sitemap, and the starter's template asks search engines not to index it.
 
-Images and other files of a page lie in `static/`, as in `static/assets/img/`, and a page links to them from the root of the website, as in `![The harbour](/assets/img/harbour.jpg)`; a [figure](/en/book/writing/markdown-spice/#images-and-figures) gives an image a caption, a width and an alignment. Blyss publishes only the Markdown files of `_content/`, not the other files beside them.
+Images and other files of a page lie in `static/`, as in `static/assets/img/`, and a page links to them from the root of the website, as in `![The harbour](/assets/img/harbour.jpg)`; a [figure](/en/book/authoring/markdown-spice/#images-and-figures) gives an image a caption, a width and an alignment. Blyss publishes only the Markdown files of `_content/`, not the other files beside them.
 
 ## Drafts
 
@@ -90,4 +90,4 @@ Markdown directly in `_content/<language>/`, such as `heroCards.md`, is a fragme
 - Fragment names start with a Latin letter and contain only Latin letters and digits.
 - The fragments `heroCards.md` and `overlayCards.md` also hold the cards of the [hero and the overlay](/en/book/templates/#hero-and-overlay). `hero.md` and `overlay.md` beside them are no fragments: they show the [components](/en/book/components/#components-of-the-hero-and-the-overlay) of these regions.
 
-A paragraph consisting only of `{{<name>}}` displays a component. A fenced [component block](/en/book/components/#blocks) gives one occurrence its own text and settings. See [Markdown spice](/en/book/writing/markdown-spice/) for formulas, diagrams, callouts, figures, highlighted code, task lists and footnotes.
+A paragraph consisting only of `{{<name>}}` displays a component. A fenced [component block](/en/book/components/#blocks) gives one occurrence its own text and settings. See [Markdown spice](/en/book/authoring/markdown-spice/) for formulas, diagrams, callouts, figures, highlighted code, task lists and footnotes.

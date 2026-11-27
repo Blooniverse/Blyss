@@ -13,7 +13,7 @@ A label names an element of a page, a post or a doc. Blyss numbers the figures a
 
 A label becomes the `id` of its element, to which a link or a [reference](#references) leads. An element gets its label in one of these ways:
 
-- **Option**: `label`, or `name`, of a callout, an `{image}`, a `{figure}` or a `{math}` [directive](/en/book/writing/markdown-spice/#directives).
+- **Option**: `label`, or `name`, of a callout, an `{image}`, a `{figure}` or a `{math}` [directive](/en/book/authoring/markdown-spice/#directives).
 - **Line above**: a line `(label)=` above a heading or above any other block, such as a paragraph, a list or a diagram.
 - **Formula**: the label in brackets after a formula between `$$`, or `\label{…}` within it.
 
@@ -29,7 +29,7 @@ A label follows these rules:
 
 - **Form**: it consists of letters, digits, hyphens, underscores, full stops and colons, and starts with a letter or a digit, as in `fig-rings` or `eq:area`.
 - **One element**: it names one element of its page. The build stops at a label that stands twice, and at one that is the `id` of an element of the templates or of a footnote.
-- **Headings**: a heading has its label as its `id`, in a doc in place of [the one from its text](/en/book/writing/book/navigation/#headings).
+- **Headings**: a heading has its label as its `id`, in a doc in place of [the one from its text](/en/book/authoring/book/navigation/#headings).
 
 
 
@@ -62,7 +62,7 @@ Rings from the gallery of the starter.
 - **`{image}`**: an image has no caption and therefore no number, but it can have a label.
 - **Style**: the number is a `span` with the class `caption-number`, which the starter's `static/assets/css/main.css` sets in bold.
 
-The images of a [figure without a URL](/en/book/writing/markdown-spice/#images-and-figures) have letters. If the figure has a label, each image has that label and its letter as its `id`, such as `fig-views-b`:
+The images of a [figure without a URL](/en/book/authoring/markdown-spice/#images-and-figures) have letters. If the figure has a label, each image has that label and its letter as its `id`, such as `fig-views-b`:
 
 ````markdown
 :::{figure}
@@ -129,7 +129,7 @@ $$
 
 ## Footnotes
 
-Blyss numbers the footnotes of a page in the order of their first references, whatever their names; see [Footnotes](/en/book/writing/markdown-spice/#footnotes). As the footnotes follow the text, a figure or a formula within a footnote is numbered after those of the text.
+Blyss numbers the footnotes of a page in the order of their first references, whatever their names; see [Footnotes](/en/book/authoring/markdown-spice/#footnotes). As the footnotes follow the text, a figure or a formula within a footnote is numbered after those of the text.
 
 
 
@@ -163,7 +163,7 @@ Blyss is stricter than MyST here:
 
 - **Missing label**: the build stops at a reference to a label that its page lacks. Label the element, or give the link a text.
 - **Missing number or name**: the build stops at a reference that asks for a number or a name that its element lacks. MyST shows "??" or the label then.
-- **Other links**: only a reference shows a text without having one. Any other link without a text stops the build, also one to a label of another page, as in `[](/en/book/writing/labels-numbers-references/#fig-rings)`. Write the text of such a link yourself, as numbers start anew on every page.
+- **Other links**: only a reference shows a text without having one. Any other link without a text stops the build, also one to a label of another page, as in `[](/en/book/authoring/labels-numbers-references/#fig-rings)`. Write the text of such a link yourself, as numbers start anew on every page.
 
 
 

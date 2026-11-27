@@ -29,19 +29,19 @@ Für das Front Matter gilt:
 - Eine Zeile, die weder ein Feld noch ein Listeneintrag ist, stoppt den Build, ebenso ein Feld, das zweimal vorkommt; eine Zeile, die mit `#` beginnt, ist ein Kommentar.
 - Ein Wert darf in Anführungszeichen stehen, etwa `title: "Blyss: eine Einführung"`. In einer Liste verhindern sie, dass ein Text mit Doppelpunkt als Feld gelesen wird: `- "Blyss: eine Einführung"`.
 - `datePublished` und `dateModified` sind Daten wie `2026-11-10`, auch mit Uhrzeit wie `2026-11-10T09:30:00+01:00`; jeder andere Wert stoppt den Build.
-- `translationKey` verknüpft eine Seite mit ihren [Übersetzungen](/de/book/schreiben/uebersetzungen/) in den anderen Sprachen.
+- `translationKey` verknüpft eine Seite mit ihren [Übersetzungen](/de/book/verfassen/uebersetzungen/) in den anderen Sprachen.
 
 Blyss veröffentlicht Inhalte nach ihrem Verzeichnis:
 
 - Seiten in `_content/de/pages/` erscheinen unter `/de/pages/<slug>/`.
 - Beiträge in `_content/de/posts/` erscheinen unter `/de/posts/<slug>/`.
-- [Dokumente](/de/book/schreiben/buch/dokumente/) in `_content/de/book/` erscheinen unter `/de/book/`.
+- [Dokumente](/de/book/verfassen/buch/dokumente/) in `_content/de/book/` erscheinen unter `/de/book/`.
 - `pages/index.md` wird zur Startseite `/de/`.
 - `pages/404.md` ist eine besondere [Fehlerseite](#fehlerseite).
 
 Der Slug ist der Name der Datei ohne `.md`: `posts/261110-init-hallo-welt.md` erscheint unter `/de/posts/261110-init-hallo-welt/`; benennen Sie die Dateien jeder Sprache deshalb in dieser Sprache. Das Front Matter braucht einen `slug` nur für einen anderen, etwa `slug: mein-erster-beitrag`. Ein Slug ist ein einzelner Teil der URL, ohne `/`, `\`, `?` oder `#`.
 
-Bilder und andere Dateien einer Seite liegen in `static/`, etwa in `static/assets/img/`, und eine Seite verlinkt sie von der Wurzel der Website aus, etwa mit `![Der Hafen](/assets/img/hafen.jpg)`; eine [Abbildung](/de/book/schreiben/markdown-wuerze/#bilder-und-abbildungen) gibt einem Bild eine Bildunterschrift, eine Breite und eine Ausrichtung. Blyss veröffentlicht nur die Markdown-Dateien aus `_content/`, nicht die anderen Dateien daneben.
+Bilder und andere Dateien einer Seite liegen in `static/`, etwa in `static/assets/img/`, und eine Seite verlinkt sie von der Wurzel der Website aus, etwa mit `![Der Hafen](/assets/img/hafen.jpg)`; eine [Abbildung](/de/book/verfassen/markdown-wuerze/#bilder-und-abbildungen) gibt einem Bild eine Bildunterschrift, eine Breite und eine Ausrichtung. Blyss veröffentlicht nur die Markdown-Dateien aus `_content/`, nicht die anderen Dateien daneben.
 
 ## Entwürfe
 
@@ -87,7 +87,7 @@ Markdown-Dateien direkt in `_content/<Sprache>/`, etwa `heroCards.md`, sind Frag
 - Fehlt die Datei in einer Sprache, sind ihre Platzhalter dort leer.
 - Die Fragmente `heroCards.md` und `overlayCards.md` enthalten zugleich die Karten von [Hero und Overlay](/de/book/vorlagen/#hero-und-overlay). `hero.md` und `overlay.md` daneben sind keine Fragmente: Sie zeigen die [Komponenten](/de/book/komponenten/#komponenten-in-hero-und-overlay) dieser Bereiche.
 
-Ein Absatz, der nur aus dem Namen einer Komponente in doppelten geschweiften Klammern besteht, zeigt sie an; ein [Block](/de/book/komponenten/#blöcke-pro-verwendung) gibt einer einzelnen Verwendung eigene Texte und Einstellungen. Formeln, Diagramme, Hinweisboxen, Abbildungen, hervorgehobenen Code, Aufgabenlisten und Fußnoten zeigt [Markdown-Würze](/de/book/schreiben/markdown-wuerze/).
+Ein Absatz, der nur aus dem Namen einer Komponente in doppelten geschweiften Klammern besteht, zeigt sie an; ein [Block](/de/book/komponenten/#blöcke-pro-verwendung) gibt einer einzelnen Verwendung eigene Texte und Einstellungen. Formeln, Diagramme, Hinweisboxen, Abbildungen, hervorgehobenen Code, Aufgabenlisten und Fußnoten zeigt [Markdown-Würze](/de/book/verfassen/markdown-wuerze/).
 
 ## Fehlerseite
 
