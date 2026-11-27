@@ -293,50 +293,9 @@ Zwei Bilder der Galerie.
 
 
 
-## Wechsel von Mensch und Agent
-
-Ein Text, den ein Mensch und ein KI-Agent gemeinsam schreiben, zeigt, wer was geschrieben hat: Jeder Wechsel ist ein `{contribution}`, seinem Autor zugeschrieben und datiert.
-
-````markdown
-:::{contribution}
-:by: human
-:author: Ada
-:date: 2026-11-26
-Welcher Static Site Generator passt zu einer kleinen mehrsprachigen Website?
-:::
-
-:::{contribution}
-:by: agent
-:author: Claude
-:date: 2026-11-27
-Einer, der jede Sprache in eigenen Markdown-Dateien hält.
-:::
-````
-
-:::{contribution}
-:by: human
-:author: Ada
-:date: 2026-11-26
-Welcher Static Site Generator passt zu einer kleinen mehrsprachigen Website?
-:::
-
-:::{contribution}
-:by: agent
-:author: Claude
-:date: 2026-11-27
-Einer, der jede Sprache in eigenen Markdown-Dateien hält.
-:::
-
-- `:by:` ist Pflicht: `human` oder `agent`. Die Bezeichnungen `contributionHuman` und `contributionAgent` der Sprache benennen die Art.
-- `:author:` nennt den Autor, und `:date:` datiert den Wechsel, etwa `2026-11-26`.
-- Ein Label, `(name)=` in der Zeile darüber, lässt einen anderen Wechsel darauf verlinken.
-- Das JSON-LD der Seite nennt die Autoren als ihre `contributor`: einen Menschen als `Person`, einen Agenten als `SoftwareApplication`. Ein Mensch ohne Namen ist der Herausgeber der Website.
-
-Die Datei `AGENTS.md` der Website weist einen Agenten an, seine Wechsel unter dem letzten anzufügen und nie einen anderen zu ändern.
-
 ## Direktiven
 
-Hinweisboxen, `{image}`, `{figure}` und `{math}` sind Direktiven von [MyST](https://mystmd.org/guide/syntax-overview), und mit Blyss' eigenem [`{contribution}`](#wechsel-von-mensch-und-agent) die einzigen, die Blyss liest. Sie haben dieselbe Form:
+Hinweisboxen, `{image}`, `{figure}` und `{math}` sind Direktiven von [MyST](https://mystmd.org/guide/syntax-overview), und mit Blyss' eigenem [`{contribution}`](/de/book/schreiben/agentisches-co-authoring/#wechsel-von-mensch-und-agent) die einzigen, die Blyss liest. Sie haben dieselbe Form:
 
 - **Name**: Die öffnende Zeile nennt die Direktive in geschweiften Klammern. Der Text hinter dem Namen ist ihr Argument, etwa ein Titel oder eine URL.
 - **Begrenzung**: Eine Direktive steht zwischen zwei Zeilen aus mindestens drei Backticks oder aus mindestens drei Doppelpunkten; beides bedeutet dasselbe. Doppelpunkte eignen sich für einen Inhalt aus Markdown, etwa den einer Hinweisbox: Andere Werkzeuge wie GitHub zeigen ihn dann als Text statt als Code. Backticks eignen sich für eine Formel.

@@ -13,7 +13,7 @@ Blyss ist ein schlanker Static-Site-Generator: Er macht aus Markdown eine mehrsp
 3. [Konfiguration und Sprachen](/de/book/konfiguration/): die Einstellungen in `blyss.config.js`, darunter die Sprachen.
 4. [Vorlagen und Gestaltung](/de/book/vorlagen/): das HTML um die Inhalte, das Layout, der Hero und das Overlay.
 5. [Komponenten](/de/book/komponenten/): wiederverwendbare Elemente wie der Slider, die Galerie und die Diagramme.
-6. [Schreiben](/de/book/schreiben/): Dokumente, Seiten und Beiträge, ihre Übersetzungen und Markdown über reinen Text hinaus.
+6. [Schreiben](/de/book/schreiben/): Dokumente, Seiten und Beiträge, ihre Übersetzungen, Markdown über reinen Text hinaus und Co-Authoring mit KI-Agenten.
 7. [Veröffentlichung](/de/book/bereitstellung/): was vor der Veröffentlichung zu ersetzen ist und wie die Website gehostet wird.
 8. [Blyss entwickeln](/de/book/entwicklung/): an der Engine und an ihrem Starter arbeiten.
 

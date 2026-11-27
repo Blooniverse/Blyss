@@ -13,7 +13,7 @@ npm run check   # check everything, the drafts included, without writing
 npx blyss new post "A title"   # create a draft
 ```
 
-Writing with an AI agent: see [`AGENTS.md`](AGENTS.md) and [`_authoring/`](_authoring/README.md).
+Writing with an AI agent: see [`AGENTS.md`](AGENTS.md), [`_authoring/`](_authoring/README.md) and [agentic co-authoring](_content/en/book/writing/agentic-co-authoring.md).
 
 See [installation and commands](_content/en/book/installation.md) and [writing](_content/en/book/writing/index.md). `public/` is disposable: each build recreates it.
 

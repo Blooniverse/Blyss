@@ -1,7 +1,7 @@
 ---
 title: Labels, Nummern, Referenzen
 description: Wie Sie die Elemente eines Textes benennen, wie Blyss dessen Abbildungen, Formeln und Fußnoten nummeriert und wie Sie auf sie verweisen.
-order: 5
+order: 6
 translationKey: book-labels-nbrs-refs
 ---
 

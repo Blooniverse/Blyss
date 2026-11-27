@@ -16,6 +16,8 @@ title: Warum Blyss
 - **3 Inhaltstypen**: Dokument, Seite, Beitrag.
     - `draft: true` im Front Matter.
     - Inhalte im Browser bearbeiten mit [Decap CMS](https://decapcms.org/) oder [Tina](https://tina.io/).
+- **KI-Co-Authoring**: Wechsel von Mensch und Agent als zugeschriebene, datierte `{contribution}`-Blöcke.
+    - `AGENTS.md` und `_authoring/` im Starter.
 - **Gestaltbar**: Blyss bringt einen schlanken Starter mit.
 - **Kombinierbar**: Markdown-Komponenten und ihre Fragmente lassen sich überall verwenden.
 - **Konfigurierbar**: Über blyss.config.js und das Markdown der Komponenten.
@@ -23,8 +25,10 @@ title: Warum Blyss
 - **AIO und SEO**: Semantischer RDF-Graph (in JSON-LD) und eine klassische sitemap.xml.
 
 #### Lokale Kontrolle und Cybersicherheit
-- **Local-first**: Volle Kontrolle für Entwickler und Autoren. Ideal für Git-basierte Workflows.
 > [!IMPORTANT]
+> - **Local-first**: Volle Kontrolle für Entwickler und Autoren. Ideal für Git-basierte Workflows.
 > - **Cybersicherheit**:
 >     - 0 (NULL) Abhängigkeiten im Node.js-Server!
 >     - 3 (DREI) Abhängigkeiten in der SSG-Engine: `highlight.js`, `marked`, `temml` (und keine weiteren Abhängigkeiten)!
+- **Bibliotheks-API**: `import { build, check, createContent } from "@blooniverse/blyss"`.
+- **Live-Vorschau und Prüfungen**: Bei Änderungen neu bauen und neu laden; Inhalte samt Entwürfen prüfen, mit JSON-Berichten für Agenten und Skripte.

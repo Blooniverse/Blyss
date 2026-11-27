@@ -499,8 +499,10 @@
   and development. "Writing" holds the section "Book" with the docs "Docs",
   the former "Getting started", and "Navigation", then "Pages and posts",
   the new doc "Translations", "Markdown spice", the former "Formulas,
-  footnotes, code and diagrams", and the new doc "Labels and numbers". The
-  start page lists the chapters and tells about the documentation itself.
+  footnotes, code and diagrams", the new doc "Agentic co-authoring", which
+  holds the turns of humans and agents, and the new doc "Labels and
+  numbers". The start page lists the chapters and tells about the
+  documentation itself.
 - **Tables in the starter**: `static/assets/css/main.css` formats tables as
   GitHub does, with lines around the cells, a bold head and a shade on every
   second row. Existing websites copy the rules for `table`, `th`, `td` and
