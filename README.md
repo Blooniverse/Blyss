@@ -44,7 +44,7 @@ Blyss is a lean, local-first SSG (static site generator) for Markdown++. Ships w
 - **Live preview & checks**: Rebuild and reload on changes; check content including drafts, with JSON reports for agents and scripts.
 
 
-## Simple local workflow
+## Workflow: simple & local
 ```text
 Authoring (local)
   ▼
@@ -56,7 +56,7 @@ Publishing (optional)
 ```
 
 
-## Optional Git & automation workflow
+## Workflow: Git & automation
 ```text
 Authoring
   ▼
