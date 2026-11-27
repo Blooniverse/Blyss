@@ -38,6 +38,7 @@ Die Inhaltsvorlagen kennen diese Platzhalter:
 - `{{locale}}` und `{{languageKey}}`: Locale und Schlüssel der Sprache der Seite.
 - `{{canonicalUrl}}`, `{{alternateLinks}}` und `{{jsonLd}}`: die kanonische URL der Seite, die Links zu ihren Übersetzungen und ihr JSON-LD.
 - `{{languageSwitcher}}`: der Sprachwechsler, sofern `site.languageSwitcher` ihn nicht ausblendet.
+- `{{mainNavigation}}`: die Links der Kopfleiste, die `mainNavigation` in `blyss.config.js` aufzählt; siehe [Hauptnavigation](/de/book/konfiguration/#hauptnavigation).
 - `{{kind}}`: `home`, `page`, `post`, `book`, `list` oder `not-found`.
 - `{{basePath}}`: wie in den Inhaltsvorlagen.
 - Die Layout-Platzhalter unten.
@@ -102,6 +103,7 @@ Die `hero`-, `overlay`- und `close`-Labels unterstützen Beschriftung und Bedien
 Die Kopfleiste und die Farben des Starters passen Sie so an:
 
 - Logo: Ersetzen Sie `static/assets/img/logo.svg` und passen Sie `alt`, `width` und `height` in `templates/document.html` an.
+- Navigation: Ihre Links zählt `mainNavigation` in `blyss.config.js` auf.
 - Suchfeld: Es ist in der Starter-Kopfleiste noch ohne Funktion und sendet nichts.
 - Farben für hervorgehobenen Code: Sie stehen in `static/assets/css/main.css`; erhalten Sie mindestens 4,5:1 Kontrast zum Codehintergrund.
 

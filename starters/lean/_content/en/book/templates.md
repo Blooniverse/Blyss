@@ -38,6 +38,7 @@ Content templates can use these placeholders:
 - `{{locale}}` and `{{languageKey}}`: the locale and the key of the page's language.
 - `{{canonicalUrl}}`, `{{alternateLinks}}` and `{{jsonLd}}`: the canonical URL of the page, the links to its translations and its JSON-LD.
 - `{{languageSwitcher}}`: the language switcher, unless `site.languageSwitcher` hides it.
+- `{{mainNavigation}}`: the links of the top bar, which `mainNavigation` in `blyss.config.js` lists; see [Main navigation](/en/book/configuration/#main-navigation).
 - `{{kind}}`: `home`, `page`, `post`, `book`, `list` or `not-found`.
 - `{{basePath}}`: as in the content templates.
 - The layout placeholders below.
@@ -60,7 +61,7 @@ A placeholder that its template cannot fill, such as a misspelt one, stops the b
 The sticky top bar in `document.html` holds:
 
 - A placeholder logo. Replace `static/assets/img/logo.svg` and adjust its image's alt text and dimensions in the template.
-- The navigation.
+- The main navigation, whose links `mainNavigation` in `blyss.config.js` lists.
 - A search field, which is not functional and sends nothing.
 - The language switcher.
 

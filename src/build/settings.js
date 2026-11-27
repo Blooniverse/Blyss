@@ -4,7 +4,7 @@ export const refuse = (setting, value, requirement) =>
   new BlyssError(`Cannot use ${setting} ${JSON.stringify(value)}: it must be ${requirement}.`);
 
 const isObject = value => typeof value === "object" && value !== null && !Array.isArray(value);
-const isWebAddress = value => typeof value === "string" && URL.canParse(value) && /^https?:$/.test(new URL(value).protocol);
+export const isWebAddress = value => typeof value === "string" && URL.canParse(value) && /^https?:$/.test(new URL(value).protocol);
 
 // Every page names the website, its URL and its publisher in its head and in its JSON-LD: a website without them
 // is refused.

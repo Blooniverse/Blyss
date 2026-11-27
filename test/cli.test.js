@@ -462,6 +462,25 @@ describe("a generated starter", () => {
     }
   });
 
+  test("renders the main navigation of blyss.config.js and marks the current page and the pages that hold it", async () => {
+    const nav = async path => {
+      const html = await readFile(join(site, "public", path, "index.html"), "utf8");
+      return html.slice(html.indexOf('<nav aria-label="Main navigation">'), html.indexOf("</nav>") + "</nav>".length);
+    };
+    assert.equal(await nav("en/pages/about"), '<nav aria-label="Main navigation">\n      <ul>\n' +
+      '        <li><a href="/en/">Home</a></li>\n        <li><a href="/en/posts/">Posts</a></li>\n' +
+      '        <li><a href="/en/tags/">Tags</a></li>\n        <li><a href="/en/book/">Documentation</a></li>\n' +
+      '        <li><a href="/en/pages/about/" aria-current="page">About</a></li>\n      </ul>\n    </nav>');
+    // The home page holds every page, but is current on itself only.
+    const first = async directory => `en/${directory}/${(await readdir(join(site, "public", "en", directory), { withFileTypes: true }))
+      .find(entry => entry.isDirectory() && entry.name !== "page").name}`;
+    for (const [path, current] of [["en", '/en/" aria-current="page'], ["en/posts", '/en/posts/" aria-current="page'],
+      [await first("posts"), '/en/posts/" aria-current="true'], [await first("tags"), '/en/tags/" aria-current="true'],
+      [await first("book"), '/en/book/" aria-current="true']]) {
+      assert.deepEqual((await nav(path)).match(/[^"]+" aria-current="[^"]+/g), [current], path);
+    }
+  });
+
   test("renders the home pages with a site header and the title and slogan inside main", async () => {
     const { title, description } = await starterText("en", "pages", "index.md");
     const english = (await readFile(join(site, "public", "en", "index.html"), "utf8")).replace(/>\s+</g, "><");
@@ -1158,7 +1177,7 @@ describe("a site with technical documentation", () => {
     const headings = "## Overview\n\n### Details\n\n#### Deep\n\n## Overview\n\n## Overlay\n\n## Install & *run*\n\n## ???\n\n## Demo\n\n" +
       '<div id="demo">Demo</div>';
     for (const [file, frontMatter, body = "Text."] of [
-      ["index.md", "title: Docs"],
+      ["index.md", "title: Docs\ntranslationKey: book"],
       ["zebra.md", "title: Zebra\norder: 1"],
       ["apple.md", "title: Apple\norder: 1\ndatePublished: 2026-11-01\ntags: Blyss"],
       ["later.md", "title: Later"],
@@ -1173,7 +1192,7 @@ describe("a site with technical documentation", () => {
     await rm(german, { recursive: true, force: true });
     await mkdir(join(german, "teil", "unter"), { recursive: true });
     for (const [file, frontMatter, body = "Text."] of [
-      ["index.md", "title: Doku"],
+      ["index.md", "title: Doku\ntranslationKey: book"],
       ["teil/index.md", "title: Teil"],
       ["teil/unter/index.md", "title: Unter\norder: 1"],
       ["teil/unter/erst.md", "title: Erst\norder: 1"],
@@ -1461,6 +1480,96 @@ describe("a site with drafts", () => {
     const result = run(["build"], site);
     assert.equal(result.status, 0, result.stderr);
     await assert.rejects(stat(join(site, "public", "en", "book", "guides")), { code: "ENOENT" });
+  });
+});
+
+describe("a site with its own main navigation", () => {
+  let site;
+  let config;
+  const block = source => source.slice(source.indexOf("  mainNavigation: ["), source.indexOf("\n  ],\n", source.indexOf("  mainNavigation: [")) + 6);
+  // Each link of the main navigation of a page, as its href, its aria-current and its text.
+  const links = async path => {
+    const html = await readFile(join(site, "public", path, "index.html"), "utf8");
+    const nav = html.match(/<nav aria-label="(?:Main navigation|Hauptnavigation)">.*?<\/nav>/s)?.[0] ?? "";
+    return [...nav.matchAll(/<li><a href="([^"]*)"((?: aria-current="\w+")?)>([^<]*)<\/a><\/li>/g)].map(([, href, current, text]) => `${href}${current} ${text}`);
+  };
+
+  before(async () => {
+    site = join(sandbox, "main-navigation");
+    assert.equal(run(["init", site], sandbox).status, 0);
+    const source = await readFile(join(site, "blyss.config.js"), "utf8");
+    // A link without a label, to an archive with two pages, to a page without a German translation, to a draft, to
+    // the page of a tag and to a page of the archive that only a draft post makes, and to another website, whose
+    // address lacks the // that a browser needs, with labels of the site's own.
+    config = source.replace(block(source), `  mainNavigation: [
+    { translationKey: "about" },
+    { translationKey: "blyss:posts" },
+    { translationKey: "faq" },
+    { translationKey: "plans", label: "plans" },
+    { translationKey: "blyss:tags/roadmap" },
+    { translationKey: "blyss:posts/page/3" },
+    { href: "https:github.com/Blooniverse/Blyss?tab=readme&lang=en", label: "source" }
+  ],\n`).replace('about: "About",', 'about: "About", plans: "Plans", source: "Source",')
+      .replace('about: "Über uns",', 'about: "Über uns", plans: "Pläne", source: "Quelltext",').replace("pageSize: 10", "pageSize: 1");
+    assert.equal((config.match(/plans: "/g) ?? []).length, 2);
+    await writeFile(join(site, "blyss.config.js"), config);
+    await writeFile(join(site, "_content", "en", "pages", "faq.md"), "---\ntitle: Questions & answers\ntranslationKey: faq\n---\n\nText.\n");
+    await writeFile(join(site, "_content", "en", "pages", "plans.md"), "---\ntitle: Plans\ntranslationKey: plans\ndraft: true\n---\n\nText.\n");
+    await writeFile(join(site, "_content", "en", "posts", "roadmap.md"),
+      "---\ntitle: Roadmap\ndatePublished: 2026-12-01\ntags: Roadmap\ndraft: true\n---\n\nText.\n");
+  });
+
+  test("links the pages of each language in their order, by their labels or titles, and leaves out those it lacks", async () => {
+    const result = run(["build"], site);
+    assert.equal(result.status, 0, result.stderr);
+    const source = "https://github.com/Blooniverse/Blyss?tab=readme&amp;lang=en";
+    assert.deepEqual(await links("en/pages/about"), ['/en/pages/about/ aria-current="page" About', "/en/posts/ Posts",
+      "/en/pages/faq/ Questions &amp; answers", `${source} Source`]);
+    assert.deepEqual(await links("de/pages/about"), ['/de/pages/about/ aria-current="page" Über uns', "/de/posts/ Beiträge",
+      `${source} Quelltext`]);
+    assert.deepEqual(await links("en/posts/page/2"), ["/en/pages/about/ About", '/en/posts/ aria-current="true" Posts',
+      "/en/pages/faq/ Questions &amp; answers", `${source} Source`]);
+  });
+
+  test("links a draft, and the pages that only drafts make, for --drafts only", async () => {
+    try {
+      const result = run(["build", "--drafts"], site);
+      assert.equal(result.status, 0, result.stderr);
+      assert.deepEqual(await links("en/pages/about"), ['/en/pages/about/ aria-current="page" About', "/en/posts/ Posts",
+        "/en/pages/faq/ Questions &amp; answers", "/en/pages/plans/ Plans", "/en/tags/roadmap/ Tag: Roadmap", "/en/posts/page/3/ Posts – Page 3",
+        "https://github.com/Blooniverse/Blyss?tab=readme&amp;lang=en Source"]);
+    } finally {
+      assert.equal(run(["build"], site).status, 0);
+    }
+  });
+
+  test("leaves out the navigation without links", async () => {
+    await writeFile(join(site, "blyss.config.js"), config.replace(block(config), "  mainNavigation: [],\n"));
+    try {
+      const result = run(["build"], site);
+      assert.equal(result.status, 0, result.stderr);
+      const html = await readFile(join(site, "public", "en", "pages", "about", "index.html"), "utf8");
+      assert.match(html, /<a class="logo" href="\/en\/">.*?<\/a>\s*<search>/s);
+    } finally {
+      await writeFile(join(site, "blyss.config.js"), config);
+    }
+  });
+
+  test("lets a website of drafts only link the lists that its drafts make", async () => {
+    const drafts = join(sandbox, "main-navigation-drafts");
+    assert.equal(run(["init", drafts], sandbox).status, 0);
+    const files = (await listFiles(join(drafts, "_content"))).filter(file => /^(?:en|de)\/(?:pages|posts|book)\/.*\.md$/.test(file));
+    assert.ok(files.length);
+    for (const file of files) {
+      const source = await readFile(join(drafts, "_content", file), "utf8");
+      await writeFile(join(drafts, "_content", file), source.replace(/^---\n/, "---\ndraft: true\n"));
+    }
+    const result = run(["build"], drafts);
+    assert.equal(result.status, 0, result.stderr);
+    const all = run(["build", "--drafts"], drafts);
+    assert.equal(all.status, 0, all.stderr);
+    const html = await readFile(join(drafts, "public", "en", "index.html"), "utf8");
+    assert.ok(html.includes('<li><a href="/en/posts/">Posts</a></li>'));
   });
 });
 
@@ -2639,6 +2748,39 @@ describe("invalid configuration", () => {
       await withConfig('books: ["book"],', replacement, async () => {
         const result = run(["build"], site);
         assert.equal(result.status, 1, replacement);
+        assert.equal(result.stderr, `Cannot use ${message}.\n`);
+        assert.ok((await stat(join(site, "public", "en", "index.html"))).isFile());
+      });
+    }
+  });
+
+  test("refuses a main navigation that is not a list of links to pages or other websites, with labels of site.languages", async () => {
+    const block = config.slice(config.indexOf("  mainNavigation: ["), config.indexOf("\n  ],\n", config.indexOf("  mainNavigation: [")) + 6);
+    const either = 'it must be a link with either a translationKey or an href, such as { translationKey: "about", label: "about" }';
+    const label = 'it must be the name of a label of site.languages, such as "home" or "posts"';
+    const unknown = (index, key) => `mainNavigation[${index}].translationKey "${key}": no page has it.\n` +
+      'Correct it or remove the link, or give this translationKey to a page; "blyss:posts" is the key of the archive, "blyss:tags" ' +
+      'that of the tags, and "blyss:tags/" followed by the slug of a tag that of its page';
+    for (const [links, message] of [
+      ['"home"', 'mainNavigation "home": it must be a list of links, such as [{ translationKey: "home", label: "home" }]'],
+      ['["home"]', `mainNavigation[0] "home": ${either}`],
+      ['[{ label: "home" }]', `mainNavigation[0] {"label":"home"}: ${either}`],
+      ['[{ translationKey: "home", href: "https://example.com" }]', `mainNavigation[0] {"translationKey":"home","href":"https://example.com"}: ${either}`],
+      ['[{ translationKey: "home", text: "Home" }]', 'mainNavigation[0]: a link has no "text", only "translationKey", "href" and "label"'],
+      ['[{ translationKey: "home" }, { translationKey: "my page" }]', 'mainNavigation[1].translationKey "my page": ' +
+        'it must be the translationKey of a page, a post, a doc or a list, such as "about" or "blyss:posts"'],
+      ['[{ href: "mailto:me@example.com", label: "home" }]', 'mainNavigation[0].href "mailto:me@example.com": ' +
+        'it must be the URL of another website, such as "https://github.com"'],
+      ['[{ href: "https://example.com" }]', `mainNavigation[0].label undefined: ${label}, for the text of the link`],
+      ['[{ translationKey: "home", label: "Home" }]', `mainNavigation[0].label "Home": ${label}`],
+      ['[{ translationKey: "home" }, { translationKey: "abuot", label: "about" }]', unknown(1, "abuot")],
+      // Only the archive and the page of a tag have further pages, from the second one on.
+      ...["blyss:tags/nope/page/2", "blyss:tags/page/2", "blyss:posts/page/1", "blyss:posts/page/02", "home/page/2"]
+        .map(key => [`[{ translationKey: "${key}" }]`, unknown(0, key)])
+    ]) {
+      await withConfig(block, `  mainNavigation: ${links},\n`, async () => {
+        const result = run(["build"], site);
+        assert.equal(result.status, 1, links);
         assert.equal(result.stderr, `Cannot use ${message}.\n`);
         assert.ok((await stat(join(site, "public", "en", "index.html"))).isFile());
       });

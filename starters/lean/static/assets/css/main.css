@@ -202,7 +202,7 @@ figcaption > :last-child { margin-bottom: 0; }
 .footnotes li:target { background: var(--card); }
 
 nav ul { display: flex; flex-wrap: wrap; gap: .25rem 1rem; padding: 0; list-style: none; }
-[aria-current="page"] { font-weight: 700; text-decoration: none; }
+[aria-current="page"], [aria-current="true"] { font-weight: 700; text-decoration: none; }
 /* The top bar stays at the top of the window on every page and spans the page up to its frame. */
 .site-bar {
   position: sticky;

@@ -7,14 +7,35 @@ translationKey: book-configuration
 
 ## Configuration
 
-The comments in `blyss.config.js` describe the starter's site, pagination, layout, hero, overlay, components, directories and server settings, including their values and defaults. Beyond them:
+The comments in `blyss.config.js` describe the starter's site, pagination, books, main navigation, layout, hero, overlay, components, directories and server settings, including their values and defaults. Beyond them:
 
 - Paths in `directories` are relative to the website root.
 - `pagination.pageSize` must be a positive whole number.
 - `books` names the [books](/en/book/writing/book/#several-books) of the website, `["book"]` by default.
+- `mainNavigation` lists the links of the top bar; see [Main navigation](#main-navigation).
 - Invalid configuration stops the build before the previous output is deleted.
 
 The starter's placeholder name, public URL, publisher and language descriptions are marked `CHANGE BEFORE PRODUCTION`. `site.baseUrl` is used for canonical, alternate and JSON-LD URLs; with a path, as in `https://example.com/docs`, it places the website [below that path](/en/book/deployment/#below-a-path). See [Deployment](/en/book/deployment/) before publishing.
+
+## Main navigation
+
+`mainNavigation` lists the links of the top bar in their order, and `templates/document.html` shows them with the placeholder `{{mainNavigation}}`. Each link has either a `translationKey` or an `href`:
+
+```js
+mainNavigation: [
+  { translationKey: "home", label: "home" },
+  { translationKey: "blyss:posts", label: "posts" },
+  { translationKey: "book", label: "book" },
+  { translationKey: "about" },
+  { href: "https://github.com/Blooniverse/Blyss", label: "github" }
+],
+```
+
+- A `translationKey` links the page, post or doc with that [translationKey](/en/book/writing/translations/) in the language of each page; `blyss:posts` and `blyss:tags` link the archive and the tags, and `blyss:tags/` followed by the slug of a tag, such as `blyss:tags/markdown`, the page of that tag. A language without such a page, or with a draft only, lacks the link.
+- An `href` links another website.
+- `label` names a label of `site.languages`, such as `home`, which is the text of the link in each language; a label of your own, such as `github`, needs a text in each language. Without a label, a link to a page shows the title of that page; a link to another website needs one.
+- The link to the current page has `aria-current="page"`, and a link to a page that holds it, such as the start page of its book or the archive of the posts, has `aria-current="true"`. The home page holds every page, but is marked on itself only.
+- A `translationKey` that no page has, such as a misspelt one, stops the build. Without links, the placeholder is empty.
 
 ## Languages
 

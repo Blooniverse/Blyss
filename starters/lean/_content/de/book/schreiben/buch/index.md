@@ -27,6 +27,6 @@ Jedes Buch braucht eine eigene Startseite, `index.md`, und hat eine eigene Navig
 So fügen Sie ein Buch hinzu:
 
 1. Ergänzen Sie seinen Namen in `books`.
-2. Legen Sie seine Startseite in jeder Sprache an, etwa `_content/de/guide/index.md`.
+2. Legen Sie seine Startseite in jeder Sprache an, etwa `_content/de/guide/index.md`, mit einem eigenen `translationKey` wie `guide`.
 3. Legen Sie seine Dokumente an, etwa mit `npx blyss new doc --book guide --lang de "Ein Titel"`; ohne `--book` legt `blyss new doc` ein Dokument im ersten Buch an.
-4. Verlinken Sie das Buch in `templates/document.html`, so wie der Starter `/<Sprache>/book/` verlinkt. Ein Label jeder Sprache in `site.languages`, etwa `guide`, benennt es: Sein Platzhalter ist guideLabel in doppelten geschweiften Klammern.
+4. Ergänzen Sie den `translationKey` seiner Startseite in [`mainNavigation`](/de/book/konfiguration/#hauptnavigation), so wie der Starter `book` ergänzt. Ein Label jeder Sprache in `site.languages`, etwa `guide`, kann den Link benennen; ohne Label zeigt er den Titel der Startseite.

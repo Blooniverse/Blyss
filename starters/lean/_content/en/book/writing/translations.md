@@ -26,7 +26,7 @@ Within a language, each page has a key of its own: two pages of one language wit
 
 Every language needs its own:
 
-- `pages/index.md`, `pages/about.md` and `book/index.md`, without a different slug: the starter's navigation links to the home page, to the about page and to the start page of the documentation.
+- `pages/index.md`, `pages/about.md` and `book/index.md`, with the `translationKey` of the starter, `home`, `about` and `book`: the starter's [main navigation](/en/book/configuration/#main-navigation) links the home page, the about page and the start page of the documentation by it.
 - Not-found page, `pages/404.md`.
 - Components and cards of the [hero and the overlay](/en/book/templates/#hero-and-overlay), and texts of the [components](/en/book/components/).
 - Labels in `blyss.config.js`.

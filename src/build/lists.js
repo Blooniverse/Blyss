@@ -7,6 +7,11 @@ function slugify(name) {
     .replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }
 
+// The translationKeys of the archive, of the tags and of the page of a tag, the same in every language.
+export const postsKey = "blyss:posts";
+export const tagsKey = "blyss:tags";
+export const tagKey = slug => `${tagsKey}/${slug}`;
+
 // Accepts "tags: [Blyss, Markdown]", "tags: Blyss, Markdown" or a YAML block list.
 export function parseTags(value, languageKey, source) {
   // An item of a list that starts with a name, a colon and a space is a field, as in YAML, and no text.
@@ -88,11 +93,11 @@ export function createListRecords(config, records, locate) {
     }
     const sortedTags = [...tags.values()].sort((left, right) => left.name.localeCompare(right.name, languageConfig.locale));
 
-    addPostLists([languageKey, "posts"], labels.posts, "blyss:posts", posts);
-    addList([languageKey, "tags"], labels.tags, "blyss:tags", renderList(sortedTags.map(tag =>
+    addPostLists([languageKey, "posts"], labels.posts, postsKey, posts);
+    addList([languageKey, "tags"], labels.tags, tagsKey, renderList(sortedTags.map(tag =>
       `<a href="${escapeHtml(tag.url)}">${escapeHtml(tag.name)}</a> (${tag.posts.length})`)));
     for (const tag of sortedTags) {
-      addPostLists([languageKey, "tags", tag.slug], `${labels.tag}: ${tag.name}`, `blyss:tags/${tag.slug}`, tag.posts);
+      addPostLists([languageKey, "tags", tag.slug], `${labels.tag}: ${tag.name}`, tagKey(tag.slug), tag.posts);
     }
   }
   return lists;
