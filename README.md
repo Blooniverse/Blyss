@@ -28,7 +28,8 @@ Blyss is a lean, local-first SSG (static site generator) for Markdown++. Ships w
 - **Authoring with 3 content types**: book doc, page, post.
     - `draft: true` in Frontmatter.
     - In-browser content editing via: [Decap CMS](https://decapcms.org/) or [Tina](https://tina.io/).
-- **Co-authoring with AI agents**: Human and agent turns as attributed, dated `{contribution}` blocks; `AGENTS.md` and `_authoring/` in the starter.
+- **AI co-authoring**: Human and agent turns as attributed, dated `{contribution}` blocks.
+    - `AGENTS.md` and `_authoring/` in the starter.
 - **Themeable**: Blyss comes with a lean starter.
 - **Composable**: Markdown components and their fragments can be used anywhere.
 - **Configurable**: Via blyss.config.js and component Markdown.
