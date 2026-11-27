@@ -9,7 +9,7 @@ import { createListRecords, parseTags } from "./lists.js";
 import { renderFragments } from "./fragments.js";
 import { readFrontMatter } from "./front-matter.js";
 import { languagesOf } from "./languages.js";
-import { resolvePaths } from "./paths.js";
+import { isSystemFile, resolvePaths } from "./paths.js";
 import { renderRecord } from "./render.js";
 import { assertSite, basePathOf, layoutOf } from "./settings.js";
 import { arrangeRegions } from "./regions.js";
@@ -26,7 +26,7 @@ async function findMarkdownFiles(directory) {
   for (const entry of entries) {
     const path = join(directory, entry.name);
     if (entry.isDirectory()) files.push(...await findMarkdownFiles(path));
-    else if (entry.isFile() && extname(entry.name).toLowerCase() === ".md") files.push(path);
+    else if (entry.isFile() && extname(entry.name).toLowerCase() === ".md" && !isSystemFile(entry.name)) files.push(path);
   }
   return files;
 }
@@ -279,7 +279,7 @@ export async function build(projectDir, configPath = './blyss.config.js', { draf
 
   await rm(publicDirectory, { recursive: true, force: true });
   await mkdir(publicDirectory, { recursive: true });
-  if (hasStatic) await cp(staticDirectory, publicDirectory, { recursive: true, force: true });
+  if (hasStatic) await cp(staticDirectory, publicDirectory, { recursive: true, force: true, filter: file => !isSystemFile(file) });
   await components.publish(publicDirectory);
 
   for (const { record, html } of pages) {

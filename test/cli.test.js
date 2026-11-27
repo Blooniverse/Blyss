@@ -12,6 +12,7 @@ import { readRenderer } from "../src/build/browser.js";
 import { parseFrontMatter } from "../src/build/front-matter.js";
 import { escapeHtml } from "../src/build/html.js";
 import { parseTags } from "../src/build/lists.js";
+import { isSystemFile } from "../src/build/paths.js";
 import { fileFor, listenAddress } from "../src/server/server.js";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
@@ -37,13 +38,19 @@ async function listFiles(directory) {
     .sort();
 }
 
+// Those of a directory of the starter that Blyss reads and copies: none that the operating system has written there,
+// as the Finder of macOS does into each folder that it shows.
+async function listStarterFiles(directory) {
+  return (await listFiles(directory)).filter(file => !isSystemFile(file));
+}
+
 async function starterFiles() {
-  return (await listFiles(starter)).map(file => file === "gitignore" ? ".gitignore" : file).sort();
+  return (await listStarterFiles(starter)).map(file => file === "gitignore" ? ".gitignore" : file).sort();
 }
 
 async function starterPosts(language) {
   const directory = join(starter, "_content", language, "posts");
-  return Promise.all((await listFiles(directory)).filter(file => file.endsWith(".md")).map(async file => {
+  return Promise.all((await listStarterFiles(directory)).filter(file => file.endsWith(".md")).map(async file => {
     const { metadata, markdown } = parseFrontMatter(await readFile(join(directory, file), "utf8"));
     const parent = posix.dirname(file);
     const slug = posix.join(parent === "." ? "" : parent, metadata.slug || basename(file, ".md"));
@@ -65,7 +72,7 @@ async function starterPages(language) {
   const pages = [];
   const tags = new Set();
   for (const section of ["pages", "posts", "book"]) {
-    const files = await listFiles(join(directory, section)).catch(error => error.code === "ENOENT" ? [] : Promise.reject(error));
+    const files = await listStarterFiles(join(directory, section)).catch(error => error.code === "ENOENT" ? [] : Promise.reject(error));
     for (const file of files.filter(file => file.endsWith(".md") && !(section === "pages" && file === "404.md"))) {
       const { metadata } = parseFrontMatter(await readFile(join(directory, section, file), "utf8"));
       if (metadata.draft === "true") continue;
@@ -362,6 +369,36 @@ describe("blyss init", () => {
     await assert.rejects(init(sandbox, existing), failure);
     assert.deepEqual(await readdir(existing), []);
   });
+
+  test("copies, reads and publishes no file that the operating system writes into a folder", async t => {
+    // A copy of Blyss, and then the website that it creates, in folders that macOS and Windows have shown. The
+    // content of ._index.md is that of such a file of macOS, which is no Markdown.
+    const written = [".DS_Store", "._index.md", "Thumbs.db", "desktop.ini"];
+    const strew = async directory => {
+      for (const name of written) await writeFile(join(directory, name), "\u0000\u0005\u0016\u0007\u0000\u0002");
+    };
+    const isWritten = file => /(?:^|\/)(?:\.DS_Store|\._|Thumbs\.db|desktop\.ini)/.test(file);
+    const folders = ["", "static", join("static", "assets"), join("components", "componentSlider"), join("_content", "en", "pages")];
+    const copy = await emptyDirectory("system-files-package");
+    for (const path of ["package.json", "src", "starters"]) {
+      await cp(join(root, path), join(copy, path), { recursive: true });
+    }
+    for (const folder of folders) await strew(join(copy, "starters", "lean", folder));
+    const { init } = await import(pathToFileURL(join(copy, "src", "init", "init.js")).href);
+    const site = join(sandbox, "system-files");
+    t.mock.method(console, "log", () => {});
+    await init(sandbox, site);
+    assert.deepEqual((await listFiles(site)).filter(isWritten), []);
+
+    for (const folder of folders) await strew(join(site, folder));
+    await mkdir(join(site, "static", ".well-known"));
+    await writeFile(join(site, "static", ".well-known", "security.txt"), "Contact: mailto:security@example.com\n");
+    const result = run(["build"], site);
+    assert.equal(result.status, 0, result.stderr);
+    const published = await listFiles(join(site, "public"));
+    assert.deepEqual(published.filter(isWritten), []);
+    assert.ok(published.includes(".well-known/security.txt"));
+  });
 });
 
 describe("a generated starter", () => {
@@ -390,11 +427,13 @@ describe("a generated starter", () => {
     assert.equal(result.status, 0, result.stderr);
     const pages = [...starterPagesOf.en, ...starterPagesOf.de].map(page => page.path);
     const notFoundPages = ["404.html", "en/404.html", "de/404.html"];
-    // Static files are copied as they are; components publish their files but their templates and data files, and
-    // the renderer of Blyss, which the live demo asks for.
-    const componentFiles = (await listFiles(join(starter, "components"))).filter(file => !/\.(?:html|data\.js)$/.test(file));
+    // Static files are copied as they are; components publish the files of their directories but their templates,
+    // their data files and what has a name that starts with a dot or an underscore, and the renderer of Blyss, which
+    // the live demo asks for.
+    const componentFiles = (await listStarterFiles(join(starter, "components")))
+      .filter(file => file.includes("/") && !/(?:^|\/)[._]/.test(file) && !/\.(?:html|data\.js)$/.test(file));
     const rendererFiles = Object.keys(await readRenderer()).map(file => `blyss-renderer/${file}`);
-    assert.deepEqual(await listFiles(join(site, "public")), [...await listFiles(join(starter, "static")),
+    assert.deepEqual(await listFiles(join(site, "public")), [...await listStarterFiles(join(starter, "static")),
       ...[...componentFiles, ...rendererFiles].map(file => `components/${file}`), "sitemap.xml", ...pages, ...notFoundPages].sort());
     for (const page of [...pages, ...notFoundPages]) {
       const html = await readFile(join(site, "public", page), "utf8");
@@ -3056,11 +3095,12 @@ export default { ...site, site: { ...site.site, name } };
   test("a watching server that closes lets its running build end first", async () => {
     await rm(join(site, "public"), { recursive: true, force: true });
     // The first build runs while the server closes; the sitemap is the last file that a build writes.
+    // A text rather than a truth value: under node --test in a terminal with colours, FORCE_COLOR would colour that.
     const script = `
       import { existsSync } from "node:fs";
       import { loadConfig, serve } from ${JSON.stringify(pathToFileURL(join(root, "src", "index.js")).href)};
       const server = serve(process.cwd(), await loadConfig(process.cwd()), { watch: true, port: ${await freePort()} });
-      server.on("listening", () => server.close(() => console.log("closed with its sitemap:", existsSync("public/sitemap.xml"))));
+      server.on("listening", () => server.close(() => console.log(\`closed with its sitemap: \${existsSync("public/sitemap.xml")}\`)));
     `;
     const result = spawnSync(process.execPath, ["--input-type=module", "--eval", script], { cwd: site, encoding: "utf8", timeout: 60_000 });
     assert.equal(result.status, 0, result.stderr);
@@ -3092,6 +3132,44 @@ export default { ...site, site: { ...site.site, name } };
     assert.equal(result.status, 0, result.stderr);
     assert.match(result.stderr, /Cannot watch _content: watch unavailable/);
     assert.deepEqual(JSON.parse(result.stdout), [{ ok: false, message: "Cannot watch _content: watch unavailable" }]);
+  });
+
+  test("builds anew after a change, but not after the operating system has written a file of its own into a folder", () => {
+    // Each build counts, and ends at once.
+    const script = `
+      import childProcess from "node:child_process";
+      import { EventEmitter } from "node:events";
+      import fs from "node:fs";
+      import { syncBuiltinESMExports } from "node:module";
+      import { resolve } from "node:path";
+      import { setTimeout as wait } from "node:timers/promises";
+      const listeners = new Map();
+      fs.watch = (path, options, listener) => {
+        listeners.set(path, listener);
+        return Object.assign(new EventEmitter(), { close() {} });
+      };
+      let builds = 0;
+      childProcess.spawn = () => {
+        builds++;
+        const build = Object.assign(new EventEmitter(), { stdout: new EventEmitter(), stderr: new EventEmitter() });
+        setImmediate(() => build.emit("close", 0));
+        return build;
+      };
+      syncBuiltinESMExports();
+      const { rebuildOnChange } = await import(${JSON.stringify(pathToFileURL(join(root, "src", "server", "watch.js")).href)});
+      const stop = rebuildOnChange(process.cwd(), { sources: ["_content"], publicDirectory: "public" }, "blyss.config.js");
+      const changed = listeners.get(resolve("_content"));
+      for (const name of [".DS_Store", "en/._about.md", "en/pages/Thumbs.db", "de/desktop.ini"]) changed("rename", name);
+      await wait(300);
+      const before = builds;
+      changed("change", "en/pages/about.md");
+      while (builds === before) await wait(10);
+      await stop();
+      console.log(JSON.stringify([before, builds]));
+    `;
+    const result = spawnSync(process.execPath, ["--input-type=module", "--eval", script], { cwd: site, encoding: "utf8", timeout: 20_000 });
+    assert.equal(result.status, 0, result.stderr);
+    assert.deepEqual(JSON.parse(result.stdout.trim().split("\n").at(-1)), [1, 2]);
   });
 
   test("is a library through the exports of its package", async () => {

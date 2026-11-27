@@ -5,6 +5,7 @@ import { BlyssError } from "../errors.js";
 import { publishRenderer, readRenderer } from "./browser.js";
 import { readFrontMatter } from "./front-matter.js";
 import { renderDocument, renderMarkdown } from "./markdown.js";
+import { isSystemFile } from "./paths.js";
 import { applyTemplate, escapeHtml, labelValues } from "./render.js";
 import { basePathOf, refuse } from "./settings.js";
 import { splitTexts } from "./texts.js";
@@ -63,8 +64,9 @@ async function importData(file, location) {
 
 // A name that starts with a dot or an underscore marks what the browser does not need, such as a module that a data
 // file imports, notes or the files of an editor: such a file or directory of a component is not published, wherever
-// it lies in the directory of the component, and such a directory beside the components is no component.
-const isPublished = file => !/^[._]/.test(basename(file));
+// it lies in the directory of the component, and such a directory beside the components is no component. Neither is
+// a file that the operating system writes there (see isSystemFile).
+const isPublished = file => !/^[._]/.test(basename(file)) && !isSystemFile(file);
 
 // A component is a directory components/<name>/ with a template, <name>.html, which {{<name>}} shows in the templates
 // of the website and in its Markdown. The placeholders of that template are, each replacing an earlier one of its

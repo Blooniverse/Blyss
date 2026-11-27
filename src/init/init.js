@@ -4,6 +4,7 @@ import { builtinModules } from "node:module";
 import { basename, dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { BlyssError } from "../errors.js";
+import { isSystemFile } from "../build/paths.js";
 
 const packageRoot = fileURLToPath(new URL("../../", import.meta.url));
 const starterDirectory = join(packageRoot, "starters", "lean");
@@ -44,7 +45,7 @@ async function renderPackageJson(destination) {
 async function readStarter() {
   const entries = await readdir(starterDirectory, { recursive: true, withFileTypes: true });
   return entries
-    .filter(entry => entry.isDirectory() || entry.isFile())
+    .filter(entry => entry.isDirectory() || (entry.isFile() && !isSystemFile(entry.name)))
     .map(entry => ({
       source: join(entry.parentPath, entry.name),
       target: join(relative(starterDirectory, entry.parentPath), renamedFiles.get(entry.name) ?? entry.name),

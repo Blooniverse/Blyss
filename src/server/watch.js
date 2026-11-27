@@ -3,7 +3,7 @@ import { existsSync, lstatSync, readFileSync, readlinkSync, realpathSync, statSy
 import { registerHooks } from "node:module";
 import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
-import { within } from "../build/paths.js";
+import { isSystemFile, within } from "../build/paths.js";
 
 const cli = fileURLToPath(new URL("../../bin/blyss.js", import.meta.url));
 
@@ -278,7 +278,8 @@ export function rebuildOnChange(projectDir, served, configFile, { drafts = false
       if (watched.has(key)) continue;
       const counts = path => recursive ||
         (path ? files.has(path) : [...files.keys()].some(file => dirname(file) === directory && isStale(file)));
-      watched.set(key, observe(directory, recursive, path => { if (counts(path)) schedule(); }, failed));
+      // A file that the operating system writes into a folder that it shows, as the Finder does, changes no page.
+      watched.set(key, observe(directory, recursive, path => { if (!(path && isSystemFile(path)) && counts(path)) schedule(); }, failed));
     }
   };
 

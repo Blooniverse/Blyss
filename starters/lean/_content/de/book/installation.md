@@ -89,4 +89,6 @@ Ohne `blyss.config.js` brechen `build` und `serve` ab und empfehlen `init`. `ser
 | `blyss.config.js` | Einstellungen der Website |
 | `public/` | Generierte Ausgabe, nicht von Hand bearbeiten |
 
+Blyss übergeht die Dateien, die Betriebssysteme selbst in die angezeigten Ordner schreiben: `.DS_Store` und `._<Name>` von macOS, `Thumbs.db` und `desktop.ini` von Windows. Es veröffentlicht sie nicht und erstellt die Website ihretwegen nicht neu.
+
 Der mit Blyss gelieferte Starter `starters/lean/` bleibt unverändert; die erzeugte Website ist Ihre eigene Kopie. Jeder Build löscht und erzeugt das konfigurierte Ausgabeverzeichnis neu. Bearbeiten Sie stattdessen die Quelldateien. Weiter geht es mit der [Konfiguration](/de/book/konfiguration/).

@@ -94,4 +94,6 @@ A website consists of:
 
 A website without `components/` or `static/` has no components or no such files.
 
+Blyss ignores the files that operating systems write into the folders they show: `.DS_Store` and `._<name>` of macOS, `Thumbs.db` and `desktop.ini` of Windows. It neither publishes them nor rebuilds the website when they change.
+
 Every build deletes and recreates `public/`: edit the sources, not `public/`. Blyss refuses to build into the website root or a directory containing or inside a source directory. The bundled starter stays unchanged when `init` copies it; the new website is yours to edit.
