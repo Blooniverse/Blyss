@@ -21,7 +21,7 @@ function renderItem(doc, current, indent, children = doc.children) {
   return `${indent}<li>${link}\n${indent}  <ul>\n${items}\n${indent}  </ul>\n${indent}</li>`;
 }
 
-// The start page of the documentation comes first, followed by its docs and sections, each section with its docs.
+// The start page of the book comes first, followed by its docs and sections, each section with its docs.
 function renderNavigation(root, current, labels) {
   const items = [renderItem(root, current, "  ", []), ...root.children.map(doc => renderItem(doc, current, "  "))];
   return `<nav aria-label="${escapeHtml(labels.book)}">\n<ul>\n${items.join("\n")}\n</ul>\n</nav>\n`;
@@ -36,14 +36,17 @@ function renderPager(previous, next, labels) {
   return `<nav aria-label="${escapeHtml(labels.pagination)}">\n<ul>\n${links.map(link => `  <li>${link}</li>`).join("\n")}\n</ul>\n</nav>\n`;
 }
 
-// The docs of a language lie in _content/<language>/book/, and each of its directories is a section: its index.md is
-// the start page of the section and names it in the navigation. Like the sidebars of Docusaurus or MkDocs, the
-// navigation follows the directories, and the docs beside each other are sorted by their order, then by their titles.
-// The previous and the next doc are those before and after a doc in the navigation. drafts names the files of the
-// drafts that the build leaves out: a doc cannot be built if the start page of its section is one of them.
+// The docs of a book lie in its directory of a language, such as _content/<language>/book/, and each directory
+// within it is a section: its index.md is the start page of the section and names it in the navigation. Like the
+// sidebars of Docusaurus or MkDocs, the navigation follows the directories, and the docs beside each other are sorted
+// by their order, then by their titles. The previous and the next doc are those before and after a doc in the
+// navigation, which never leads into another book. drafts names the files of the drafts that the build leaves out: a
+// doc cannot be built if the start page of its section is one of them.
 export function arrangeBooks(projectDir, contentDirectory, records, drafts = []) {
   const docs = new Map();
   const sections = new Map();
+  // Each book of each language has a navigation of its own, such as en/book or de/guide.
+  const bookOf = record => `${record.languageKey}/${record.book}`;
   for (const record of records.filter(item => item.type === "book")) {
     const file = relative(projectDir, record.sourceFile);
     const [, , ...path] = relative(contentDirectory, record.sourceFile).split(sep);
@@ -53,19 +56,19 @@ export function arrangeBooks(projectDir, contentDirectory, records, drafts = [])
       // The directory of the section that lists the doc: the parent directory of a section's start page.
       parent: isIndex ? directories.slice(0, -1) : directories };
     docs.set(record, doc);
-    if (isIndex) sections.set(`${record.languageKey}/${directories.join("/")}`, doc);
+    if (isIndex) sections.set(`${bookOf(record)}/${directories.join("/")}`, doc);
   }
 
   const roots = new Map();
   for (const doc of docs.values()) {
     const { record, file, parent } = doc;
-    if (doc === sections.get(`${record.languageKey}/`)) {
-      roots.set(record.languageKey, doc);
+    if (doc === sections.get(`${bookOf(record)}/`)) {
+      roots.set(bookOf(record), doc);
       continue;
     }
-    const section = sections.get(`${record.languageKey}/${parent.join("/")}`);
+    const section = sections.get(`${bookOf(record)}/${parent.join("/")}`);
     if (!section) {
-      const index = join(relative(projectDir, contentDirectory), record.languageKey, "book", ...parent, "index.md");
+      const index = join(relative(projectDir, contentDirectory), record.languageKey, record.book, ...parent, "index.md");
       if (drafts.includes(index)) {
         throw new BlyssError(`Cannot build ${file}: ${index}, the start page of its section, is a draft.\n` +
           "Make the doc a draft as well, or publish the start page: its title names the section in the navigation.");
@@ -77,7 +80,7 @@ export function arrangeBooks(projectDir, contentDirectory, records, drafts = [])
   }
 
   const sequences = new Map();
-  for (const [languageKey, root] of roots) {
+  for (const [book, root] of roots) {
     const sequence = [];
     const arrange = doc => {
       sequence.push(doc);
@@ -86,7 +89,7 @@ export function arrangeBooks(projectDir, contentDirectory, records, drafts = [])
       doc.children.forEach(arrange);
     };
     arrange(root);
-    sequences.set(languageKey, sequence);
+    sequences.set(book, sequence);
   }
 
   return {
@@ -95,10 +98,10 @@ export function arrangeBooks(projectDir, contentDirectory, records, drafts = [])
       const doc = docs.get(record);
       if (!doc) return { bookNavigation: "", bookPager: "" };
       const { labels } = record.languageConfig;
-      const sequence = sequences.get(record.languageKey);
+      const sequence = sequences.get(bookOf(record));
       const position = sequence.indexOf(doc);
       return {
-        bookNavigation: renderNavigation(roots.get(record.languageKey), doc, labels),
+        bookNavigation: renderNavigation(roots.get(bookOf(record)), doc, labels),
         bookPager: renderPager(sequence[position - 1], sequence[position + 1], labels)
       };
     }

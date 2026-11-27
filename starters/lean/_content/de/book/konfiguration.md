@@ -12,6 +12,7 @@ Die Kommentare in `blyss.config.js` erklären die Einstellungen des Starters und
 Weitere Einstellungen:
 
 - `pagination.pageSize` legt die Anzahl der Beiträge je Archiv- und Schlagwortseite fest; der Standard ist 10, erlaubt sind positive ganze Zahlen.
+- `books` nennt die [Bücher](/de/book/schreiben/buch/#mehrere-bücher) der Website; der Standard ist `["book"]`.
 - `layout` steuert Abstände und Ausrichtung; Hero und Overlay sowie ihre Schalter beschreibt [Vorlagen](/de/book/vorlagen/).
 - `components` enthält die Einstellungen einzelner Komponenten; ein [Block](/de/book/komponenten/) kann sie für eine einzelne Verwendung ersetzen.
 
@@ -44,7 +45,7 @@ Zwei weitere Einstellungen betreffen die Sprachen:
 
 1. Ergänzen Sie etwa `fr` in `site.languages`, mit `label`, `locale`, `description` und allen übersetzten `labels`.
 2. Ergänzen Sie französische Beschreibungen in jedem Schritt von `components.componentSlider.steps`.
-3. Legen Sie `_content/fr/` nach dem Vorbild von `_content/en/` an: `pages/index.md`, `pages/about.md`, `pages/404.md`, `hero.md`, `overlay.md`, `heroCards.md`, `overlayCards.md`, die benötigten Texte unter `components/`, `book/index.md`, Dokumente und Beiträge. Gleiche `translationKey`-Werte verknüpfen Übersetzungen.
+3. Legen Sie `_content/fr/` nach dem Vorbild von `_content/en/` an: `pages/index.md`, `pages/about.md`, `pages/404.md`, `hero.md`, `overlay.md`, `heroCards.md`, `overlayCards.md`, die benötigten Texte unter `components/`, die `index.md` jedes Buchs wie `book/index.md`, Dokumente und Beiträge. Gleiche `translationKey`-Werte verknüpfen Übersetzungen.
 4. Erstellen Sie die Website mit `npm run build` und prüfen Sie die Sprachlinks.
 
 Zum Entfernen einer Sprache löschen Sie ihren Eintrag, ihr Inhaltsverzeichnis und ihre Slider-Beschreibungen. Ändern Sie gegebenenfalls `defaultLanguage`; bei nur einer Sprache können Sie den Sprachwechsler ausblenden. Bei einer neuen Standardsprache passen Sie auch die Weiterleitung in `static/staticwebapp.config.json` und im Deployment-Workflow an: siehe [Bereitstellung](/de/book/bereitstellung/).

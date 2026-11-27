@@ -5,9 +5,28 @@ order: 1
 translationKey: book-writing-book
 ---
 
-A book is the documentation of a website, such as this one. Its docs are the Markdown files in `_content/<language>/book/`, published below `/<language>/book/`. Unlike pages and posts, docs are arranged in sections, and Blyss links them: by a navigation, by a table of contents in each doc and by links to the previous and the next doc.
+A book is the documentation of a website, such as this one. Its docs are the Markdown files in `_content/<language>/book/`, published below `/<language>/book/`. Unlike pages and posts, docs are arranged in sections, and Blyss links them: by a navigation, by a table of contents in each doc and by links to the previous and the next doc. A website can have [several books](#several-books).
 
 - [Docs](/en/book/writing/book/docs/): add a doc or a section and place it among the others.
 - [Navigation](/en/book/writing/book/navigation/): how Blyss links the docs and their headings.
 
 This section is `_content/en/book/writing/book/`, a section within the section [Writing](/en/book/writing/).
+
+## Several books
+
+A website can have more than one book, such as a user guide beside its developer documentation. `books` in `blyss.config.js` names them; without it, the website has the one book `book`:
+
+```js
+books: ["book", "guide"],
+```
+
+Each name is a directory in `_content/<language>/` and the start of the book's URLs: the docs in `_content/en/guide/` are published below `/en/guide/`. A name consists of lower-case Latin letters, digits and hyphens, and is none of `pages`, `posts`, `tags` and `components`.
+
+Each book needs its own start page, `index.md`, and has its own navigation and its own links to the previous and the next doc, which never lead into another book. Otherwise all books are alike: their docs use `templates/book.html`, follow `overlay.showOn.book` and are described as TechArticle in the JSON-LD.
+
+To add a book:
+
+1. Add its name to `books`.
+2. Create its start page in each language, such as `_content/en/guide/index.md`.
+3. Create its docs, such as with `npx blyss new doc --book guide "A title"`; without `--book`, `blyss new doc` puts a doc into the first book.
+4. Link the book in `templates/document.html`, as the starter links `/<language>/book/`. A label of each language in `site.languages`, such as `guide`, names it: its placeholder is guideLabel in double curly braces.

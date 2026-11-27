@@ -15,6 +15,7 @@ title: Why Blyss
  
 #### Authoring
 - **3 content types**: book doc, page, post.
+    - Any number of books, each with its own navigation.
     - `draft: true` in Frontmatter.
     - In-browser content editing via: [Decap CMS](https://decapcms.org/) or [Tina](https://tina.io/).
 - **AI co-authoring**: Human and agent turns as attributed, dated `{contribution}` blocks.

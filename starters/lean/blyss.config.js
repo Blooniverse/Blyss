@@ -4,13 +4,14 @@
 // The settings, in the order of this file:
 //   1. site                    the name, the URL, the publisher and the languages
 //   2. pagination              the length of the lists of posts
-//   3. layout                  the margin, the paddings and the alignments
-//   4. hero                    the cards of the hero of the home pages
-//   5. overlay                 the pages and the cards of the overlay
-//   6. synchroniseHeroOverlay  the overlay as a copy of the hero
-//   7. components              the settings of each component
-//   8. directories             the directories of the website
-//   9. server                  the address and port of the local server
+//   3. books                   the books of the documentation
+//   4. layout                  the margin, the paddings and the alignments
+//   5. hero                    the cards of the hero of the home pages
+//   6. overlay                 the pages and the cards of the overlay
+//   7. synchroniseHeroOverlay  the overlay as a copy of the hero
+//   8. components              the settings of each component
+//   9. directories             the directories of the website
+//  10. server                  the address and port of the local server
 export default {
   // 1. Site
   site: {
@@ -128,7 +129,13 @@ export default {
   // 2. Pagination
   pagination: { pageSize: 10 }, // posts per archive and tag page; later pages are at <list>/page/<n>/
 
-  // 3. Layout: each length is a CSS length in px, rem, vw, vh, vmin or vmax.
+  // 3. Books: each name is a directory of docs in _content/<language>/ and the start of their URLs, as "book" is in
+  // /en/book/. Each book has its own start page, index.md, its own navigation and its own links to the previous and the
+  // next doc; blyss new doc puts a doc into the first book unless --book names another. Add a name, such as "guide",
+  // for a second book, and link it in templates/document.html; _content/en/book/writing/book/index.md tells more.
+  books: ["book"],
+
+  // 4. Layout: each length is a CSS length in px, rem, vw, vh, vmin or vmax.
   layout: {
     margin: "2vmin", // the space between the frame and the content
     alignHome: "center", // or "left", which aligns all content of the home pages (only the home pages)
@@ -139,21 +146,21 @@ export default {
     alignOverlay: "centerExtra" // or "left" or "center" (as above, with the cards of overlayCards.md), which aligns the content of the overlay
   },
 
-  // 4. Hero: the region below the content of the home pages (templates/hero.html). It shows the components of
+  // 5. Hero: the region below the content of the home pages (templates/hero.html). It shows the components of
   // _content/<language>/hero.md, each with its settings and its text, and its cards, which are switched on (true) or
   // off (false) here; a hero without a component and without cards is not shown at all.
   hero: {
     cards: true // all cards of _content/<language>/heroCards.md, with their title
   },
 
-  // 5. Overlay: the bar at the bottom of the window whose button opens a panel (templates/overlay.html). It shows
+  // 6. Overlay: the bar at the bottom of the window whose button opens a panel (templates/overlay.html). It shows
   // the components of _content/<language>/overlay.md and its own cards, like the hero, and is not shown without them
   // either.
   overlay: {
     showOn: { // the kinds of pages that have the overlay: the three content types, then the other kinds
       page: true, // the pages in _content/<language>/pages/
       post: true, // the posts in _content/<language>/posts/
-      book: true, // the docs in _content/<language>/book/
+      book: true, // the docs of every book, such as those in _content/<language>/book/
       home: false, // the home pages, which have the hero
       list: true, // the archive and the tag pages
       "not-found": true // the "not found" pages
@@ -161,12 +168,12 @@ export default {
     cards: true // all cards of _content/<language>/overlayCards.md, with their title
   },
 
-  // 6. Synchronisation: true makes the overlay a copy of the hero. The overlay then shows the components of hero.md
+  // 7. Synchronisation: true makes the overlay a copy of the hero. The overlay then shows the components of hero.md
   // and, if hero.cards is true, the cards of heroCards.md, whatever overlay.md and overlay.cards say; overlayCards.md
   // is not used, and overlay.showOn still applies.
   synchroniseHeroOverlay: false,
 
-  // 7. Components: the settings of the components in components/<name>/, whose texts are in
+  // 8. Components: the settings of the components in components/<name>/, whose texts are in
   // _content/<language>/components/<name>.md. They apply wherever a template or the Markdown of a page shows a
   // component by its name. A block gives a single one settings and a text of its own, as those of hero.md and of
   // overlay.md do for the hero and the overlay. Each duration is a time in ms or s. The diagrams and the live demo
@@ -237,7 +244,7 @@ export default {
     }
   },
 
-  // 8. Directories
+  // 9. Directories
   directories: {
     components: "components",
     content: "_content",
@@ -246,7 +253,7 @@ export default {
     templates: "templates"
   },
 
-  // 9. Server
+  // 10. Server
   server: {
     // The address that blyss serve listens on: 127.0.0.1 only for this computer, 0.0.0.0 for every network, as a
     // container needs. --hostbind and the environment variable BLYSS_HOSTBIND come first.
