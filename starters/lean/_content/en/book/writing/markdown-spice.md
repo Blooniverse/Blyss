@@ -292,50 +292,9 @@ Two images of the gallery.
 
 
 
-## Turns of humans and agents
-
-A text that a human and an AI agent write together shows who wrote what: each turn is a `{contribution}`, attributed to its author and dated.
-
-````markdown
-:::{contribution}
-:by: human
-:author: Ada
-:date: 2026-11-26
-Which static site generator suits a small multilingual website?
-:::
-
-:::{contribution}
-:by: agent
-:author: Claude
-:date: 2026-11-27
-One that keeps each language in Markdown files of its own.
-:::
-````
-
-:::{contribution}
-:by: human
-:author: Ada
-:date: 2026-11-26
-Which static site generator suits a small multilingual website?
-:::
-
-:::{contribution}
-:by: agent
-:author: Claude
-:date: 2026-11-27
-One that keeps each language in Markdown files of its own.
-:::
-
-- `:by:` is required: `human` or `agent`. The labels `contributionHuman` and `contributionAgent` of the language name the kind.
-- `:author:` names the author and `:date:` dates the turn, as in `2026-11-26`.
-- A label, `(name)=` on the line above, lets another turn link to it.
-- The JSON-LD of the page names the authors as its `contributor`: a human as a `Person`, an agent as a `SoftwareApplication`. A human without a name is the publisher of the website.
-
-The file `AGENTS.md` of the website tells an agent to add its turns below the last one and never to change another.
-
 ## Directives
 
-Callouts, `{image}`, `{figure}` and `{math}` are directives of [MyST](https://mystmd.org/guide/syntax-overview), and, with Blyss's own [`{contribution}`](#turns-of-humans-and-agents), the only ones that Blyss reads. They share one form:
+Callouts, `{image}`, `{figure}` and `{math}` are directives of [MyST](https://mystmd.org/guide/syntax-overview), and, with Blyss's own [`{contribution}`](/en/book/writing/agentic-co-authoring/#turns-of-humans-and-agents), the only ones that Blyss reads. They share one form:
 
 - **Name**: the opening fence names the directive in braces. The text after the name is its argument, such as a title or a URL.
 - **Fences**: a directive stands between two lines of at least three backticks or of at least three colons, which mean the same. Colons suit a body of Markdown, such as that of a callout: another tool, such as GitHub, then shows the body as text rather than as code. Backticks suit a formula.

@@ -13,7 +13,7 @@ Blyss is a lean static-site generator: it turns Markdown into a multilingual web
 3. [Configuration and languages](/en/book/configuration/): the settings of `blyss.config.js`, among them the languages.
 4. [Templates and the lean theme](/en/book/templates/): the HTML around the content, the layout, the hero and the overlay.
 5. [Components](/en/book/components/): reusable elements such as the slider, the gallery and the diagrams.
-6. [Writing](/en/book/writing/): docs, pages and posts, their translations and Markdown beyond plain text.
+6. [Writing](/en/book/writing/): docs, pages and posts, their translations, Markdown beyond plain text and co-authoring with AI agents.
 7. [Deployment and SEO](/en/book/deployment/): what to replace before publishing, and how to host the website.
 8. [Developing Blyss](/en/book/development/): work on the engine and on its starter.
 

@@ -1,7 +1,7 @@
 ---
 title: Labels, numbers, references
 description: How to label the elements of a text, how Blyss numbers its figures, formulae and footnotes, and how to refer to them.
-order: 5
+order: 6
 translationKey: book-labels-nbrs-refs
 ---
 
