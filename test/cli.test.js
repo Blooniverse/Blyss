@@ -1554,6 +1554,23 @@ describe("a site with its own main navigation", () => {
       await writeFile(join(site, "blyss.config.js"), config);
     }
   });
+
+  test("lets a website of drafts only link the lists that its drafts make", async () => {
+    const drafts = join(sandbox, "main-navigation-drafts");
+    assert.equal(run(["init", drafts], sandbox).status, 0);
+    const files = (await listFiles(join(drafts, "_content"))).filter(file => /^(?:en|de)\/(?:pages|posts|book)\/.*\.md$/.test(file));
+    assert.ok(files.length);
+    for (const file of files) {
+      const source = await readFile(join(drafts, "_content", file), "utf8");
+      await writeFile(join(drafts, "_content", file), source.replace(/^---\n/, "---\ndraft: true\n"));
+    }
+    const result = run(["build"], drafts);
+    assert.equal(result.status, 0, result.stderr);
+    const all = run(["build", "--drafts"], drafts);
+    assert.equal(all.status, 0, all.stderr);
+    const html = await readFile(join(drafts, "public", "en", "index.html"), "utf8");
+    assert.ok(html.includes('<li><a href="/en/posts/">Posts</a></li>'));
+  });
 });
 
 describe("a site with its own hero cards and fragments", () => {
@@ -2741,6 +2758,9 @@ describe("invalid configuration", () => {
     const block = config.slice(config.indexOf("  mainNavigation: ["), config.indexOf("\n  ],\n", config.indexOf("  mainNavigation: [")) + 6);
     const either = 'it must be a link with either a translationKey or an href, such as { translationKey: "about", label: "about" }';
     const label = 'it must be the name of a label of site.languages, such as "home" or "posts"';
+    const unknown = (index, key) => `mainNavigation[${index}].translationKey "${key}": no page has it.\n` +
+      'Correct it or remove the link, or give this translationKey to a page; "blyss:posts" is the key of the archive, "blyss:tags" ' +
+      'that of the tags, and "blyss:tags/" followed by the slug of a tag that of its page';
     for (const [links, message] of [
       ['"home"', 'mainNavigation "home": it must be a list of links, such as [{ translationKey: "home", label: "home" }]'],
       ['["home"]', `mainNavigation[0] "home": ${either}`],
@@ -2753,12 +2773,10 @@ describe("invalid configuration", () => {
         'it must be the URL of another website, such as "https://github.com"'],
       ['[{ href: "https://example.com" }]', `mainNavigation[0].label undefined: ${label}, for the text of the link`],
       ['[{ translationKey: "home", label: "Home" }]', `mainNavigation[0].label "Home": ${label}`],
-      ['[{ translationKey: "blyss:tags/nope/page/2" }]', 'mainNavigation[0].translationKey "blyss:tags/nope/page/2": no page has it.\n' +
-        'Correct it or remove the link, or give this translationKey to a page; "blyss:posts" is the key of the archive, "blyss:tags" ' +
-        'that of the tags, and "blyss:tags/" followed by the slug of a tag that of its page'],
-      ['[{ translationKey: "home" }, { translationKey: "abuot", label: "about" }]', 'mainNavigation[1].translationKey "abuot": no page has it.\n' +
-        'Correct it or remove the link, or give this translationKey to a page; "blyss:posts" is the key of the archive, "blyss:tags" ' +
-        'that of the tags, and "blyss:tags/" followed by the slug of a tag that of its page']
+      ['[{ translationKey: "home" }, { translationKey: "abuot", label: "about" }]', unknown(1, "abuot")],
+      // Only the archive and the page of a tag have further pages, from the second one on.
+      ...["blyss:tags/nope/page/2", "blyss:tags/page/2", "blyss:posts/page/1", "blyss:posts/page/02", "home/page/2"]
+        .map(key => [`[{ translationKey: "${key}" }]`, unknown(0, key)])
     ]) {
       await withConfig(block, `  mainNavigation: ${links},\n`, async () => {
         const result = run(["build"], site);

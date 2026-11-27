@@ -5,7 +5,7 @@ import { BlyssError, BlyssErrors } from "../errors.js";
 import { dateAdvice, isDate } from "./dates.js";
 import { loadComponents } from "./components.js";
 import { withBasePath } from "./html.js";
-import { createListRecords, parseTags, tagKey } from "./lists.js";
+import { createListRecords, parseTags, postsKey, tagKey, tagsKey } from "./lists.js";
 import { renderFragments } from "./fragments.js";
 import { readFrontMatter } from "./front-matter.js";
 import { languagesOf } from "./languages.js";
@@ -139,8 +139,9 @@ async function discoverContent(projectDir, config, contentDirectory, locate, dra
     const type = sections[section];
     const nested = parts.slice(2, -1);
     const draft = isDraft(file, metadata);
-    // Nothing else of a draft that is left out is checked: it may lack what a page needs. The translationKeys that it
-    // would give its page and the pages of its tags tell that a link of mainNavigation to them is no mistake.
+    // Nothing else of a draft that is left out is checked: it may lack what a page needs. The translationKeys of the
+    // pages that it would make tell that a link of mainNavigation to them is no mistake: its own, those of its tags,
+    // and those of the lists, which a language of drafts only lacks.
     if (draft && !drafts) {
       let tags = [];
       try {
@@ -148,7 +149,7 @@ async function discoverContent(projectDir, config, contentDirectory, locate, dra
       } catch {
         // Tags that a page cannot have stop the build of the draft only.
       }
-      return { sourceFile, type: 'draft', translationKeys: [metadata.translationKey, ...tags.map(tag => tagKey(tag.slug))] };
+      return { sourceFile, type: 'draft', translationKeys: [metadata.translationKey, postsKey, tagsKey, ...tags.map(tag => tagKey(tag.slug))] };
     }
     assertTexts(file, metadata, ["title", "description", "slug", "translationKey"]);
     assertDates(file, metadata);

@@ -38,14 +38,17 @@ export function mainNavigationOf(config) {
   });
 }
 
+// The archive or the page of a tag of which key is a further page, such as "blyss:posts" of "blyss:posts/page/2"
+// (see lists.js).
+const listOfPage = key => /^(blyss:posts|blyss:tags\/[^/]+)\/page\/(?:[2-9]|[1-9]\d+)$/.exec(key)?.[1];
+
 // A translationKey that no page has, not even a draft that the build leaves out, is a mistake, such as a misspelt one.
-// draftKeys are the translationKeys that those drafts would give their pages and the pages of their tags. A further
-// page of a list, such as "blyss:posts/page/2", comes and goes with the number of its posts: it is no mistake while
-// its list is none.
+// draftKeys are the translationKeys of the pages that those drafts would make. A further page of the archive or of
+// the page of a tag comes and goes with the number of its posts: it is no mistake while its list is none.
 export function assertMainNavigation(links, translationIndex, draftKeys) {
-  const known = key => translationIndex.has(key) || draftKeys.includes(key);
+  const known = key => key !== undefined && (translationIndex.has(key) || draftKeys.includes(key));
   links.forEach(({ translationKey }, index) => {
-    if (translationKey === undefined || known(translationKey) || known(translationKey.replace(/^(blyss:.+)\/page\/\d+$/, "$1"))) return;
+    if (translationKey === undefined || known(translationKey) || known(listOfPage(translationKey))) return;
     throw new BlyssError(`Cannot use mainNavigation[${index}].translationKey "${translationKey}": no page has it.\n` +
       'Correct it or remove the link, or give this translationKey to a page; "blyss:posts" is the key of the archive, "blyss:tags" ' +
       'that of the tags, and "blyss:tags/" followed by the slug of a tag that of its page.');
