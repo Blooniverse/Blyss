@@ -46,7 +46,7 @@ Blyss liest Markdown mit [marked](https://marked.js.org/) und erweitert es um Ko
 
 ### Front Matter
 
-Jede Datei beginnt mit Front Matter, wie es [Jekyll](https://jekyllrb.com/docs/front-matter/) eingeführt hat: Zeilen aus `key: value` zwischen zwei Zeilen aus `---`, etwa der `title`, die `description` und der `translationKey`, der die Sprachen eines Textes verbindet. Blyss liest eine einfache Teilmenge von YAML: jedes Feld auf einer eigenen Zeile, mit Listen und Gruppen von Feldern eingerückt unter einem Feld ohne Wert. Siehe [Seiten und Beiträge](/de/book/schreiben/seiten-und-beitraege/#front-matter-und-urls).
+Jede Datei beginnt mit Front Matter, wie es [Jekyll](https://jekyllrb.com/docs/front-matter/) eingeführt hat: Zeilen aus `key: value` zwischen zwei Zeilen aus `---`, etwa der `title`, die `description` und der `translationKey`, der die Sprachen eines Textes verbindet. Blyss liest eine einfache Teilmenge von YAML: jedes Feld auf einer eigenen Zeile, mit Listen und Gruppen von Feldern eingerückt unter einem Feld ohne Wert. Siehe [Seiten und Beiträge](/de/book/verfassen/seiten-und-beitraege/#front-matter-und-urls).
 
 
 ### GitHub Flavored Markdown
@@ -91,4 +91,4 @@ Die Komponenten einer Website, etwa der Slider und die Galerie, sind, was Shortc
 
 ### Weiterlesen
 
-[Markdown-Würze](/de/book/schreiben/markdown-wuerze/) zeigt jede dieser Erweiterungen in Aktion, und [Labels, Nummern, Referenzen](/de/book/schreiben/labels-nummern-referenzen/) erklärt die Nummerierung von Abbildungen und Formeln.
+[Markdown-Würze](/de/book/verfassen/markdown-wuerze/) zeigt jede dieser Erweiterungen in Aktion, und [Labels, Nummern, Referenzen](/de/book/verfassen/labels-nummern-referenzen/) erklärt die Nummerierung von Abbildungen und Formeln.

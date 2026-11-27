@@ -1,7 +1,7 @@
 ---
 title: Installation and commands
 description: Create, build and serve a Blyss website.
-order: 1
+order: 5
 translationKey: book-installation
 ---
 
@@ -43,9 +43,9 @@ Run these commands from the website root, where `blyss.config.js` lives: they ca
 
 The commands take these arguments:
 
-- `blyss new <page|post|doc> "<title>"` creates a [draft](/en/book/writing/pages-and-posts/#drafts) in the default language, with a front matter that the build accepts, and never replaces a file. `--lang <key>` chooses another language, `--slug <slug>` another file name and `--key <translationKey>` makes it the translation of a page in another language; without it, a translationKey that another file has already is refused. `--book <name>` puts a doc into one of the other [books](/en/book/writing/book/#several-books); without it, a doc goes into the first. Posts are named after their date, as in `261126-a-title.md`.
+- `blyss new <page|post|doc> "<title>"` creates a [draft](/en/book/authoring/pages-and-posts/#drafts) in the default language, with a front matter that the build accepts, and never replaces a file. `--lang <key>` chooses another language, `--slug <slug>` another file name and `--key <translationKey>` makes it the translation of a page in another language; without it, a translationKey that another file has already is refused. `--book <name>` puts a doc into one of the other [books](/en/book/authoring/books/#several-books); without it, a doc goes into the first. Posts are named after their date, as in `261126-a-title.md`.
 - `blyss check` builds everything, the drafts included, without writing: it reports every broken file at once, then the pages that lack a `translationKey` or a translation. `--json` prints the report for a script or an AI agent. It ends with the exit code 1 if a build would fail.
-- `blyss build --drafts` builds the [drafts](/en/book/writing/pages-and-posts/#drafts) as well, which every other build leaves out.
+- `blyss build --drafts` builds the [drafts](/en/book/authoring/pages-and-posts/#drafts) as well, which every other build leaves out.
 - `blyss --help` lists the commands and `blyss --version` shows the version of Blyss.
 - `blyss serve --hostbind <address> --port <number>` serves on another address or port.
 - `blyss serve --watch` builds, then rebuilds on each change of the content, the templates, the components, the static files, `blyss.config.js` or a module that it or the data file of a component imports, and reloads the open pages. A failed build shows its message on the page. `--drafts` builds the drafts as well. A changed configuration applies from the next build that succeeds, also to the directories that the server watches and serves; only the address and the port need the server to start anew.

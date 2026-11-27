@@ -137,13 +137,13 @@ Für einen Block gilt:
 
 - Das optionale Front Matter ergänzt die Felder der Textdatei und ersetzt gleichnamige Felder; es überschreibt zugleich gleichnamige Einstellungen aus `blyss.config.js`.
 - JSON-Werte wie `5`, `true` oder `[1, 2]` werden entsprechend gelesen, andere als Text.
-- Ein Feld ohne Wert enthält die Liste oder die Gruppe von Feldern in den Zeilen darunter, wie die `steps` des Sliders oben; siehe [Front Matter](/de/book/schreiben/seiten-und-beitraege/#front-matter-und-urls).
+- Ein Feld ohne Wert enthält die Liste oder die Gruppe von Feldern in den Zeilen darunter, wie die `steps` des Sliders oben; siehe [Front Matter](/de/book/verfassen/seiten-und-beitraege/#front-matter-und-urls).
 - Der Markdown-Text ersetzt den der Textdatei; fehlt er, bleibt dieser erhalten.
 - Ein leerer Block verwendet die Komponente unverändert.
 - Innerhalb einer Liste, eines Zitats oder einer Direktive bleibt der Block Code.
 - Für einen Block, der selbst einen Codeblock enthält, verwenden Sie außen mehr Backticks.
 
-Doppelte geschweifte Klammern benennen eine Komponente der Website; einfache, wie in `{note}`, benennen eine [Direktive](/de/book/schreiben/markdown-wuerze/#direktiven), die Blyss selbst rendert.
+Doppelte geschweifte Klammern benennen eine Komponente der Website; einfache, wie in `{note}`, benennen eine [Direktive](/de/book/verfassen/markdown-wuerze/#direktiven), die Blyss selbst rendert.
 
 ## Diagramme und eigenes Hosting
 
@@ -153,7 +153,7 @@ Drei Starterkomponenten zeigen freistehende Codeblöcke ihrer Sprachen:
 - `componentFlowchart`: `flowchart` oder `flow`.
 - `componentVegaLite`: `vega-lite`.
 
-Beispiele stehen unter [Markdown-Würze](/de/book/schreiben/markdown-wuerze/#diagramme). Für Diagramme gilt:
+Beispiele stehen unter [Markdown-Würze](/de/book/verfassen/markdown-wuerze/#diagramme). Für Diagramme gilt:
 
 - Ein Komponentenblock kann für ein Diagramm `title` und Einstellungen im Front Matter und danach den Diagrammcode enthalten.
 - Vega-Lite-Code muss gültiges JSON sein.

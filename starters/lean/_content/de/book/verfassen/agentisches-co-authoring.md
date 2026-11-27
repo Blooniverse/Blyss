@@ -11,7 +11,7 @@ Ein Text, den ein Mensch und ein KI-Agent gemeinsam schreiben, zeigt, wer was ge
 
 ## Wechsel von Mensch und Agent
 
-`{contribution}` ist eine eigene Direktive von Blyss, in der Form der [Direktiven](/de/book/schreiben/markdown-wuerze/#direktiven) von MyST:
+`{contribution}` ist eine eigene Direktive von Blyss, in der Form der [Direktiven](/de/book/verfassen/markdown-wuerze/#direktiven) von MyST:
 
 ````markdown
 :::{contribution}
@@ -45,7 +45,7 @@ Einer, der jede Sprache in eigenen Markdown-Dateien hält.
 
 - `:by:` ist Pflicht: `human` oder `agent`. Die Bezeichnungen `contributionHuman` und `contributionAgent` der Sprache benennen die Art.
 - `:author:` nennt den Autor, und `:date:` datiert den Wechsel, etwa `2026-11-26`.
-- Ein Label, `(name)=` in der Zeile darüber, lässt einen anderen Wechsel darauf verlinken; siehe [Labels und Nummern](/de/book/schreiben/labels-nummern-referenzen/#labels).
+- Ein Label, `(name)=` in der Zeile darüber, lässt einen anderen Wechsel darauf verlinken; siehe [Labels und Nummern](/de/book/verfassen/labels-nummern-referenzen/#labels).
 - Das JSON-LD der Seite nennt die Autoren als ihre `contributor`: einen Menschen als `Person`, einen Agenten als `SoftwareApplication`. Ein Mensch ohne Namen ist der Herausgeber der Website.
 
 
@@ -54,7 +54,7 @@ Einer, der jede Sprache in eigenen Markdown-Dateien hält.
 
 Der Starter bereitet eine Website auf das Schreiben mit Agenten vor, mit Dateien, die Blyss weder liest noch veröffentlicht:
 
-- `AGENTS.md` sagt einem Agenten, wie er an der Website arbeitet: seine Wechsel unter dem letzten anzufügen und nie einen anderen zu ändern, eine neue Seite als [Entwurf](/de/book/schreiben/seiten-und-beitraege/#entwürfe) zu belassen und erst fertig zu sein, wenn [`npx blyss check --json`](/de/book/installation/#befehle) `"ok": true` meldet.
+- `AGENTS.md` sagt einem Agenten, wie er an der Website arbeitet: seine Wechsel unter dem letzten anzufügen und nie einen anderen zu ändern, eine neue Seite als [Entwurf](/de/book/verfassen/seiten-und-beitraege/#entwürfe) zu belassen und erst fertig zu sein, wenn [`npx blyss check --json`](/de/book/installation/#befehle) `"ok": true` meldet.
 - `_authoring/` enthält das Material hinter den Seiten: den Styleguide `style-guide.md`, das Glossar `glossary.md` mit den Begriffen in jeder Sprache und in `briefs/` ein Briefing pro Inhalt, die Aufgabe, die ein Mensch einem Agenten gibt.
 - `.github/workflows/ci-dev-check-content.yml` führt `blyss check` für jeden Pull Request aus, sodass ein Wechsel, der den Build brechen würde, dort auffällt.
 

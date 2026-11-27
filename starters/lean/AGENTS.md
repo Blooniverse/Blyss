@@ -74,7 +74,7 @@ Your text, in Markdown.
 
 ## Markdown
 
-Blyss reads GitHub Flavored Markdown with a few additions; the starter's book documents them in `_content/en/book/writing/`:
+Blyss reads GitHub Flavored Markdown with a few additions; the starter's book documents them in `_content/en/book/authoring/`:
 
 - Callouts: `:::{note}` … `:::`, also `tip`, `warning`, `important`, `caution` and the other kinds of MyST, or `> [!NOTE]`.
 - Images and figures: `:::{figure} /assets/img/name.jpg` with `:alt:` and a caption as the body. Files lie in `static/`, linked from `/`.

@@ -13,7 +13,7 @@ Ein Label benennt ein Element einer Seite, eines Beitrags oder eines Dokuments. 
 
 Ein Label wird zur `id` seines Elements, zu der ein Link oder ein [Verweis](#verweise) führt. Ein Element erhält sein Label auf einem dieser Wege:
 
-- **Option**: `label` oder `name` einer Hinweisbox, eines `{image}`, eines `{figure}` oder einer `{math}`-[Direktive](/de/book/schreiben/markdown-wuerze/#direktiven).
+- **Option**: `label` oder `name` einer Hinweisbox, eines `{image}`, eines `{figure}` oder einer `{math}`-[Direktive](/de/book/verfassen/markdown-wuerze/#direktiven).
 - **Zeile darüber**: eine Zeile `(label)=` über einer Überschrift oder über jedem anderen Block, etwa einem Absatz, einer Liste oder einem Diagramm.
 - **Formel**: das Label in Klammern hinter einer Formel zwischen `$$` oder `\label{…}` in ihr.
 
@@ -29,7 +29,7 @@ Für ein Label gelten diese Regeln:
 
 - **Form**: Es besteht aus Buchstaben, Ziffern, Bindestrichen, Unterstrichen, Punkten und Doppelpunkten und beginnt mit einem Buchstaben oder einer Ziffer, wie in `abb-ringe` oder `gl:flaeche`.
 - **Ein Element**: Es benennt ein Element seiner Seite. Der Build stoppt bei einem Label, das zweimal vorkommt, und bei einem, das die `id` eines Elements der Vorlagen oder einer Fußnote ist.
-- **Überschriften**: Eine Überschrift hat ihr Label als `id`, in einem Dokument anstelle [der ID aus ihrem Text](/de/book/schreiben/buch/navigation/#überschriften).
+- **Überschriften**: Eine Überschrift hat ihr Label als `id`, in einem Dokument anstelle [der ID aus ihrem Text](/de/book/verfassen/buecher/navigation/#überschriften).
 
 
 
@@ -62,7 +62,7 @@ Ringe aus der Galerie des Starters.
 - **`{image}`**: Ein Bild hat keine Bildunterschrift und deshalb keine Nummer, kann aber ein Label haben.
 - **Gestaltung**: Die Nummer ist ein `span` mit der Klasse `caption-number`, die `static/assets/css/main.css` im Starter fett setzt.
 
-Die Bilder einer [Abbildung ohne URL](/de/book/schreiben/markdown-wuerze/#bilder-und-abbildungen) haben Buchstaben. Hat die Abbildung ein Label, so hat jedes Bild dieses Label und seinen Buchstaben als `id`, etwa `abb-ansichten-b`:
+Die Bilder einer [Abbildung ohne URL](/de/book/verfassen/markdown-wuerze/#bilder-und-abbildungen) haben Buchstaben. Hat die Abbildung ein Label, so hat jedes Bild dieses Label und seinen Buchstaben als `id`, etwa `abb-ansichten-b`:
 
 ````markdown
 :::{figure}
@@ -129,7 +129,7 @@ $$
 
 ## Fußnoten
 
-Blyss nummeriert die Fußnoten einer Seite in der Reihenfolge ihrer ersten Verweise, unabhängig von ihren Namen; siehe [Fußnoten](/de/book/schreiben/markdown-wuerze/#fußnoten). Da die Fußnoten auf den Text folgen, wird eine Abbildung oder eine Formel in einer Fußnote nach denen des Textes nummeriert.
+Blyss nummeriert die Fußnoten einer Seite in der Reihenfolge ihrer ersten Verweise, unabhängig von ihren Namen; siehe [Fußnoten](/de/book/verfassen/markdown-wuerze/#fußnoten). Da die Fußnoten auf den Text folgen, wird eine Abbildung oder eine Formel in einer Fußnote nach denen des Textes nummeriert.
 
 
 
@@ -163,7 +163,7 @@ Blyss ist hier strenger als MyST:
 
 - **Fehlendes Label**: Der Build stoppt bei einem Verweis auf ein Label, das seine Seite nicht hat. Geben Sie dem Element ein Label oder dem Link einen Text.
 - **Fehlende Nummer oder fehlender Name**: Der Build stoppt bei einem Verweis, der eine Nummer oder einen Namen verlangt, die sein Element nicht hat. MyST zeigt dann „??“ oder das Label.
-- **Andere Links**: Nur ein Verweis zeigt einen Text, ohne einen zu haben. Jeder andere Link ohne Text stoppt den Build, auch einer zu einem Label einer anderen Seite, wie in `[](/de/book/schreiben/labels-nummern-referenzen/#abb-ringe)`. Schreiben Sie den Text eines solchen Links selbst, denn die Nummern beginnen auf jeder Seite neu.
+- **Andere Links**: Nur ein Verweis zeigt einen Text, ohne einen zu haben. Jeder andere Link ohne Text stoppt den Build, auch einer zu einem Label einer anderen Seite, wie in `[](/de/book/verfassen/labels-nummern-referenzen/#abb-ringe)`. Schreiben Sie den Text eines solchen Links selbst, denn die Nummern beginnen auf jeder Seite neu.
 
 
 

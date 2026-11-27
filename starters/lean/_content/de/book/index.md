@@ -1,23 +1,23 @@
 ---
 title: Dokumentation
-description: Eine Blyss-Website installieren, konfigurieren, gestalten, schreiben und veröffentlichen.
+description: Die Inhalte einer Blyss-Website verfassen, die Website konfigurieren, gestalten, installieren und veröffentlichen.
 translationKey: book
 ---
 
-Blyss ist ein schlanker Static-Site-Generator: Er macht aus Markdown eine mehrsprachige Website mit Seiten, Beiträgen und einem Buch wie diesem. Diese Dokumentation führt von einer neuen Website bis zu ihrer Veröffentlichung.
+Blyss ist ein schlanker Static-Site-Generator: Er macht aus Markdown eine mehrsprachige Website mit Seiten, Beiträgen und einem Buch wie diesem. Diese Dokumentation beginnt mit dem, was ihre Autorinnen und Autoren brauchen, und wendet sich dann der Gestaltung einer Website, ihrer Installation und ihrer Veröffentlichung zu.
 
 ## Kapitel
 
 1. [Markdown und mehr](/de/book/markdown-und-mehr/): die Syntax von Markdown, und was Blyss ihr hinzufügt.
-2. [Installation und Einstieg](/de/book/installation/): eine Website anlegen, erstellen und lokal ansehen.
+2. [Verfassen](/de/book/verfassen/): Dokumente, Seiten und Beiträge, ihre Übersetzungen, Markdown über reinen Text hinaus und Co-Authoring mit KI-Agenten.
 3. [Konfiguration und Sprachen](/de/book/konfiguration/): die Einstellungen in `blyss.config.js`, darunter die Sprachen.
 4. [Vorlagen und Gestaltung](/de/book/vorlagen/): das HTML um die Inhalte, das Layout, der Hero und das Overlay.
 5. [Komponenten](/de/book/komponenten/): wiederverwendbare Elemente wie der Slider, die Galerie und die Diagramme.
-6. [Schreiben](/de/book/schreiben/): Dokumente, Seiten und Beiträge, ihre Übersetzungen, Markdown über reinen Text hinaus und Co-Authoring mit KI-Agenten.
+6. [Installation und Einstieg](/de/book/installation/): eine Website anlegen, erstellen und lokal ansehen.
 7. [Veröffentlichung](/de/book/bereitstellung/): was vor der Veröffentlichung zu ersetzen ist und wie die Website gehostet wird.
 8. [Blyss entwickeln](/de/book/entwicklung/): an der Engine und an ihrem Starter arbeiten.
 
-Die Kapitel 2 bis 5 und 7 richten sich an alle, die eine Website einrichten und gestalten, die Kapitel 1 und 6 an ihre Autorinnen und Autoren und Kapitel 8 an alle, die an Blyss mitarbeiten.
+Die Kapitel 1 und 2 richten sich an die Autorinnen und Autoren einer Website, die Kapitel 3 bis 7 an alle, die sie gestalten, installieren und veröffentlichen, und Kapitel 8 an alle, die an Blyss mitarbeiten.
 
 ## Über diese Dokumentation
 

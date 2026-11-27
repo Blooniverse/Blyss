@@ -85,11 +85,11 @@ Front matter and body are optional:
 
 - Fields merge with and override the component text's front matter; fields matching settings also override the configuration.
 - JSON values such as `5`, `true`, `"5"` and `[1, 2]` keep their types; other values are text.
-- A field without a value holds the list or the group of fields on the lines below it, like the `steps` of the slider above; see [front matter](/en/book/writing/pages-and-posts/#front-matter-and-urls).
+- A field without a value holds the list or the group of fields on the lines below it, like the `steps` of the slider above; see [front matter](/en/book/authoring/pages-and-posts/#front-matter-and-urls).
 - The block body replaces the component's body; without a body it keeps it.
 - Invalid settings stop the build with the source file named.
 
-Blocks must stand alone: within a list, a quotation or a directive they remain code. Use a longer outer fence if the body contains fenced code. Double braces name a component of the website; single braces, as in `{note}`, name a [directive](/en/book/writing/markdown-spice/#directives), which Blyss renders by itself.
+Blocks must stand alone: within a list, a quotation or a directive they remain code. Use a longer outer fence if the body contains fenced code. Double braces name a component of the website; single braces, as in `{note}`, name a [directive](/en/book/authoring/markdown-spice/#directives), which Blyss renders by itself.
 
 ## Component templates and data
 
@@ -156,7 +156,7 @@ The starter includes three diagram components, each for the fenced code blocks o
 - flowchart.js: `flowchart` or `flow`.
 - Vega-Lite: `vega-lite`.
 
-See [Markdown spice](/en/book/writing/markdown-spice/#diagrams) for examples. The browser loads each library only when a diagram comes near the window or its overlay opens; code remains visible without JavaScript or if drawing fails. Localized component files provide error messages and flowchart yes/no labels.
+See [Markdown spice](/en/book/authoring/markdown-spice/#diagrams) for examples. The browser loads each library only when a diagram comes near the window or its overlay opens; code remains visible without JavaScript or if drawing fails. Localized component files provide error messages and flowchart yes/no labels.
 
 Each diagram's settings and library URLs are documented in `blyss.config.js`. A block named `{{componentMermaid}}`, for example, supplies a title and settings for one diagram, followed by its code. Vega-Lite expects JSON and stops the build if it is invalid; `"width": "container"` makes a chart as wide as the text. Diagrams inherit the surrounding font; flowchart colour is set in `components/componentFlowchart/componentFlowchart.css`.
 

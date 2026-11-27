@@ -12,7 +12,7 @@ Die Kommentare in `blyss.config.js` erklären die Einstellungen des Starters und
 Weitere Einstellungen:
 
 - `pagination.pageSize` legt die Anzahl der Beiträge je Archiv- und Schlagwortseite fest; der Standard ist 10, erlaubt sind positive ganze Zahlen.
-- `books` nennt die [Bücher](/de/book/schreiben/buch/#mehrere-bücher) der Website; der Standard ist `["book"]`.
+- `books` nennt die [Bücher](/de/book/verfassen/buecher/#mehrere-bücher) der Website; der Standard ist `["book"]`.
 - `mainNavigation` zählt die Links der Kopfleiste auf; siehe [Hauptnavigation](#hauptnavigation).
 - `layout` steuert Abstände und Ausrichtung; Hero und Overlay sowie ihre Schalter beschreibt [Vorlagen](/de/book/vorlagen/).
 - `components` enthält die Einstellungen einzelner Komponenten; ein [Block](/de/book/komponenten/) kann sie für eine einzelne Verwendung ersetzen.
@@ -39,7 +39,7 @@ mainNavigation: [
 ],
 ```
 
-- Ein `translationKey` verlinkt die Seite, den Beitrag oder das Dokument mit diesem [`translationKey`](/de/book/schreiben/uebersetzungen/) in der Sprache der jeweiligen Seite; `blyss:posts` und `blyss:tags` verlinken das Archiv und die Schlagwörter, `blyss:tags/` mit dem Slug eines Schlagworts, etwa `blyss:tags/markdown`, dessen Seite. Einer Sprache ohne eine solche Seite, oder nur mit einem Entwurf davon, fehlt der Link.
+- Ein `translationKey` verlinkt die Seite, den Beitrag oder das Dokument mit diesem [`translationKey`](/de/book/verfassen/uebersetzungen/) in der Sprache der jeweiligen Seite; `blyss:posts` und `blyss:tags` verlinken das Archiv und die Schlagwörter, `blyss:tags/` mit dem Slug eines Schlagworts, etwa `blyss:tags/markdown`, dessen Seite. Einer Sprache ohne eine solche Seite, oder nur mit einem Entwurf davon, fehlt der Link.
 - Eine `href` verlinkt eine andere Website.
 - `label` nennt ein Label aus `site.languages`, etwa `home`, das in jeder Sprache der Text des Links ist; ein eigenes Label wie `github` braucht einen Text in jeder Sprache. Ohne Label zeigt ein Link zu einer Seite deren Titel; ein Link zu einer anderen Website braucht eines.
 - Der Link zur aktuellen Seite erhält `aria-current="page"`, ein Link zu einer Seite, die sie enthält, etwa zur Startseite ihres Buchs oder zum Archiv der Beiträge, `aria-current="true"`. Die Startseite enthält jede Seite, wird aber nur auf sich selbst markiert.
@@ -53,14 +53,14 @@ mainNavigation: [
 - Ein `label`.
 - Ein `locale` wie `de` oder `en-GB`.
 - Eine `description` als Ersatz für Seiten ohne eigene Beschreibung.
-- Dieselben `labels` wie die anderen Sprachen. Die Labels der von Blyss erzeugten Elemente fallen andernfalls auf Englisch zurück, darunter die Titel der [Hinweisboxen](/de/book/schreiben/markdown-wuerze/#hinweisboxen) wie `note` und `warning`.
+- Dieselben `labels` wie die anderen Sprachen. Die Labels der von Blyss erzeugten Elemente fallen andernfalls auf Englisch zurück, darunter die Titel der [Hinweisboxen](/de/book/verfassen/markdown-wuerze/#hinweisboxen) wie `note` und `warning`.
 
 Zwei weitere Einstellungen betreffen die Sprachen:
 
 - `site.defaultLanguage` bestimmt das Ziel der Weiterleitung von `/` und die Sprache von `/404.html`; ohne Angabe ist es die erste Sprache.
 - `site.languageSwitcher: false` versteckt den Sprachwechsler, nicht aber die `hreflang`-Links.
 
-[Übersetzte Dateien](/de/book/schreiben/uebersetzungen/) erhalten denselben `translationKey`, dürfen aber unterschiedliche Pfade und Slugs haben.
+[Übersetzte Dateien](/de/book/verfassen/uebersetzungen/) erhalten denselben `translationKey`, dürfen aber unterschiedliche Pfade und Slugs haben.
 
 ### Sprache hinzufügen
 

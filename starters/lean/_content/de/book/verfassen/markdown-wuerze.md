@@ -36,7 +36,7 @@ Wie in [MyST](https://mystmd.org/guide/math) kommt eine Formel auch ohne Dollarz
 \int_0^1 x^2 \, dx = \frac{1}{3}
 ```
 
-Eine Formel auf eigenen Zeilen kann ein Label und eine Nummer haben; siehe [Labels und Nummern](/de/book/schreiben/labels-nummern-referenzen/#formeln).
+Eine Formel auf eigenen Zeilen kann ein Label und eine Nummer haben; siehe [Labels und Nummern](/de/book/verfassen/labels-nummern-referenzen/#formeln).
 
 Formeln funktionieren auch in Komponententexten, Fragmenten und den Karten der Bereiche. Die lokalen Temml-Dateien des Starters müssen zur installierten Version passen; siehe [Gestaltung und Schriften](/de/book/vorlagen/#gestaltung-und-schriften).
 
@@ -235,7 +235,7 @@ Es ist generierte Ausgabe: Jeder Build legt es neu an.
 > [!IMPORTANT]
 > Ersetzen Sie die Platzhalterwerte, bevor Sie veröffentlichen.
 
-Eine Hinweisbox ist ein `div` mit den Klassen `admonition` und ihrer Art, ihr Titel ein Absatz mit der Klasse `admonition-title`; eine aufklappbare ist ein `details` mit ihrem Titel als `summary`. `static/assets/css/main.css` gestaltet sie im Starter, und jede weitere Klasse der Option `class` können Sie selbst gestalten. Die Option `label` benennt eine Hinweisbox; siehe [Labels und Nummern](/de/book/schreiben/labels-nummern-referenzen/#labels).
+Eine Hinweisbox ist ein `div` mit den Klassen `admonition` und ihrer Art, ihr Titel ein Absatz mit der Klasse `admonition-title`; eine aufklappbare ist ein `details` mit ihrem Titel als `summary`. `static/assets/css/main.css` gestaltet sie im Starter, und jede weitere Klasse der Option `class` können Sie selbst gestalten. Die Option `label` benennt eine Hinweisbox; siehe [Labels und Nummern](/de/book/verfassen/labels-nummern-referenzen/#labels).
 
 
 
@@ -269,7 +269,7 @@ Beide haben diese Optionen:
 - `alt`: die Beschreibung des Bildes für alle, die es nicht sehen können.
 - `width`: eine Zahl mit einer CSS-Einheit, etwa `30%` der Textbreite oder `300px`; eine Zahl allein zählt in Pixeln. Das Stylesheet des Starters hält ein Bild innerhalb der Textbreite.
 - `align`: `left`, `center` oder `right`. Ohne diese Option steht das Bild wie der Text um es herum.
-- `label` und, für eine Abbildung, `enumerated`: Sie benennen und nummerieren sie; siehe [Labels und Nummern](/de/book/schreiben/labels-nummern-referenzen/#abbildungen).
+- `label` und, für eine Abbildung, `enumerated`: Sie benennen und nummerieren sie; siehe [Labels und Nummern](/de/book/verfassen/labels-nummern-referenzen/#abbildungen).
 
 Ein ausgerichtetes Bild trägt die Klasse `align-left`, `align-center` oder `align-right` an seinem Absatz oder an seinem `figure`, nach der das Stylesheet es platziert.
 
@@ -295,7 +295,7 @@ Zwei Bilder der Galerie.
 
 ## Direktiven
 
-Hinweisboxen, `{image}`, `{figure}` und `{math}` sind Direktiven von [MyST](https://mystmd.org/guide/syntax-overview), und mit Blyss' eigenem [`{contribution}`](/de/book/schreiben/agentisches-co-authoring/#wechsel-von-mensch-und-agent) die einzigen, die Blyss liest. Sie haben dieselbe Form:
+Hinweisboxen, `{image}`, `{figure}` und `{math}` sind Direktiven von [MyST](https://mystmd.org/guide/syntax-overview), und mit Blyss' eigenem [`{contribution}`](/de/book/verfassen/agentisches-co-authoring/#wechsel-von-mensch-und-agent) die einzigen, die Blyss liest. Sie haben dieselbe Form:
 
 - **Name**: Die öffnende Zeile nennt die Direktive in geschweiften Klammern. Der Text hinter dem Namen ist ihr Argument, etwa ein Titel oder eine URL.
 - **Begrenzung**: Eine Direktive steht zwischen zwei Zeilen aus mindestens drei Backticks oder aus mindestens drei Doppelpunkten; beides bedeutet dasselbe. Doppelpunkte eignen sich für einen Inhalt aus Markdown, etwa den einer Hinweisbox: Andere Werkzeuge wie GitHub zeigen ihn dann als Text statt als Code. Backticks eignen sich für eine Formel.

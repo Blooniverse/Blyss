@@ -1,7 +1,7 @@
 ---
 title: Installation und Einstieg
 description: Eine Website sicher anlegen, erstellen und lokal ansehen.
-order: 1
+order: 5
 translationKey: book-installation
 ---
 
@@ -60,9 +60,9 @@ Führen Sie diese Befehle im Wurzelverzeichnis der Website aus, in dem `blyss.co
 
 Die Befehle nehmen diese Argumente entgegen:
 
-- `blyss new <page|post|doc> "<titel>"` legt einen [Entwurf](/de/book/schreiben/seiten-und-beitraege/#entwürfe) in der Standardsprache an, mit einem Front Matter, den der Build annimmt, und ersetzt nie eine Datei. `--lang <schlüssel>` wählt eine andere Sprache, `--slug <slug>` einen anderen Dateinamen, und `--key <translationKey>` macht ihn zur Übersetzung einer Seite in einer anderen Sprache; ohne diese Option weist er einen translationKey zurück, den schon eine andere Datei trägt. `--book <name>` legt ein Dokument in einem der anderen [Bücher](/de/book/schreiben/buch/#mehrere-bücher) an; ohne diese Option kommt es ins erste. Beiträge tragen ihr Datum im Namen, etwa `261126-ein-titel.md`.
+- `blyss new <page|post|doc> "<titel>"` legt einen [Entwurf](/de/book/verfassen/seiten-und-beitraege/#entwürfe) in der Standardsprache an, mit einem Front Matter, den der Build annimmt, und ersetzt nie eine Datei. `--lang <schlüssel>` wählt eine andere Sprache, `--slug <slug>` einen anderen Dateinamen, und `--key <translationKey>` macht ihn zur Übersetzung einer Seite in einer anderen Sprache; ohne diese Option weist er einen translationKey zurück, den schon eine andere Datei trägt. `--book <name>` legt ein Dokument in einem der anderen [Bücher](/de/book/verfassen/buecher/#mehrere-bücher) an; ohne diese Option kommt es ins erste. Beiträge tragen ihr Datum im Namen, etwa `261126-ein-titel.md`.
 - `blyss check` erstellt alles samt Entwürfen, ohne zu schreiben: Es meldet jede fehlerhafte Datei auf einmal, dann die Seiten ohne `translationKey` oder ohne Übersetzung. `--json` gibt den Bericht für ein Skript oder einen KI-Agenten aus. Es endet mit dem Exit-Code 1, wenn ein Build scheitern würde.
-- `blyss build --drafts` erstellt auch die [Entwürfe](/de/book/schreiben/seiten-und-beitraege/#entwürfe), die jeder andere Build auslässt.
+- `blyss build --drafts` erstellt auch die [Entwürfe](/de/book/verfassen/seiten-und-beitraege/#entwürfe), die jeder andere Build auslässt.
 - `blyss --help` listet die Befehle auf, und `blyss --version` zeigt die Version von Blyss.
 - `blyss serve --hostbind <adresse> --port <zahl>` liefert auf einer anderen Adresse oder einem anderen Port aus.
 - `blyss serve --watch` erstellt die Website und danach bei jeder Änderung der Inhalte, Templates, Komponenten, statischen Dateien, von `blyss.config.js` oder eines Moduls, das sie oder die Datendatei einer Komponente importiert, neu und lädt die geöffneten Seiten neu. Ein gescheiterter Build zeigt seine Meldung auf der Seite. `--drafts` erstellt auch die Entwürfe. Eine geänderte Konfiguration gilt ab dem nächsten gelungenen Build, auch für die Verzeichnisse, die der Server überwacht und ausliefert; nur Adresse und Port verlangen einen Neustart des Servers.
