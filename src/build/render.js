@@ -149,8 +149,8 @@ function renderTags(record) {
 // renders it in the language of the record, and resolves to it for a block of the record's Markdown; languages
 // names the component that shows the code blocks of a language, and former tells what to write instead of a name
 // that no longer shows a component; regions tells which of the hero and the overlay the page shows (see
-// regions.js); book holds the navigation and the pager of a doc, and trail the start pages above it, from that of its
-// book, and the doc itself (see book.js); mainNavigation holds the links of the top bar (see navigation.js); basePath
+// regions.js); book holds the navigation and the pager of a doc (see book.js), and trail the pages that its
+// BreadcrumbList leads through (see json-ld.js); mainNavigation holds the links of the top bar (see navigation.js); basePath
 // is the path below which the website is hosted, {{basePath}} in every template.
 export async function renderRecord({ record, file, templates, templateFile = name => `${name}.html`, translationIndex, site, records = [],
   layout, fragments = {}, components = {}, languages = new Map(), former = () => "", regions = { of: () => ({}) }, book = {},

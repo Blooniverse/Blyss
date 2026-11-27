@@ -16,9 +16,11 @@ function contributorsOf(contributions, publisherId) {
 
 const typeOf = record => record.metadata.type || { post: "BlogPosting", book: "TechArticle", list: "CollectionPage" }[record.type] || "WebPage";
 
-// trail names the records from the start page of a doc's book through the start pages of its sections to the doc
-// (see book.js). A doc is part of the start page above it, up to the start page of its book, which is part of the
-// website; a BreadcrumbList leads from the start page of the book to the doc. Other pages are part of the website.
+// trail names the pages from the top of a page's part of the website to the page itself: for a doc, the start pages
+// of its book and of its sections (see book.js); for a post or a list, the lists above it, from the archive or the
+// tags (see lists.js). A BreadcrumbList follows a trail of two pages or more. A doc is part of the start page above
+// it, up to the start page of its book, which is part of the website; a post is only listed in the archive, so it
+// and every other page are part of the website.
 export function createJsonLd({ site, record, contributions = [], trail = [] }) {
   const siteUrl = absoluteUrl(site.baseUrl, "/");
   const canonicalUrl = absoluteUrl(site.baseUrl, record.url);
@@ -27,7 +29,7 @@ export function createJsonLd({ site, record, contributions = [], trail = [] }) {
   const pageId = `${canonicalUrl}#webpage`;
   const urlOf = item => absoluteUrl(site.baseUrl, item.url);
   const nameOf = item => item.metadata.title || site.name;
-  const above = trail.slice(0, -1);
+  const above = record.type === "book" ? trail.slice(0, -1) : [];
   // What the page at a depth below the start page of the book is part of; the start page itself is part of the website.
   const partOf = depth => ({ "@id": depth ? `${urlOf(above[depth - 1])}#webpage` : websiteId });
 
@@ -64,7 +66,7 @@ export function createJsonLd({ site, record, contributions = [], trail = [] }) {
       isPartOf: partOf(depth)
     }))
   ];
-  if (above.length) {
+  if (trail.length > 1) {
     graph.push({
       "@type": "BreadcrumbList",
       "@id": `${canonicalUrl}#breadcrumb`,

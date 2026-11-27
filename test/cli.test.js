@@ -1144,6 +1144,26 @@ describe("a site with several tagged posts", () => {
     assert.deepEqual(post.author, { "@id": "https://example.com/#publisher" });
   });
 
+  test("leads from the archive to each post and its further pages, and from the tags to the page of each tag", async () => {
+    const crumbs = async path => {
+      const graph = JSON.parse((await page(path)).match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)[1])["@graph"];
+      // A post is listed in the archive, not part of it: posts and lists stay part of the website.
+      assert.deepEqual(graph[2].isPartOf, { "@id": "https://example.com/#website" }, path);
+      const list = graph.find(node => node["@type"] === "BreadcrumbList");
+      return list && [list["@id"], ...list.itemListElement.map(item => `${item.position} ${item.name} ${item.item}`)];
+    };
+    const trail = (path, ...items) => [`https://example.com/${path}/#breadcrumb`,
+      ...items.map(([name, item], index) => `${index + 1} ${name} https://example.com/${item}/`)];
+    assert.deepEqual(await crumbs("en/posts/older"), trail("en/posts/older", ["Posts", "en/posts"], ["Older", "en/posts/older"]));
+    assert.deepEqual(await crumbs("en/posts/page/3"), trail("en/posts/page/3", ["Posts", "en/posts"], ["Posts – Page 3", "en/posts/page/3"]));
+    assert.deepEqual(await crumbs("en/tags/blyss/page/2"), trail("en/tags/blyss/page/2", ["Tags", "en/tags"], ["Tag: Blyss", "en/tags/blyss"],
+      ["Tag: Blyss – Page 2", "en/tags/blyss/page/2"]));
+    assert.deepEqual(await crumbs("de/tags/markdown"), trail("de/tags/markdown", ["Schlagwörter", "de/tags"], ["Schlagwort: Markdown", "de/tags/markdown"]));
+    assert.deepEqual(await crumbs("de/posts/page/2"), trail("de/posts/page/2", ["Beiträge", "de/posts"], ["Beiträge – Seite 2", "de/posts/page/2"]));
+    // A BreadcrumbList needs two items, so the archive and the tags have none.
+    for (const path of ["en/posts", "en/tags", "de/tags"]) assert.equal(await crumbs(path), undefined, path);
+  });
+
   test("escapes JSON-LD so that content cannot close its script element", async () => {
     const html = await page("en/posts/newest");
     assert.equal(html.match(/<\/script/gi).length, 2, "the script of the overlay's slider and JSON-LD");
