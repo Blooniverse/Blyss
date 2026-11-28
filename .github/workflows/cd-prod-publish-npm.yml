@@ -1,11 +1,11 @@
-# Publishes @blooniverse/blyss to npm through trusted publishing (OIDC): no npm token is stored, and npm adds provenance.
+# Publishes @blooniverse/blyss to npm through trusted publishing (OIDC): no npm-token is stored, and npm adds provenance.
 # For more information see: https://docs.npmjs.com/trusted-publishers
 #
 # One-time setup, after the first version has been published by hand:
 #   1. On npmjs.com, in the package's settings under "Trusted Publisher", choose GitHub Actions with
-#      organization "Blooniverse", repository "Blyss", workflow "cd-prod-publish-npm.yml", environment "npm",
+#      organization "Blooniverse", repository "Blyss", workflow "cd-prod-publish-npm.yml", environment "NPM",
 #      and allow `npm publish`.
-#   2. In the repository's settings, create the environment "npm" with yourself as required reviewer.
+#   2. In the repository's settings, create the environment "NPM" with yourself as required reviewer.
 #   3. On npmjs.com, set the package's publishing access to "Require two-factor authentication and disallow tokens".
 #
 # Releasing (maintainer only):
